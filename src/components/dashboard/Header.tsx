@@ -1,0 +1,62 @@
+import { component$, type QRL, useContext } from '@builder.io/qwik';
+import { UserDropdown } from '../common/UserDropdown';
+import { LanguageSwitcher } from '../common/LanguageSwitcher';
+import { useAdminAuth } from '../../routes/admin/layout';
+import { MenuIcon } from './icons';
+import { ProjectSettingsContext } from '../../stores/project-settings-store';
+
+interface HeaderProps {
+  onMenuClick?: QRL<() => void>;
+}
+
+/**
+ * Dashboard header component with menu toggle
+ * Uses project settings (logo, name) from Laravel API
+ */
+export const Header = component$<HeaderProps>((props) => {
+  const auth = useAdminAuth();
+  const projectSettings = useContext(ProjectSettingsContext);
+  
+  // Get project name and logo from Laravel settings
+  const projectName = projectSettings.settings?.name || 'Dashboard';
+  const projectLogo = projectSettings.settings?.logo;
+
+  return (
+    <>
+      {/* Component: Header */}
+      <header class="sticky top-0 z-30 bg-white/80 dark:bg-slate-800/80 backdrop-blur-xl border-b border-slate-200/60 dark:border-slate-700/60 shadow-sm transition-colors duration-300">
+      <div class="flex h-16 md:h-20 lg:h-24 items-center justify-between px-4 sm:px-6 md:px-8 lg:px-12">
+        <div class="flex items-center gap-3 md:gap-5">
+          {props.onMenuClick && (
+            <button
+              onClick$={props.onMenuClick}
+              class="text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 transition-colors p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700"
+              aria-label="Toggle sidebar"
+            >
+              <MenuIcon />
+            </button>
+          )}
+          {/* Project logo from Laravel (if available) */}
+          {projectLogo && (
+            <img 
+              src={projectLogo} 
+              alt={projectName}
+              width="48"
+              height="48"
+              class="h-8 md:h-10 lg:h-12 w-auto object-contain"
+            />
+          )}
+          {/* Project name from Laravel */}
+          <h1 class="text-xl sm:text-2xl md:text-3xl font-bold bg-gradient-to-r from-slate-900 to-slate-700 dark:from-slate-100 dark:to-slate-300 bg-clip-text text-transparent tracking-tight">
+            {projectName}
+          </h1>
+        </div>
+        <div class="flex items-center gap-3 md:gap-4">
+          <LanguageSwitcher />
+          {auth.value?.user && <UserDropdown user={auth.value.user} />}
+        </div>
+      </div>
+    </header>
+    </>
+  );
+});

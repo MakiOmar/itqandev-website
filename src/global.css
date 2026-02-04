@@ -1,0 +1,282 @@
+/* Tailwind CSS v4 - Optimized with Vite */
+@import "tailwindcss";
+@config "../tailwind.config.js";
+@plugin "@tailwindcss/forms";
+@plugin "@tailwindcss/typography";
+
+/* Note: Cairo font is loaded via <link> tag in router-head.tsx for better performance */
+
+/* Prevent flash of unstyled content (FOUC) for direction */
+/* Hide body by default - only show when BOTH html and body have dir attribute AND data-render-complete is set */
+/* This ensures both language and direction are applied simultaneously */
+body {
+  visibility: hidden !important;
+  opacity: 0 !important;
+}
+
+/* Only show body when all conditions are met */
+html[dir] body[dir][data-render-complete] {
+  visibility: visible !important;
+  opacity: 1 !important;
+  /* No transition - instant show to prevent visual shift */
+}
+
+/* Prevent transitions on elements until body is fully rendered */
+/* This prevents sidebar and other elements from flashing during language switch */
+/* Allow transitions on interactive elements for better UX */
+body:not([data-render-complete]) * {
+  transition: none !important;
+  animation: none !important;
+}
+
+/* Allow transitions on interactive elements even before render complete */
+body:not([data-render-complete]) button,
+body:not([data-render-complete]) [role="button"],
+body:not([data-render-complete]) [role="menu"],
+body:not([data-render-complete]) [role="menuitem"],
+body:not([data-render-complete]) a,
+body:not([data-render-complete]) input,
+body:not([data-render-complete]) select,
+body:not([data-render-complete]) textarea {
+  transition: color 0.2s ease, background-color 0.2s ease, border-color 0.2s ease, opacity 0.2s ease, transform 0.2s ease !important;
+}
+
+/* Sidebar positioning based on direction attribute - ensures simultaneous change */
+/* Position sidebar on the right for RTL, left for LTR */
+/* This ensures sidebar position changes at the same time as direction, preventing flash */
+html[dir="rtl"] aside.fixed.z-50,
+html[dir="rtl"] aside[class*="fixed"][class*="z-50"] {
+  right: 0 !important;
+  left: auto !important;
+}
+
+html[dir="ltr"] aside.fixed.z-50,
+html[dir="ltr"] aside[class*="fixed"][class*="z-50"] {
+  left: 0 !important;
+  right: auto !important;
+}
+
+/* Enable class-based dark mode variant for Tailwind v4 */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* Elegant Design System - Modern CSS Reset */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+/* Remove default margin on common elements */
+body,
+h1, h2, h3, h4, h5, h6,
+p, figure, blockquote, dl, dd {
+  margin: 0;
+}
+
+/* Remove list styles on ul, ol elements with a list role */
+ul[role='list'],
+ol[role='list'] {
+  list-style: none;
+}
+
+/* Set core root defaults */
+html:focus-within {
+  scroll-behavior: smooth;
+}
+
+/* Set core body defaults */
+body {
+  min-height: 100vh;
+  text-rendering: optimizeSpeed;
+  line-height: 1.5;
+}
+
+/* A elements that don't have a class get default styles */
+a:not([class]) {
+  text-decoration-skip-ink: auto;
+}
+
+/* Make images easier to work with */
+img,
+picture {
+  max-width: 100%;
+  display: block;
+}
+
+/* Inherit fonts for inputs and buttons */
+input,
+button,
+textarea,
+select {
+  font: inherit;
+}
+
+/* Remove all animations, transitions and smooth scroll for people that prefer not to see them */
+@media (prefers-reduced-motion: reduce) {
+  html:focus-within {
+    scroll-behavior: auto;
+  }
+  
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+html {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
+  letter-spacing: -0.011em;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Use Cairo font for Arabic/RTL content */
+html[dir="rtl"],
+html[lang="ar"] {
+  font-family: 'Cairo', 'Segoe UI', Tahoma, Arial, sans-serif;
+  letter-spacing: 0;
+}
+
+/* Apply Cairo font to all elements when in RTL mode */
+[dir="rtl"] *,
+[lang="ar"] * {
+  font-family: inherit;
+}
+
+body {
+  font-family: inherit; /* Inherit from html element */
+  background: linear-gradient(135deg, #fafbfc 0%, #f5f7fa 100%);
+  color: #0f172a;
+  line-height: 1.7;
+  font-weight: 400;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+.dark body {
+  background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+  color: #f1f5f9;
+}
+
+/* Elegant Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+/* Smooth Transitions */
+* {
+  transition-property: color, background-color, border-color, text-decoration-color, fill, stroke, opacity, box-shadow, transform, filter, backdrop-filter;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 200ms;
+}
+
+/* Dark mode scrollbar */
+.dark ::-webkit-scrollbar-thumb {
+  background: #475569;
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: #64748b;
+}
+
+/* CSS Variables for backward compatibility */
+:root {
+  --background: 0 0% 100%;
+  --foreground: 222.2 84% 4.9%;
+  --card: 0 0% 100%;
+  --card-foreground: 222.2 84% 4.9%;
+  --muted: 210 40% 96.1%;
+  --muted-foreground: 215.4 16.3% 46.9%;
+  --border: 214.3 31.8% 91.4%;
+  --input: 214.3 31.8% 91.4%;
+  --ring: 222.2 84% 4.9%;
+  --radius: 0.5rem;
+}
+
+.dark {
+  --background: 222.2 84% 4.9%;
+  --foreground: 210 40% 98%;
+  --card: 222.2 84% 4.9%;
+  --card-foreground: 210 40% 98%;
+  --muted: 217.2 32.6% 17.5%;
+  --muted-foreground: 215 20.2% 65.1%;
+  --border: 217.2 32.6% 17.5%;
+  --input: 217.2 32.6% 17.5%;
+  --ring: 212.7 26.8% 83.9%;
+}
+
+* {
+  border-color: hsl(var(--border));
+}
+
+/* Custom Component Classes - From QWIK_VITE_TAILWIND_SETUP.md */
+/* RTL Support - Set on :root (html element) as per CSS Writing Modes spec */
+:root[dir="rtl"] {
+  direction: rtl;
+  writing-mode: horizontal-tb;
+  text-orientation: mixed;
+}
+
+:root[dir="ltr"] {
+  direction: ltr;
+  writing-mode: horizontal-tb;
+  text-orientation: mixed;
+}
+
+/* Apply RTL/LTR styles to body and other elements */
+[dir="rtl"] {
+  text-align: right;
+  font-family: 'Cairo', 'Segoe UI', Tahoma, Arial, sans-serif;
+}
+
+[dir="rtl"] select {
+  background-position: left 0.5rem center;
+}
+
+[dir="ltr"] {
+  text-align: left;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+}
+
+/* Custom Component Classes - Tailwind v4 compatible */
+/* These utility classes can be used directly in components */
+/* Example usage: class="btn btn-primary" or class="form-input" */
+
+/* Note: In Tailwind v4, @apply has limitations with custom colors */
+/* These classes are documented for reference - use utility classes directly in components */
+
+
+.nav-indicator {
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 3px;
+  width: 100%;
+  background: var(--qwik-primary, #0099ff);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 200ms ease;
+  z-index: 9999;
+}
+
+.nav-indicator--active {
+  transform: scaleX(1);
+}

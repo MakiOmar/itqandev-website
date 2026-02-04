@@ -1,0 +1,594 @@
+import { component$, useSignal, $, useComputed$, useTask$ } from '@builder.io/qwik';
+import type { DocumentHead } from '@builder.io/qwik-city';
+import { routeLoader$, routeAction$, zod$, z, Form } from '@builder.io/qwik-city';
+import { PageHeader } from '../../../components/common/PageHeader';
+import { EmptyState } from '../../../components/common/EmptyState';
+import { useTranslate } from '../../../lib/i18n/useTranslate';
+import { useSwal } from '../../../lib/hooks/useSwal';
+import { getApiClient, extractCookieHeader } from '../../../lib/api/client';
+import { API_ENDPOINTS } from '../../../lib/api/endpoints';
+import type { Category, CategoryCreateInput, CategoryUpdateInput } from '../../../types';
+
+/**
+ * API payload shape returned by Laravel index()
+ * Backend returns:
+ *   - { data: Category[], meta?: ... } OR
+ *   - a JSON string (cached) representing that object
+ */
+type CategoriesListPayload = {
+  data: Category[];
+  meta?: { cache?: { hit?: boolean } };
+};
+
+/**
+ * Category schema (used by Qwik City action validation)
+ * Note: action data comes as strings from forms, so is_featured can be "1"/"on"/"true".
+ */
+const categorySchema = z.object({
+  name: z.string().min(1, 'Name is required'),
+  slug: z.string().optional(),
+  description: z.string().optional(),
+  is_featured: z.union([z.boolean(), z.string()]).optional(),
+});
+
+/**
+ * Load categories
+ */
+export const useCategories = routeLoader$(async ({ cookie, request }) => {
+  try {
+    const cookieHeader = extractCookieHeader(cookie, request);
+    const apiClient = getApiClient(cookieHeader);
+
+    const response = await apiClient.get(API_ENDPOINTS.CATEGORIES.LIST);
+    let body: unknown = (response as any)?.data ?? response;
+
+    if (typeof body === 'string') {
+      try {
+        body = JSON.parse(body);
+      } catch (e) {
+        console.error('Categories response was a string but not valid JSON:', e);
+        return [];
+      }
+    }
+
+    if (body && typeof body === 'object' && 'data' in (body as any) && Array.isArray((body as any).data)) {
+      return (body as CategoriesListPayload).data;
+    }
+
+    if (Array.isArray(body)) {
+      return body as Category[];
+    }
+
+    return [];
+  } catch (error: any) {
+    console.error('Failed to load categories:', error);
+    return [];
+  }
+});
+
+const toBool = (v: unknown) => v === true || v === '1' || v === 'on' || v === 'true';
+
+/**
+ * Create category action (server-side, authenticated via forwarded cookies)
+ */
+export const useCreateCategory = routeAction$(
+  async (data, { cookie, request, fail }) => {
+    try {
+      const cookieHeader = extractCookieHeader(cookie, request as any);
+      const apiClient = getApiClient(cookieHeader);
+
+      const payload: CategoryCreateInput = {
+        name: data.name,
+        slug: data.slug || undefined,
+        description: data.description || undefined,
+        // your backend field is is_featured, your TS type uses isFeatured:
+        isFeatured: toBool((data as any).is_featured),
+      };
+
+      const response = await apiClient.post<Category>(API_ENDPOINTS.CATEGORIES.CREATE, payload);
+      const created = (response as any)?.data ?? response;
+
+      return { success: true, category: created as Category };
+    } catch (err: any) {
+      return fail(500, { message: err?.message || 'Failed to create category' });
+    }
+  },
+  zod$(categorySchema)
+);
+
+/**
+ * Update category action (server-side, authenticated via forwarded cookies)
+ */
+export const useUpdateCategory = routeAction$(
+  async (data, { cookie, request, fail }) => {
+    try {
+      const cookieHeader = extractCookieHeader(cookie, request as any);
+      const apiClient = getApiClient(cookieHeader);
+
+      const payload: CategoryUpdateInput = {
+        id: Number((data as any).id),
+        name: data.name,
+        slug: data.slug || undefined,
+        description: data.description || undefined,
+        isFeatured: toBool((data as any).is_featured),
+      };
+
+      const response = await apiClient.put<Category>(
+        API_ENDPOINTS.CATEGORIES.UPDATE(String((data as any).id)),
+        payload
+      );
+
+      const updated = (response as any)?.data ?? response;
+      return { success: true, category: updated as Category };
+    } catch (err: any) {
+      return fail(401, { message: err?.message || 'Unauthorized' });
+    }
+  },
+  zod$(categorySchema.extend({ id: z.string() }))
+);
+
+/**
+ * Delete category action (server-side, authenticated via forwarded cookies)
+ */
+export const useDeleteCategory = routeAction$(async (data, { cookie, request, fail }) => {
+  try {
+    const cookieHeader = extractCookieHeader(cookie, request as any);
+    const apiClient = getApiClient(cookieHeader);
+
+    await apiClient.delete(API_ENDPOINTS.CATEGORIES.DELETE((data as any).id as string));
+    return { success: true };
+  } catch (error: any) {
+    return fail(500, { message: error?.message || 'Failed to delete category' });
+  }
+});
+
+/**
+ * Bulk delete categories action (server-side, authenticated via forwarded cookies)
+ */
+export const useBulkDeleteCategories = routeAction$(async (data, { cookie, request, fail }) => {
+  try {
+    const cookieHeader = extractCookieHeader(cookie, request as any);
+    const apiClient = getApiClient(cookieHeader);
+
+    // data.ids may arrive as string[] or string
+    const idsRaw = (data as any).ids;
+    const ids = Array.isArray(idsRaw) ? idsRaw : idsRaw ? [idsRaw] : [];
+
+    await apiClient.post(API_ENDPOINTS.CATEGORIES.BULK_DELETE, { ids });
+    return { success: true };
+  } catch (error: any) {
+    return fail(500, { message: error?.message || 'Failed to delete categories' });
+  }
+});
+
+/**
+ * Categories page
+ */
+export default component$(() => {
+  const { t } = useTranslate();
+  const { confirm, success, error: showError } = useSwal();
+
+  const categories = useCategories();
+
+  // local mutable state for instant UI updates (no navigation)
+  const categoriesState = useSignal<Category[]>(categories.value ?? []);
+  useTask$(({ track }) => {
+    track(() => categories.value);
+    categoriesState.value = categories.value ?? [];
+  });
+
+  const createAction = useCreateCategory();
+  const updateAction = useUpdateCategory();
+  const deleteAction = useDeleteCategory();
+  const bulkDeleteAction = useBulkDeleteCategories();
+
+  const translations = {
+    success: t('common.success'),
+    updated: t('common.updated'),
+    created: t('common.created'),
+    deleted: t('common.deleted'),
+    delete: t('common.delete'),
+    deleteConfirm: t('categories.deleteConfirm'),
+  };
+
+  const showForm = useSignal(false);
+  const editingId = useSignal<number | null>(null);
+  const selectedItems = useSignal<string[]>([]);
+  const searchQuery = useSignal('');
+
+  const filteredCategories = useComputed$(() => {
+    const list = categoriesState.value || [];
+    const q = (searchQuery.value || '').trim().toLowerCase();
+    if (!q) return list;
+
+    return list.filter(
+      (c) =>
+        (c.name ?? '').toLowerCase().includes(q) ||
+        (c.slug ?? '').toLowerCase().includes(q) ||
+        (c.description ?? '').toLowerCase().includes(q)
+    );
+  });
+
+  const formData = useSignal({
+    name: '',
+    slug: '',
+    description: '',
+    is_featured: false,
+  });
+
+  const handleSearch = $((value: string) => {
+    searchQuery.value = value;
+  });
+
+  const resetForm = $(() => {
+    formData.value = { name: '', slug: '', description: '', is_featured: false };
+    editingId.value = null;
+    showForm.value = false;
+  });
+
+  const editCategory = $((category: Category) => {
+    formData.value = {
+      name: category.name,
+      slug: category.slug || '',
+      description: category.description || '',
+      is_featured: (category as any).isFeatured || false,
+    };
+    editingId.value = category.id;
+    showForm.value = true;
+  });
+
+  // Helper: submit a Qwik action with FormData (avoids “action is unauthorized” issues)
+  const submitWithFormData = $(async (action: any, fields: Record<string, any>) => {
+    const fd = new FormData();
+    for (const [k, v] of Object.entries(fields)) {
+      if (v === undefined || v === null) continue;
+      if (Array.isArray(v)) {
+        // for arrays: ids[] style
+        for (const item of v) fd.append(`${k}[]`, String(item));
+      } else {
+        fd.append(k, String(v));
+      }
+    }
+    await action.submit(fd);
+    return (action as any).value;
+  });
+
+  const handleSave = $(async () => {
+    // UPDATE
+    if (editingId.value) {
+      const val = await submitWithFormData(updateAction, {
+        id: String(editingId.value),
+        name: formData.value.name,
+        slug: formData.value.slug,
+        description: formData.value.description,
+        is_featured: formData.value.is_featured ? '1' : undefined,
+      });
+
+      if (val?.failed) {
+        await showError(val.message || 'Failed to update category');
+        return;
+      }
+
+      await success(translations.success, { text: translations.updated });
+
+      const updated = val?.category as Category | undefined;
+      if (updated) {
+        categoriesState.value = categoriesState.value.map((c) => (c.id === updated.id ? updated : c));
+      } else {
+        // fallback optimistic patch
+        const id = editingId.value;
+        categoriesState.value = categoriesState.value.map((c) =>
+          c.id === id
+            ? ({
+                ...c,
+                name: formData.value.name,
+                slug: formData.value.slug || (c as any).slug,
+                description: formData.value.description || (c as any).description,
+                isFeatured: !!formData.value.is_featured,
+              } as any)
+            : c
+        );
+      }
+
+      resetForm();
+      return;
+    }
+
+    // CREATE
+    const val = await submitWithFormData(createAction, {
+      name: formData.value.name,
+      slug: formData.value.slug,
+      description: formData.value.description,
+      is_featured: formData.value.is_featured ? '1' : undefined,
+    });
+
+    if (val?.failed) {
+      await showError(val.message || val.error || 'Failed to create category');
+      return;
+    }
+
+    await success(translations.success, { text: translations.created });
+
+    const created = val?.category as Category | undefined;
+    if (created) {
+      categoriesState.value = [created, ...categoriesState.value];
+    }
+
+    resetForm();
+  });
+
+  const handleDelete = $(async (category: Category) => {
+    const result = await confirm(translations.deleteConfirm, { icon: 'warning', title: translations.delete });
+    if (!result.isConfirmed) return;
+
+    const val = await submitWithFormData(deleteAction, { id: String(category.id) });
+    if (val?.failed) {
+      await showError(val.message || 'Failed to delete category');
+      return;
+    }
+
+    await success(translations.success, { text: translations.deleted });
+    categoriesState.value = categoriesState.value.filter((c) => c.id !== category.id);
+    selectedItems.value = selectedItems.value.filter((id) => id !== String(category.id));
+  });
+
+  const handleBulkDelete = $(async () => {
+    if (selectedItems.value.length === 0) return;
+
+    const result = await confirm(translations.deleteConfirm, { icon: 'warning', title: translations.delete });
+    if (!result.isConfirmed) return;
+
+    // send ids[] as array
+    const val = await submitWithFormData(bulkDeleteAction, { ids: selectedItems.value });
+    if (val?.failed) {
+      await showError(val.message || 'Failed to delete categories');
+      return;
+    }
+
+    await success(translations.success, { text: translations.deleted });
+
+    const toDelete = new Set(selectedItems.value);
+    categoriesState.value = categoriesState.value.filter((c) => !toDelete.has(String(c.id)));
+    selectedItems.value = [];
+  });
+
+  const toggleSelect = $((id: string) => {
+    const next = [...selectedItems.value];
+    const index = next.indexOf(id);
+    if (index > -1) next.splice(index, 1);
+    else next.push(id);
+    selectedItems.value = next;
+  });
+
+  const deselectAll = $(() => {
+    selectedItems.value = [];
+  });
+
+  return (
+    <>
+      <PageHeader title={t('categories.title')} description={t('categories.subtitle')}>
+        <div class="flex gap-2">
+          {selectedItems.value.length > 0 && (
+            <>
+              <button
+                type="button"
+                onClick$={handleBulkDelete}
+                class="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-red-700"
+              >
+                {t('common.delete')} ({selectedItems.value.length})
+              </button>
+              <button
+                type="button"
+                onClick$={deselectAll}
+                class="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm transition hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 dark:hover:bg-gray-700"
+              >
+                {t('common.cancel')}
+              </button>
+            </>
+          )}
+
+          {!showForm.value ? (
+            <button
+              type="button"
+              onClick$={() => (showForm.value = true)}
+              class="rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-primary-700"
+            >
+              {t('categories.addNew')}
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick$={resetForm}
+              class="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm transition hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 dark:hover:bg-gray-700"
+            >
+              {t('common.cancel')}
+            </button>
+          )}
+        </div>
+      </PageHeader>
+
+      <div class="grid gap-6 lg:grid-cols-2">
+        {/* Form */}
+        {showForm.value && (
+          <div class="rounded-lg border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-800 dark:bg-gray-800">
+            <h2 class="mb-4 text-lg font-semibold text-gray-900 dark:text-gray-100">
+              {editingId.value ? t('categories.edit') : t('categories.addNew')}
+            </h2>
+
+            {/* Real Qwik City form (like your Project edit page) */}
+            <Form action={editingId.value ? updateAction : createAction} class="space-y-4">
+              {editingId.value && <input type="hidden" name="id" value={String(editingId.value)} />}
+
+              <div>
+                <label for="name" class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-200">
+                  {t('categories.name')} *
+                </label>
+                <input
+                  id="name"
+                  name="name"
+                  type="text"
+                  value={formData.value.name}
+                  onInput$={(e) => (formData.value = { ...formData.value, name: (e.target as HTMLInputElement).value })}
+                  class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-primary-500 focus:outline-none focus:ring focus:ring-primary-200 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:focus:ring-primary-700/40"
+                  required
+                />
+              </div>
+
+              <div>
+                <label for="slug" class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-200">
+                  {t('categories.slug')}
+                </label>
+                <input
+                  id="slug"
+                  name="slug"
+                  type="text"
+                  value={formData.value.slug}
+                  onInput$={(e) => (formData.value = { ...formData.value, slug: (e.target as HTMLInputElement).value })}
+                  class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-primary-500 focus:outline-none focus:ring focus:ring-primary-200 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:focus:ring-primary-700/40"
+                />
+              </div>
+
+              <div>
+                <label for="description" class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-200">
+                  {t('categories.description')}
+                </label>
+                <textarea
+                  id="description"
+                  name="description"
+                  rows={3}
+                  value={formData.value.description}
+                  onInput$={(e) =>
+                    (formData.value = { ...formData.value, description: (e.target as HTMLTextAreaElement).value })
+                  }
+                  class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-primary-500 focus:outline-none focus:ring focus:ring-primary-200 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:focus:ring-primary-700/40"
+                />
+              </div>
+
+              <div class="flex items-center gap-2">
+                <input
+                  id="is_featured"
+                  name="is_featured"
+                  type="checkbox"
+                  value="1"
+                  checked={formData.value.is_featured}
+                  onChange$={(e) =>
+                    (formData.value = { ...formData.value, is_featured: (e.target as HTMLInputElement).checked })
+                  }
+                  class="h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+                />
+                <label for="is_featured" class="text-sm font-medium text-gray-700 dark:text-gray-200">
+                  {t('categories.featured')}
+                </label>
+              </div>
+
+              <div class="flex gap-2">
+                <button
+                  type="button"
+                  preventdefault:click
+                  onClick$={handleSave}
+                  class="flex-1 rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-primary-700"
+                >
+                  {editingId.value ? t('common.update') : t('common.add')}
+                </button>
+                <button
+                  type="button"
+                  onClick$={resetForm}
+                  class="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm transition hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 dark:hover:bg-gray-700"
+                >
+                  {t('common.cancel')}
+                </button>
+              </div>
+            </Form>
+          </div>
+        )}
+
+        {/* List */}
+        <div class="rounded-lg border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-800 dark:bg-gray-800">
+          <h2 class="mb-4 text-lg font-semibold text-gray-900 dark:text-gray-100">{t('categories.list')}</h2>
+
+          {/* Search */}
+          <div class="mb-4">
+            <input
+              type="text"
+              value={searchQuery.value}
+              onInput$={(e) => handleSearch((e.target as HTMLInputElement).value)}
+              placeholder={t('common.search')}
+              class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-primary-500 focus:outline-none focus:ring focus:ring-primary-200 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:focus:ring-primary-700/40"
+            />
+          </div>
+
+          {filteredCategories.value.length === 0 ? (
+            <EmptyState title={t('categories.noCategories')} />
+          ) : (
+            <ul class="space-y-2">
+              {filteredCategories.value.map((category) => (
+                <li
+                  key={category.id}
+                  class="flex items-center justify-between rounded-lg border border-gray-200 px-4 py-3 dark:border-gray-700"
+                >
+                  <div class="flex items-start gap-3">
+                    <input
+                      type="checkbox"
+                      checked={selectedItems.value.includes(String(category.id))}
+                      onChange$={() => toggleSelect(String(category.id))}
+                      class="mt-1 h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+                    />
+
+                    <div>
+                      <p class="font-medium text-gray-900 dark:text-gray-100">{category.name}</p>
+                      <p class="text-xs text-gray-500 dark:text-gray-400">
+                        {t('categories.slug')}: {category.slug}
+                      </p>
+
+                      {category.description && (
+                        <p class="mt-1 text-sm text-gray-600 dark:text-gray-300">{category.description}</p>
+                      )}
+
+                      {(category as any).isFeatured && (
+                        <span class="mt-1 inline-block rounded-full bg-primary-100 px-2 py-0.5 text-xs font-medium text-primary-800 dark:bg-primary-900/20 dark:text-primary-400">
+                          {t('categories.featured')}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
+                  <div class="flex items-center gap-2">
+                    <span class="text-xs text-gray-500 dark:text-gray-400">
+                      {t('categories.projectsCount', { count: (category as any).projectsCount ?? 0 })}
+                    </span>
+
+                    <button
+                      type="button"
+                      onClick$={() => editCategory(category)}
+                      class="rounded-lg px-3 py-1 text-xs text-primary-600 hover:bg-primary-50 dark:text-primary-400 dark:hover:bg-primary-900/20"
+                    >
+                      {t('common.edit')}
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick$={() => handleDelete(category)}
+                      class="rounded-lg px-3 py-1 text-xs text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/20"
+                    >
+                      {t('common.delete')}
+                    </button>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      </div>
+    </>
+  );
+});
+
+export const head: DocumentHead = {
+  title: 'Categories - Dashboard',
+  meta: [
+    {
+      name: 'description',
+      content: 'Manage categories',
+    },
+  ],
+};

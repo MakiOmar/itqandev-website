@@ -1,0 +1,85 @@
+{
+  "name": "qwik-dashboard",
+  "description": "Reusable Qwik dashboard framework for Laravel projects - supports both admin dashboard and public site with easy extension points",
+  "version": "1.0.0",
+  "main": "./src/index.ts",
+  "types": "./src/types/index.ts",
+  "exports": {
+    ".": {
+      "types": "./src/types/index.ts",
+      "import": "./src/index.ts"
+    },
+    "./types": {
+      "types": "./src/types/index.ts",
+      "import": "./src/types/index.ts"
+    },
+    "./config": {
+      "types": "./src/lib/config/index.ts",
+      "import": "./src/lib/config/index.ts"
+    },
+    "./auth": {
+      "types": "./src/lib/auth/index.ts",
+      "import": "./src/lib/auth/index.ts"
+    },
+    "./extensions": {
+      "types": "./src/lib/extensions/registry.ts",
+      "import": "./src/lib/extensions/registry.ts"
+    }
+  },
+  "engines": {
+    "node": "^18.17.0 || ^20.3.0 || >=21.0.0"
+  },
+  "engines-annotation": "Mostly required by sharp which needs a Node-API v9 compatible runtime",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "qwik build",
+    "build.client": "vite build",
+    "build.preview": "vite build --ssr src/entry.preview.tsx",
+    "build.types": "tsc --incremental --noEmit",
+    "deploy": "echo 'Run \"npm run qwik add\" to install a server adapter'",
+    "dev": "vite --mode ssr",
+    "dev.debug": "node --inspect-brk ./node_modules/vite/bin/vite.js --mode ssr --force",
+    "fmt": "prettier --write .",
+    "fmt.check": "prettier --check .",
+    "lint": "eslint \"src/**/*.ts*\"",
+    "preview": "qwik build preview && vite preview --open",
+    "start": "vite --open --mode ssr",
+    "qwik": "qwik"
+  },
+  "devDependencies": {
+    "@builder.io/qwik": "^1.18.0",
+    "@builder.io/qwik-city": "^1.18.0",
+    "@eslint/js": "latest",
+    "@tailwindcss/forms": "^0.5.11",
+    "@tailwindcss/postcss": "^4.1.18",
+    "@tailwindcss/typography": "^0.5.19",
+    "@types/node": "20.19.0",
+    "autoprefixer": "^10.4.23",
+    "eslint": "9.32.0",
+    "eslint-plugin-qwik": "^1.18.0",
+    "globals": "16.4.0",
+    "nx": "^22.3.3",
+    "postcss": "^8.5.6",
+    "prettier": "3.6.2",
+    "tailwindcss": "^4.1.18",
+    "typescript": "5.4.5",
+    "typescript-eslint": "8.38.0",
+    "typescript-plugin-css-modules": "latest",
+    "undici": "*",
+    "vite": "7.2.6",
+    "vite-tsconfig-paths": "^4.2.1"
+  },
+  "dependencies": {
+    "@qwik-ui/headless": "^0.7.4",
+    "@qwik-ui/styled": "^0.4.1",
+    "@qwikest/icons": "^0.0.13",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "qwik-speak": "^0.24.0",
+    "sweetalert2": "^11.26.17",
+    "tailwind-merge": "^3.4.0",
+    "zod": "^4.3.5"
+  },
+  "nx": {}
+}
