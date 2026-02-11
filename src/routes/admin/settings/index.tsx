@@ -128,9 +128,9 @@ export default component$(() => {
 
   // Pre-compute translation strings to avoid serialization issues
   const successTitle = String(t('common.success'));
-  const savedText = String(t('settings.saved') || 'Settings saved successfully');
+  const savedText = String(t('settings.saveSuccess'));
   const errorTitle = String(t('common.error'));
-  const errorText = 'Failed to save settings';
+  const errorText = String(t('settings.saveFailed'));
 
   // Handle success/error feedback
   // eslint-disable-next-line qwik/no-use-visible-task

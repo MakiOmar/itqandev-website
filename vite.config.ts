@@ -98,8 +98,9 @@ export default defineConfig(({ command, mode }): UserConfig => {
     },
     preview: {
       headers: {
-        // Do cache the server response in preview (non-adapter production build)
-        "Cache-Control": "public, max-age=600",
+        // Long-lived caching for fingerprinted static assets in preview.
+        // Route handlers can still override this for HTML/doc responses.
+        "Cache-Control": "public, max-age=31536000, immutable",
       },
     },
   };

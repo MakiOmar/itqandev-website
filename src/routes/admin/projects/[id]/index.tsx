@@ -353,6 +353,8 @@ export default component$(() => {
   const skillIds = useSignal<(string | number)[]>(
     project.value?.skills?.map((s: Skill) => s.id) || []
   );
+  const statusValue = useSignal<string>(project.value.status || 'draft');
+  const featuredValue = useSignal<boolean>(!!project.value.featured);
 
   const categoryItems = categoriesAndSkills.value.categories.map((c) => ({
     id: c.id,
@@ -432,42 +434,6 @@ export default component$(() => {
                     value={project.value.slug || ''}
                     class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-primary-500 focus:outline-none focus:ring focus:ring-primary-200 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:focus:ring-primary-700/40"
                   />
-                </div>
-
-                <div>
-                  <label
-                    for="status"
-                    class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-200"
-                  >
-                    {translations.status}
-                  </label>
-                  <select
-                    id="status"
-                    name="status"
-                    value={project.value.status}
-                    class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-primary-500 focus:outline-none focus:ring focus:ring-primary-200 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:focus:ring-primary-700/40"
-                  >
-                    <option value="draft">{translations.statusDraft}</option>
-                    <option value="published">{translations.statusPublished}</option>
-                    <option value="archived">{translations.statusArchived}</option>
-                  </select>
-                </div>
-
-                <div class="flex items-center gap-2">
-                  <input
-                    id="featured"
-                    name="featured"
-                    type="checkbox"
-                    checked={project.value.featured}
-                    value="1"
-                    class="h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
-                  />
-                  <label
-                    for="featured"
-                    class="text-sm font-medium text-gray-700 dark:text-gray-200"
-                  >
-                    {translations.featured}
-                  </label>
                 </div>
 
                 <div class="md:col-span-2">
@@ -569,6 +535,55 @@ export default component$(() => {
             </div>
 
             <div class="space-y-6">
+              <div class="rounded-lg border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-900">
+                <h3 class="mb-3 text-base font-semibold text-gray-900 dark:text-gray-100">
+                  {translations.status}
+                </h3>
+                <div class="space-y-3">
+                  <div>
+                    <label
+                      for="status"
+                      class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-200"
+                    >
+                      {translations.status}
+                    </label>
+                    <select
+                      id="status"
+                      name="status"
+                      value={statusValue.value}
+                      onChange$={(e: Event) => {
+                        statusValue.value = (e.target as HTMLSelectElement).value;
+                      }}
+                      class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-primary-500 focus:outline-none focus:ring focus:ring-primary-200 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:focus:ring-primary-700/40"
+                    >
+                      <option value="draft">{translations.statusDraft}</option>
+                      <option value="published">{translations.statusPublished}</option>
+                      <option value="archived">{translations.statusArchived}</option>
+                    </select>
+                  </div>
+
+                  <div class="flex items-center gap-2">
+                    <input
+                      id="featured"
+                      name="featured"
+                      type="checkbox"
+                      checked={featuredValue.value}
+                      onChange$={(e: Event) => {
+                        featuredValue.value = (e.target as HTMLInputElement).checked;
+                      }}
+                      value="1"
+                      class="h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+                    />
+                    <label
+                      for="featured"
+                      class="text-sm font-medium text-gray-700 dark:text-gray-200"
+                    >
+                      {translations.featured}
+                    </label>
+                  </div>
+                </div>
+              </div>
+
               <div class="rounded-lg border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-900">
                 <h3 class="mb-3 text-base font-semibold text-gray-900 dark:text-gray-100">
                   {translations.categories}

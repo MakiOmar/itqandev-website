@@ -39,7 +39,7 @@ export const onRequest = ({ cookie, redirect }: RequestEvent) => {
 /**
  * System health route loader
  */
-export const useSystemHealth = routeLoader$(async ({ cookie }) => {
+export const useSystemHealth = routeLoader$(async () => {
     
     // Simulate API delay
     await new Promise((resolve) => setTimeout(resolve, 100));

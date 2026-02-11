@@ -1,5 +1,5 @@
 import { component$, isDev, useSignal, useVisibleTask$ } from "@builder.io/qwik";
-import { QwikCityProvider, RouterOutlet } from "@builder.io/qwik-city";
+import { QwikCityProvider, RouterOutlet, useLocation } from "@builder.io/qwik-city";
 import { useQwikSpeak, useSpeakLocale } from "qwik-speak";
 import { RouterHead } from "./components/router-head/router-head";
 import { DarkModeToggle } from "./components/common/DarkModeToggle";
@@ -7,6 +7,63 @@ import { speakConfig } from "./lib/i18n/config";
 import { translationFn } from "./lib/i18n/translation-fn";
 
 import "./global.css";
+
+const LOCALE_FONT_LINK_ID = "app-locale-font";
+const INTER_FONT_HREF =
+  "https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap";
+const CAIRO_FONT_HREF =
+  "https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800;900&display=swap";
+
+function normalizeLocale(lang: string | undefined): "en" | "ar" {
+  return lang === "ar" ? "ar" : "en";
+}
+
+function ensureLocaleFont(locale: "en" | "ar") {
+  if (typeof document === "undefined") {
+    return;
+  }
+
+  const href = locale === "ar" ? CAIRO_FONT_HREF : INTER_FONT_HREF;
+  let fontLink = document.getElementById(
+    LOCALE_FONT_LINK_ID,
+  ) as HTMLLinkElement | null;
+
+  if (fontLink?.getAttribute("href") === href) {
+    return;
+  }
+
+  if (!fontLink) {
+    fontLink = document.createElement("link");
+    fontLink.id = LOCALE_FONT_LINK_ID;
+    fontLink.rel = "stylesheet";
+  }
+
+  fontLink.setAttribute("href", href);
+  fontLink.media = "print";
+  const activeLink = fontLink;
+  activeLink.onload = () => {
+    activeLink.media = "all";
+  };
+
+  if (!activeLink.parentNode) {
+    document.head.appendChild(activeLink);
+  }
+}
+
+const LocaleFontSync = component$(() => {
+  const locale = useSpeakLocale();
+  const location = useLocation();
+
+  // Keep locale font applied across SPA navigations where head diffing can drop dynamic links.
+  // eslint-disable-next-line qwik/no-use-visible-task
+  useVisibleTask$(({ track }) => {
+    track(() => locale.lang);
+    track(() => location.url.href);
+    ensureLocaleFont(normalizeLocale(locale.lang));
+  });
+
+  return null;
+});
 
 export default component$(() => {
   /**
@@ -39,13 +96,17 @@ export default component$(() => {
         bodyLang.value = savedLocale;
         bodyDir.value = savedLocale === 'ar' ? 'rtl' : 'ltr';
       }
+
+      ensureLocaleFont(normalizeLocale(savedLocale ?? locale.lang));
     }
   });
 
   // Update body lang and dir when locale changes
   // eslint-disable-next-line qwik/no-use-visible-task
   useVisibleTask$(({ track }) => {
-    const currentLang = track(() => locale.lang);
+    const trackedLang = track(() => locale.lang);
+    const currentLocale = normalizeLocale(trackedLang);
+    const currentLang = currentLocale;
     
     bodyLang.value = currentLang;
     // Set direction: RTL for Arabic, LTR for English and others
@@ -53,11 +114,15 @@ export default component$(() => {
     
     // Update document body and html attributes
     if (typeof document !== 'undefined') {
-      document.body.setAttribute('lang', currentLang);
-      document.body.setAttribute('dir', bodyDir.value);
+      if (document.body) {
+        document.body.setAttribute('lang', currentLang);
+        document.body.setAttribute('dir', bodyDir.value);
+      }
       document.documentElement.setAttribute('lang', currentLang);
       document.documentElement.setAttribute('dir', bodyDir.value);
     }
+
+    ensureLocaleFont(currentLocale);
   });
 
   return (
@@ -83,6 +148,7 @@ export default component$(() => {
             }
             return null;
           })()}
+          <LocaleFontSync />
           <RouterOutlet />
           <DarkModeToggle />
         </body>

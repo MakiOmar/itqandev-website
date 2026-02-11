@@ -19,14 +19,7 @@ export const RouterHead = component$(() => {
       {/* Performance optimizations - Font preloading */}
       <link rel="preconnect" href="https://fonts.googleapis.com" />
       <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-      <link 
-        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" 
-        rel="stylesheet"
-      />
-      <link 
-        href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800;900&display=swap" 
-        rel="stylesheet"
-      />
+      {/* Font stylesheets are injected asynchronously in the bootstrap script below */}
       
       {/* Performance optimizations */}
       <meta name="theme-color" content="#ffffff" />
@@ -70,10 +63,45 @@ export const RouterHead = component$(() => {
               preferredLocale = localStorage.getItem('preferred-locale');
             }
             
+            // Normalize locale to supported values only.
+            var locale = preferredLocale === 'ar' ? 'ar' : 'en';
+
+            // Load Google fonts asynchronously to avoid render blocking.
+            // Only request Cairo for Arabic locale; otherwise request Inter.
+            function loadFontStylesheet(href) {
+              var fontLinkId = 'app-locale-font';
+              var link = document.getElementById(fontLinkId);
+
+              if (link && link.getAttribute('href') === href) {
+                return;
+              }
+
+              if (!link) {
+                link = document.createElement('link');
+                link.id = fontLinkId;
+                link.rel = 'stylesheet';
+              }
+
+              link.setAttribute('href', href);
+              link.media = 'print';
+              link.onload = function() {
+                this.media = 'all';
+              };
+
+              if (!link.parentNode) {
+                document.head.appendChild(link);
+              }
+            }
+            if (locale === 'ar') {
+              loadFontStylesheet('https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800;900&display=swap');
+            } else {
+              loadFontStylesheet('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+            }
+
             // Set direction and lang immediately based on locale
             // This ensures both language and direction are set before any rendering
-            var dir = preferredLocale === 'ar' ? 'rtl' : 'ltr';
-            var lang = preferredLocale || 'en';
+            var dir = locale === 'ar' ? 'rtl' : 'ltr';
+            var lang = locale;
             
             // Ensure body stays hidden initially by removing data-render-complete if it exists
             // This prevents body from being visible before we're ready

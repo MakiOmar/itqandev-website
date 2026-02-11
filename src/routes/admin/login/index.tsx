@@ -17,7 +17,7 @@ const loginSchema = z.object({
  * Login route action - must be in route file for Qwik to create endpoint
  */
 export const useLoginAction = routeAction$(
-  async (data, { cookie, redirect: redirectFn }) => {
+  async (data, { cookie, redirect: redirectFn, fail }) => {
     try {
       const session = await auth.login(
         {
@@ -28,10 +28,9 @@ export const useLoginAction = routeAction$(
       );
 
       if (!session) {
-        return {
-          success: false,
+        return fail(401, {
           error: 'Invalid email or password',
-        };
+        });
       }
 
       // Redirect to admin home page
@@ -43,11 +42,21 @@ export const useLoginAction = routeAction$(
         throw error;
       }
       
-      // For other errors, return error response
-      return {
-        success: false,
+      // Surface backend validation errors in the same shape the form already renders.
+      const fieldErrors =
+        error?.errors && typeof error.errors === 'object'
+          ? Object.fromEntries(
+              Object.entries(error.errors).map(([field, messages]) => [
+                field,
+                Array.isArray(messages) ? (messages[0] as string) : String(messages),
+              ]),
+            )
+          : undefined;
+
+      return fail(error?.status || 500, {
         error: error?.message || 'Login failed. Please try again.',
-      };
+        fieldErrors,
+      });
     }
   },
   zod$(loginSchema),

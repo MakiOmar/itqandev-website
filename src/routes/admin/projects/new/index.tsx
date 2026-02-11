@@ -90,12 +90,12 @@ export const useCreateProject = routeAction$(
         description: data.description || undefined,
         status: (data.status as any) || 'draft',
         featured: data.featured === true || data.featured === '1' || data.featured === 'on',
-        categoryIds: normalizeArray(data.category_ids),
-        skillIds: normalizeArray(data.skill_ids),
-        linkUrl: data.link_url || undefined,
-        repoUrl: data.repo_url || undefined,
-        demoUrl: data.demo_url || undefined,
-        publishedAt: data.published_at || undefined,
+        category_ids: normalizeArray(data.category_ids),
+        skill_ids: normalizeArray(data.skill_ids),
+        link_url: data.link_url || undefined,
+        repo_url: data.repo_url || undefined,
+        demo_url: data.demo_url || undefined,
+        published_at : data.published_at || undefined,
       };
 
       const response = await apiClient.post<Project>(API_ENDPOINTS.PROJECTS.CREATE, payload);

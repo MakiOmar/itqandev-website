@@ -77,7 +77,7 @@ export class LaravelAuthAdapter implements AuthAdapter {
       return session;
     } catch (error: any) {
       console.error('Laravel login error:', error);
-      return null;
+      throw error;
     }
   }
 

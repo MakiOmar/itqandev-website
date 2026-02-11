@@ -4,7 +4,7 @@
 @plugin "@tailwindcss/forms";
 @plugin "@tailwindcss/typography";
 
-/* Note: Cairo font is loaded via <link> tag in router-head.tsx for better performance */
+/* Fonts are loaded asynchronously in router-head.tsx based on current locale. */
 
 /* Prevent flash of unstyled content (FOUC) for direction */
 /* Hide body by default - only show when BOTH html and body have dir attribute AND data-render-complete is set */
