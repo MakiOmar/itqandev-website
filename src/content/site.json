@@ -1,0 +1,165 @@
+{
+  "services": [
+    {
+      "id": "web",
+      "slug": "web",
+      "name": "Web Development",
+      "shortDescription": "Fast, scalable web applications",
+      "description": "We build modern web applications with React, Vue, or vanilla stacks. From SPAs to SSR and static sites, we focus on performance, SEO, and maintainability.",
+      "process": ["Discovery & requirements", "Design & prototyping", "Development & testing", "Deploy & maintain"],
+      "deliverables": ["Responsive web app", "API integration", "CMS if needed", "Documentation & handoff"],
+      "icon": "web"
+    },
+    {
+      "id": "android",
+      "slug": "android",
+      "name": "Android Development",
+      "shortDescription": "Native and Kotlin-first Android apps",
+      "description": "Native Android apps with Kotlin and Jetpack. We follow Material Design and ensure compatibility across devices and OS versions.",
+      "process": ["UX & architecture", "Development in Kotlin", "Testing on devices", "Play Store release"],
+      "deliverables": ["Native Android app", "CI/CD pipeline", "Play Store listing", "Maintenance plan"],
+      "icon": "android"
+    },
+    {
+      "id": "ios",
+      "slug": "ios",
+      "name": "iOS Development",
+      "shortDescription": "Native Swift and SwiftUI apps",
+      "description": "Native iOS apps with Swift and SwiftUI. We deliver apps that feel at home on iPhone and iPad and comply with App Store guidelines.",
+      "process": ["Design & UX", "Swift/SwiftUI development", "TestFlight & QA", "App Store submission"],
+      "deliverables": ["Native iOS app", "App Store assets", "TestFlight setup", "Ongoing updates"],
+      "icon": "ios"
+    },
+    {
+      "id": "cross-platform",
+      "slug": "cross-platform",
+      "name": "Cross-Platform Mobile",
+      "shortDescription": "One codebase for iOS and Android",
+      "description": "React Native or Flutter apps that share logic and UI across iOS and Android. We optimize for performance and native feel.",
+      "process": ["Platform strategy", "Shared codebase development", "Platform-specific polish", "Release to both stores"],
+      "deliverables": ["iOS + Android app", "Shared component library", "Store listings", "Single codebase docs"],
+      "icon": "cross-platform"
+    },
+    {
+      "id": "ui-ux",
+      "slug": "ui-ux",
+      "name": "UI/UX Design",
+      "shortDescription": "User-centered design and prototyping",
+      "description": "Research, wireframes, and high-fidelity designs. We create interfaces that are accessible, consistent, and aligned with your brand.",
+      "process": ["User research", "Wireframes & flows", "Visual design", "Prototypes & handoff"],
+      "deliverables": ["Design system", "Figma/Sketch files", "Prototypes", "Specs for development"],
+      "icon": "ui-ux"
+    },
+    {
+      "id": "api-backend",
+      "slug": "api-backend",
+      "name": "API & Backend",
+      "shortDescription": "APIs, backends, and DevOps",
+      "description": "REST and GraphQL APIs, microservices, and cloud infrastructure. We use Laravel, Node, or Go depending on your needs.",
+      "process": ["API design", "Implementation & tests", "Documentation", "Deploy & monitor"],
+      "deliverables": ["API + docs", "Database design", "CI/CD", "Monitoring setup"],
+      "icon": "api"
+    }
+  ],
+  "pricingTiers": [
+    {
+      "id": "starter",
+      "name": "Starter",
+      "price": "From $5,000",
+      "period": "project",
+      "description": "Ideal for MVPs and small projects.",
+      "features": ["Up to 3 core features", "Design + development", "2 revision rounds", "30-day support"],
+      "cta": "Get started",
+      "highlighted": false
+    },
+    {
+      "id": "growth",
+      "name": "Growth",
+      "price": "From $15,000",
+      "period": "project",
+      "description": "Full product build with ongoing support.",
+      "features": ["Full scope development", "Dedicated project manager", "Unlimited revisions", "3 months support", "Analytics & SEO"],
+      "cta": "Contact us",
+      "highlighted": true
+    },
+    {
+      "id": "enterprise",
+      "name": "Enterprise",
+      "price": "Custom",
+      "period": "",
+      "description": "Large-scale and long-term partnerships.",
+      "features": ["Custom scope", "Dedicated team", "SLA & security review", "Ongoing maintenance", "Priority support"],
+      "cta": "Request quote",
+      "highlighted": false
+    }
+  ],
+  "faq": [
+    {
+      "question": "How long does a typical project take?",
+      "answer": "Small projects (MVP, landing page) often take 4–8 weeks. Full web or mobile apps usually 3–6 months depending on scope. We provide a timeline after discovery."
+    },
+    {
+      "question": "Do you work with startups?",
+      "answer": "Yes. We work with startups at all stages and can align with equity, milestones, or phased payments where it makes sense."
+    },
+    {
+      "question": "What tech stack do you use?",
+      "answer": "We choose the stack per project: Laravel, Node, or Go for backend; React, Vue, or Qwik for web; Swift/Kotlin for native; React Native or Flutter for cross-platform. We recommend based on your goals and team."
+    },
+    {
+      "question": "Do you offer ongoing support?",
+      "answer": "Yes. We offer maintenance plans (bug fixes, updates, monitoring) and can scale to ongoing feature work or dedicated capacity."
+    },
+    {
+      "question": "Can you take over an existing project?",
+      "answer": "Yes. We do audits and handoffs: we review codebase, docs, and infra, then propose a plan for fixes, refactors, or new features."
+    }
+  ],
+  "contact": {
+    "email": "hello@credocode.com",
+    "phone": "+1 (555) 123-4567",
+    "address": "123 Agency Street, Suite 100, City, ST 12345",
+    "calendarLink": "https://calendly.com/credocode",
+    "socials": [
+      { "name": "LinkedIn", "url": "https://linkedin.com/company/credocode", "icon": "linkedin" },
+      { "name": "Twitter", "url": "https://twitter.com/credocode", "icon": "twitter" },
+      { "name": "GitHub", "url": "https://github.com/credocode", "icon": "github" }
+    ]
+  },
+  "techStack": [
+    "Laravel",
+    "Node.js",
+    "React",
+    "Vue",
+    "Qwik",
+    "React Native",
+    "Flutter",
+    "Swift",
+    "Kotlin",
+    "PostgreSQL",
+    "Redis",
+    "AWS",
+    "Docker"
+  ],
+  "about": {
+    "tagline": "We build digital products that scale.",
+    "mission": "To partner with ambitious teams and deliver web and mobile solutions that are fast, reliable, and a pleasure to use.",
+    "values": ["Quality over speed", "Clear communication", "Long-term partnerships", "Inclusive and accessible design"],
+    "team": [
+      { "name": "Alex Johnson", "role": "Lead Developer", "bio": "Full-stack with a focus on performance and APIs." },
+      { "name": "Sam Williams", "role": "Design Lead", "bio": "UI/UX and design systems." },
+      { "name": "Jordan Lee", "role": "Mobile Lead", "bio": "Native iOS and Android, and cross-platform." }
+    ],
+    "processTimeline": [
+      { "title": "Discovery", "description": "We align on goals, scope, and success metrics." },
+      { "title": "Design", "description": "Wireframes, visual design, and prototypes." },
+      { "title": "Build", "description": "Iterative development with regular demos." },
+      { "title": "Launch", "description": "Deploy, monitor, and hand off with docs and support." }
+    ],
+    "stats": [
+      { "value": 50, "label": "Projects delivered" },
+      { "value": 8, "label": "Years experience" },
+      { "value": 99, "label": "Client satisfaction %" }
+    ]
+  }
+}

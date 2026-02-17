@@ -43,6 +43,26 @@ export const RouterHead = component$(() => {
             } else {
               setTheme('light');
             }
+
+            // Public marketing routes: show body immediately (no RTL flash concern)
+            var path = (document.location.pathname || '/').replace(/\\/$/, '') || '/';
+            var isPublicRoute = path === '/' || path === '' || path.indexOf('/services') === 0 || path.indexOf('/work') === 0 || path.indexOf('/about') === 0 || path.indexOf('/pricing') === 0 || path.indexOf('/contact') === 0 || path.indexOf('/blog') === 0;
+            function revealBodyForPublic() {
+              document.documentElement.setAttribute('dir', 'ltr');
+              document.documentElement.setAttribute('lang', 'en');
+              if (document.body) {
+                document.body.setAttribute('dir', 'ltr');
+                document.body.setAttribute('lang', 'en');
+                document.body.setAttribute('data-render-complete', 'true');
+              }
+            }
+            if (isPublicRoute) {
+              if (document.body) {
+                revealBodyForPublic();
+              } else {
+                document.addEventListener('DOMContentLoaded', revealBodyForPublic);
+              }
+            }
             
             // Initialize direction and language from cookie/localStorage
             // This must run BEFORE any content renders to prevent visual shift
@@ -103,9 +123,8 @@ export const RouterHead = component$(() => {
             var dir = locale === 'ar' ? 'rtl' : 'ltr';
             var lang = locale;
             
-            // Ensure body stays hidden initially by removing data-render-complete if it exists
-            // This prevents body from being visible before we're ready
-            if (document.body && document.body.hasAttribute('data-render-complete')) {
+            // Ensure body stays hidden initially by removing data-render-complete if it exists (dashboard only)
+            if (!isPublicRoute && document.body && document.body.hasAttribute('data-render-complete')) {
               document.body.removeAttribute('data-render-complete');
             }
             

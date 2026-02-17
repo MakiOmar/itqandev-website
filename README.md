@@ -75,28 +75,62 @@ The application includes mock authentication with the following demo accounts:
 src/
 ├── components/
 │   ├── common/          # Reusable components (DataTable, StatCard, etc.)
-│   ├── dashboard/      # Dashboard-specific components (Sidebar, Header)
-│   └── ui/             # Qwik UI styled components
+│   ├── dashboard/       # Dashboard-specific (Sidebar, Header)
+│   ├── marketing/       # Public site (Header, Footer, Button, Card, etc.)
+│   └── ui/              # Qwik UI styled components
+├── content/             # Marketing local content (JSON)
+│   ├── case-studies.json
+│   ├── testimonials.json
+│   ├── site.json
+│   └── blog.json
 ├── lib/
-│   ├── api/            # API client and mock data
-│   ├── auth/           # Authentication logic
-│   ├── constants/      # Constants (roles, routes)
-│   └── utils/          # Utility functions
+│   ├── api/             # API client and mock data
+│   ├── auth/            # Authentication logic
+│   ├── marketing/       # Content layer, API client, types, endpoints
+│   ├── constants/       # Constants (roles, routes)
+│   └── utils/           # Utility functions
 ├── routes/
-│   ├── (dashboard)/    # Dashboard pages (grouped layout)
-│   ├── login/         # Login page
-│   └── layout.tsx     # Root layout
-├── stores/            # Global state stores
-└── i18n/             # Internationalization (ready for setup)
+│   ├── (public)/        # Marketing pages (/, /services, /work, /blog, etc.)
+│   ├── admin/           # Dashboard (e.g. /admin, /admin/login)
+│   ├── sitemap.xml/     # Dynamic sitemap
+│   └── layout.tsx       # Root layout
+├── stores/              # Global state stores
+└── i18n/                # Internationalization (ready for setup)
 ```
 
 ## Available Scripts
 
-- `npm run dev` - Start development server
+- `npm run dev` - Start development server (SSR mode)
 - `npm run build` - Build for production
-- `npm run preview` - Preview production build
+- `npm run preview` - Preview production build (`qwik build preview && vite preview --open`)
 - `npm run lint` - Run ESLint
 - `npm run fmt` - Format code with Prettier
+
+To analyze bundle size, run `npm run build` and inspect the output in `dist/` or use `vite build --mode production` with Rollup analyzer if configured.
+
+## Marketing site (public)
+
+The app includes a public marketing site (agency-style) under the `(public)` route group. It does not require authentication.
+
+**Routes:** `/` (home), `/services`, `/work`, `/work/[slug]`, `/about`, `/pricing`, `/contact`, `/blog`, `/blog/[slug]`.  
+**Dashboard** remains at `/admin/*` (e.g. `/admin/login`).
+
+**Run commands:** Same as above — `npm run dev` from `website/` and open `http://localhost:5173`. The marketing site is the default at `/`; use the header “Login” to go to the dashboard.
+
+## Design system (marketing)
+
+- **Colors:** `primary` (50–950, DEFAULT), `elegant.gray`, `secondary`; dark mode via `dark:` and class `dark` on `html`.
+- **Typography:** Same as dashboard (Inter / Cairo); scale via Tailwind `text-*` and `font-*`.
+- **Spacing:** Tailwind default + `18`, `88`, `128`; sections use `py-16 sm:py-20 lg:py-24`.
+- **Components:** Header, Footer, Button, Container, Section, Card, AnimatedReveal, TestimonialGrid, CaseStudyCard, BlogCard, FAQ (details/summary). All under `src/components/marketing/`.
+- **Animations:** IntersectionObserver-based reveal; `prefers-reduced-motion` respected. Transform/opacity only.
+
+## Deployment
+
+- **Standalone:** Build with `npm run build` and serve the output with a Node server (e.g. the Qwik preview server or your adapter’s start command). For static export, use an adapter that supports SSG.
+- **With Laravel:** Use a reverse proxy so that the Laravel app serves the API (e.g. `/api`) and proxies `/` (and optionally other paths) to the Qwik app, or host Qwik on a subdomain.
+- **Caching:** Set `Cache-Control` for immutable assets (e.g. hashed JS/CSS) to `public, max-age=31536000, immutable`. For HTML, use short `max-age` and `stale-while-revalidate` (see root layout `onGet`). Prefer gzip or Brotli on the server/CDN.
+- **Security headers:** Consider `X-Frame-Options`, `X-Content-Type-Options`, and a strict `Content-Security-Policy` in production (e.g. nginx or Cloudflare).
 
 ## Pages
 
@@ -182,6 +216,31 @@ The project includes a flexible API structure:
 - **Mock Data** (`src/lib/api/mock-data.ts`) - Mock data for development
 
 The dashboard automatically uses the Laravel client when `VITE_LARAVEL_SANCTUM=true` is set.
+
+### Marketing API integration
+
+The marketing site uses a **content layer** (`src/lib/marketing/content-layer.ts`) that can read from local JSON/markdown or from the Laravel API.
+
+- **Env:** `VITE_MARKETING_CONTENT_SOURCE=local` (default) or `api`. When `api`, set `VITE_API_BASE_URL` or `VITE_MARKETING_API_URL` to the Laravel base URL.
+- **Local content:** `src/content/case-studies.json`, `src/content/testimonials.json`, `src/content/site.json`, `src/content/blog.json`. Interfaces in `src/lib/marketing/types.ts` so switching to API only requires implementing the same types on the backend.
+- **When using API:** Add public (unauthenticated) routes in Laravel, e.g. `GET /api/public/projects`, `GET /api/public/blog-posts`, `GET /api/public/testimonials`, and optionally `GET /api/public/site-content`. Response shapes should match the payloads expected by the content layer (see types and existing JSON files). No backend changes are required to run the marketing site with local content.
+
+### Contact endpoint (backend contract)
+
+The contact form (`/contact`) submits to a configurable URL. If no backend is configured, the form shows a “thank you” stub and logs to the console.
+
+**Required backend:** `POST /api/contact` (or the URL set by `VITE_CONTACT_API_URL`).
+
+**Request body (JSON):**
+
+- `name` (string, required)
+- `email` (string, required)
+- `subject` (string, required)
+- `message` (string, required)
+
+**Response:** HTTP 200 (or 201) with optional JSON body (e.g. `{ "message": "Thank you" }`). On 4xx/5xx, the frontend shows the error message from the response body.
+
+**Recommendations:** Validate and sanitize input; use rate limiting; optional CSRF token if same-origin with Laravel.
 
 ## Authentication
 

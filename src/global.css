@@ -21,6 +21,12 @@ html[dir] body[dir][data-render-complete] {
   /* No transition - instant show to prevent visual shift */
 }
 
+/* Public marketing pages: show body immediately (no RTL/locale flash concern) */
+body:has([data-public-page]) {
+  visibility: visible !important;
+  opacity: 1 !important;
+}
+
 /* Prevent transitions on elements until body is fully rendered */
 /* This prevents sidebar and other elements from flashing during language switch */
 /* Allow transitions on interactive elements for better UX */

@@ -1,0 +1,29 @@
+[
+  {
+    "id": 1,
+    "slug": "building-fast-websites-with-qwik",
+    "title": "Building Fast Websites with Qwik",
+    "excerpt": "Why we chose Qwik for our marketing site and how resumability improves performance.",
+    "date": "2025-01-15",
+    "author": { "name": "Alex Johnson" },
+    "body": "<p>Modern frameworks often ship too much JavaScript. Qwik takes a different approach: resumability. The server sends HTML and only the minimal JS needed for interactivity is loaded when the user needs it.</p><p>For a marketing site, that means faster First Contentful Paint and Time to Interactive, especially on mobile. We use Qwik City for routing and server-side rendering, and Tailwind for styling.</p><p>If you're considering a new frontend, give Qwik a look for content-heavy or marketing sites where every kilobyte counts.</p>"
+  },
+  {
+    "id": 2,
+    "slug": "api-design-best-practices",
+    "title": "API Design Best Practices for Mobile and Web",
+    "excerpt": "REST and versioning, auth, and how to keep your API maintainable as you scale.",
+    "date": "2025-01-08",
+    "author": { "name": "Jordan Lee" },
+    "body": "<p>A well-designed API makes both web and mobile clients easier to build and maintain. We recommend REST with clear resource naming, consistent status codes, and versioning in the URL path.</p><p>Use JSON for request and response bodies, and document everything with OpenAPI or similar. For auth, prefer tokens (e.g. Laravel Sanctum) with short expiry and refresh flows.</p><p>Finally, add rate limiting and CORS from day one so you don't have to retrofit later.</p>"
+  },
+  {
+    "id": 3,
+    "slug": "why-we-use-laravel-for-backends",
+    "title": "Why We Use Laravel for Backends",
+    "excerpt": "Laravel remains our go-to for APIs and admin tools. Here's why.",
+    "date": "2025-01-01",
+    "author": { "name": "Alex Johnson" },
+    "body": "<p>Laravel gives us a solid foundation: routing, validation, Eloquent ORM, queues, and a strong ecosystem. For agency work, that means we spend less time on boilerplate and more on business logic.</p><p>Laravel Sanctum makes SPA and mobile auth straightforward. When we need to ship an API plus an admin dashboard, Laravel lets us do both in one codebase with clear separation.</p><p>We still pick Node or Go when the problem fits better, but for most CRUD-heavy products, Laravel is our default.</p>"
+  }
+]

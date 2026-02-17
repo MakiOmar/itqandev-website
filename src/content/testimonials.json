@@ -1,0 +1,52 @@
+[
+  {
+    "id": 1,
+    "quote": "They delivered our mobile app on time and the quality exceeded expectations. The team understood our vision from day one.",
+    "authorName": "Sarah Chen",
+    "authorRole": "CEO, TechStart",
+    "authorAvatar": "",
+    "projectTitle": "E-Commerce Mobile App",
+    "rating": 5,
+    "approved": true
+  },
+  {
+    "id": 2,
+    "quote": "Professional, responsive, and technically excellent. Our dashboard is now the backbone of our operations.",
+    "authorName": "James Wilson",
+    "authorRole": "CTO, HealthCare Plus",
+    "authorAvatar": "",
+    "projectTitle": "Healthcare Analytics Dashboard",
+    "rating": 5,
+    "approved": true
+  },
+  {
+    "id": 3,
+    "quote": "The API and documentation they built allowed our partners to integrate in days, not weeks. Highly recommend.",
+    "authorName": "Maria Garcia",
+    "authorRole": "Head of Product, FinanceFlow",
+    "authorAvatar": "",
+    "projectTitle": "Fintech Banking API",
+    "rating": 5,
+    "approved": true
+  },
+  {
+    "id": 4,
+    "quote": "From concept to launch, the process was smooth. They brought both design and engineering expertise.",
+    "authorName": "David Kim",
+    "authorRole": "Founder, TravelHub",
+    "authorAvatar": "",
+    "projectTitle": "Travel Booking Platform",
+    "rating": 5,
+    "approved": true
+  },
+  {
+    "id": 5,
+    "quote": "Native performance and a great UX. Our users love the fitness app they built for us.",
+    "authorName": "Emma Brown",
+    "authorRole": "Product Manager, FitLife",
+    "authorAvatar": "",
+    "projectTitle": "Fitness & Wellness App",
+    "rating": 5,
+    "approved": true
+  }
+]

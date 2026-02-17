@@ -1,3 +1,8 @@
+/**
+ * Tailwind config: dashboard + marketing site.
+ * Marketing pages use primary, slate, and the same spacing/radius scale.
+ * Design tokens: primary (accent), elegant.gray, secondary; spacing 18/88/128; radii lg/md/sm.
+ */
 /** @type {import('tailwindcss').Config} */
 export default {
   content: ['./src/**/*.{js,ts,jsx,tsx,mdx}'],

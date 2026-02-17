@@ -8,6 +8,31 @@ import { translationFn } from "./lib/i18n/translation-fn";
 
 import "./global.css";
 
+/** Paths that are public marketing pages (body should stay visible, do not strip data-render-complete). */
+const PUBLIC_PATH_PREFIXES = ["/", "/services", "/work", "/about", "/pricing", "/contact", "/blog"];
+
+function isPublicRoute(pathname: string): boolean {
+  const normalized = pathname.replace(/\/+$/, "") || "/";
+  if (normalized === "/" || normalized === "") return true;
+  return PUBLIC_PATH_PREFIXES.some((p) => p !== "/" && normalized.startsWith(p));
+}
+
+/**
+ * Runs inside QwikCityProvider; clears data-render-complete on non-public routes only
+ * so the head script's value for public pages is not overwritten.
+ */
+const BodyRenderCompleteGuard = component$(() => {
+  const location = useLocation();
+  // eslint-disable-next-line qwik/no-use-visible-task -- intentional: clear body attribute only on non-public routes
+  useVisibleTask$(() => {
+    const pathname = location.url.pathname ?? "/";
+    if (!isPublicRoute(pathname) && document.body?.hasAttribute("data-render-complete")) {
+      document.body.removeAttribute("data-render-complete");
+    }
+  });
+  return null;
+});
+
 const LOCALE_FONT_LINK_ID = "app-locale-font";
 const INTER_FONT_HREF =
   "https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap";
@@ -139,15 +164,8 @@ export default component$(() => {
           )}
           <RouterHead />
         </head>
-        <body lang={bodyLang.value} dir={bodyDir.value} data-render-complete={typeof window === 'undefined' ? 'false' : undefined}>
-          {typeof window !== 'undefined' && (() => {
-            // Ensure data-render-complete is not set initially on client-side
-            // The blocking script will set it when ready
-            if (document.body && document.body.hasAttribute('data-render-complete')) {
-              document.body.removeAttribute('data-render-complete');
-            }
-            return null;
-          })()}
+        <body lang={bodyLang.value} dir={bodyDir.value} data-render-complete={typeof window === "undefined" ? "false" : undefined}>
+          <BodyRenderCompleteGuard />
           <LocaleFontSync />
           <RouterOutlet />
           <DarkModeToggle />
