@@ -18,16 +18,23 @@ function isPublicRoute(pathname: string): boolean {
 }
 
 /**
- * Runs inside QwikCityProvider; clears data-render-complete on non-public routes only
- * so the head script's value for public pages is not overwritten.
+ * Runs inside QwikCityProvider; keeps data-render-complete in sync so routes
+ * never remain hidden after client-side transitions.
  */
 const BodyRenderCompleteGuard = component$(() => {
   const location = useLocation();
   // eslint-disable-next-line qwik/no-use-visible-task -- intentional: clear body attribute only on non-public routes
-  useVisibleTask$(() => {
+  useVisibleTask$(({ track }) => {
+    track(() => location.url.pathname);
+
     const pathname = location.url.pathname ?? "/";
-    if (!isPublicRoute(pathname) && document.body?.hasAttribute("data-render-complete")) {
-      document.body.removeAttribute("data-render-complete");
+    const body = document.body;
+    if (!body) return;
+
+    // Keep public pages visible and ensure admin/login/dashboard routes are never stuck hidden.
+    // Some non-public transitions can drop the attribute; explicitly restore it.
+    if (!body.hasAttribute("data-render-complete") || !isPublicRoute(pathname)) {
+      body.setAttribute("data-render-complete", "true");
     }
   });
   return null;
