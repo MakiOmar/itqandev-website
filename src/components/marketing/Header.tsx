@@ -5,6 +5,8 @@ import { MARKETING_ROUTES } from '~/lib/marketing/constants';
 import { ThemeToggle } from '~/components/marketing/ThemeToggle';
 import { Button } from '~/components/marketing/Button';
 import { Container } from '~/components/marketing/Container';
+import { UserDropdown } from '~/components/common/UserDropdown';
+import type { AuthSession } from '~/lib/auth/types';
 
 const navLinks = [
   { label: 'Home', href: MARKETING_ROUTES.home },
@@ -16,10 +18,15 @@ const navLinks = [
   { label: 'Contact', href: MARKETING_ROUTES.contact },
 ];
 
-export const Header = component$(() => {
+interface HeaderProps {
+  session?: AuthSession | null;
+}
+
+export const Header = component$<HeaderProps>((props) => {
   const menuOpen = useSignal(false);
   const config = getConfig();
   const loginHref = config.routes.admin.login;
+  const user = props.session?.user;
 
   const closeMenu = $(() => {
     menuOpen.value = false;
@@ -60,9 +67,13 @@ export const Header = component$(() => {
             <Button href={MARKETING_ROUTES.contact} variant="primary">
               Get in touch
             </Button>
-            <Button href={loginHref} variant="outline">
-              Login
-            </Button>
+            {user ? (
+              <UserDropdown user={user} />
+            ) : (
+              <Button href={loginHref} variant="outline">
+                Login
+              </Button>
+            )}
           </div>
 
           {/* Mobile menu button */}
@@ -106,9 +117,15 @@ export const Header = component$(() => {
               <Button href={MARKETING_ROUTES.contact} variant="primary" class="w-full justify-center">
                 Get in touch
               </Button>
-              <Button href={loginHref} variant="outline" class="w-full justify-center">
-                Login
-              </Button>
+              {user ? (
+                <div class="flex justify-center">
+                  <UserDropdown user={user} />
+                </div>
+              ) : (
+                <Button href={loginHref} variant="outline" class="w-full justify-center">
+                  Login
+                </Button>
+              )}
             </div>
           </nav>
         </div>
