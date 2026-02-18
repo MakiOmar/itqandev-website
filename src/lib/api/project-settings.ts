@@ -40,6 +40,32 @@ export const defaultProjectSettings: ProjectSettings = {
   description: '',
 };
 
+function normalizeProjectSettings(raw: Record<string, any>): ProjectSettings {
+  const maxFileSize = Number(raw?.max_file_size);
+  const uploadMaxSize = Number(raw?.upload_max_size);
+  const normalizedMaxFileSize =
+    maxFileSize > 0
+      ? maxFileSize
+      : uploadMaxSize > 0
+        ? uploadMaxSize <= 10000
+          ? uploadMaxSize * 1024 * 1024
+          : uploadMaxSize
+        : undefined;
+
+  return {
+    ...raw,
+    name: raw?.name || raw?.site_name || defaultProjectSettings.name,
+    logo: raw?.logo || raw?.site_logo || undefined,
+    favicon: raw?.favicon || raw?.site_favicon || undefined,
+    primaryColor: raw?.primaryColor || raw?.primary_color || undefined,
+    secondaryColor: raw?.secondaryColor || raw?.secondary_color || undefined,
+    description: raw?.description || raw?.site_description || defaultProjectSettings.description,
+    supportEmail: raw?.supportEmail || raw?.site_email || undefined,
+    supportPhone: raw?.supportPhone || raw?.site_phone || undefined,
+    max_file_size: normalizedMaxFileSize,
+  };
+}
+
 /**
  * Fetch project settings from Laravel API
  * This should be called on app initialization or when settings change
@@ -50,9 +76,10 @@ export async function fetchProjectSettings(): Promise<ProjectSettings> {
     const response = await apiClient.get<ProjectSettings>(API_ENDPOINTS.SETTINGS.GET);
     
     if (response.success && response.data) {
+      const normalized = normalizeProjectSettings(response.data as any);
       return {
         ...defaultProjectSettings,
-        ...response.data,
+        ...normalized,
       };
     }
     

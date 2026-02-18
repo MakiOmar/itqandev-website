@@ -146,6 +146,7 @@ export const Sidebar = component$<SidebarProps>((props) => {
         { label: t('settings.general'), href: ROUTES.ADMIN.SETTINGS_GENERAL },
         { label: t('settings.socialMedia'), href: ROUTES.ADMIN.SETTINGS_SOCIAL },
         { label: t('media.title'), href: ROUTES.ADMIN.SETTINGS_MEDIA },
+        { label: t('settings.branding'), href: ROUTES.ADMIN.SETTINGS_BRANDING },
       ],
       roles: ['admin', 'super_admin'],
     },

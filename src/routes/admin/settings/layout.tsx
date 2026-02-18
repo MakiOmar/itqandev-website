@@ -17,6 +17,10 @@ export interface SettingsFormData {
   social_linkedin: string;
   social_instagram: string;
   upload_max_size: number;
+  logo: string;
+  favicon: string;
+  primaryColor: string;
+  secondaryColor: string;
 }
 
 export const defaultSettings: SettingsFormData = {
@@ -30,20 +34,41 @@ export const defaultSettings: SettingsFormData = {
   social_linkedin: '',
   social_instagram: '',
   upload_max_size: 100,
+  logo: '',
+  favicon: '',
+  primaryColor: '',
+  secondaryColor: '',
 };
 
 function normalizeSettings(input: Partial<SettingsFormData> | undefined | null): SettingsFormData {
+  const maxUploadSizeRaw =
+    Number((input as any)?.upload_max_size) ||
+    Number((input as any)?.max_file_size);
+  const uploadSizeMb =
+    Number((input as any)?.upload_max_size) > 0
+      ? Number((input as any)?.upload_max_size)
+      : Number((input as any)?.max_file_size) > 0
+        ? Math.max(1, Math.round(Number((input as any).max_file_size) / (1024 * 1024)))
+        : defaultSettings.upload_max_size;
+
   return {
-    site_name: input?.site_name || defaultSettings.site_name,
-    site_description: input?.site_description || defaultSettings.site_description,
-    site_email: input?.site_email || defaultSettings.site_email,
-    site_phone: input?.site_phone || defaultSettings.site_phone,
+    site_name: (input as any)?.site_name || (input as any)?.name || defaultSettings.site_name,
+    site_description:
+      (input as any)?.site_description || (input as any)?.description || defaultSettings.site_description,
+    site_email: (input as any)?.site_email || (input as any)?.supportEmail || defaultSettings.site_email,
+    site_phone: (input as any)?.site_phone || (input as any)?.supportPhone || defaultSettings.site_phone,
     site_address: input?.site_address || defaultSettings.site_address,
     social_facebook: input?.social_facebook || defaultSettings.social_facebook,
     social_twitter: input?.social_twitter || defaultSettings.social_twitter,
     social_linkedin: input?.social_linkedin || defaultSettings.social_linkedin,
     social_instagram: input?.social_instagram || defaultSettings.social_instagram,
-    upload_max_size: Number(input?.upload_max_size) || defaultSettings.upload_max_size,
+    upload_max_size: maxUploadSizeRaw > 0 ? uploadSizeMb : defaultSettings.upload_max_size,
+    logo: (input as any)?.logo || (input as any)?.site_logo || defaultSettings.logo,
+    favicon: (input as any)?.favicon || (input as any)?.site_favicon || defaultSettings.favicon,
+    primaryColor:
+      (input as any)?.primaryColor || (input as any)?.primary_color || defaultSettings.primaryColor,
+    secondaryColor:
+      (input as any)?.secondaryColor || (input as any)?.secondary_color || defaultSettings.secondaryColor,
   };
 }
 
@@ -74,11 +99,20 @@ export const useUpdateSettings = routeAction$(
       const apiClient = getApiClient(cookieHeader);
 
       const parsedMaxSize = Number(data.upload_max_size);
+      const siteName = (data.site_name as string) || defaultSettings.site_name;
+      const siteDescription = (data.site_description as string) || '';
+      const siteEmail = (data.site_email as string) || '';
+      const sitePhone = (data.site_phone as string) || '';
+      const logo = (data.logo as string) || '';
+      const favicon = (data.favicon as string) || '';
+      const primaryColor = (data.primaryColor as string) || '';
+      const secondaryColor = (data.secondaryColor as string) || '';
+
       const payload: SettingsFormData = {
-        site_name: (data.site_name as string) || defaultSettings.site_name,
-        site_description: (data.site_description as string) || '',
-        site_email: (data.site_email as string) || '',
-        site_phone: (data.site_phone as string) || '',
+        site_name: siteName,
+        site_description: siteDescription,
+        site_email: siteEmail,
+        site_phone: sitePhone,
         site_address: (data.site_address as string) || '',
         social_facebook: (data.social_facebook as string) || '',
         social_twitter: (data.social_twitter as string) || '',
@@ -88,9 +122,26 @@ export const useUpdateSettings = routeAction$(
           Number.isFinite(parsedMaxSize) && parsedMaxSize > 0
             ? parsedMaxSize
             : defaultSettings.upload_max_size,
+        logo,
+        favicon,
+        primaryColor,
+        secondaryColor,
       };
 
-      await apiClient.put(API_ENDPOINTS.SETTINGS.UPDATE, payload);
+      // Keep existing keys stable and add compatible aliases used by Laravel settings controller.
+      const compatiblePayload = {
+        ...payload,
+        name: siteName,
+        description: siteDescription,
+        supportEmail: siteEmail,
+        supportPhone: sitePhone,
+        primary_color: primaryColor,
+        secondary_color: secondaryColor,
+        site_logo: logo,
+        site_favicon: favicon,
+      };
+
+      await apiClient.put(API_ENDPOINTS.SETTINGS.UPDATE, compatiblePayload);
       clearProjectSettingsCache();
 
       return {
@@ -115,6 +166,18 @@ export const useUpdateSettings = routeAction$(
     social_linkedin: z.string().url().optional().or(z.literal('')),
     social_instagram: z.string().url().optional().or(z.literal('')),
     upload_max_size: z.union([z.string(), z.number()]).optional(),
+    logo: z.string().optional(),
+    favicon: z.string().optional(),
+    primaryColor: z
+      .string()
+      .regex(/^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/)
+      .optional()
+      .or(z.literal('')),
+    secondaryColor: z
+      .string()
+      .regex(/^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/)
+      .optional()
+      .or(z.literal('')),
   }),
 );
 
@@ -152,6 +215,14 @@ export const SettingsHiddenFields = component$<SettingsHiddenFieldsProps>(({ exc
       {!isExcluded('upload_max_size') && (
         <input type="hidden" name="upload_max_size" value={String(settings.value.upload_max_size)} />
       )}
+      {!isExcluded('logo') && <input type="hidden" name="logo" value={settings.value.logo} />}
+      {!isExcluded('favicon') && <input type="hidden" name="favicon" value={settings.value.favicon} />}
+      {!isExcluded('primaryColor') && (
+        <input type="hidden" name="primaryColor" value={settings.value.primaryColor} />
+      )}
+      {!isExcluded('secondaryColor') && (
+        <input type="hidden" name="secondaryColor" value={settings.value.secondaryColor} />
+      )}
     </>
   );
 });
@@ -181,6 +252,7 @@ export default component$(() => {
     { label: t('settings.general'), href: ROUTES.ADMIN.SETTINGS_GENERAL },
     { label: t('settings.socialMedia'), href: ROUTES.ADMIN.SETTINGS_SOCIAL },
     { label: t('media.title'), href: ROUTES.ADMIN.SETTINGS_MEDIA },
+    { label: t('settings.branding'), href: ROUTES.ADMIN.SETTINGS_BRANDING },
   ];
 
   return (

@@ -17,6 +17,7 @@ export function getRoutes() {
       SETTINGS_GENERAL: `${config.routes.admin.prefix}/settings/general`,
       SETTINGS_SOCIAL: `${config.routes.admin.prefix}/settings/social`,
       SETTINGS_MEDIA: `${config.routes.admin.prefix}/settings/media`,
+      SETTINGS_BRANDING: `${config.routes.admin.prefix}/settings/branding`,
       ACTIVITY: `${config.routes.admin.prefix}/activity`,
       NOTIFICATIONS: `${config.routes.admin.prefix}/notifications`,
       SYSTEM: `${config.routes.admin.prefix}/system`,
