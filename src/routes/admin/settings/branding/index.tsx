@@ -18,14 +18,20 @@ export default component$(() => {
   const settings = useSettings();
   const updateAction = useUpdateSettings();
   const logoUrl = useSignal(settings.value.logo || '');
+  const logoDarkUrl = useSignal(settings.value.logoDark || '');
+  const logoLightUrl = useSignal(settings.value.logoLight || '');
   const faviconUrl = useSignal(settings.value.favicon || '');
   const showLogoSelector = useSignal(false);
+  const showLogoDarkSelector = useSignal(false);
+  const showLogoLightSelector = useSignal(false);
   const showFaviconSelector = useSignal(false);
 
   const successTitle = String(t('common.success'));
   const savedText = String(t('settings.saveSuccess'));
   const errorTitle = String(t('common.error'));
   const errorText = String(t('settings.saveFailed'));
+  const darkModeLogoLabel = `${String(t('settings.logo'))} (${String(t('common.darkMode'))})`;
+  const lightModeLogoLabel = `${String(t('settings.logo'))} (${String(t('common.lightMode'))})`;
 
   // eslint-disable-next-line qwik/no-use-visible-task
   useVisibleTask$(({ track }) => {
@@ -48,6 +54,12 @@ export default component$(() => {
     if (!logoUrl.value && current.logo) {
       logoUrl.value = current.logo;
     }
+    if (!logoDarkUrl.value && current.logoDark) {
+      logoDarkUrl.value = current.logoDark;
+    }
+    if (!logoLightUrl.value && current.logoLight) {
+      logoLightUrl.value = current.logoLight;
+    }
     if (!faviconUrl.value && current.favicon) {
       faviconUrl.value = current.favicon;
     }
@@ -58,8 +70,12 @@ export default component$(() => {
       <div class="rounded-lg border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-800 dark:bg-gray-800">
         <h2 class="mb-4 text-lg font-semibold">{t('settings.branding')}</h2>
         <Form action={updateAction} class="space-y-4">
-          <SettingsHiddenFields exclude={['logo', 'favicon', 'primaryColor', 'secondaryColor']} />
+          <SettingsHiddenFields
+            exclude={['logo', 'logoDark', 'logoLight', 'favicon', 'primaryColor', 'secondaryColor']}
+          />
           <input type="hidden" name="logo" value={logoUrl.value} />
+          <input type="hidden" name="logoDark" value={logoDarkUrl.value} />
+          <input type="hidden" name="logoLight" value={logoLightUrl.value} />
           <input type="hidden" name="favicon" value={faviconUrl.value} />
 
           <div class="grid gap-4 md:grid-cols-2">
@@ -102,6 +118,100 @@ export default component$(() => {
                   type="button"
                   onClick$={() => {
                     logoUrl.value = '';
+                  }}
+                  class="rounded-lg border border-gray-300 px-3 py-2 text-xs font-medium text-gray-700 hover:bg-gray-100 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
+                >
+                  {t('common.delete')}
+                </button>
+              </div>
+            </div>
+
+            <div class="rounded-lg border border-gray-200 p-4 dark:border-gray-700">
+              <label class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-200">
+                {darkModeLogoLabel}
+              </label>
+              <div class="mb-3 flex h-24 items-center justify-center rounded-lg border border-dashed border-gray-300 bg-gray-50 dark:border-gray-600 dark:bg-gray-900">
+                {logoDarkUrl.value ? (
+                  <img
+                    src={logoDarkUrl.value}
+                    alt="Dark mode logo preview"
+                    width={320}
+                    height={80}
+                    class="max-h-20 max-w-full object-contain"
+                  />
+                ) : (
+                  <span class="text-sm text-gray-500 dark:text-gray-400">No dark logo selected</span>
+                )}
+              </div>
+              <div class="mb-2">
+                <input
+                  type="text"
+                  value={logoDarkUrl.value}
+                  readOnly
+                  class="w-full rounded-lg border border-gray-300 bg-gray-50 px-3 py-2 text-xs text-gray-700 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300"
+                />
+              </div>
+              <div class="flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  onClick$={() => {
+                    showLogoDarkSelector.value = true;
+                  }}
+                  class="rounded-lg bg-primary-600 px-3 py-2 text-xs font-medium text-white hover:bg-primary-700"
+                >
+                  {t('media.selectMedia')}
+                </button>
+                <button
+                  type="button"
+                  onClick$={() => {
+                    logoDarkUrl.value = '';
+                  }}
+                  class="rounded-lg border border-gray-300 px-3 py-2 text-xs font-medium text-gray-700 hover:bg-gray-100 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
+                >
+                  {t('common.delete')}
+                </button>
+              </div>
+            </div>
+
+            <div class="rounded-lg border border-gray-200 p-4 dark:border-gray-700">
+              <label class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-200">
+                {lightModeLogoLabel}
+              </label>
+              <div class="mb-3 flex h-24 items-center justify-center rounded-lg border border-dashed border-gray-300 bg-gray-50 dark:border-gray-600 dark:bg-gray-900">
+                {logoLightUrl.value ? (
+                  <img
+                    src={logoLightUrl.value}
+                    alt="Light mode logo preview"
+                    width={320}
+                    height={80}
+                    class="max-h-20 max-w-full object-contain"
+                  />
+                ) : (
+                  <span class="text-sm text-gray-500 dark:text-gray-400">No light logo selected</span>
+                )}
+              </div>
+              <div class="mb-2">
+                <input
+                  type="text"
+                  value={logoLightUrl.value}
+                  readOnly
+                  class="w-full rounded-lg border border-gray-300 bg-gray-50 px-3 py-2 text-xs text-gray-700 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300"
+                />
+              </div>
+              <div class="flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  onClick$={() => {
+                    showLogoLightSelector.value = true;
+                  }}
+                  class="rounded-lg bg-primary-600 px-3 py-2 text-xs font-medium text-white hover:bg-primary-700"
+                >
+                  {t('media.selectMedia')}
+                </button>
+                <button
+                  type="button"
+                  onClick$={() => {
+                    logoLightUrl.value = '';
                   }}
                   class="rounded-lg border border-gray-300 px-3 py-2 text-xs font-medium text-gray-700 hover:bg-gray-100 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
                 >
@@ -201,6 +311,34 @@ export default component$(() => {
           })}
           onClose={$(() => {
             showLogoSelector.value = false;
+          })}
+        />
+      )}
+
+      {showLogoDarkSelector.value && (
+        <MediaSelector
+          title={darkModeLogoLabel}
+          accept="image/*"
+          onSelect={$((media: Media) => {
+            logoDarkUrl.value = media.url || media.thumbnailUrl || '';
+            showLogoDarkSelector.value = false;
+          })}
+          onClose={$(() => {
+            showLogoDarkSelector.value = false;
+          })}
+        />
+      )}
+
+      {showLogoLightSelector.value && (
+        <MediaSelector
+          title={lightModeLogoLabel}
+          accept="image/*"
+          onSelect={$((media: Media) => {
+            logoLightUrl.value = media.url || media.thumbnailUrl || '';
+            showLogoLightSelector.value = false;
+          })}
+          onClose={$(() => {
+            showLogoLightSelector.value = false;
           })}
         />
       )}

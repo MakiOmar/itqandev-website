@@ -87,7 +87,12 @@ export const Sidebar = component$<SidebarProps>((props) => {
   
   // Get project name and logo from Laravel settings
   const projectName = projectSettings.settings?.name || 'Dashboard';
-  const projectLogo = projectSettings.settings?.logo;
+  const defaultLogo = projectSettings.settings?.logo;
+  const projectLightLogo = projectSettings.settings?.logoLight || defaultLogo;
+  const projectDarkLogo = projectSettings.settings?.logoDark || defaultLogo;
+  const hasProjectLogo = Boolean(projectLightLogo || projectDarkLogo);
+  const hasThemeSpecificLogos =
+    Boolean(projectLightLogo) && Boolean(projectDarkLogo) && projectLightLogo !== projectDarkLogo;
   
   // Get first letter of project name for fallback icon
   const projectInitial = projectName.charAt(0).toUpperCase();
@@ -201,14 +206,33 @@ export const Sidebar = component$<SidebarProps>((props) => {
           <div class="flex items-center justify-between h-16 md:h-20 lg:h-28 px-4 sm:px-6 md:px-8 lg:px-10 border-b border-slate-200/60 dark:border-slate-700/60">
             <div class="flex items-center gap-2 md:gap-4">
               {/* Project logo from Laravel (if available), otherwise show initial */}
-              {projectLogo ? (
-                <img 
-                  src={projectLogo} 
-                  alt={projectName}
-                  width="48"
-                  height="48"
-                  class="h-10 w-10 md:h-12 md:w-12 rounded-xl object-contain flex-shrink-0"
-                />
+              {hasProjectLogo ? (
+                hasThemeSpecificLogos ? (
+                  <>
+                    <img
+                      src={projectLightLogo || ''}
+                      alt={projectName}
+                      width="48"
+                      height="48"
+                      class="h-10 w-10 md:h-12 md:w-12 rounded-xl object-contain flex-shrink-0 block dark:hidden"
+                    />
+                    <img
+                      src={projectDarkLogo || ''}
+                      alt={projectName}
+                      width="48"
+                      height="48"
+                      class="h-10 w-10 md:h-12 md:w-12 rounded-xl object-contain flex-shrink-0 hidden dark:block"
+                    />
+                  </>
+                ) : (
+                  <img
+                    src={projectLightLogo || projectDarkLogo || ''}
+                    alt={projectName}
+                    width="48"
+                    height="48"
+                    class="h-10 w-10 md:h-12 md:w-12 rounded-xl object-contain flex-shrink-0"
+                  />
+                )
               ) : (
                 <div class="h-10 w-10 md:h-12 md:w-12 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-blue-500/30 flex-shrink-0">
                   <span class="text-white font-bold text-lg md:text-xl">{projectInitial}</span>

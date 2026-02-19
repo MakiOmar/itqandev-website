@@ -18,6 +18,8 @@ export interface SettingsFormData {
   social_instagram: string;
   upload_max_size: number;
   logo: string;
+  logoDark: string;
+  logoLight: string;
   favicon: string;
   primaryColor: string;
   secondaryColor: string;
@@ -35,6 +37,8 @@ export const defaultSettings: SettingsFormData = {
   social_instagram: '',
   upload_max_size: 100,
   logo: '',
+  logoDark: '',
+  logoLight: '',
   favicon: '',
   primaryColor: '',
   secondaryColor: '',
@@ -64,6 +68,18 @@ function normalizeSettings(input: Partial<SettingsFormData> | undefined | null):
     social_instagram: input?.social_instagram || defaultSettings.social_instagram,
     upload_max_size: maxUploadSizeRaw > 0 ? uploadSizeMb : defaultSettings.upload_max_size,
     logo: (input as any)?.logo || (input as any)?.site_logo || defaultSettings.logo,
+    logoDark:
+      (input as any)?.logoDark ||
+      (input as any)?.logo_dark ||
+      (input as any)?.dark_logo ||
+      (input as any)?.site_logo_dark ||
+      defaultSettings.logoDark,
+    logoLight:
+      (input as any)?.logoLight ||
+      (input as any)?.logo_light ||
+      (input as any)?.light_logo ||
+      (input as any)?.site_logo_light ||
+      defaultSettings.logoLight,
     favicon: (input as any)?.favicon || (input as any)?.site_favicon || defaultSettings.favicon,
     primaryColor:
       (input as any)?.primaryColor || (input as any)?.primary_color || defaultSettings.primaryColor,
@@ -104,6 +120,8 @@ export const useUpdateSettings = routeAction$(
       const siteEmail = (data.site_email as string) || '';
       const sitePhone = (data.site_phone as string) || '';
       const logo = (data.logo as string) || '';
+      const logoDark = (data.logoDark as string) || '';
+      const logoLight = (data.logoLight as string) || '';
       const favicon = (data.favicon as string) || '';
       const primaryColor = (data.primaryColor as string) || '';
       const secondaryColor = (data.secondaryColor as string) || '';
@@ -123,6 +141,8 @@ export const useUpdateSettings = routeAction$(
             ? parsedMaxSize
             : defaultSettings.upload_max_size,
         logo,
+        logoDark,
+        logoLight,
         favicon,
         primaryColor,
         secondaryColor,
@@ -138,6 +158,12 @@ export const useUpdateSettings = routeAction$(
         primary_color: primaryColor,
         secondary_color: secondaryColor,
         site_logo: logo,
+        logo_dark: logoDark,
+        logo_light: logoLight,
+        dark_logo: logoDark,
+        light_logo: logoLight,
+        site_logo_dark: logoDark,
+        site_logo_light: logoLight,
         site_favicon: favicon,
       };
 
@@ -167,6 +193,8 @@ export const useUpdateSettings = routeAction$(
     social_instagram: z.string().url().optional().or(z.literal('')),
     upload_max_size: z.union([z.string(), z.number()]).optional(),
     logo: z.string().optional(),
+    logoDark: z.string().optional(),
+    logoLight: z.string().optional(),
     favicon: z.string().optional(),
     primaryColor: z
       .string()
@@ -216,6 +244,8 @@ export const SettingsHiddenFields = component$<SettingsHiddenFieldsProps>(({ exc
         <input type="hidden" name="upload_max_size" value={String(settings.value.upload_max_size)} />
       )}
       {!isExcluded('logo') && <input type="hidden" name="logo" value={settings.value.logo} />}
+      {!isExcluded('logoDark') && <input type="hidden" name="logoDark" value={settings.value.logoDark} />}
+      {!isExcluded('logoLight') && <input type="hidden" name="logoLight" value={settings.value.logoLight} />}
       {!isExcluded('favicon') && <input type="hidden" name="favicon" value={settings.value.favicon} />}
       {!isExcluded('primaryColor') && (
         <input type="hidden" name="primaryColor" value={settings.value.primaryColor} />

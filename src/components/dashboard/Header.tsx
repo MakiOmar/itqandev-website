@@ -19,7 +19,12 @@ export const Header = component$<HeaderProps>((props) => {
   
   // Get project name and logo from Laravel settings
   const projectName = projectSettings.settings?.name || 'Dashboard';
-  const projectLogo = projectSettings.settings?.logo;
+  const defaultLogo = projectSettings.settings?.logo;
+  const projectLightLogo = projectSettings.settings?.logoLight || defaultLogo;
+  const projectDarkLogo = projectSettings.settings?.logoDark || defaultLogo;
+  const hasProjectLogo = Boolean(projectLightLogo || projectDarkLogo);
+  const hasThemeSpecificLogos =
+    Boolean(projectLightLogo) && Boolean(projectDarkLogo) && projectLightLogo !== projectDarkLogo;
 
   return (
     <>
@@ -37,14 +42,32 @@ export const Header = component$<HeaderProps>((props) => {
             </button>
           )}
           {/* Project logo from Laravel (if available) */}
-          {projectLogo && (
-            <img 
-              src={projectLogo} 
+          {hasProjectLogo && !hasThemeSpecificLogos && (
+            <img
+              src={projectLightLogo || projectDarkLogo || ''}
               alt={projectName}
               width="48"
               height="48"
               class="h-8 md:h-10 lg:h-12 w-auto object-contain"
             />
+          )}
+          {hasThemeSpecificLogos && (
+            <>
+              <img
+                src={projectLightLogo || ''}
+                alt={projectName}
+                width="48"
+                height="48"
+                class="h-8 md:h-10 lg:h-12 w-auto object-contain block dark:hidden"
+              />
+              <img
+                src={projectDarkLogo || ''}
+                alt={projectName}
+                width="48"
+                height="48"
+                class="h-8 md:h-10 lg:h-12 w-auto object-contain hidden dark:block"
+              />
+            </>
           )}
           {/* Project name from Laravel */}
           <h1 class="text-xl sm:text-2xl md:text-3xl font-bold bg-gradient-to-r from-slate-900 to-slate-700 dark:from-slate-100 dark:to-slate-300 bg-clip-text text-transparent tracking-tight">

@@ -10,6 +10,8 @@ export interface ProjectSettings {
   // Branding
   name: string;
   logo?: string;
+  logoDark?: string;
+  logoLight?: string;
   favicon?: string;
   primaryColor?: string;
   secondaryColor?: string;
@@ -56,6 +58,18 @@ function normalizeProjectSettings(raw: Record<string, any>): ProjectSettings {
     ...raw,
     name: raw?.name || raw?.site_name || defaultProjectSettings.name,
     logo: raw?.logo || raw?.site_logo || undefined,
+    logoDark:
+      raw?.logoDark ||
+      raw?.logo_dark ||
+      raw?.dark_logo ||
+      raw?.site_logo_dark ||
+      undefined,
+    logoLight:
+      raw?.logoLight ||
+      raw?.logo_light ||
+      raw?.light_logo ||
+      raw?.site_logo_light ||
+      undefined,
     favicon: raw?.favicon || raw?.site_favicon || undefined,
     primaryColor: raw?.primaryColor || raw?.primary_color || undefined,
     secondaryColor: raw?.secondaryColor || raw?.secondary_color || undefined,
