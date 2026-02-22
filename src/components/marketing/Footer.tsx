@@ -1,4 +1,4 @@
-import { component$ } from '@builder.io/qwik';
+import { component$, useSignal, useVisibleTask$ } from '@builder.io/qwik';
 import { Link } from '@builder.io/qwik-city';
 import { getConfig } from '~/lib/config';
 import { MARKETING_ROUTES } from '~/lib/marketing/constants';
@@ -9,6 +9,12 @@ export interface FooterProps {
     email?: string;
     socials?: { name: string; url: string }[];
   };
+  branding?: {
+    name: string;
+    logo?: string;
+    logoDark?: string;
+    logoLight?: string;
+  } | null;
 }
 
 const footerLinks = [
@@ -20,9 +26,37 @@ const footerLinks = [
   { label: 'Contact', href: MARKETING_ROUTES.contact },
 ];
 
-export const Footer = component$<FooterProps>(({ contact }) => {
+export const Footer = component$<FooterProps>(({ contact, branding }) => {
+  const isDarkMode = useSignal(false);
   const config = getConfig();
   const year = new Date().getFullYear();
+  const brandName = branding?.name || config.branding.name;
+  const defaultLogo = branding?.logo || '';
+  const lightLogo = branding?.logoLight || defaultLogo;
+  const darkLogo = branding?.logoDark || defaultLogo;
+  const activeLogo = isDarkMode.value
+    ? (darkLogo || lightLogo || defaultLogo)
+    : (lightLogo || darkLogo || defaultLogo);
+
+  // eslint-disable-next-line qwik/no-use-visible-task
+  useVisibleTask$(({ cleanup }) => {
+    const updateTheme = () => {
+      if (typeof document === 'undefined') return;
+      isDarkMode.value = document.documentElement.classList.contains('dark');
+    };
+
+    updateTheme();
+
+    if (typeof document !== 'undefined') {
+      const observer = new MutationObserver(updateTheme);
+      observer.observe(document.documentElement, {
+        attributes: true,
+        attributeFilter: ['class'],
+      });
+
+      cleanup(() => observer.disconnect());
+    }
+  });
 
   return (
     <footer class="border-t border-slate-200 bg-slate-50 dark:border-slate-700 dark:bg-slate-900/50" role="contentinfo">
@@ -30,8 +64,17 @@ export const Footer = component$<FooterProps>(({ contact }) => {
         <div class="grid gap-8 md:grid-cols-2 lg:grid-cols-4">
           {/* Brand */}
           <div>
-            <Link href={MARKETING_ROUTES.home} class="text-lg font-bold text-slate-900 dark:text-white">
-              {config.branding.name}
+            <Link href={MARKETING_ROUTES.home} class="inline-flex items-center gap-2 text-lg font-bold text-slate-900 dark:text-white">
+              {activeLogo && (
+                <img
+                  src={activeLogo}
+                  alt={brandName}
+                  width={120}
+                  height={32}
+                  class="h-7 w-auto object-contain"
+                />
+              )}
+              <span>{brandName}</span>
             </Link>
             <p class="mt-2 text-sm text-slate-600 dark:text-slate-400">
               Web, Android & iOS development. We build digital products that scale.
@@ -99,7 +142,7 @@ export const Footer = component$<FooterProps>(({ contact }) => {
 
         <div class="mt-12 border-t border-slate-200 pt-8 dark:border-slate-700">
           <p class="text-center text-sm text-slate-500 dark:text-slate-400">
-            &copy; {year} {config.branding.name}. All rights reserved.
+            &copy; {year} {brandName}. All rights reserved.
           </p>
         </div>
       </Container>

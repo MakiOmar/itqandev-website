@@ -1,4 +1,4 @@
-import { component$, useSignal, $ } from '@builder.io/qwik';
+import { component$, useSignal, useVisibleTask$, $ } from '@builder.io/qwik';
 import { Link } from '@builder.io/qwik-city';
 import { getConfig } from '~/lib/config';
 import { MARKETING_ROUTES } from '~/lib/marketing/constants';
@@ -18,15 +18,51 @@ const navLinks = [
   { label: 'Contact', href: MARKETING_ROUTES.contact },
 ];
 
+interface HeaderBranding {
+  name: string;
+  logo?: string;
+  logoDark?: string;
+  logoLight?: string;
+}
+
 interface HeaderProps {
   session?: AuthSession | null;
+  branding?: HeaderBranding | null;
 }
 
 export const Header = component$<HeaderProps>((props) => {
   const menuOpen = useSignal(false);
+  const isDarkMode = useSignal(false);
   const config = getConfig();
   const loginHref = config.routes.admin.login;
   const user = props.session?.user;
+  const brandName = props.branding?.name || config.branding.name;
+  const defaultLogo = props.branding?.logo || '';
+  const lightLogo = props.branding?.logoLight || defaultLogo;
+  const darkLogo = props.branding?.logoDark || defaultLogo;
+  const activeLogo = isDarkMode.value
+    ? (darkLogo || lightLogo || defaultLogo)
+    : (lightLogo || darkLogo || defaultLogo);
+
+  // eslint-disable-next-line qwik/no-use-visible-task
+  useVisibleTask$(({ cleanup }) => {
+    const updateTheme = () => {
+      if (typeof document === 'undefined') return;
+      isDarkMode.value = document.documentElement.classList.contains('dark');
+    };
+
+    updateTheme();
+
+    if (typeof document !== 'undefined') {
+      const observer = new MutationObserver(updateTheme);
+      observer.observe(document.documentElement, {
+        attributes: true,
+        attributeFilter: ['class'],
+      });
+
+      cleanup(() => observer.disconnect());
+    }
+  });
 
   const closeMenu = $(() => {
     menuOpen.value = false;
@@ -41,10 +77,19 @@ export const Header = component$<HeaderProps>((props) => {
         {/* Logo */}
         <Link
           href={MARKETING_ROUTES.home}
-          class="text-xl font-bold text-slate-900 dark:text-white"
+          class="inline-flex items-center gap-2 text-xl font-bold text-slate-900 dark:text-white"
           aria-label="Home"
         >
-          {config.branding.name}
+          {activeLogo && (
+            <img
+              src={activeLogo}
+              alt={brandName}
+              width={120}
+              height={32}
+              class="h-8 w-auto object-contain"
+            />
+          )}
+          {activeLogo ? <span class="sr-only">{brandName}</span> : <span>{brandName}</span>}
         </Link>
 
         {/* Desktop nav */}

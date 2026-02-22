@@ -50,6 +50,7 @@ export const Sidebar = component$<SidebarProps>((props) => {
   const locale = useSpeakLocale();
   const userRole = auth.value?.user.role || 'user';
   const settingsMenuOpen = useSignal(false);
+  const isDarkMode = useSignal(false);
   
   // Check direction directly from document attribute (set immediately by blocking script)
   // This ensures sidebar position changes simultaneously with direction, preventing flash
@@ -59,26 +60,29 @@ export const Sidebar = component$<SidebarProps>((props) => {
   // Track direction from document attribute and update immediately
   // eslint-disable-next-line qwik/no-use-visible-task
   useVisibleTask$(({ cleanup }) => {
-    const updateDirection = () => {
+    const updateUiState = () => {
       if (typeof document !== 'undefined') {
         const dir = document.documentElement.getAttribute('dir');
         // Update immediately - this will trigger re-render with correct position
         if (isRTL.value !== (dir === 'rtl')) {
           isRTL.value = dir === 'rtl';
         }
+        const isDark = document.documentElement.classList.contains('dark');
+        if (isDarkMode.value !== isDark) {
+          isDarkMode.value = isDark;
+        }
       }
     };
     
     // Set initial value immediately (in case it changed between render and this task)
-    updateDirection();
+    updateUiState();
     
-    // Watch for changes to dir attribute - update immediately when it changes
+    // Watch for direction/theme class changes and update immediately when changed.
     if (typeof document !== 'undefined') {
-      const observer = new MutationObserver(updateDirection);
+      const observer = new MutationObserver(updateUiState);
       observer.observe(document.documentElement, {
         attributes: true,
-        attributeFilter: ['dir'],
-        // Use attributeOldValue: false for better performance
+        attributeFilter: ['dir', 'class'],
       });
       
       cleanup(() => observer.disconnect());
@@ -90,9 +94,9 @@ export const Sidebar = component$<SidebarProps>((props) => {
   const defaultLogo = projectSettings.settings?.logo;
   const projectLightLogo = projectSettings.settings?.logoLight || defaultLogo;
   const projectDarkLogo = projectSettings.settings?.logoDark || defaultLogo;
-  const hasProjectLogo = Boolean(projectLightLogo || projectDarkLogo);
-  const hasThemeSpecificLogos =
-    Boolean(projectLightLogo) && Boolean(projectDarkLogo) && projectLightLogo !== projectDarkLogo;
+  const activeLogo = isDarkMode.value
+    ? (projectDarkLogo || projectLightLogo || '')
+    : (projectLightLogo || projectDarkLogo || '');
   
   // Get first letter of project name for fallback icon
   const projectInitial = projectName.charAt(0).toUpperCase();
@@ -206,33 +210,14 @@ export const Sidebar = component$<SidebarProps>((props) => {
           <div class="flex items-center justify-between h-16 md:h-20 lg:h-28 px-4 sm:px-6 md:px-8 lg:px-10 border-b border-slate-200/60 dark:border-slate-700/60">
             <div class="flex items-center gap-2 md:gap-4">
               {/* Project logo from Laravel (if available), otherwise show initial */}
-              {hasProjectLogo ? (
-                hasThemeSpecificLogos ? (
-                  <>
-                    <img
-                      src={projectLightLogo || ''}
-                      alt={projectName}
-                      width="48"
-                      height="48"
-                      class="h-10 w-10 md:h-12 md:w-12 rounded-xl object-contain flex-shrink-0 block dark:hidden"
-                    />
-                    <img
-                      src={projectDarkLogo || ''}
-                      alt={projectName}
-                      width="48"
-                      height="48"
-                      class="h-10 w-10 md:h-12 md:w-12 rounded-xl object-contain flex-shrink-0 hidden dark:block"
-                    />
-                  </>
-                ) : (
-                  <img
-                    src={projectLightLogo || projectDarkLogo || ''}
-                    alt={projectName}
-                    width="48"
-                    height="48"
-                    class="h-10 w-10 md:h-12 md:w-12 rounded-xl object-contain flex-shrink-0"
-                  />
-                )
+              {activeLogo ? (
+                <img
+                  src={activeLogo}
+                  alt={projectName}
+                  width="48"
+                  height="48"
+                  class="h-10 w-10 md:h-12 md:w-12 rounded-xl object-contain flex-shrink-0"
+                />
               ) : (
                 <div class="h-10 w-10 md:h-12 md:w-12 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-blue-500/30 flex-shrink-0">
                   <span class="text-white font-bold text-lg md:text-xl">{projectInitial}</span>

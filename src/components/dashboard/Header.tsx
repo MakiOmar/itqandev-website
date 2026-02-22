@@ -1,4 +1,4 @@
-import { component$, type QRL, useContext } from '@builder.io/qwik';
+import { component$, type QRL, useContext, useSignal, useVisibleTask$ } from '@builder.io/qwik';
 import { UserDropdown } from '../common/UserDropdown';
 import { LanguageSwitcher } from '../common/LanguageSwitcher';
 import { useAdminAuth } from '../../routes/admin/layout';
@@ -16,15 +16,36 @@ interface HeaderProps {
 export const Header = component$<HeaderProps>((props) => {
   const auth = useAdminAuth();
   const projectSettings = useContext(ProjectSettingsContext);
+  const isDarkMode = useSignal(false);
   
   // Get project name and logo from Laravel settings
   const projectName = projectSettings.settings?.name || 'Dashboard';
   const defaultLogo = projectSettings.settings?.logo;
   const projectLightLogo = projectSettings.settings?.logoLight || defaultLogo;
   const projectDarkLogo = projectSettings.settings?.logoDark || defaultLogo;
-  const hasProjectLogo = Boolean(projectLightLogo || projectDarkLogo);
-  const hasThemeSpecificLogos =
-    Boolean(projectLightLogo) && Boolean(projectDarkLogo) && projectLightLogo !== projectDarkLogo;
+  const activeLogo = isDarkMode.value
+    ? (projectDarkLogo || projectLightLogo || '')
+    : (projectLightLogo || projectDarkLogo || '');
+
+  // eslint-disable-next-line qwik/no-use-visible-task
+  useVisibleTask$(({ cleanup }) => {
+    const updateTheme = () => {
+      if (typeof document === 'undefined') return;
+      isDarkMode.value = document.documentElement.classList.contains('dark');
+    };
+
+    updateTheme();
+
+    if (typeof document !== 'undefined') {
+      const observer = new MutationObserver(updateTheme);
+      observer.observe(document.documentElement, {
+        attributes: true,
+        attributeFilter: ['class'],
+      });
+
+      cleanup(() => observer.disconnect());
+    }
+  });
 
   return (
     <>
@@ -42,32 +63,14 @@ export const Header = component$<HeaderProps>((props) => {
             </button>
           )}
           {/* Project logo from Laravel (if available) */}
-          {hasProjectLogo && !hasThemeSpecificLogos && (
+          {activeLogo && (
             <img
-              src={projectLightLogo || projectDarkLogo || ''}
+              src={activeLogo}
               alt={projectName}
               width="48"
               height="48"
               class="h-8 md:h-10 lg:h-12 w-auto object-contain"
             />
-          )}
-          {hasThemeSpecificLogos && (
-            <>
-              <img
-                src={projectLightLogo || ''}
-                alt={projectName}
-                width="48"
-                height="48"
-                class="h-8 md:h-10 lg:h-12 w-auto object-contain block dark:hidden"
-              />
-              <img
-                src={projectDarkLogo || ''}
-                alt={projectName}
-                width="48"
-                height="48"
-                class="h-8 md:h-10 lg:h-12 w-auto object-contain hidden dark:block"
-              />
-            </>
           )}
           {/* Project name from Laravel */}
           <h1 class="text-xl sm:text-2xl md:text-3xl font-bold bg-gradient-to-r from-slate-900 to-slate-700 dark:from-slate-100 dark:to-slate-300 bg-clip-text text-transparent tracking-tight">

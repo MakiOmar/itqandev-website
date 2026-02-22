@@ -5,7 +5,6 @@ import { useTranslate } from '../../../../lib/i18n/useTranslate';
 import { useSwal } from '../../../../lib/hooks/useSwal';
 import { MediaSelector } from '../../../../components/common/MediaSelector';
 import {
-  SettingsHiddenFields,
   SettingsSaveButton,
   useSettings,
   useUpdateSettings,
@@ -70,9 +69,6 @@ export default component$(() => {
       <div class="rounded-lg border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-800 dark:bg-gray-800">
         <h2 class="mb-4 text-lg font-semibold">{t('settings.branding')}</h2>
         <Form action={updateAction} class="space-y-4">
-          <SettingsHiddenFields
-            exclude={['logo', 'logoDark', 'logoLight', 'favicon', 'primaryColor', 'secondaryColor']}
-          />
           <input type="hidden" name="logo" value={logoUrl.value} />
           <input type="hidden" name="logoDark" value={logoDarkUrl.value} />
           <input type="hidden" name="logoLight" value={logoLightUrl.value} />

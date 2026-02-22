@@ -4,6 +4,9 @@ import { getSiteContent } from '~/lib/marketing/content-layer';
 import { Header } from '~/components/marketing/Header';
 import { Footer } from '~/components/marketing/Footer';
 import { auth } from '~/lib/auth';
+import { getApiClient, extractCookieHeader } from '~/lib/api/client';
+import { API_ENDPOINTS } from '~/lib/api/endpoints';
+import { getConfig } from '~/lib/config';
 
 /**
  * Load site content once for layout (footer contact/socials).
@@ -25,20 +28,57 @@ export const usePublicAuth = routeLoader$(async ({ cookie }) => {
 });
 
 /**
+ * Load public branding from settings API so marketing pages can use uploaded logos.
+ * Supports compatibility aliases and falls back to config branding name.
+ */
+export const usePublicBranding = routeLoader$(async ({ cookie, request }) => {
+  const fallbackName = getConfig().branding.name;
+
+  try {
+    const cookieHeader = extractCookieHeader(cookie, request);
+    const apiClient = getApiClient(cookieHeader);
+    const response = await apiClient.get<Record<string, any>>(API_ENDPOINTS.SETTINGS.GET);
+    const settings = (response?.data ?? response) as Record<string, any>;
+
+    const name = settings?.site_name || settings?.name || fallbackName;
+    const logo = settings?.logo || settings?.site_logo || '';
+    const logoDark =
+      settings?.logoDark || settings?.logo_dark || settings?.dark_logo || settings?.site_logo_dark || '';
+    const logoLight =
+      settings?.logoLight || settings?.logo_light || settings?.light_logo || settings?.site_logo_light || '';
+
+    return {
+      name,
+      logo,
+      logoDark,
+      logoLight,
+    };
+  } catch {
+    return {
+      name: fallbackName,
+      logo: '',
+      logoDark: '',
+      logoLight: '',
+    };
+  }
+});
+
+/**
  * Public marketing layout: Header + main + Footer.
  */
 export default component$(() => {
   const siteContent = useSiteContent();
   const authSession = usePublicAuth();
+  const branding = usePublicBranding();
   const contact = siteContent.value?.contact;
 
   return (
     <div data-public-page class="min-h-screen flex flex-col bg-gradient-to-br from-slate-50 via-blue-50/30 to-indigo-50/20 dark:from-slate-900 dark:via-slate-800/30 dark:to-slate-900/20 transition-colors duration-300">
-      <Header session={authSession.value} />
+      <Header session={authSession.value} branding={branding.value} />
       <main class="flex-1 overflow-y-auto">
         <Slot />
       </main>
-      <Footer contact={contact} />
+      <Footer contact={contact} branding={branding.value} />
     </div>
   );
 });

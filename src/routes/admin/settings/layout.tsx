@@ -106,68 +106,84 @@ export const useSettings = routeLoader$(async ({ cookie, request }) => {
 
 /**
  * Shared settings update action for nested settings pages.
- * Keeps payload keys stable; each child page submits full payload.
+ * Sends only submitted section keys and adds compatibility aliases.
+ * Backend preserves existing keys to avoid cross-section overwrites.
  */
 export const useUpdateSettings = routeAction$(
   async (data, { cookie, request }) => {
     try {
       const cookieHeader = extractCookieHeader(cookie, request);
       const apiClient = getApiClient(cookieHeader);
+      const has = (key: string) => Object.prototype.hasOwnProperty.call(data, key);
+      const payload: Record<string, any> = {};
 
-      const parsedMaxSize = Number(data.upload_max_size);
-      const siteName = (data.site_name as string) || defaultSettings.site_name;
-      const siteDescription = (data.site_description as string) || '';
-      const siteEmail = (data.site_email as string) || '';
-      const sitePhone = (data.site_phone as string) || '';
-      const logo = (data.logo as string) || '';
-      const logoDark = (data.logoDark as string) || '';
-      const logoLight = (data.logoLight as string) || '';
-      const favicon = (data.favicon as string) || '';
-      const primaryColor = (data.primaryColor as string) || '';
-      const secondaryColor = (data.secondaryColor as string) || '';
+      const stringKeys = [
+        'site_name',
+        'site_description',
+        'site_email',
+        'site_phone',
+        'site_address',
+        'social_facebook',
+        'social_twitter',
+        'social_linkedin',
+        'social_instagram',
+        'logo',
+        'logoDark',
+        'logoLight',
+        'favicon',
+        'primaryColor',
+        'secondaryColor',
+      ];
 
-      const payload: SettingsFormData = {
-        site_name: siteName,
-        site_description: siteDescription,
-        site_email: siteEmail,
-        site_phone: sitePhone,
-        site_address: (data.site_address as string) || '',
-        social_facebook: (data.social_facebook as string) || '',
-        social_twitter: (data.social_twitter as string) || '',
-        social_linkedin: (data.social_linkedin as string) || '',
-        social_instagram: (data.social_instagram as string) || '',
-        upload_max_size:
-          Number.isFinite(parsedMaxSize) && parsedMaxSize > 0
-            ? parsedMaxSize
-            : defaultSettings.upload_max_size,
-        logo,
-        logoDark,
-        logoLight,
-        favicon,
-        primaryColor,
-        secondaryColor,
-      };
+      for (const key of stringKeys) {
+        if (has(key)) {
+          payload[key] = String((data as any)[key] ?? '');
+        }
+      }
 
-      // Keep existing keys stable and add compatible aliases used by Laravel settings controller.
-      const compatiblePayload = {
-        ...payload,
-        name: siteName,
-        description: siteDescription,
-        supportEmail: siteEmail,
-        supportPhone: sitePhone,
-        primary_color: primaryColor,
-        secondary_color: secondaryColor,
-        site_logo: logo,
-        logo_dark: logoDark,
-        logo_light: logoLight,
-        dark_logo: logoDark,
-        light_logo: logoLight,
-        site_logo_dark: logoDark,
-        site_logo_light: logoLight,
-        site_favicon: favicon,
-      };
+      if (has('upload_max_size')) {
+        const parsedMaxSize = Number((data as any).upload_max_size);
+        if (Number.isFinite(parsedMaxSize) && parsedMaxSize > 0) {
+          payload.upload_max_size = parsedMaxSize;
+        }
+      }
 
-      await apiClient.put(API_ENDPOINTS.SETTINGS.UPDATE, compatiblePayload);
+      if ('site_name' in payload) {
+        payload.name = payload.site_name;
+      }
+      if ('site_description' in payload) {
+        payload.description = payload.site_description;
+      }
+      if ('site_email' in payload) {
+        payload.supportEmail = payload.site_email;
+      }
+      if ('site_phone' in payload) {
+        payload.supportPhone = payload.site_phone;
+      }
+      if ('primaryColor' in payload) {
+        payload.primary_color = payload.primaryColor;
+      }
+      if ('secondaryColor' in payload) {
+        payload.secondary_color = payload.secondaryColor;
+      }
+      if ('logo' in payload) {
+        payload.site_logo = payload.logo;
+      }
+      if ('favicon' in payload) {
+        payload.site_favicon = payload.favicon;
+      }
+      if ('logoDark' in payload) {
+        payload.logo_dark = payload.logoDark;
+        payload.dark_logo = payload.logoDark;
+        payload.site_logo_dark = payload.logoDark;
+      }
+      if ('logoLight' in payload) {
+        payload.logo_light = payload.logoLight;
+        payload.light_logo = payload.logoLight;
+        payload.site_logo_light = payload.logoLight;
+      }
+
+      await apiClient.put(API_ENDPOINTS.SETTINGS.UPDATE, payload);
       clearProjectSettingsCache();
 
       return {
