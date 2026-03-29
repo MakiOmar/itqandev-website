@@ -3,6 +3,7 @@ import { routeLoader$ } from '@builder.io/qwik-city';
 import { getSiteContent } from '~/lib/marketing/content-layer';
 import { Header } from '~/components/marketing/Header';
 import { Footer } from '~/components/marketing/Footer';
+import { ParticlesBackground } from '~/components/marketing/ParticlesBackground';
 import { auth } from '~/lib/auth';
 import { getApiClient, extractCookieHeader } from '~/lib/api/client';
 import { API_ENDPOINTS } from '~/lib/api/endpoints';
@@ -73,12 +74,19 @@ export default component$(() => {
   const contact = siteContent.value?.contact;
 
   return (
-    <div data-public-page class="min-h-screen flex flex-col bg-gradient-to-br from-slate-50 via-blue-50/30 to-indigo-50/20 dark:from-slate-900 dark:via-slate-800/30 dark:to-slate-900/20 transition-colors duration-300">
-      <Header session={authSession.value} branding={branding.value} />
-      <main class="flex-1 overflow-y-auto">
-        <Slot />
-      </main>
-      <Footer contact={contact} branding={branding.value} />
+    <div
+      data-public-page
+      class="relative isolate min-h-screen flex flex-col bg-gradient-to-br from-slate-50 via-blue-50/30 to-indigo-50/20 dark:from-slate-900 dark:via-slate-800/30 dark:to-slate-900/20 transition-colors duration-300"
+    >
+      {/* Full-viewport particles behind page chrome + content */}
+      <ParticlesBackground />
+      <div class="relative z-10 flex min-h-screen flex-1 flex-col">
+        <Header session={authSession.value} branding={branding.value} />
+        <main class="flex-1 overflow-y-auto">
+          <Slot />
+        </main>
+        <Footer contact={contact} branding={branding.value} />
+      </div>
     </div>
   );
 });
