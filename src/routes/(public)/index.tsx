@@ -103,7 +103,7 @@ export default component$(() => {
                   <AnimatedReveal delay={i * 80}>
                     <Link
                       href={`${MARKETING_ROUTES.services}#${s.slug}`}
-                      class="block rounded-xl border border-slate-200 bg-white p-6 transition-shadow hover:shadow-md dark:border-slate-700 dark:bg-slate-800/50 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500"
+                      class="block rounded-xl border border-slate-200 bg-white/75 p-6 shadow-sm backdrop-blur-md transition-shadow hover:shadow-md dark:border-slate-700 dark:bg-slate-800/50 dark:backdrop-blur-none focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500"
                     >
                       <h3 class="text-lg font-semibold text-slate-900 dark:text-white">{s.name}</h3>
                       <p class="mt-2 text-sm text-slate-600 dark:text-slate-400">{s.shortDescription}</p>

@@ -59,7 +59,7 @@ export const Footer = component$<FooterProps>(({ contact, branding }) => {
   });
 
   return (
-    <footer class="border-t border-slate-200 bg-slate-50 dark:border-slate-700 dark:bg-slate-900/50" role="contentinfo">
+    <footer class="border-t border-slate-200 bg-slate-50/55 backdrop-blur-md dark:border-slate-700 dark:bg-slate-900/50 dark:backdrop-blur-none" role="contentinfo">
       <Container class="py-12 md:py-16">
         <div class="grid gap-8 md:grid-cols-2 lg:grid-cols-4">
           {/* Brand */}
@@ -71,6 +71,8 @@ export const Footer = component$<FooterProps>(({ contact, branding }) => {
                   alt={brandName}
                   width={120}
                   height={32}
+                  loading="lazy"
+                  decoding="async"
                   class="h-7 w-auto object-contain"
                 />
               )}

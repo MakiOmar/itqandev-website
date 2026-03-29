@@ -65,7 +65,7 @@ export default component$(() => {
               </h2>
               <ul class="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-4" role="list">
                 {values.map((v: string, i: number) => (
-                  <li key={i} class="rounded-xl border border-slate-200 bg-white p-6 dark:border-slate-700 dark:bg-slate-800/50">
+                  <li key={i} class="rounded-xl border border-slate-200 bg-white/75 p-6 shadow-sm backdrop-blur-md dark:border-slate-700 dark:bg-slate-800/50 dark:backdrop-blur-none">
                     {v}
                   </li>
                 ))}
@@ -109,7 +109,7 @@ export default component$(() => {
               </h2>
               <ul class="mt-10 grid gap-8 sm:grid-cols-2 lg:grid-cols-3" role="list">
                 {team.map((member: { name: string; role: string; bio?: string }, i: number) => (
-                  <li key={i} class="rounded-xl border border-slate-200 bg-white p-6 dark:border-slate-700 dark:bg-slate-800/50">
+                  <li key={i} class="rounded-xl border border-slate-200 bg-white/75 p-6 shadow-sm backdrop-blur-md dark:border-slate-700 dark:bg-slate-800/50 dark:backdrop-blur-none">
                     <p class="font-semibold text-slate-900 dark:text-white">{member.name}</p>
                     <p class="text-sm text-primary-600 dark:text-primary-400">{member.role}</p>
                     {member.bio && <p class="mt-2 text-sm text-slate-600 dark:text-slate-400">{member.bio}</p>}

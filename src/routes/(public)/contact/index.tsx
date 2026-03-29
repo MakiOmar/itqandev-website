@@ -77,7 +77,7 @@ export default component$(() => {
               {/* Form */}
               <AnimatedReveal delay={80}>
                 {submitted.value ? (
-                  <div class="rounded-xl border border-slate-200 bg-slate-50 p-8 dark:border-slate-700 dark:bg-slate-800/50">
+                  <div class="rounded-xl border border-slate-200 bg-slate-50/60 p-8 shadow-sm backdrop-blur-md dark:border-slate-700 dark:bg-slate-800/50 dark:backdrop-blur-none">
                     <p class="font-medium text-slate-900 dark:text-white">Thank you for your message.</p>
                     <p class="mt-2 text-sm text-slate-600 dark:text-slate-400">
                       We&apos;ll get back to you as soon as we can.
@@ -149,7 +149,7 @@ export default component$(() => {
 
               {/* Office info */}
               <AnimatedReveal delay={120}>
-                <div class="rounded-xl border border-slate-200 bg-slate-50 p-8 dark:border-slate-700 dark:bg-slate-800/50">
+                <div class="rounded-xl border border-slate-200 bg-slate-50/60 p-8 shadow-sm backdrop-blur-md dark:border-slate-700 dark:bg-slate-800/50 dark:backdrop-blur-none">
                   <h2 class="text-lg font-semibold text-slate-900 dark:text-white">Office</h2>
                   {contact?.address && (
                     <p class="mt-2 text-slate-600 dark:text-slate-400">{contact.address}</p>

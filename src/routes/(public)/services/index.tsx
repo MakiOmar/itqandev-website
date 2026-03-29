@@ -38,7 +38,7 @@ export default component$(() => {
               <AnimatedReveal key={s.id} delay={i * 60}>
                 <article
                   id={s.slug}
-                  class="scroll-mt-24 rounded-2xl border border-slate-200 bg-white p-8 dark:border-slate-700 dark:bg-slate-800/50 sm:p-10 lg:p-12"
+                  class="scroll-mt-24 rounded-2xl border border-slate-200 bg-white/75 p-8 shadow-sm backdrop-blur-md dark:border-slate-700 dark:bg-slate-800/50 dark:backdrop-blur-none sm:p-10 lg:p-12"
                 >
                   <h2 class="text-2xl font-bold text-slate-900 dark:text-white sm:text-3xl">
                     {s.name}

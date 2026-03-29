@@ -22,7 +22,7 @@ export const FAQ = component$<FAQProps>(({ items, title = 'Frequently asked ques
         <ul class="mt-10 space-y-4" role="list">
           {items.map((item, i) => (
             <li key={i}>
-              <details class="group rounded-lg border border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-800/50">
+              <details class="group rounded-lg border border-slate-200 bg-white/80 backdrop-blur-md dark:border-slate-700 dark:bg-slate-800/50 dark:backdrop-blur-none">
                 <summary class="flex cursor-pointer list-none items-center justify-between px-4 py-4 font-medium text-slate-900 dark:text-white [&::-webkit-details-marker]:hidden">
                   <span>{item.question}</span>
                   <span class="ml-2 shrink-0 transition-transform group-open:rotate-180" aria-hidden="true">

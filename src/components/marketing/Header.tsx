@@ -86,6 +86,7 @@ export const Header = component$<HeaderProps>((props) => {
               alt={brandName}
               width={120}
               height={32}
+              decoding="async"
               class="h-8 w-auto object-contain"
             />
           )}
@@ -143,7 +144,7 @@ export const Header = component$<HeaderProps>((props) => {
       {/* Mobile menu */}
       {menuOpen.value && (
         <div
-          class="border-t border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-900 md:hidden"
+          class="border-t border-slate-200 bg-white/90 backdrop-blur-md dark:border-slate-700 dark:bg-slate-900 dark:backdrop-blur-none md:hidden"
           role="dialog"
           aria-label="Mobile menu"
         >

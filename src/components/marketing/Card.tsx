@@ -11,7 +11,7 @@ export const Card = component$<CardProps>(
       padding === 'none' ? '' : padding === 'sm' ? 'p-4' : 'p-6';
     return (
       <div
-        class={`rounded-xl border border-slate-200 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-800/50 ${paddingClass} ${className}`.trim()}
+        class={`rounded-xl border border-slate-200 bg-white/75 shadow-sm backdrop-blur-md dark:border-slate-700 dark:bg-slate-800/50 dark:backdrop-blur-none ${paddingClass} ${className}`.trim()}
         {...props}
       >
         <Slot />
