@@ -143,7 +143,6 @@ export const ContentTranslationsPanel = component$<{
             <div
               key={loc.code}
               class="rounded-md border border-gray-100 p-3 dark:border-gray-800"
-              dir={loc.rtl ? 'rtl' : 'ltr'}
             >
               <div class="mb-2 flex flex-wrap items-center gap-2">
                 <span class="text-sm font-semibold text-gray-900 dark:text-gray-100">

@@ -32,11 +32,9 @@ export interface LanguageSettingsRowProps {
  * do not close over qwik-speak's translate function (SSR serialization).
  */
 export const LanguageSettingsRow = component$<LanguageSettingsRowProps>((props) => {
+  /* RTL flag is stored for the public site and dashboard chrome only — keep this form LTR. */
   return (
-    <div
-      class="rounded-lg border border-gray-200 p-4 dark:border-gray-700"
-      dir={props.items[props.index].rtl ? 'rtl' : 'ltr'}
-    >
+    <div class="rounded-lg border border-gray-200 p-4 dark:border-gray-700">
       <div class="mb-3 flex flex-wrap items-center justify-between gap-2">
         <span class="text-sm font-medium text-gray-700 dark:text-gray-200">{props.rowTitle}</span>
         <button
@@ -63,12 +61,8 @@ export const LanguageSettingsRow = component$<LanguageSettingsRowProps>((props) 
             onSelect$={$((opt: LocaleOption) => {
               const idx = props.index;
               props.items[idx].code = opt.code;
-              if (!props.items[idx].label.trim()) {
-                props.items[idx].label = opt.label;
-              }
-              if (!props.items[idx].native_label.trim()) {
-                props.items[idx].native_label = opt.native;
-              }
+              props.items[idx].label = opt.label;
+              props.items[idx].native_label = opt.native;
               props.syncJson();
             })}
           />
