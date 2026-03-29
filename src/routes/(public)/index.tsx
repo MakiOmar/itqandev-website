@@ -4,6 +4,7 @@ import { Link } from '@builder.io/qwik-city';
 import { routeLoader$ } from '@builder.io/qwik-city';
 import { getConfig } from '~/lib/config';
 import { getFeaturedCaseStudies, getTestimonials, getSiteContent, getBlogPosts } from '~/lib/marketing/content-layer';
+import { readPreferredLocaleFromCookieHeader } from '~/lib/i18n/dashboard-locale';
 import { MARKETING_ROUTES } from '~/lib/marketing/constants';
 import { resolveServiceIconUrl } from '~/lib/marketing/service-icons';
 import { Container } from '~/components/marketing/Container';
@@ -14,9 +15,11 @@ import { CaseStudyCard } from '~/components/marketing/CaseStudyCard';
 import { TestimonialGrid } from '~/components/marketing/TestimonialGrid';
 import { BlogCard } from '~/components/marketing/BlogCard';
 
-export const useHomeData = routeLoader$(async () => {
+export const useHomeData = routeLoader$(async ({ request }) => {
+  const cookie = request.headers.get('cookie') || '';
+  const uiLocale = readPreferredLocaleFromCookieHeader(cookie) ?? undefined;
   const [caseStudies, testimonials, siteContent, blogPosts] = await Promise.all([
-    getFeaturedCaseStudies(3),
+    getFeaturedCaseStudies(3, uiLocale),
     getTestimonials(),
     getSiteContent(),
     getBlogPosts(),

@@ -3,19 +3,22 @@
  * Used when VITE_MARKETING_CONTENT_SOURCE=api and Laravel exposes these routes.
  */
 
+/**
+ * Paths are appended to VITE_MARKETING_API_URL / VITE_API_BASE_URL (usually ends with `/api`).
+ */
 export const MARKETING_ENDPOINTS = {
-  /** GET list of case studies / projects (public) */
-  caseStudies: '/api/public/projects',
+  /** GET list of published projects (public; supports ?featured=1&per_page=) */
+  caseStudies: '/public/projects',
   /** GET single case study by id or slug */
-  caseStudy: (idOrSlug: string | number) => `/api/public/projects/${idOrSlug}`,
+  caseStudy: (idOrSlug: string | number) => `/public/projects/${idOrSlug}`,
   /** GET list of blog posts (public) */
-  blogPosts: '/api/public/blog-posts',
+  blogPosts: '/public/blog-posts',
   /** GET single blog post by id or slug */
-  blogPost: (idOrSlug: string | number) => `/api/public/blog-posts/${idOrSlug}`,
+  blogPost: (idOrSlug: string | number) => `/public/blog-posts/${idOrSlug}`,
   /** GET list of testimonials (public) */
-  testimonials: '/api/public/testimonials',
+  testimonials: '/public/testimonials',
   /** POST contact form submission */
-  contact: '/api/contact',
+  contact: '/contact',
   /** GET site content (services, pricing, FAQ, etc.) - optional */
-  siteContent: '/api/public/site-content',
+  siteContent: '/public/site-content',
 } as const;

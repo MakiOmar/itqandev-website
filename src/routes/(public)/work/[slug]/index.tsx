@@ -3,6 +3,7 @@ import type { DocumentHead } from '@builder.io/qwik-city';
 import { routeLoader$ } from '@builder.io/qwik-city';
 import { getConfig } from '~/lib/config';
 import { getCaseStudyBySlug } from '~/lib/marketing/content-layer';
+import { readPreferredLocaleFromCookieHeader } from '~/lib/i18n/dashboard-locale';
 import { MARKETING_ROUTES } from '~/lib/marketing/constants';
 import { Container } from '~/components/marketing/Container';
 import { Section } from '~/components/marketing/Section';
@@ -10,9 +11,11 @@ import { AnimatedReveal } from '~/components/marketing/AnimatedReveal';
 import { Link } from '@builder.io/qwik-city';
 import { ContentImage } from '~/components/marketing/ContentImage';
 
-export const useCaseStudy = routeLoader$(async ({ params }) => {
+export const useCaseStudy = routeLoader$(async ({ params, request }) => {
   const slug = params.slug;
-  const caseStudy = await getCaseStudyBySlug(slug);
+  const cookie = request.headers.get('cookie') || '';
+  const uiLocale = readPreferredLocaleFromCookieHeader(cookie) ?? undefined;
+  const caseStudy = await getCaseStudyBySlug(slug, uiLocale);
   if (!caseStudy) throw new Error('Case study not found');
   return caseStudy;
 });

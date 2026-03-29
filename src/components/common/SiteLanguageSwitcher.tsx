@@ -2,6 +2,7 @@ import { component$, useSignal, $ } from '@builder.io/qwik';
 import { useSpeakLocale } from 'qwik-speak';
 import { speakConfig } from '~/lib/i18n/config';
 import { persistPreferredLocale } from '~/lib/i18n/preferred-locale-persist';
+import { getLanguageFlagEmoji } from '~/lib/i18n/language-flags';
 import type { SiteLanguageRow } from '~/types/site-language';
 
 const supportedSpeakCodes = new Set(speakConfig.supportedLocales.map((l) => l.lang.toLowerCase()));
@@ -53,6 +54,9 @@ export const SiteLanguageSwitcher = component$<{ languages: SiteLanguageRow[] | 
         class="flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
         aria-label="Change language"
       >
+        <span class="text-lg leading-none" aria-hidden="true">
+          {getLanguageFlagEmoji(current.code)}
+        </span>
         <span class="hidden sm:inline">{current.native_label || current.label || current.code}</span>
         <span class="sm:hidden">{String(current.code).toUpperCase()}</span>
         <svg
@@ -89,6 +93,9 @@ export const SiteLanguageSwitcher = component$<{ languages: SiteLanguageRow[] | 
                       : 'text-slate-700 hover:bg-slate-50 dark:text-slate-300 dark:hover:bg-slate-800'
                   }`}
                 >
+                  <span class="text-xl leading-none" aria-hidden="true">
+                    {getLanguageFlagEmoji(row.code)}
+                  </span>
                   <span>{row.native_label || row.label || row.code}</span>
                   {active ? (
                     <svg

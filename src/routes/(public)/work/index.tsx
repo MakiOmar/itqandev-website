@@ -3,13 +3,18 @@ import type { DocumentHead } from '@builder.io/qwik-city';
 import { routeLoader$ } from '@builder.io/qwik-city';
 import { getConfig } from '~/lib/config';
 import { getCaseStudies } from '~/lib/marketing/content-layer';
+import { readPreferredLocaleFromCookieHeader } from '~/lib/i18n/dashboard-locale';
 import { Container } from '~/components/marketing/Container';
 import { Section } from '~/components/marketing/Section';
 import { AnimatedReveal } from '~/components/marketing/AnimatedReveal';
 import { CaseStudyCard } from '~/components/marketing/CaseStudyCard';
 import type { CaseStudy } from '~/lib/marketing/types';
 
-export const useWorkData = routeLoader$(async () => getCaseStudies());
+export const useWorkData = routeLoader$(async ({ request }) => {
+  const cookie = request.headers.get('cookie') || '';
+  const uiLocale = readPreferredLocaleFromCookieHeader(cookie) ?? undefined;
+  return getCaseStudies(uiLocale);
+});
 
 export default component$(() => {
   const caseStudies = useWorkData().value;

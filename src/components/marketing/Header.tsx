@@ -77,11 +77,11 @@ export const Header = component$<HeaderProps>((props) => {
       class="sticky top-0 z-40 w-full border-b border-slate-200/80 bg-white/80 backdrop-blur-md dark:border-slate-700/80 dark:bg-slate-900/80"
       role="banner"
     >
-      <Container class="flex h-16 items-center justify-between sm:h-18">
-        {/* Logo */}
+      <Container class="flex h-16 w-full items-center justify-between gap-3 md:justify-start sm:h-18">
+        {/* Logo — keep away from main nav cluster */}
         <Link
           href={MARKETING_ROUTES.home}
-          class="inline-flex items-center gap-2 text-xl font-bold text-slate-900 dark:text-white"
+          class="inline-flex shrink-0 items-center gap-2 text-xl font-bold text-slate-900 dark:text-white"
           aria-label="Home"
         >
           {activeLogo && (
@@ -99,22 +99,23 @@ export const Header = component$<HeaderProps>((props) => {
           {activeLogo ? <span class="sr-only">{brandName}</span> : <span>{brandName}</span>}
         </Link>
 
-        {/* Desktop nav */}
-        <nav class="hidden md:flex md:items-center md:gap-1" aria-label="Main">
-          {navLinks.map((item) => (
-            <Link
-              key={item.href}
-              href={item.href}
-              class="rounded-lg px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white"
-            >
-              {item.label}
-            </Link>
-          ))}
-        </nav>
+        {/* Main menu — centered in the middle column on desktop only */}
+        <div class="hidden min-w-0 flex-1 md:flex md:justify-center">
+          <nav class="flex items-center gap-1" aria-label="Main">
+            {navLinks.map((item) => (
+              <Link
+                key={item.href}
+                href={item.href}
+                class="rounded-lg px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white"
+              >
+                {item.label}
+              </Link>
+            ))}
+          </nav>
+        </div>
 
-        {/* Right: language (when site has multiple) + theme + CTA + Login */}
-        <div class="flex items-center gap-2">
-          <SiteLanguageSwitcher languages={props.branding?.site_languages} />
+        {/* Theme, CTA, user menu — language switcher last (furthest from main nav) */}
+        <div class="flex shrink-0 items-center gap-2 md:ml-auto">
           <ThemeToggle />
           <div class="hidden sm:flex sm:items-center sm:gap-2">
             <Button href={MARKETING_ROUTES.contact} variant="primary">
@@ -128,6 +129,7 @@ export const Header = component$<HeaderProps>((props) => {
               </Button>
             )}
           </div>
+          <SiteLanguageSwitcher languages={props.branding?.site_languages} />
 
           {/* Mobile menu button */}
           <button
