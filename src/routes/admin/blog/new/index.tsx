@@ -3,7 +3,7 @@ import type { DocumentHead } from '@builder.io/qwik-city';
 import { routeAction$, Form, zod$, z, Link } from '@builder.io/qwik-city';
 import { ContentTranslationsPanel } from '../../../../components/admin/ContentTranslationsPanel';
 import { initialTranslationsJson, parseTranslationsJson } from '../../../../lib/content-translations';
-import { useSiteLanguageConfig } from '../../../../lib/loaders/site-language-config';
+import { useSiteLanguageConfig } from '../../layout';
 import { getApiClient, extractCookieHeader } from '../../../../lib/api/client';
 import { PageHeader } from '../../../../components/common/PageHeader';
 import { useTranslate } from '../../../../lib/i18n/useTranslate';

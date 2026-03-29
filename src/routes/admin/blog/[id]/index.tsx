@@ -8,7 +8,7 @@ import { useTranslate } from '../../../../lib/i18n/useTranslate';
 import { useSwal } from '../../../../lib/hooks/useSwal';
 import { ContentTranslationsPanel } from '../../../../components/admin/ContentTranslationsPanel';
 import { initialTranslationsJson, parseTranslationsJson } from '../../../../lib/content-translations';
-import { useSiteLanguageConfig } from '../../../../lib/loaders/site-language-config';
+import { useSiteLanguageConfig } from '../../layout';
 import { getApiClient, extractCookieHeader } from '../../../../lib/api/client';
 import { API_ENDPOINTS } from '../../../../lib/api/endpoints';
 import { ROUTES } from '../../../../lib/constants/routes';

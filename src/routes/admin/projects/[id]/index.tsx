@@ -13,7 +13,7 @@ import { API_ENDPOINTS } from '../../../../lib/api/endpoints';
 import { ROUTES } from '../../../../lib/constants/routes';
 import { ContentTranslationsPanel } from '../../../../components/admin/ContentTranslationsPanel';
 import { initialTranslationsJson, parseTranslationsJson } from '../../../../lib/content-translations';
-import { useSiteLanguageConfig } from '../../../../lib/loaders/site-language-config';
+import { useSiteLanguageConfig } from '../../layout';
 import type { Project, ProjectUpdateInput, Category, Skill, Media } from '../../../../types';
 
 /**

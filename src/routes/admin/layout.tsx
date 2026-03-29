@@ -10,6 +10,11 @@ import { getApiClient } from '../../lib/api/client';
 import { ProjectSettingsContext } from '../../stores/project-settings-store';
 
 /**
+ * Site languages for admin content forms (must be re-exported from a route file — see Qwik routeLoader$ rules).
+ */
+export { useSiteLanguageConfig } from '../../lib/loaders/site-language-config';
+
+/**
  * Admin dashboard auth loader - ensures user is authenticated
  * Redirects to login if not authenticated (except on login page)
  * NOTE: This loader runs on all admin routes including login page
