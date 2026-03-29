@@ -32,27 +32,54 @@ export default component$(() => {
 
   return (
     <>
-      {/* Hero */}
-      <Section class="pt-12 sm:pt-16 lg:pt-20">
-        <Container>
-          <AnimatedReveal>
-            <div class="mx-auto max-w-3xl text-center">
-              <h1 class="text-4xl font-bold tracking-tight text-slate-900 dark:text-white sm:text-5xl lg:text-6xl">
-                We build web, Android & iOS apps that scale
-              </h1>
-              <p class="mt-6 text-lg text-slate-600 dark:text-slate-400 sm:text-xl">
-                From MVPs to enterprise products. Modern stack, clear process, and long-term support.
-              </p>
-              <div class="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row">
-                <Button href={MARKETING_ROUTES.contact} variant="primary" class="min-w-[180px]">
-                  Get in touch
-                </Button>
-                <Button href={MARKETING_ROUTES.work} variant="outline" class="min-w-[180px]">
-                  View our work
-                </Button>
+      {/* Hero — responsive WebP banner + copy; text first in DOM for accessibility/SEO */}
+      <Section class="relative overflow-hidden bg-gradient-to-b from-primary-50/70 via-white to-white pt-12 sm:pt-16 lg:pt-20 dark:from-primary-950/25 dark:via-slate-900 dark:to-slate-900">
+        {/* Soft accents aligned with primary / sky palette */}
+        <div
+          class="pointer-events-none absolute -right-24 -top-24 h-72 w-72 rounded-full bg-primary-400/25 blur-3xl dark:bg-primary-500/15"
+          aria-hidden="true"
+        />
+        <div
+          class="pointer-events-none absolute -bottom-40 -left-24 h-80 w-80 rounded-full bg-sky-300/20 blur-3xl dark:bg-sky-900/25"
+          aria-hidden="true"
+        />
+        <Container class="relative">
+          <div class="grid items-center gap-10 lg:grid-cols-2 lg:gap-12 xl:gap-16">
+            <AnimatedReveal>
+              <div class="mx-auto max-w-2xl text-center lg:mx-0 lg:max-w-xl lg:text-left">
+                <h1 class="text-4xl font-bold tracking-tight text-slate-900 dark:text-white sm:text-5xl lg:text-6xl">
+                  We build web, Android & iOS apps that scale
+                </h1>
+                <p class="mt-6 text-lg text-slate-600 dark:text-slate-300 sm:text-xl">
+                  From MVPs to enterprise products. Modern stack, clear process, and long-term support.
+                </p>
+                <div class="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row lg:justify-start">
+                  <Button href={MARKETING_ROUTES.contact} variant="primary" class="min-w-[180px]">
+                    Get in touch
+                  </Button>
+                  <Button href={MARKETING_ROUTES.work} variant="outline" class="min-w-[180px]">
+                    View our work
+                  </Button>
+                </div>
               </div>
-            </div>
-          </AnimatedReveal>
+            </AnimatedReveal>
+            <AnimatedReveal delay={100}>
+              <div class="mx-auto w-full max-w-lg lg:mx-0 lg:max-w-none">
+                <picture>
+                  <source media="(max-width: 1023px)" srcset="/hero-banner-mobile.webp" type="image/webp" />
+                  <img
+                    src="/hero-banner.webp"
+                    width={1400}
+                    height={788}
+                    alt="Credocode — web, Android and iOS products built to scale"
+                    class="h-auto w-full rounded-2xl border border-slate-200/90 shadow-2xl shadow-slate-900/[0.08] ring-1 ring-slate-900/5 dark:border-slate-600/40 dark:shadow-primary-950/35 dark:ring-white/10"
+                    decoding="async"
+                    fetchPriority="high"
+                  />
+                </picture>
+              </div>
+            </AnimatedReveal>
+          </div>
         </Container>
       </Section>
 
