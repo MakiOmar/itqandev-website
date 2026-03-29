@@ -41,7 +41,8 @@ export const ParticlesBackground = component$(() => {
           vx: (Math.random() - 0.5) * 0.28,
           vy: (Math.random() - 0.5) * 0.28,
           r: Math.random() * 1.4 + 0.5,
-          alpha: Math.random() * 0.28 + 0.12,
+          // Base opacity; light theme gets a boost when drawn (pale BG washes out low alpha)
+          alpha: Math.random() * 0.35 + 0.2,
         });
       }
     };
@@ -64,8 +65,9 @@ export const ParticlesBackground = component$(() => {
       const w = window.innerWidth;
       const h = window.innerHeight;
       const dark = isDark();
-      const lineRgb = '148, 163, 184';
-      const nodeRgb = dark ? '56, 189, 248' : '2, 132, 199';
+      // Light: darker slate + stronger alpha so lines read on white/blue-50 gradients
+      const lineRgb = dark ? '148, 163, 184' : '71, 85, 105';
+      const nodeRgb = dark ? '56, 189, 248' : '3, 105, 161';
 
       ctx.clearRect(0, 0, w, h);
 
@@ -88,9 +90,9 @@ export const ParticlesBackground = component$(() => {
           const dy = p.y - q.y;
           const d = Math.hypot(dx, dy);
           if (d < linkDistance) {
-            const a = (1 - d / linkDistance) * (dark ? 0.14 : 0.1);
+            const a = (1 - d / linkDistance) * (dark ? 0.14 : 0.26);
             ctx.strokeStyle = `rgba(${lineRgb}, ${a})`;
-            ctx.lineWidth = 0.55;
+            ctx.lineWidth = dark ? 0.55 : 0.65;
             ctx.beginPath();
             ctx.moveTo(p.x, p.y);
             ctx.lineTo(q.x, q.y);
@@ -100,7 +102,8 @@ export const ParticlesBackground = component$(() => {
       }
 
       for (const p of particles) {
-        ctx.fillStyle = `rgba(${nodeRgb}, ${p.alpha})`;
+        const a = dark ? p.alpha : Math.min(1, p.alpha * 1.15);
+        ctx.fillStyle = `rgba(${nodeRgb}, ${a})`;
         ctx.beginPath();
         ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
         ctx.fill();
