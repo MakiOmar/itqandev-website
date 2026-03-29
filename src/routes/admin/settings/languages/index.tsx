@@ -8,7 +8,8 @@ import {
   useSettings,
   useUpdateSettings,
 } from '../layout';
-import { SearchableLocaleSelect } from '../../../../components/admin/SearchableLocaleSelect';
+import { LanguageSettingsRow } from '../../../../components/admin/LanguageSettingsRow';
+import type { LanguageSettingsRowStrings } from '../../../../components/admin/LanguageSettingsRow';
 import { getLocaleOptions } from '../../../../lib/i18n/locale-options';
 import type { SiteLanguageRow } from '../../../../types/site-language';
 
@@ -20,20 +21,80 @@ export default component$(() => {
   const { t } = useTranslate();
   const settings = useSettings();
   const updateAction = useUpdateSettings();
-  const { success: showSuccess, error: showError } = useSwal();
-
-  const initialItems = cloneLanguages(settings.value.site_languages);
-  const items = useStore<SiteLanguageRow[]>(initialItems);
-  const defaultLocale = useSignal(settings.value.default_locale);
-  const langsJson = useSignal(JSON.stringify(initialItems));
 
   const successTitle = String(t('common.success'));
   const savedText = String(t('settings.saveSuccess'));
   const errorTitle = String(t('common.error'));
   const errorText = String(t('settings.saveFailed'));
 
+  const { success: showSuccess, error: showError } = useSwal({
+    confirmTitle: String(t('common.confirm')),
+    yes: String(t('common.yes')),
+    no: String(t('common.no')),
+    alertTitle: String(t('common.alert')),
+    ok: String(t('common.ok')),
+    successTitle,
+    errorTitle,
+    warningTitle: String(t('common.warning')),
+  });
+
+  const initialItems = cloneLanguages(settings.value.site_languages);
+  const items = useStore<SiteLanguageRow[]>(initialItems);
+  const defaultLocale = useSignal(settings.value.default_locale);
+  const langsJson = useSignal(JSON.stringify(initialItems));
+
   const syncJson = $(() => {
     langsJson.value = JSON.stringify(items);
+  });
+
+  const languageRowPrefix = String(t('settings.languageRow'));
+
+  const rowStrings: LanguageSettingsRowStrings = {
+    fieldLabel: String(t('settings.languageCode')),
+    searchPlaceholder: String(t('settings.searchLanguage')),
+    emptyHint: String(t('settings.languageCodeEmpty')),
+    noResultsText: String(t('settings.languageNoResults')),
+    rtl: String(t('settings.rtl')),
+    languageLabel: String(t('settings.languageLabel')),
+    languageNative: String(t('settings.languageNative')),
+    removeLanguage: String(t('settings.removeLanguage')),
+  };
+
+  const removeRowAt = $((index: number) => {
+    if (items.length <= 1) {
+      return;
+    }
+    items.splice(index, 1);
+    if (!items.some((r) => r.code === defaultLocale.value)) {
+      defaultLocale.value = items[0]?.code || 'en';
+    }
+    syncJson();
+  });
+
+  const addLanguageRow = $(() => {
+    const used = new Set(items.map((r) => r.code.trim().toLowerCase()).filter(Boolean));
+    const opt = getLocaleOptions().find((o) => !used.has(o.code));
+    if (opt) {
+      items.push({
+        code: opt.code,
+        label: opt.label,
+        native_label: opt.native,
+        rtl:
+          opt.code.startsWith('ar') || ['he', 'fa', 'ur', 'yi'].includes(opt.code),
+      });
+    } else {
+      items.push({
+        code: '',
+        label: '',
+        native_label: '',
+        rtl: false,
+      });
+    }
+    syncJson();
+  });
+
+  const onDefaultLocaleChange = $((e: Event) => {
+    defaultLocale.value = (e.target as HTMLSelectElement).value;
   });
 
   // eslint-disable-next-line qwik/no-use-visible-task
@@ -69,9 +130,7 @@ export default component$(() => {
           <select
             name="default_locale"
             value={defaultLocale.value}
-            onChange$={(e: Event) => {
-              defaultLocale.value = (e.target as HTMLSelectElement).value;
-            }}
+            onChange$={onDefaultLocaleChange}
             class="w-full max-w-md rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-primary-500 focus:outline-none focus:ring focus:ring-primary-200 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100"
           >
             {items.map((row) => (
@@ -89,30 +148,7 @@ export default component$(() => {
             </h3>
             <button
               type="button"
-              onClick$={() => {
-                const used = new Set(
-                  items.map((r) => r.code.trim().toLowerCase()).filter(Boolean),
-                );
-                const opt = getLocaleOptions().find((o) => !used.has(o.code));
-                if (opt) {
-                  items.push({
-                    code: opt.code,
-                    label: opt.label,
-                    native_label: opt.native,
-                    rtl:
-                      opt.code.startsWith('ar') ||
-                      ['he', 'fa', 'ur', 'yi'].includes(opt.code),
-                  });
-                } else {
-                  items.push({
-                    code: '',
-                    label: '',
-                    native_label: '',
-                    rtl: false,
-                  });
-                }
-                syncJson();
-              }}
+              onClick$={addLanguageRow}
               class="rounded-lg bg-primary-600 px-3 py-1.5 text-sm font-medium text-white shadow-sm hover:bg-primary-700"
             >
               {t('settings.addLanguage')}
@@ -121,102 +157,19 @@ export default component$(() => {
 
           <div class="space-y-4">
             {items.map((row, index) => (
-              <div
+              <LanguageSettingsRow
                 key={`${row.code}-${index}`}
-                class="rounded-lg border border-gray-200 p-4 dark:border-gray-700"
-                dir={row.rtl ? 'rtl' : 'ltr'}
-              >
-                <div class="mb-3 flex flex-wrap items-center justify-between gap-2">
-                  <span class="text-sm font-medium text-gray-700 dark:text-gray-200">
-                    {t('settings.languageRow')} {index + 1}
-                  </span>
-                  <button
-                    type="button"
-                    disabled={items.length <= 1}
-                    onClick$={() => {
-                      if (items.length <= 1) {
-                        return;
-                      }
-                      items.splice(index, 1);
-                      if (!items.some((r) => r.code === defaultLocale.value)) {
-                        defaultLocale.value = items[0]?.code || 'en';
-                      }
-                      syncJson();
-                    }}
-                    class="rounded-lg border border-red-200 bg-white px-2 py-1 text-xs font-medium text-red-700 hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-red-900 dark:bg-gray-900 dark:text-red-300 dark:hover:bg-red-950/40"
-                  >
-                    {t('settings.removeLanguage')}
-                  </button>
-                </div>
-
-                <div class="grid gap-3 md:grid-cols-2">
-                  <div>
-                    <SearchableLocaleSelect
-                      selectedCode={row.code}
-                      excludeCodes={items
-                        .map((r, j) => (j !== index ? r.code.trim().toLowerCase() : ''))
-                        .filter(Boolean)}
-                      fieldLabel={t('settings.languageCode')}
-                      searchPlaceholder={t('settings.searchLanguage')}
-                      emptyHint={t('settings.languageCodeEmpty')}
-                      noResultsText={t('settings.languageNoResults')}
-                      onSelect$={$((opt) => {
-                        items[index].code = opt.code;
-                        if (!items[index].label.trim()) {
-                          items[index].label = opt.label;
-                        }
-                        if (!items[index].native_label.trim()) {
-                          items[index].native_label = opt.native;
-                        }
-                        syncJson();
-                      })}
-                    />
-                  </div>
-                  <div class="flex items-end gap-2 pb-1">
-                    <input
-                      id={`rtl-${index}`}
-                      type="checkbox"
-                      checked={row.rtl}
-                      onChange$={(e: Event) => {
-                        items[index].rtl = (e.target as HTMLInputElement).checked;
-                        syncJson();
-                      }}
-                      class="h-4 w-4 rounded border-gray-300 text-primary-600"
-                    />
-                    <label for={`rtl-${index}`} class="text-sm text-gray-700 dark:text-gray-200">
-                      {t('settings.rtl')}
-                    </label>
-                  </div>
-                  <div class="md:col-span-2">
-                    <label class="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-300">
-                      {t('settings.languageLabel')}
-                    </label>
-                    <input
-                      type="text"
-                      value={row.label}
-                      onInput$={(e: Event) => {
-                        items[index].label = (e.target as HTMLInputElement).value;
-                        syncJson();
-                      }}
-                      class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 dark:border-gray-600 dark:bg-gray-950 dark:text-gray-100"
-                    />
-                  </div>
-                  <div class="md:col-span-2">
-                    <label class="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-300">
-                      {t('settings.languageNative')}
-                    </label>
-                    <input
-                      type="text"
-                      value={row.native_label}
-                      onInput$={(e: Event) => {
-                        items[index].native_label = (e.target as HTMLInputElement).value;
-                        syncJson();
-                      }}
-                      class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 dark:border-gray-600 dark:bg-gray-950 dark:text-gray-100"
-                    />
-                  </div>
-                </div>
-              </div>
+                index={index}
+                items={items}
+                excludeCodes={items
+                  .map((r, j) => (j !== index ? r.code.trim().toLowerCase() : ''))
+                  .filter(Boolean)}
+                rowTitle={`${languageRowPrefix} ${index + 1}`}
+                removeDisabled={items.length <= 1}
+                strings={rowStrings}
+                syncJson={syncJson}
+                onRemove$={removeRowAt}
+              />
             ))}
           </div>
         </div>
