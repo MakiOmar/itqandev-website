@@ -11,8 +11,12 @@ import { useSwal } from '../../../../lib/hooks/useSwal';
 import { getApiClient, extractCookieHeader } from '../../../../lib/api/client';
 import { API_ENDPOINTS } from '../../../../lib/api/endpoints';
 import { ROUTES } from '../../../../lib/constants/routes';
-import { ContentTranslationsPanel } from '../../../../components/admin/ContentTranslationsPanel';
-import { initialTranslationsJson, parseTranslationsJson } from '../../../../lib/content-translations';
+import {
+  ContentPrimaryLanguageSelect,
+  FieldTranslationGlobe,
+  TranslationsFormRoot,
+} from '../../../../components/admin/PerFieldContentTranslations';
+import { initialTranslationsJson, parseTranslationsJson, secondaryLocalesForContent } from '../../../../lib/content-translations';
 import { useSiteLanguageConfig } from '../../layout';
 import type { Project, ProjectUpdateInput, Category, Skill, Media } from '../../../../types';
 
@@ -154,6 +158,10 @@ export const useUpdateProject = routeAction$(
         published_at: data.published_at || undefined,
       };
 
+      const rawContentLocale = (data as { content_locale?: string }).content_locale?.trim();
+      (payload as ProjectUpdateInput & { content_locale?: string | null }).content_locale =
+        rawContentLocale && rawContentLocale.length > 0 ? rawContentLocale : null;
+
       const parsedTranslations = parseTranslationsJson((data as { translations_json?: string }).translations_json);
       if (parsedTranslations) {
         (payload as unknown as { translations?: unknown[] }).translations = parsedTranslations;
@@ -267,6 +275,7 @@ export const useUpdateProject = routeAction$(
     heroMedia: z.any().optional(),
     videoMedia: z.any().optional(),
     translations_json: z.string().optional(),
+    content_locale: z.string().optional(),
   }))
 );
 
@@ -317,6 +326,13 @@ export default component$(() => {
     ctHint: t('contentTranslations.defaultHint'),
     ctNoLangs: t('contentTranslations.noSecondaryLanguages'),
     ctRtl: t('contentTranslations.rtlBadge'),
+    ctPrimaryLang: t('contentTranslations.contentPrimaryLanguage'),
+    ctPrimaryHint: t('contentTranslations.contentPrimaryHint'),
+    ctUseSiteDefault: t('contentTranslations.useSiteDefault'),
+    ctFallbackHint: t('contentTranslations.fallbackPlaceholderHint'),
+    ctGlobeTitle: t('contentTranslations.globeTitle'),
+    ctGlobeSummary: t('contentTranslations.globeSummary'),
+    ctGlobeDescription: t('contentTranslations.globeDescription'),
   };
   
   const { success } = useSwal({
@@ -371,6 +387,11 @@ export default component$(() => {
   );
   const statusValue = useSignal<string>(project.value.status || 'draft');
   const featuredValue = useSignal<boolean>(!!project.value.featured);
+  const contentLocaleDraft = useSignal<string>(
+    project.value.content_locale != null && String(project.value.content_locale).trim() !== ''
+      ? String(project.value.content_locale).trim()
+      : '',
+  );
 
   const categoryItems = categoriesAndSkills.value.categories.map((c) => ({
     id: c.id,
@@ -382,9 +403,14 @@ export default component$(() => {
     name: s.name,
   }));
 
+  const translationSecondaries = secondaryLocalesForContent(
+    langConfig.value.site_languages,
+    langConfig.value.default_locale,
+    contentLocaleDraft.value.trim() !== '' ? contentLocaleDraft.value.trim() : null,
+  );
   const projectTranslationsJson = initialTranslationsJson(
     'project',
-    langConfig.value.secondary,
+    translationSecondaries,
     project.value?.translations,
   );
 
@@ -420,96 +446,120 @@ export default component$(() => {
           <div class="grid gap-6 lg:grid-cols-[1fr_360px]">
             <div class="space-y-6">
               <div class="grid gap-4 md:grid-cols-2">
-                <div>
-                  <label
-                    for="title"
-                    class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-200"
-                  >
-                    {translations.name} *
-                  </label>
-                  <input
-                    id="title"
-                    name="title"
-                    type="text"
-                    value={project.value.title}
-                    required
-                    class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-primary-500 focus:outline-none focus:ring focus:ring-primary-200 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:focus:ring-primary-700/40"
+                <TranslationsFormRoot
+                  kind="project"
+                  locales={translationSecondaries}
+                  initialJson={projectTranslationsJson}
+                  rtlBadge={translations.ctRtl}
+                  fallbackHintShort={translations.ctFallbackHint}
+                >
+                  <ContentPrimaryLanguageSelect
+                    siteLanguages={langConfig.value.site_languages}
+                    defaultLocale={langConfig.value.default_locale}
+                    value={contentLocaleDraft.value}
+                    label={translations.ctPrimaryLang}
+                    hint={translations.ctPrimaryHint}
+                    useSiteDefaultLabel={translations.ctUseSiteDefault}
+                    onChange$={$((code: string) => {
+                      contentLocaleDraft.value = code;
+                    })}
                   />
-                  {updateAction.value?.failed && updateAction.value.fieldErrors?.title && (
-                    <p class="mt-1 text-sm text-red-600 dark:text-red-400">
-                      {updateAction.value.fieldErrors.title}
-                    </p>
-                  )}
-                </div>
 
-                <div>
-                  <label
-                    for="slug"
-                    class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-200"
-                  >
-                    {translations.slug}
-                  </label>
-                  <input
-                    id="slug"
-                    name="slug"
-                    type="text"
-                    value={project.value.slug || ''}
-                    class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-primary-500 focus:outline-none focus:ring focus:ring-primary-200 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:focus:ring-primary-700/40"
-                  />
-                </div>
+                  {!translationSecondaries.length ? (
+                    <p class="md:col-span-2 text-sm text-gray-600 dark:text-gray-400">{translations.ctNoLangs}</p>
+                  ) : null}
 
-                <div class="md:col-span-2">
-                  <label
-                    for="summary"
-                    class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-200"
+                  <FieldTranslationGlobe
+                    fieldKey="title"
+                    gridSpan="one"
+                    globeAriaLabel={translations.ctGlobeTitle}
+                    fallbackText={project.value.title ?? ''}
                   >
-                    {translations.summary}
-                  </label>
-                  <textarea
-                    id="summary"
-                    name="summary"
-                    rows={2}
-                    value={project.value.summary || ''}
-                    class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-primary-500 focus:outline-none focus:ring focus:ring-primary-200 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:focus:ring-primary-700/40"
-                  />
-                </div>
+                    <div>
+                      <label
+                        for="title"
+                        class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-200"
+                      >
+                        {translations.name} *
+                      </label>
+                      <input
+                        id="title"
+                        name="title"
+                        type="text"
+                        value={project.value.title}
+                        required
+                        class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-primary-500 focus:outline-none focus:ring focus:ring-primary-200 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:focus:ring-primary-700/40"
+                      />
+                      {updateAction.value?.failed && updateAction.value.fieldErrors?.title && (
+                        <p class="mt-1 text-sm text-red-600 dark:text-red-400">
+                          {updateAction.value.fieldErrors.title}
+                        </p>
+                      )}
+                    </div>
+                  </FieldTranslationGlobe>
 
-                <div class="md:col-span-2">
-                  <label
-                    for="description"
-                    class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-200"
+                  <div>
+                    <label
+                      for="slug"
+                      class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-200"
+                    >
+                      {translations.slug}
+                    </label>
+                    <input
+                      id="slug"
+                      name="slug"
+                      type="text"
+                      value={project.value.slug || ''}
+                      class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-primary-500 focus:outline-none focus:ring focus:ring-primary-200 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:focus:ring-primary-700/40"
+                    />
+                  </div>
+
+                  <FieldTranslationGlobe
+                    fieldKey="summary"
+                    gridSpan="full"
+                    globeAriaLabel={translations.ctGlobeSummary}
+                    fallbackText={project.value.summary || ''}
                   >
-                    {translations.description}
-                  </label>
-                  <textarea
-                    id="description"
-                    name="description"
-                    rows={4}
-                    value={project.value.description || ''}
-                    class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-primary-500 focus:outline-none focus:ring focus:ring-primary-200 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:focus:ring-primary-700/40"
-                  />
-                </div>
+                    <div>
+                      <label
+                        for="summary"
+                        class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-200"
+                      >
+                        {translations.summary}
+                      </label>
+                      <textarea
+                        id="summary"
+                        name="summary"
+                        rows={2}
+                        value={project.value.summary || ''}
+                        class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-primary-500 focus:outline-none focus:ring focus:ring-primary-200 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:focus:ring-primary-700/40"
+                      />
+                    </div>
+                  </FieldTranslationGlobe>
 
-                <div class="md:col-span-2">
-                  <ContentTranslationsPanel
-                    kind="project"
-                    locales={langConfig.value.secondary}
-                    initialJson={projectTranslationsJson}
-                    labels={{
-                      addTranslations: translations.ctAdd,
-                      collapseTranslations: translations.ctCollapseTranslations,
-                      sectionTitle: translations.ctSection,
-                      defaultHint: translations.ctHint,
-                      noLanguages: translations.ctNoLangs,
-                      rtlBadge: translations.ctRtl,
-                      title: translations.name,
-                      summary: translations.summary,
-                      description: translations.description,
-                      excerpt: '',
-                      content: '',
-                    }}
-                  />
-                </div>
+                  <FieldTranslationGlobe
+                    fieldKey="description"
+                    gridSpan="full"
+                    globeAriaLabel={translations.ctGlobeDescription}
+                    fallbackText={project.value.description || ''}
+                  >
+                    <div>
+                      <label
+                        for="description"
+                        class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-200"
+                      >
+                        {translations.description}
+                      </label>
+                      <textarea
+                        id="description"
+                        name="description"
+                        rows={4}
+                        value={project.value.description || ''}
+                        class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-primary-500 focus:outline-none focus:ring focus:ring-primary-200 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:focus:ring-primary-700/40"
+                      />
+                    </div>
+                  </FieldTranslationGlobe>
+                </TranslationsFormRoot>
 
                 <div>
                   <label

@@ -339,7 +339,16 @@
     "sectionTitle": "ترجمات (لغات أخرى)",
     "defaultHint": "الحقول أعلاه هي للغة الافتراضية. وسّع القسم لتحرير النص لكل لغة إضافية مفعّلة.",
     "noSecondaryLanguages": "أضف لغات من الإعدادات ← اللغات لترجمة المحتوى.",
-    "rtlBadge": "RTL"
+    "rtlBadge": "RTL",
+    "contentPrimaryLanguage": "لغة المحتوى (الحقول الرئيسية)",
+    "contentPrimaryHint": "العنوان والنص الرئيسي بهذه اللغة. اترك «افتراضي الموقع» لمزامنة الإعدادات، أو اختر لغة أخرى لهذا العنصر فقط.",
+    "useSiteDefault": "افتراضي الموقع",
+    "fallbackPlaceholderHint": "اتركه فارغًا لاستخدام نص اللغة الرئيسية",
+    "globeTitle": "ترجمات العنوان",
+    "globeSummary": "ترجمات الملخص",
+    "globeDescription": "ترجمات الوصف",
+    "globeExcerpt": "ترجمات المقتطف",
+    "globeContent": "ترجمات المحتوى"
   },
   "seo": {
     "title": "SEO",

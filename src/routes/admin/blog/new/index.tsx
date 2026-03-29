@@ -1,8 +1,12 @@
-import { component$ } from '@builder.io/qwik';
+import { component$, useSignal, $ } from '@builder.io/qwik';
 import type { DocumentHead } from '@builder.io/qwik-city';
 import { routeAction$, Form, zod$, z, Link } from '@builder.io/qwik-city';
-import { ContentTranslationsPanel } from '../../../../components/admin/ContentTranslationsPanel';
-import { initialTranslationsJson, parseTranslationsJson } from '../../../../lib/content-translations';
+import {
+  ContentPrimaryLanguageSelect,
+  FieldTranslationGlobe,
+  TranslationsFormRoot,
+} from '../../../../components/admin/PerFieldContentTranslations';
+import { initialTranslationsJson, parseTranslationsJson, secondaryLocalesForContent } from '../../../../lib/content-translations';
 import { useSiteLanguageConfig } from '../../layout';
 import { getApiClient, extractCookieHeader } from '../../../../lib/api/client';
 import { PageHeader } from '../../../../components/common/PageHeader';
@@ -42,6 +46,10 @@ export const useCreateBlogPost = routeAction$(
         publishedAt: data.published_at || undefined,
       };
 
+      const rawContentLocale = (data as { content_locale?: string }).content_locale?.trim();
+      (payload as BlogPostCreateInput & { content_locale?: string | null }).content_locale =
+        rawContentLocale && rawContentLocale.length > 0 ? rawContentLocale : null;
+
       const parsedTranslations = parseTranslationsJson((data as { translations_json?: string }).translations_json);
       if (parsedTranslations) {
         (payload as unknown as { translations?: unknown[] }).translations = parsedTranslations;
@@ -63,7 +71,7 @@ export const useCreateBlogPost = routeAction$(
       };
     }
   },
-  zod$(blogPostSchema.extend({ translations_json: z.string().optional() }))
+  zod$(blogPostSchema.extend({ translations_json: z.string().optional(), content_locale: z.string().optional() }))
 );
 
 /**
@@ -73,8 +81,14 @@ export default component$(() => {
   const { t } = useTranslate();
   const langConfig = useSiteLanguageConfig();
   const createAction = useCreateBlogPost();
+  const contentLocaleDraft = useSignal('');
 
-  const blogTranslationsJson = initialTranslationsJson('blog', langConfig.value.secondary, null);
+  const translationSecondaries = secondaryLocalesForContent(
+    langConfig.value.site_languages,
+    langConfig.value.default_locale,
+    contentLocaleDraft.value.trim() !== '' ? contentLocaleDraft.value.trim() : null,
+  );
+  const blogTranslationsJson = initialTranslationsJson('blog', translationSecondaries, null);
 
   return (
     <>
@@ -95,126 +109,153 @@ export default component$(() => {
       <div class="rounded-lg border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-800 dark:bg-gray-800">
         <Form action={createAction} class="space-y-6">
           <div class="grid gap-4 md:grid-cols-2">
-            <div>
-              <label
-                for="title"
-                class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-200"
-              >
-                {t('blog.name')} *
-              </label>
-              <input
-                id="title"
-                name="title"
-                type="text"
-                required
-                class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-primary-500 focus:outline-none focus:ring focus:ring-primary-200 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:focus:ring-primary-700/40"
+            <TranslationsFormRoot
+              kind="blog"
+              locales={translationSecondaries}
+              initialJson={blogTranslationsJson}
+              rtlBadge={t('contentTranslations.rtlBadge')}
+              fallbackHintShort={t('contentTranslations.fallbackPlaceholderHint')}
+            >
+              <ContentPrimaryLanguageSelect
+                siteLanguages={langConfig.value.site_languages}
+                defaultLocale={langConfig.value.default_locale}
+                value={contentLocaleDraft.value}
+                label={t('contentTranslations.contentPrimaryLanguage')}
+                hint={t('contentTranslations.contentPrimaryHint')}
+                useSiteDefaultLabel={t('contentTranslations.useSiteDefault')}
+                onChange$={$((code: string) => {
+                  contentLocaleDraft.value = code;
+                })}
               />
-              {createAction.value?.failed && createAction.value.fieldErrors?.title && (
-                <p class="mt-1 text-sm text-red-600 dark:text-red-400">
-                  {createAction.value.fieldErrors.title}
+
+              {!translationSecondaries.length ? (
+                <p class="md:col-span-2 text-sm text-gray-600 dark:text-gray-400">
+                  {t('contentTranslations.noSecondaryLanguages')}
                 </p>
-              )}
-            </div>
+              ) : null}
 
-            <div>
-              <label
-                for="slug"
-                class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-200"
+              <FieldTranslationGlobe
+                fieldKey="title"
+                gridSpan="one"
+                globeAriaLabel={t('contentTranslations.globeTitle')}
+                fallbackText=""
               >
-                {t('blog.slug')}
-              </label>
-              <input
-                id="slug"
-                name="slug"
-                type="text"
-                class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-primary-500 focus:outline-none focus:ring focus:ring-primary-200 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:focus:ring-primary-700/40"
-              />
-            </div>
+                <div>
+                  <label
+                    for="title"
+                    class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-200"
+                  >
+                    {t('blog.name')} *
+                  </label>
+                  <input
+                    id="title"
+                    name="title"
+                    type="text"
+                    required
+                    class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-primary-500 focus:outline-none focus:ring focus:ring-primary-200 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:focus:ring-primary-700/40"
+                  />
+                  {createAction.value?.failed && createAction.value.fieldErrors?.title && (
+                    <p class="mt-1 text-sm text-red-600 dark:text-red-400">
+                      {createAction.value.fieldErrors.title}
+                    </p>
+                  )}
+                </div>
+              </FieldTranslationGlobe>
 
-            <div>
-              <label
-                for="status"
-                class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-200"
-              >
-                {t('blog.status')}
-              </label>
-              <select
-                id="status"
-                name="status"
-                class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-primary-500 focus:outline-none focus:ring focus:ring-primary-200 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:focus:ring-primary-700/40"
-              >
-                <option value="draft">{t('blog.statusDraft')}</option>
-                <option value="published">{t('blog.statusPublished')}</option>
-                <option value="archived">{t('blog.statusArchived')}</option>
-              </select>
-            </div>
+              <div>
+                <label
+                  for="slug"
+                  class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-200"
+                >
+                  {t('blog.slug')}
+                </label>
+                <input
+                  id="slug"
+                  name="slug"
+                  type="text"
+                  class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-primary-500 focus:outline-none focus:ring focus:ring-primary-200 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:focus:ring-primary-700/40"
+                />
+              </div>
 
-            <div class="flex items-center gap-2">
-              <input
-                id="featured"
-                name="featured"
-                type="checkbox"
-                value="1"
-                class="h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
-              />
-              <label
-                for="featured"
-                class="text-sm font-medium text-gray-700 dark:text-gray-200"
-              >
-                {t('blog.featured')}
-              </label>
-            </div>
+              <div>
+                <label
+                  for="status"
+                  class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-200"
+                >
+                  {t('blog.status')}
+                </label>
+                <select
+                  id="status"
+                  name="status"
+                  class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-primary-500 focus:outline-none focus:ring focus:ring-primary-200 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:focus:ring-primary-700/40"
+                >
+                  <option value="draft">{t('blog.statusDraft')}</option>
+                  <option value="published">{t('blog.statusPublished')}</option>
+                  <option value="archived">{t('blog.statusArchived')}</option>
+                </select>
+              </div>
 
-            <div class="md:col-span-2">
-              <label
-                for="excerpt"
-                class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-200"
-              >
-                {t('blog.excerpt')}
-              </label>
-              <textarea
-                id="excerpt"
-                name="excerpt"
-                rows={2}
-                class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-primary-500 focus:outline-none focus:ring focus:ring-primary-200 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:focus:ring-primary-700/40"
-              />
-            </div>
+              <div class="flex items-center gap-2">
+                <input
+                  id="featured"
+                  name="featured"
+                  type="checkbox"
+                  value="1"
+                  class="h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+                />
+                <label
+                  for="featured"
+                  class="text-sm font-medium text-gray-700 dark:text-gray-200"
+                >
+                  {t('blog.featured')}
+                </label>
+              </div>
 
-            <div class="md:col-span-2">
-              <label
-                for="content"
-                class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-200"
+              <FieldTranslationGlobe
+                fieldKey="excerpt"
+                gridSpan="full"
+                globeAriaLabel={t('contentTranslations.globeExcerpt')}
+                fallbackText=""
               >
-                {t('blog.content')}
-              </label>
-              <textarea
-                id="content"
-                name="content"
-                rows={10}
-                class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-primary-500 focus:outline-none focus:ring focus:ring-primary-200 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:focus:ring-primary-700/40"
-              />
-            </div>
+                <div>
+                  <label
+                    for="excerpt"
+                    class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-200"
+                  >
+                    {t('blog.excerpt')}
+                  </label>
+                  <textarea
+                    id="excerpt"
+                    name="excerpt"
+                    rows={2}
+                    class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-primary-500 focus:outline-none focus:ring focus:ring-primary-200 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:focus:ring-primary-700/40"
+                  />
+                </div>
+              </FieldTranslationGlobe>
 
-            <div class="md:col-span-2">
-              <ContentTranslationsPanel
-                kind="blog"
-                locales={langConfig.value.secondary}
-                initialJson={blogTranslationsJson}
-                labels={{
-                  addTranslations: t('contentTranslations.addTranslations'),
-                  collapseTranslations: t('contentTranslations.collapseTranslations'),
-                  sectionTitle: t('contentTranslations.sectionTitle'),
-                  defaultHint: t('contentTranslations.defaultHint'),
-                  noLanguages: t('contentTranslations.noSecondaryLanguages'),
-                  rtlBadge: t('contentTranslations.rtlBadge'),
-                  title: t('blog.name'),
-                  summary: '',
-                  description: '',
-                  excerpt: t('blog.excerpt'),
-                  content: t('blog.content'),
-                }}
-              />
-            </div>
+              <FieldTranslationGlobe
+                fieldKey="content"
+                gridSpan="full"
+                globeAriaLabel={t('contentTranslations.globeContent')}
+                fallbackText=""
+                secondaryTextareaRows={10}
+              >
+                <div>
+                  <label
+                    for="content"
+                    class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-200"
+                  >
+                    {t('blog.content')}
+                  </label>
+                  <textarea
+                    id="content"
+                    name="content"
+                    rows={10}
+                    class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-primary-500 focus:outline-none focus:ring focus:ring-primary-200 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:focus:ring-primary-700/40"
+                  />
+                </div>
+              </FieldTranslationGlobe>
+            </TranslationsFormRoot>
 
             <div>
               <label

@@ -17,6 +17,74 @@ export function secondaryLocales(
   return list.filter((l) => l.code.toLowerCase() !== def);
 }
 
+/**
+ * Secondary locales for a record whose main columns use `contentLocale` (or site default when empty).
+ */
+export function secondaryLocalesForContent(
+  all: SiteLanguageRow[] | undefined | null,
+  siteDefaultLocale: string | undefined | null,
+  contentLocale: string | null | undefined,
+): SiteLanguageRow[] {
+  const list = Array.isArray(all) && all.length > 0 ? all : [defaultEnglish];
+  const codes = new Set(list.map((l) => l.code.toLowerCase()));
+  const raw =
+    contentLocale != null && String(contentLocale).trim() !== '' ? String(contentLocale).trim().toLowerCase() : '';
+  const primary = raw && codes.has(raw) ? raw : (siteDefaultLocale || 'en').toLowerCase();
+  return list.filter((l) => l.code.toLowerCase() !== primary);
+}
+
+/** Build JSON for hidden `translations_json` from the in-memory store. */
+export function serializeTranslationsJson(
+  kind: 'project' | 'blog',
+  locales: SiteLanguageRow[],
+  store: Record<string, Record<string, string>>,
+): string {
+  const arr = locales.map((l) => {
+    const r = store[l.code] || {};
+    if (kind === 'project') {
+      return {
+        locale: l.code,
+        title: r.title ?? '',
+        summary: r.summary ?? '',
+        description: r.description ?? '',
+      };
+    }
+    return {
+      locale: l.code,
+      title: r.title ?? '',
+      excerpt: r.excerpt ?? '',
+      content: r.content ?? '',
+    };
+  });
+  return JSON.stringify(arr);
+}
+
+export function translationRowsFromJsonString(s: string): Map<string, Record<string, string>> {
+  const m = new Map<string, Record<string, string>>();
+  try {
+    const arr = JSON.parse(s) as unknown;
+    if (!Array.isArray(arr)) {
+      return m;
+    }
+    for (const item of arr) {
+      if (!item || typeof item !== 'object') {
+        continue;
+      }
+      const row = item as Record<string, unknown>;
+      const loc = String(row.locale ?? '')
+        .trim()
+        .toLowerCase();
+      if (!loc) {
+        continue;
+      }
+      m.set(loc, row as Record<string, string>);
+    }
+  } catch {
+    return m;
+  }
+  return m;
+}
+
 /** JSON for hidden `translations_json` field (one row per secondary locale). */
 export function initialTranslationsJson(
   kind: 'project' | 'blog',

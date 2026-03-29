@@ -10,6 +10,8 @@ export interface Project {
   id: number;
   title: string;
   slug: string;
+  /** Primary language for main columns; omit/null = site default */
+  content_locale?: string | null;
   summary?: string;
   description?: string;
   status: 'draft' | 'published' | 'archived';
@@ -29,6 +31,7 @@ export interface Project {
 export interface ProjectCreateInput {
   title: string;
   slug?: string;
+  content_locale?: string | null;
   summary?: string;
   description?: string;
   status?: 'draft' | 'published' | 'archived';

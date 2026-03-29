@@ -8,6 +8,7 @@ export interface BlogPost {
   id: number;
   title: string;
   slug: string;
+  content_locale?: string | null;
   excerpt?: string;
   content?: string;
   status: 'draft' | 'published' | 'archived';
@@ -28,6 +29,7 @@ export interface BlogPost {
 export interface BlogPostCreateInput {
   title: string;
   slug?: string;
+  content_locale?: string | null;
   excerpt?: string;
   content?: string;
   status?: 'draft' | 'published' | 'archived';

@@ -339,7 +339,16 @@
     "sectionTitle": "Translations (other languages)",
     "defaultHint": "The fields above are the default locale. Expand to edit text for each additional enabled language.",
     "noSecondaryLanguages": "Add more languages under Settings → Languages to translate content.",
-    "rtlBadge": "RTL"
+    "rtlBadge": "RTL",
+    "contentPrimaryLanguage": "Content language (main fields)",
+    "contentPrimaryHint": "Main title and body fields use this language. Leave as site default to follow Settings, or pick another enabled language for this item only.",
+    "useSiteDefault": "Site default",
+    "fallbackPlaceholderHint": "leave empty to use main language text",
+    "globeTitle": "Translations for title",
+    "globeSummary": "Translations for summary",
+    "globeDescription": "Translations for description",
+    "globeExcerpt": "Translations for excerpt",
+    "globeContent": "Translations for content"
   },
   "seo": {
     "title": "SEO",
