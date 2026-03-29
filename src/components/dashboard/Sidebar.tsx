@@ -50,7 +50,6 @@ export const Sidebar = component$<SidebarProps>((props) => {
   const locale = useSpeakLocale();
   const userRole = auth.value?.user.role || 'user';
   const settingsMenuOpen = useSignal(false);
-  const isDarkMode = useSignal(false);
   
   // Check direction directly from document attribute (set immediately by blocking script)
   // This ensures sidebar position changes simultaneously with direction, preventing flash
@@ -67,10 +66,6 @@ export const Sidebar = component$<SidebarProps>((props) => {
         if (isRTL.value !== (dir === 'rtl')) {
           isRTL.value = dir === 'rtl';
         }
-        const isDark = document.documentElement.classList.contains('dark');
-        if (isDarkMode.value !== isDark) {
-          isDarkMode.value = isDark;
-        }
       }
     };
     
@@ -82,24 +77,15 @@ export const Sidebar = component$<SidebarProps>((props) => {
       const observer = new MutationObserver(updateUiState);
       observer.observe(document.documentElement, {
         attributes: true,
-        attributeFilter: ['dir', 'class'],
+        attributeFilter: ['dir'],
       });
       
       cleanup(() => observer.disconnect());
     }
   });
   
-  // Get project name and logo from Laravel settings
+  // Project name from Laravel (logo is shown only in the dashboard header)
   const projectName = projectSettings.settings?.name || 'Dashboard';
-  const defaultLogo = projectSettings.settings?.logo;
-  const projectLightLogo = projectSettings.settings?.logoLight || defaultLogo;
-  const projectDarkLogo = projectSettings.settings?.logoDark || defaultLogo;
-  const activeLogo = isDarkMode.value
-    ? (projectDarkLogo || projectLightLogo || '')
-    : (projectLightLogo || projectDarkLogo || '');
-  
-  // Get first letter of project name for fallback icon
-  const projectInitial = projectName.charAt(0).toUpperCase();
 
   const navItems: NavItem[] = [
     {
@@ -208,25 +194,22 @@ export const Sidebar = component$<SidebarProps>((props) => {
       >
         <div class="flex h-full flex-col">
           <div class="flex items-center justify-between h-16 md:h-20 lg:h-28 px-4 sm:px-6 md:px-8 lg:px-10 border-b border-slate-200/60 dark:border-slate-700/60">
-            <div class="flex items-center gap-2 md:gap-4">
-              {/* Project logo from Laravel (if available), otherwise show initial */}
-              {activeLogo ? (
-                <img
-                  src={activeLogo}
-                  alt={projectName}
-                  width="48"
-                  height="48"
-                  class="h-10 w-10 md:h-12 md:w-12 rounded-xl object-contain flex-shrink-0"
-                />
-              ) : (
-                <div class="h-10 w-10 md:h-12 md:w-12 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-blue-500/30 flex-shrink-0">
-                  <span class="text-white font-bold text-lg md:text-xl">{projectInitial}</span>
-                </div>
-              )}
-              {/* Project name from Laravel */}
-              <h2 class="text-base md:text-lg lg:text-xl font-bold bg-gradient-to-r from-slate-900 to-slate-700 dark:from-slate-100 dark:to-slate-300 bg-clip-text text-transparent tracking-tight">
-                {projectName}
-              </h2>
+            <div class="flex min-w-0 flex-1 items-center">
+              {/* Brand text only: logo lives in header; link matches header homepage */}
+              <Link
+                href={ROUTES.PUBLIC.HOME}
+                class="min-w-0 rounded-lg outline-none ring-offset-2 ring-offset-white focus-visible:ring-2 focus-visible:ring-blue-500 dark:ring-offset-slate-800"
+                aria-label={`${projectName} — go to homepage`}
+                onClick$={() => {
+                  if (typeof window !== 'undefined' && window.innerWidth < 1024 && props.onClose) {
+                    props.onClose();
+                  }
+                }}
+              >
+                <h2 class="truncate text-base md:text-lg lg:text-xl font-bold bg-gradient-to-r from-slate-900 to-slate-700 dark:from-slate-100 dark:to-slate-300 bg-clip-text text-transparent tracking-tight">
+                  {projectName}
+                </h2>
+              </Link>
             </div>
             {props.onClose && (
               <button

@@ -1,6 +1,8 @@
 import { component$, type QRL, useContext, useSignal, useVisibleTask$ } from '@builder.io/qwik';
+import { Link } from '@builder.io/qwik-city';
 import { UserDropdown } from '../common/UserDropdown';
 import { LanguageSwitcher } from '../common/LanguageSwitcher';
+import { ROUTES } from '../../lib/constants/routes';
 import { useAdminAuth } from '../../routes/admin/layout';
 import { MenuIcon } from './icons';
 import { ProjectSettingsContext } from '../../stores/project-settings-store';
@@ -62,20 +64,25 @@ export const Header = component$<HeaderProps>((props) => {
               <MenuIcon />
             </button>
           )}
-          {/* Project logo from Laravel (if available) */}
-          {activeLogo && (
-            <img
-              src={activeLogo}
-              alt={projectName}
-              width="48"
-              height="48"
-              class="h-8 md:h-10 lg:h-12 w-auto object-contain"
-            />
-          )}
-          {/* Project name from Laravel */}
-          <h1 class="text-xl sm:text-2xl md:text-3xl font-bold bg-gradient-to-r from-slate-900 to-slate-700 dark:from-slate-100 dark:to-slate-300 bg-clip-text text-transparent tracking-tight">
-            {projectName}
-          </h1>
+          {/* Single brand logo + name: links to public homepage */}
+          <Link
+            href={ROUTES.PUBLIC.HOME}
+            class="flex min-w-0 items-center gap-3 md:gap-4 rounded-lg outline-none ring-offset-2 ring-offset-white focus-visible:ring-2 focus-visible:ring-blue-500 dark:ring-offset-slate-800"
+            aria-label={`${projectName} — go to homepage`}
+          >
+            {activeLogo ? (
+              <img
+                src={activeLogo}
+                alt=""
+                width="48"
+                height="48"
+                class="h-8 md:h-10 lg:h-12 w-auto shrink-0 object-contain"
+              />
+            ) : null}
+            <h1 class="truncate text-xl sm:text-2xl md:text-3xl font-bold bg-gradient-to-r from-slate-900 to-slate-700 dark:from-slate-100 dark:to-slate-300 bg-clip-text text-transparent tracking-tight">
+              {projectName}
+            </h1>
+          </Link>
         </div>
         <div class="flex items-center gap-3 md:gap-4">
           <LanguageSwitcher />
