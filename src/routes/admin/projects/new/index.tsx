@@ -9,6 +9,9 @@ import { useSwal } from '../../../../lib/hooks/useSwal';
 import { getApiClient, extractCookieHeader } from '../../../../lib/api/client';
 import { API_ENDPOINTS } from '../../../../lib/api/endpoints';
 import { ROUTES } from '../../../../lib/constants/routes';
+import { ContentTranslationsPanel } from '../../../../components/admin/ContentTranslationsPanel';
+import { initialTranslationsJson, parseTranslationsJson } from '../../../../lib/content-translations';
+import { useSiteLanguageConfig } from '../../../../lib/loaders/site-language-config';
 import type { ProjectCreateInput, Project, Category, Skill } from '../../../../types';
 
 /**
@@ -98,6 +101,11 @@ export const useCreateProject = routeAction$(
         published_at : data.published_at || undefined,
       };
 
+      const parsedTranslations = parseTranslationsJson((data as { translations_json?: string }).translations_json);
+      if (parsedTranslations) {
+        (payload as unknown as { translations?: unknown[] }).translations = parsedTranslations;
+      }
+
       const response = await apiClient.post<Project>(API_ENDPOINTS.PROJECTS.CREATE, payload);
       const project = (response?.data ?? response) as any;
       const projectId = project.id;
@@ -158,6 +166,7 @@ export const useCreateProject = routeAction$(
   zod$(projectSchema.extend({
     heroMedia: z.any().optional(),
     videoMedia: z.any().optional(),
+    translations_json: z.string().optional(),
   }))
 );
 
@@ -169,6 +178,7 @@ export default component$(() => {
   const { success, error: showError } = useSwal();
   const navigate = useNavigate();
   const categoriesAndSkills = useCategoriesAndSkills();
+  const langConfig = useSiteLanguageConfig();
   const createAction = useCreateProject();
 
   // Pre-compute translation strings to avoid serialization issues
@@ -222,6 +232,8 @@ export default component$(() => {
     id: s.id,
     name: s.name,
   }));
+
+  const projectTranslationsJson = initialTranslationsJson('project', langConfig.value.secondary, null);
 
   // Handle postMessage from media iframe
   // eslint-disable-next-line qwik/no-use-visible-task
@@ -432,6 +444,27 @@ export default component$(() => {
                 name="description"
                 rows={4}
                 class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-primary-500 focus:outline-none focus:ring focus:ring-primary-200 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:focus:ring-primary-700/40"
+              />
+            </div>
+
+            <div class="md:col-span-2">
+              <ContentTranslationsPanel
+                kind="project"
+                locales={langConfig.value.secondary}
+                initialJson={projectTranslationsJson}
+                labels={{
+                  addTranslations: t('contentTranslations.addTranslations'),
+                  collapseTranslations: t('contentTranslations.collapseTranslations'),
+                  sectionTitle: t('contentTranslations.sectionTitle'),
+                  defaultHint: t('contentTranslations.defaultHint'),
+                  noLanguages: t('contentTranslations.noSecondaryLanguages'),
+                  rtlBadge: t('contentTranslations.rtlBadge'),
+                  title: t('projects.name'),
+                  summary: t('projects.summary'),
+                  description: t('projects.description'),
+                  excerpt: '',
+                  content: '',
+                }}
               />
             </div>
 

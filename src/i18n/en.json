@@ -316,7 +316,27 @@
     "save": "Save Settings",
     "saving": "Saving...",
     "saveSuccess": "Settings saved successfully",
-    "saveFailed": "Failed to save settings"
+    "saveFailed": "Failed to save settings",
+    "languagesNav": "Languages",
+    "languagesTitle": "Site languages",
+    "languagesSubtitle": "Choose which languages are available for content translations, mark RTL scripts, and set the default (primary) locale.",
+    "defaultLocale": "Default locale",
+    "languagesListHeading": "Enabled languages",
+    "languageRow": "Language",
+    "languageCode": "Code (e.g. en, ar)",
+    "languageLabel": "English label",
+    "languageNative": "Native name",
+    "rtl": "Right-to-left (RTL)",
+    "addLanguage": "Add language",
+    "removeLanguage": "Remove"
+  },
+  "contentTranslations": {
+    "addTranslations": "Add translations",
+    "collapseTranslations": "Hide translations",
+    "sectionTitle": "Translations (other languages)",
+    "defaultHint": "The fields above are the default locale. Expand to edit text for each additional enabled language.",
+    "noSecondaryLanguages": "Add more languages under Settings → Languages to translate content.",
+    "rtlBadge": "RTL"
   },
   "seo": {
     "title": "SEO",

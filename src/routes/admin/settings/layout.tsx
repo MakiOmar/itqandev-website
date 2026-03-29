@@ -5,6 +5,7 @@ import { getApiClient, extractCookieHeader } from '../../../lib/api/client';
 import { API_ENDPOINTS } from '../../../lib/api/endpoints';
 import { ROUTES } from '../../../lib/constants/routes';
 import { clearProjectSettingsCache } from '../../../lib/api/project-settings';
+import type { SiteLanguageRow } from '../../../types/site-language';
 
 export interface SettingsFormData {
   site_name: string;
@@ -23,6 +24,8 @@ export interface SettingsFormData {
   favicon: string;
   primaryColor: string;
   secondaryColor: string;
+  site_languages: SiteLanguageRow[];
+  default_locale: string;
 }
 
 export const defaultSettings: SettingsFormData = {
@@ -42,6 +45,10 @@ export const defaultSettings: SettingsFormData = {
   favicon: '',
   primaryColor: '',
   secondaryColor: '',
+  site_languages: [
+    { code: 'en', label: 'English', native_label: 'English', rtl: false },
+  ],
+  default_locale: 'en',
 };
 
 function normalizeSettings(input: Partial<SettingsFormData> | undefined | null): SettingsFormData {
@@ -85,7 +92,48 @@ function normalizeSettings(input: Partial<SettingsFormData> | undefined | null):
       (input as any)?.primaryColor || (input as any)?.primary_color || defaultSettings.primaryColor,
     secondaryColor:
       (input as any)?.secondaryColor || (input as any)?.secondary_color || defaultSettings.secondaryColor,
+    site_languages: normalizeSiteLanguages((input as any)?.site_languages),
+    default_locale: normalizeDefaultLocale((input as any)?.default_locale, (input as any)?.site_languages),
   };
+}
+
+function normalizeSiteLanguages(raw: unknown): SiteLanguageRow[] {
+  if (!Array.isArray(raw) || raw.length === 0) {
+    return defaultSettings.site_languages;
+  }
+  const rows: SiteLanguageRow[] = [];
+  for (const item of raw) {
+    if (!item || typeof item !== 'object') {
+      continue;
+    }
+    const o = item as Record<string, unknown>;
+    const code = String(o.code || '')
+      .trim()
+      .toLowerCase();
+    if (!code) {
+      continue;
+    }
+    rows.push({
+      code,
+      label: String(o.label || code),
+      native_label: String(o.native_label || o.label || code),
+      rtl: !!o.rtl,
+    });
+  }
+  return rows.length > 0 ? rows : defaultSettings.site_languages;
+}
+
+function normalizeDefaultLocale(raw: unknown, langsRaw: unknown): string {
+  const langs = normalizeSiteLanguages(langsRaw);
+  const codes = langs.map((l) => l.code);
+  const d =
+    typeof raw === 'string' && raw.trim()
+      ? raw.trim().toLowerCase()
+      : defaultSettings.default_locale;
+  if (codes.includes(d)) {
+    return d;
+  }
+  return codes[0] || defaultSettings.default_locale;
 }
 
 /**
@@ -183,6 +231,26 @@ export const useUpdateSettings = routeAction$(
         payload.site_logo_light = payload.logoLight;
       }
 
+      if (has('site_languages_json')) {
+        try {
+          const parsed = JSON.parse(String((data as any).site_languages_json));
+          if (Array.isArray(parsed)) {
+            payload.site_languages = parsed;
+          }
+        } catch {
+          /* ignore invalid JSON */
+        }
+      }
+
+      if (has('default_locale')) {
+        const code = String((data as any).default_locale || '')
+          .trim()
+          .toLowerCase();
+        if (code) {
+          payload.default_locale = code;
+        }
+      }
+
       await apiClient.put(API_ENDPOINTS.SETTINGS.UPDATE, payload);
       clearProjectSettingsCache();
 
@@ -222,6 +290,8 @@ export const useUpdateSettings = routeAction$(
       .regex(/^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/)
       .optional()
       .or(z.literal('')),
+    site_languages_json: z.string().optional(),
+    default_locale: z.string().optional(),
   }),
 );
 
@@ -299,6 +369,7 @@ export default component$(() => {
     { label: t('settings.socialMedia'), href: ROUTES.ADMIN.SETTINGS_SOCIAL },
     { label: t('media.title'), href: ROUTES.ADMIN.SETTINGS_MEDIA },
     { label: t('settings.branding'), href: ROUTES.ADMIN.SETTINGS_BRANDING },
+    { label: t('settings.languagesNav'), href: ROUTES.ADMIN.SETTINGS_LANGUAGES },
   ];
 
   return (

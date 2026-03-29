@@ -2,6 +2,7 @@
  * Central export for all entity types
  */
 
+export * from './site-language';
 export * from './project';
 export * from './category';
 export * from './skill';

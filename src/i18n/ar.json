@@ -316,7 +316,27 @@
     "save": "حفظ الإعدادات",
     "saving": "جاري الحفظ...",
     "saveSuccess": "تم حفظ الإعدادات بنجاح",
-    "saveFailed": "فشل حفظ الإعدادات"
+    "saveFailed": "فشل حفظ الإعدادات",
+    "languagesNav": "اللغات",
+    "languagesTitle": "لغات الموقع",
+    "languagesSubtitle": "اختر اللغات المتاحة لترجمة المحتوى، وحدد اللغات من اليمين لليسار، وعيّن اللغة الافتراضية.",
+    "defaultLocale": "اللغة الافتراضية",
+    "languagesListHeading": "اللغات المفعّلة",
+    "languageRow": "لغة",
+    "languageCode": "الرمز (مثل en، ar)",
+    "languageLabel": "التسمية بالإنجليزية",
+    "languageNative": "الاسم باللغة الأصلية",
+    "rtl": "من اليمين لليسار (RTL)",
+    "addLanguage": "إضافة لغة",
+    "removeLanguage": "إزالة"
+  },
+  "contentTranslations": {
+    "addTranslations": "إضافة ترجمات",
+    "collapseTranslations": "إخفاء الترجمات",
+    "sectionTitle": "ترجمات (لغات أخرى)",
+    "defaultHint": "الحقول أعلاه هي للغة الافتراضية. وسّع القسم لتحرير النص لكل لغة إضافية مفعّلة.",
+    "noSecondaryLanguages": "أضف لغات من الإعدادات ← اللغات لترجمة المحتوى.",
+    "rtlBadge": "RTL"
   },
   "seo": {
     "title": "SEO",

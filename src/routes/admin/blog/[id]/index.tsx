@@ -6,6 +6,9 @@ import { PageHeader } from '../../../../components/common/PageHeader';
 import { LoadingSpinner } from '../../../../components/common/LoadingSpinner';
 import { useTranslate } from '../../../../lib/i18n/useTranslate';
 import { useSwal } from '../../../../lib/hooks/useSwal';
+import { ContentTranslationsPanel } from '../../../../components/admin/ContentTranslationsPanel';
+import { initialTranslationsJson, parseTranslationsJson } from '../../../../lib/content-translations';
+import { useSiteLanguageConfig } from '../../../../lib/loaders/site-language-config';
 import { getApiClient, extractCookieHeader } from '../../../../lib/api/client';
 import { API_ENDPOINTS } from '../../../../lib/api/endpoints';
 import { ROUTES } from '../../../../lib/constants/routes';
@@ -42,9 +45,10 @@ export const useBlogPost = routeLoader$(async ({ params, fail, cookie, request }
  * Update blog post action
  */
 export const useUpdateBlogPost = routeAction$(
-  async (data, { params, redirect: redirectFn }) => {
+  async (data, { params, cookie, request, redirect: redirectFn }) => {
     try {
-      const apiClient = getApiClient();
+      const cookieHeader = extractCookieHeader(cookie, request);
+      const apiClient = getApiClient(cookieHeader);
       const payload: BlogPostUpdateInput = {
         id: Number(params.id),
         title: data.title,
@@ -55,6 +59,11 @@ export const useUpdateBlogPost = routeAction$(
         featured: data.featured === true || data.featured === '1' || data.featured === 'on',
         publishedAt: data.published_at || undefined,
       };
+
+      const parsedTranslations = parseTranslationsJson((data as { translations_json?: string }).translations_json);
+      if (parsedTranslations) {
+        (payload as unknown as { translations?: unknown[] }).translations = parsedTranslations;
+      }
 
       await apiClient.put(API_ENDPOINTS.BLOG.UPDATE(params.id), payload);
 
@@ -71,7 +80,7 @@ export const useUpdateBlogPost = routeAction$(
       };
     }
   },
-  zod$(blogPostSchema)
+  zod$(blogPostSchema.extend({ translations_json: z.string().optional() }))
 );
 
 /**
@@ -99,6 +108,7 @@ export default component$(() => {
   const { success, error: showError } = useSwal();
   const location = useLocation();
   const post = useBlogPost();
+  const langConfig = useSiteLanguageConfig();
   const updateAction = useUpdateBlogPost();
   const uploadImageAction = useUploadFeaturedImage();
 
@@ -167,6 +177,12 @@ export default component$(() => {
       </div>
     );
   }
+
+  const blogTranslationsJson = initialTranslationsJson(
+    'blog',
+    langConfig.value.secondary,
+    post.value.translations,
+  );
 
   return (
     <>
@@ -290,6 +306,27 @@ export default component$(() => {
                 rows={10}
                 value={post.value.content || ''}
                 class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-primary-500 focus:outline-none focus:ring focus:ring-primary-200 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:focus:ring-primary-700/40"
+              />
+            </div>
+
+            <div class="md:col-span-2">
+              <ContentTranslationsPanel
+                kind="blog"
+                locales={langConfig.value.secondary}
+                initialJson={blogTranslationsJson}
+                labels={{
+                  addTranslations: t('contentTranslations.addTranslations'),
+                  collapseTranslations: t('contentTranslations.collapseTranslations'),
+                  sectionTitle: t('contentTranslations.sectionTitle'),
+                  defaultHint: t('contentTranslations.defaultHint'),
+                  noLanguages: t('contentTranslations.noSecondaryLanguages'),
+                  rtlBadge: t('contentTranslations.rtlBadge'),
+                  title: t('blog.name'),
+                  summary: '',
+                  description: '',
+                  excerpt: t('blog.excerpt'),
+                  content: t('blog.content'),
+                }}
               />
             </div>
 

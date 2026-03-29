@@ -2,6 +2,7 @@
  * Blog post entity types
  */
 import type { Media } from './media';
+import type { BlogTranslationRow } from './site-language';
 
 export interface BlogPost {
   id: number;
@@ -21,6 +22,7 @@ export interface BlogPost {
     email: string;
   };
   featuredImage?: Media;
+  translations?: BlogTranslationRow[];
 }
 
 export interface BlogPostCreateInput {
@@ -32,6 +34,7 @@ export interface BlogPostCreateInput {
   featured?: boolean;
   publishedAt?: string;
   featuredImageId?: number;
+  translations?: BlogTranslationRow[];
 }
 
 export interface BlogPostUpdateInput extends Partial<BlogPostCreateInput> {

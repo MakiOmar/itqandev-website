@@ -4,6 +4,7 @@
 import type { Category } from './category';
 import type { Skill } from './skill';
 import type { Media } from './media';
+import type { ProjectTranslationRow } from './site-language';
 
 export interface Project {
   id: number;
@@ -22,6 +23,7 @@ export interface Project {
   categories?: Category[];
   skills?: Skill[];
   heroImage?: Media;
+  translations?: ProjectTranslationRow[];
 }
 
 export interface ProjectCreateInput {
@@ -38,6 +40,7 @@ export interface ProjectCreateInput {
   category_ids?: number[];
   skill_ids?: number[];
   heroImageId?: number;
+  translations?: ProjectTranslationRow[];
 }
 
 export interface ProjectUpdateInput extends Partial<ProjectCreateInput> {

@@ -1,10 +1,12 @@
 import { component$ } from '@builder.io/qwik';
 import type { DocumentHead } from '@builder.io/qwik-city';
-import { routeAction$, Form, zod$, z } from '@builder.io/qwik-city';
-import { Link } from '@builder.io/qwik-city';
+import { routeAction$, Form, zod$, z, Link } from '@builder.io/qwik-city';
+import { ContentTranslationsPanel } from '../../../../components/admin/ContentTranslationsPanel';
+import { initialTranslationsJson, parseTranslationsJson } from '../../../../lib/content-translations';
+import { useSiteLanguageConfig } from '../../../../lib/loaders/site-language-config';
+import { getApiClient, extractCookieHeader } from '../../../../lib/api/client';
 import { PageHeader } from '../../../../components/common/PageHeader';
 import { useTranslate } from '../../../../lib/i18n/useTranslate';
-import { getApiClient } from '../../../../lib/api/client';
 import { API_ENDPOINTS } from '../../../../lib/api/endpoints';
 import { ROUTES } from '../../../../lib/constants/routes';
 import type { BlogPost, BlogPostCreateInput } from '../../../../types';
@@ -26,9 +28,10 @@ const blogPostSchema = z.object({
  * Create blog post action
  */
 export const useCreateBlogPost = routeAction$(
-  async (data, { redirect: redirectFn }) => {
+  async (data, { cookie, request, redirect: redirectFn }) => {
     try {
-      const apiClient = getApiClient();
+      const cookieHeader = extractCookieHeader(cookie, request);
+      const apiClient = getApiClient(cookieHeader);
       const payload: BlogPostCreateInput = {
         title: data.title,
         slug: data.slug || undefined,
@@ -38,6 +41,11 @@ export const useCreateBlogPost = routeAction$(
         featured: data.featured === true || data.featured === '1' || data.featured === 'on',
         publishedAt: data.published_at || undefined,
       };
+
+      const parsedTranslations = parseTranslationsJson((data as { translations_json?: string }).translations_json);
+      if (parsedTranslations) {
+        (payload as unknown as { translations?: unknown[] }).translations = parsedTranslations;
+      }
 
       const response = await apiClient.post<BlogPost>(API_ENDPOINTS.BLOG.CREATE, payload);
       const post = (response?.data ?? response) as any;
@@ -55,7 +63,7 @@ export const useCreateBlogPost = routeAction$(
       };
     }
   },
-  zod$(blogPostSchema)
+  zod$(blogPostSchema.extend({ translations_json: z.string().optional() }))
 );
 
 /**
@@ -63,7 +71,10 @@ export const useCreateBlogPost = routeAction$(
  */
 export default component$(() => {
   const { t } = useTranslate();
+  const langConfig = useSiteLanguageConfig();
   const createAction = useCreateBlogPost();
+
+  const blogTranslationsJson = initialTranslationsJson('blog', langConfig.value.secondary, null);
 
   return (
     <>
@@ -181,6 +192,27 @@ export default component$(() => {
                 name="content"
                 rows={10}
                 class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-primary-500 focus:outline-none focus:ring focus:ring-primary-200 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:focus:ring-primary-700/40"
+              />
+            </div>
+
+            <div class="md:col-span-2">
+              <ContentTranslationsPanel
+                kind="blog"
+                locales={langConfig.value.secondary}
+                initialJson={blogTranslationsJson}
+                labels={{
+                  addTranslations: t('contentTranslations.addTranslations'),
+                  collapseTranslations: t('contentTranslations.collapseTranslations'),
+                  sectionTitle: t('contentTranslations.sectionTitle'),
+                  defaultHint: t('contentTranslations.defaultHint'),
+                  noLanguages: t('contentTranslations.noSecondaryLanguages'),
+                  rtlBadge: t('contentTranslations.rtlBadge'),
+                  title: t('blog.name'),
+                  summary: '',
+                  description: '',
+                  excerpt: t('blog.excerpt'),
+                  content: t('blog.content'),
+                }}
               />
             </div>
 

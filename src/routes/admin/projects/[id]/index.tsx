@@ -11,6 +11,9 @@ import { useSwal } from '../../../../lib/hooks/useSwal';
 import { getApiClient, extractCookieHeader } from '../../../../lib/api/client';
 import { API_ENDPOINTS } from '../../../../lib/api/endpoints';
 import { ROUTES } from '../../../../lib/constants/routes';
+import { ContentTranslationsPanel } from '../../../../components/admin/ContentTranslationsPanel';
+import { initialTranslationsJson, parseTranslationsJson } from '../../../../lib/content-translations';
+import { useSiteLanguageConfig } from '../../../../lib/loaders/site-language-config';
 import type { Project, ProjectUpdateInput, Category, Skill, Media } from '../../../../types';
 
 /**
@@ -151,6 +154,11 @@ export const useUpdateProject = routeAction$(
         published_at: data.published_at || undefined,
       };
 
+      const parsedTranslations = parseTranslationsJson((data as { translations_json?: string }).translations_json);
+      if (parsedTranslations) {
+        (payload as unknown as { translations?: unknown[] }).translations = parsedTranslations;
+      }
+
       // Get original project data to compare media IDs (before update)
       const originalProject = await apiClient.get(API_ENDPOINTS.PROJECTS.GET(params.id));
       const originalProjectData = (originalProject as any)?.data || originalProject;
@@ -258,6 +266,7 @@ export const useUpdateProject = routeAction$(
   zod$(projectSchema.extend({
     heroMedia: z.any().optional(),
     videoMedia: z.any().optional(),
+    translations_json: z.string().optional(),
   }))
 );
 
@@ -302,6 +311,12 @@ export default component$(() => {
     updated: t('projects.updated'),
     preview: t('projects.preview'),
     selectMedia: t('media.selectMedia'),
+    ctAdd: t('contentTranslations.addTranslations'),
+    ctCollapseTranslations: t('contentTranslations.collapseTranslations'),
+    ctSection: t('contentTranslations.sectionTitle'),
+    ctHint: t('contentTranslations.defaultHint'),
+    ctNoLangs: t('contentTranslations.noSecondaryLanguages'),
+    ctRtl: t('contentTranslations.rtlBadge'),
   };
   
   const { success } = useSwal({
@@ -317,6 +332,7 @@ export default component$(() => {
   
   const location = useLocation();
   const project = useProject();
+  const langConfig = useSiteLanguageConfig();
   const categoriesAndSkills = useCategoriesAndSkills();
   const updateAction = useUpdateProject();
   const lastSuccessId = useSignal<number | null>(null);
@@ -365,6 +381,12 @@ export default component$(() => {
     id: s.id,
     name: s.name,
   }));
+
+  const projectTranslationsJson = initialTranslationsJson(
+    'project',
+    langConfig.value.secondary,
+    project.value?.translations,
+  );
 
   if (!project.value) {
     return (
@@ -465,6 +487,27 @@ export default component$(() => {
                     rows={4}
                     value={project.value.description || ''}
                     class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-primary-500 focus:outline-none focus:ring focus:ring-primary-200 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:focus:ring-primary-700/40"
+                  />
+                </div>
+
+                <div class="md:col-span-2">
+                  <ContentTranslationsPanel
+                    kind="project"
+                    locales={langConfig.value.secondary}
+                    initialJson={projectTranslationsJson}
+                    labels={{
+                      addTranslations: translations.ctAdd,
+                      collapseTranslations: translations.ctCollapseTranslations,
+                      sectionTitle: translations.ctSection,
+                      defaultHint: translations.ctHint,
+                      noLanguages: translations.ctNoLangs,
+                      rtlBadge: translations.ctRtl,
+                      title: translations.name,
+                      summary: translations.summary,
+                      description: translations.description,
+                      excerpt: '',
+                      content: '',
+                    }}
                   />
                 </div>
 
