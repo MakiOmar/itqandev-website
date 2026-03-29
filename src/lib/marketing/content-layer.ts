@@ -100,13 +100,14 @@ export async function getBlogPostBySlug(slug: string): Promise<BlogPost | null> 
 }
 
 function normalizeCaseStudy(raw: CaseStudy): CaseStudy {
+  const image = raw.image?.trim();
   return {
     id: raw.id,
     slug: raw.slug,
     title: raw.title,
     summary: raw.summary,
     description: raw.description,
-    image: raw.image,
+    image: image || undefined,
     imageAlt: raw.imageAlt,
     tags: raw.tags,
     categories: raw.categories,
@@ -121,6 +122,8 @@ function normalizeCaseStudy(raw: CaseStudy): CaseStudy {
 }
 
 function normalizeBlogPost(raw: BlogPost): BlogPost {
+  const cover =
+    raw.coverImage === undefined || raw.coverImage === null ? undefined : raw.coverImage.trim();
   return {
     id: raw.id,
     slug: raw.slug,
@@ -129,6 +132,8 @@ function normalizeBlogPost(raw: BlogPost): BlogPost {
     body: raw.body,
     date: raw.date,
     author: raw.author,
+    coverImage: cover,
+    coverImageAlt: raw.coverImageAlt,
     seoMeta: raw.seoMeta,
   };
 }

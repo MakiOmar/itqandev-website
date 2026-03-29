@@ -8,6 +8,7 @@ import { Container } from '~/components/marketing/Container';
 import { Section } from '~/components/marketing/Section';
 import { AnimatedReveal } from '~/components/marketing/AnimatedReveal';
 import { Link } from '@builder.io/qwik-city';
+import { ContentImage } from '~/components/marketing/ContentImage';
 
 export const useCaseStudy = routeLoader$(async ({ params }) => {
   const slug = params.slug;
@@ -16,13 +17,9 @@ export const useCaseStudy = routeLoader$(async ({ params }) => {
   return caseStudy;
 });
 
-const placeholderImage = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="800" height="450" viewBox="0 0 800 450"%3E%3Crect fill="%23e2e8f0" width="800" height="450"/%3E%3Ctext x="50%25" y="50%25" dominant-baseline="middle" text-anchor="middle" fill="%2394a3b8" font-family="sans-serif" font-size="18"%3EProject%3C/text%3E%3C/svg%3E';
-
 export default component$(() => {
   const caseStudy = useCaseStudy().value;
   const baseUrl = (import.meta.env?.VITE_SITE_URL as string) || '';
-
-  const imageSrc = caseStudy.image || placeholderImage;
 
   return (
     <>
@@ -43,8 +40,8 @@ export default component$(() => {
           <article class="mt-8">
             <AnimatedReveal delay={60}>
               <div class="aspect-video w-full overflow-hidden rounded-xl bg-slate-100 dark:bg-slate-700">
-                <img
-                  src={imageSrc}
+                <ContentImage
+                  src={caseStudy.image}
                   alt={caseStudy.imageAlt || caseStudy.title}
                   width={800}
                   height={450}

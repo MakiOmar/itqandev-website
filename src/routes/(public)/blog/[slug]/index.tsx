@@ -8,6 +8,7 @@ import { MARKETING_ROUTES } from '~/lib/marketing/constants';
 import { Container } from '~/components/marketing/Container';
 import { Section } from '~/components/marketing/Section';
 import { AnimatedReveal } from '~/components/marketing/AnimatedReveal';
+import { ContentImage } from '~/components/marketing/ContentImage';
 
 export const useBlogPost = routeLoader$(async ({ params }) => {
   const slug = params.slug;
@@ -52,6 +53,18 @@ export default component$(() => {
                   </p>
                 )}
               </header>
+              {post.coverImage !== undefined && (
+                <div class="mt-8 aspect-video w-full overflow-hidden rounded-xl bg-slate-100 dark:bg-slate-800">
+                  <ContentImage
+                    src={post.coverImage}
+                    alt={post.coverImageAlt || post.title}
+                    width={960}
+                    height={540}
+                    fetchPriority="high"
+                    class="h-full w-full object-cover"
+                  />
+                </div>
+              )}
               <div
                 class="prose prose-slate mt-8 dark:prose-invert max-w-none"
                 dangerouslySetInnerHTML={post.body}

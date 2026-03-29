@@ -30,6 +30,9 @@ export interface BlogPost {
   body: string;
   date: string;
   author?: { name: string; email?: string };
+  /** Featured / cover image URL from CMS when present */
+  coverImage?: string;
+  coverImageAlt?: string;
   seoMeta?: { title?: string; description?: string };
 }
 
