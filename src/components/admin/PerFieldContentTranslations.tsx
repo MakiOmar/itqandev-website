@@ -5,7 +5,7 @@ import {
   useContextProvider,
   useSignal,
   useStore,
-  useVisibleTask$,
+  useTask$,
   Slot,
   type QRL,
   type Signal,
@@ -23,6 +23,8 @@ export type FieldTranslationKey = 'title' | 'summary' | 'description' | 'excerpt
 interface TranslationsFormContextValue {
   kind: TranslationKind;
   locales: SiteLanguageRow[];
+  /** Server/API baseline JSON (one row per secondary locale) for merge on open */
+  initialJson: string;
   store: Record<string, Record<string, string>>;
   hiddenJson: Signal<string>;
   rtlBadge: string;
@@ -56,6 +58,20 @@ function shortPlaceholder(s: string, max = 72): string {
   return t.length > max ? `${t.slice(0, max)}…` : t;
 }
 
+function mergeTranslationMapsIntoStore(
+  kind: TranslationKind,
+  locales: SiteLanguageRow[],
+  store: Record<string, Record<string, string>>,
+  baseline: Map<string, Record<string, string>>,
+  current: Map<string, Record<string, string>>,
+): void {
+  for (const l of locales) {
+    const low = l.code.toLowerCase();
+    const merged = current.get(low) || baseline.get(low);
+    store[l.code] = emptyRow(kind, merged);
+  }
+}
+
 /**
  * Hidden translations_json + context for per-field globe editors.
  */
@@ -73,14 +89,16 @@ export const TranslationsFormRoot = component$<{
   useContextProvider(translationsFormContext, {
     kind: props.kind,
     locales: props.locales,
+    initialJson: props.initialJson,
     store,
     hiddenJson,
     rtlBadge: props.rtlBadge,
     fallbackHintShort: props.fallbackHintShort,
   });
 
-  // eslint-disable-next-line qwik/no-use-visible-task -- hydrate store from JSON when props change
-  useVisibleTask$(({ track }) => {
+  // useTask$ (not useVisibleTask$) so the store is filled before paint / when the globe opens;
+  // otherwise conditional inputs mount with an empty store and never show saved translations.
+  useTask$(({ track }) => {
     track(() => props.kind);
     track(() => props.initialJson);
     track(() => props.locales.map((l) => l.code).join('|'));
@@ -88,11 +106,7 @@ export const TranslationsFormRoot = component$<{
     const baseline = translationRowsFromJsonString(props.initialJson);
     const current = translationRowsFromJsonString(hiddenJson.value);
 
-    for (const l of props.locales) {
-      const low = l.code.toLowerCase();
-      const merged = current.get(low) || baseline.get(low);
-      store[l.code] = emptyRow(props.kind, merged);
-    }
+    mergeTranslationMapsIntoStore(props.kind, props.locales, store, baseline, current);
 
     hiddenJson.value = serializeTranslationsJson(props.kind, props.locales, store);
   });
@@ -163,6 +177,13 @@ export const FieldTranslationGlobe = component$<{
           aria-expanded={expanded.value}
           aria-label={props.globeAriaLabel}
           onClick$={() => {
+            const opening = !expanded.value;
+            if (opening) {
+              const baseline = translationRowsFromJsonString(ctx.initialJson);
+              const current = translationRowsFromJsonString(ctx.hiddenJson.value);
+              mergeTranslationMapsIntoStore(ctx.kind, ctx.locales, ctx.store, baseline, current);
+              ctx.hiddenJson.value = serializeTranslationsJson(ctx.kind, ctx.locales, ctx.store);
+            }
             expanded.value = !expanded.value;
           }}
         >
