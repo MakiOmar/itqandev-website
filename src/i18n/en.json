@@ -328,7 +328,10 @@
     "languageNative": "Native name",
     "rtl": "Right-to-left (RTL)",
     "addLanguage": "Add language",
-    "removeLanguage": "Remove"
+    "removeLanguage": "Remove",
+    "searchLanguage": "Search by name or code…",
+    "languageCodeEmpty": "Type to search, or scroll the list.",
+    "languageNoResults": "No languages match your search."
   },
   "contentTranslations": {
     "addTranslations": "Add translations",

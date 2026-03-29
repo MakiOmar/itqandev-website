@@ -8,6 +8,8 @@ import {
   useSettings,
   useUpdateSettings,
 } from '../layout';
+import { SearchableLocaleSelect } from '../../../../components/admin/SearchableLocaleSelect';
+import { getLocaleOptions } from '../../../../lib/i18n/locale-options';
 import type { SiteLanguageRow } from '../../../../types/site-language';
 
 function cloneLanguages(src: SiteLanguageRow[]): SiteLanguageRow[] {
@@ -88,12 +90,27 @@ export default component$(() => {
             <button
               type="button"
               onClick$={() => {
-                items.push({
-                  code: 'ar',
-                  label: '',
-                  native_label: '',
-                  rtl: true,
-                });
+                const used = new Set(
+                  items.map((r) => r.code.trim().toLowerCase()).filter(Boolean),
+                );
+                const opt = getLocaleOptions().find((o) => !used.has(o.code));
+                if (opt) {
+                  items.push({
+                    code: opt.code,
+                    label: opt.label,
+                    native_label: opt.native,
+                    rtl:
+                      opt.code.startsWith('ar') ||
+                      ['he', 'fa', 'ur', 'yi'].includes(opt.code),
+                  });
+                } else {
+                  items.push({
+                    code: '',
+                    label: '',
+                    native_label: '',
+                    rtl: false,
+                  });
+                }
                 syncJson();
               }}
               class="rounded-lg bg-primary-600 px-3 py-1.5 text-sm font-medium text-white shadow-sm hover:bg-primary-700"
@@ -134,21 +151,25 @@ export default component$(() => {
 
                 <div class="grid gap-3 md:grid-cols-2">
                   <div>
-                    <label class="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-300">
-                      {t('settings.languageCode')}
-                    </label>
-                    <input
-                      type="text"
-                      value={row.code}
-                      placeholder="en"
-                      onInput$={(e: Event) => {
-                        const v = (e.target as HTMLInputElement).value
-                          .trim()
-                          .toLowerCase();
-                        items[index].code = v;
+                    <SearchableLocaleSelect
+                      selectedCode={row.code}
+                      excludeCodes={items
+                        .map((r, j) => (j !== index ? r.code.trim().toLowerCase() : ''))
+                        .filter(Boolean)}
+                      fieldLabel={t('settings.languageCode')}
+                      searchPlaceholder={t('settings.searchLanguage')}
+                      emptyHint={t('settings.languageCodeEmpty')}
+                      noResultsText={t('settings.languageNoResults')}
+                      onSelect$={$((opt) => {
+                        items[index].code = opt.code;
+                        if (!items[index].label.trim()) {
+                          items[index].label = opt.label;
+                        }
+                        if (!items[index].native_label.trim()) {
+                          items[index].native_label = opt.native;
+                        }
                         syncJson();
-                      }}
-                      class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 dark:border-gray-600 dark:bg-gray-950 dark:text-gray-100"
+                      })}
                     />
                   </div>
                   <div class="flex items-end gap-2 pb-1">

@@ -328,7 +328,10 @@
     "languageNative": "الاسم باللغة الأصلية",
     "rtl": "من اليمين لليسار (RTL)",
     "addLanguage": "إضافة لغة",
-    "removeLanguage": "إزالة"
+    "removeLanguage": "إزالة",
+    "searchLanguage": "ابحث بالاسم أو الرمز…",
+    "languageCodeEmpty": "اكتب للبحث أو مرّر القائمة.",
+    "languageNoResults": "لا توجد لغات مطابقة لبحثك."
   },
   "contentTranslations": {
     "addTranslations": "إضافة ترجمات",
