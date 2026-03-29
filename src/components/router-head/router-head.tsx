@@ -1,5 +1,6 @@
 import { component$ } from "@builder.io/qwik";
 import { useDocumentHead, useLocation } from "@builder.io/qwik-city";
+import { getConfig } from "~/lib/config";
 
 /**
  * The RouterHead component is placed inside of the document `<head>` element.
@@ -19,6 +20,21 @@ export const RouterHead = component$(() => {
       {/* Performance optimizations - Font preloading */}
       <link rel="preconnect" href="https://fonts.googleapis.com" />
       <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+      {/* When API is absolute (cross-origin), warm connection for SSR and client fetches */}
+      {(() => {
+        const base = getConfig().api.baseUrl?.trim() ?? "";
+        if (!/^https?:\/\//i.test(base)) {
+          return null;
+        }
+        try {
+          const origin = new URL(base).origin;
+          return (
+            <link rel="preconnect" href={origin} crossOrigin="anonymous" />
+          );
+        } catch {
+          return null;
+        }
+      })()}
       {/* Font stylesheets are injected asynchronously in the bootstrap script below */}
       
       {/* Performance optimizations */}

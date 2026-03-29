@@ -86,6 +86,8 @@ export const Header = component$<HeaderProps>((props) => {
               alt={brandName}
               width={120}
               height={32}
+              loading="eager"
+              fetchPriority="high"
               decoding="async"
               class="h-8 w-auto object-contain"
             />

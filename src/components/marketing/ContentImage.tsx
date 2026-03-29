@@ -18,6 +18,7 @@ export const ContentImage = component$((props: ContentImageProps) => {
   const { src, alt, class: className, width, height, loading, fetchPriority, sizes } = props;
   const url = useSignal(resolveContentImageUrl(src));
   const failedOnce = useSignal(false);
+  const loadingAttr = loading ?? "lazy";
 
   return (
     <img
@@ -25,7 +26,7 @@ export const ContentImage = component$((props: ContentImageProps) => {
       alt={alt}
       width={width}
       height={height}
-      loading={loading}
+      loading={loadingAttr}
       fetchPriority={fetchPriority}
       sizes={sizes}
       class={className}
