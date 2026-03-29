@@ -1,7 +1,8 @@
-import { component$, useSignal, $ } from '@builder.io/qwik';
+import { component$, useSignal, $, useTask$ } from '@builder.io/qwik';
 import type { DocumentHead } from '@builder.io/qwik-city';
 import { routeLoader$, routeAction$, Form, zod$, z, useLocation } from '@builder.io/qwik-city';
 import { Link } from '@builder.io/qwik-city';
+import { useSpeakLocale } from 'qwik-speak';
 import { PageHeader } from '../../../../components/common/PageHeader';
 import { TagInput } from '../../../../components/common/TagInput';
 import { LoadingSpinner } from '../../../../components/common/LoadingSpinner';
@@ -17,6 +18,11 @@ import {
   TranslationsFormRoot,
 } from '../../../../components/admin/PerFieldContentTranslations';
 import { initialTranslationsJson, parseTranslationsJson, secondaryLocalesForContent } from '../../../../lib/content-translations';
+import {
+  mergeProjectFieldsForUiLocale,
+  mergeSecondaryProjectTranslations,
+  primaryLocaleForContent,
+} from '../../../../lib/content-display-locale';
 import { useSiteLanguageConfig } from '../../layout';
 import type { Project, ProjectUpdateInput, Category, Skill, Media } from '../../../../types';
 
@@ -45,7 +51,7 @@ const projectSchema = z.object({
 export const useProject = routeLoader$(async ({ params, fail, cookie, request }) => {
   try {
     const cookieHeader = extractCookieHeader(cookie, request);
-    const apiClient = getApiClient(cookieHeader);
+    const apiClient = getApiClient(cookieHeader, false);
     const response = await apiClient.get<Project>(API_ENDPOINTS.PROJECTS.GET(params.id));
     const project = (response?.data ?? response) as any;
     
@@ -127,8 +133,8 @@ export const useUpdateProject = routeAction$(
     try {
       // Extract cookie header for server-side authentication
       const cookieHeader = extractCookieHeader(cookie, request as any);
-      const apiClient = getApiClient(cookieHeader);
-      
+      const apiClient = getApiClient(cookieHeader, false);
+
       // Handle array fields - Qwik Form sends arrays, but we need to normalize them
       const normalizeArray = (value: any): number[] => {
         if (!value) return [];
@@ -141,13 +147,23 @@ export const useUpdateProject = routeAction$(
         return [];
       };
 
+      const ui = String((data as { admin_ui_locale?: string }).admin_ui_locale || 'en').toLowerCase();
+      const siteDef = String((data as { form_site_default_locale?: string }).form_site_default_locale || 'en').toLowerCase();
+      const effectivePrimary = String((data as { effective_primary_locale?: string }).effective_primary_locale || siteDef).toLowerCase();
+      const title = String(data.title || '');
+      const summary = String(data.summary ?? '');
+      const description = String(data.description ?? '');
+      const canonicalTitle = String((data as { canonical_title?: string }).canonical_title ?? '');
+      const canonicalSummary = String((data as { canonical_summary?: string }).canonical_summary ?? '');
+      const canonicalDescription = String((data as { canonical_description?: string }).canonical_description ?? '');
+
       // Convert string IDs to numbers
       const payload: ProjectUpdateInput = {
         id: Number(params.id),
-        title: data.title,
+        title: ui === effectivePrimary ? title : canonicalTitle,
         slug: data.slug || undefined,
-        summary: data.summary || undefined,
-        description: data.description || undefined,
+        summary: ui === effectivePrimary ? summary : canonicalSummary,
+        description: ui === effectivePrimary ? description : canonicalDescription,
         status: (data.status as any) || 'draft',
         featured: data.featured === true || data.featured === '1' || data.featured === 'on',
         category_ids: normalizeArray(data.category_ids),
@@ -163,8 +179,16 @@ export const useUpdateProject = routeAction$(
         rawContentLocale && rawContentLocale.length > 0 ? rawContentLocale : null;
 
       const parsedTranslations = parseTranslationsJson((data as { translations_json?: string }).translations_json);
-      if (parsedTranslations) {
-        (payload as unknown as { translations?: unknown[] }).translations = parsedTranslations;
+      if (ui === effectivePrimary) {
+        if (parsedTranslations) {
+          (payload as unknown as { translations?: unknown[] }).translations = parsedTranslations;
+        }
+      } else {
+        (payload as unknown as { translations?: unknown[] }).translations = mergeSecondaryProjectTranslations(
+          (data as { translations_json?: string }).translations_json,
+          ui,
+          { title, summary, description },
+        );
       }
 
       // Get original project data to compare media IDs (before update)
@@ -271,12 +295,20 @@ export const useUpdateProject = routeAction$(
       };
     }
   },
-  zod$(projectSchema.extend({
-    heroMedia: z.any().optional(),
-    videoMedia: z.any().optional(),
-    translations_json: z.string().optional(),
-    content_locale: z.string().optional(),
-  }))
+  zod$(
+    projectSchema.extend({
+      heroMedia: z.any().optional(),
+      videoMedia: z.any().optional(),
+      translations_json: z.string().optional(),
+      content_locale: z.string().optional(),
+      admin_ui_locale: z.string().optional(),
+      form_site_default_locale: z.string().optional(),
+      effective_primary_locale: z.string().optional(),
+      canonical_title: z.string().optional(),
+      canonical_summary: z.string().optional(),
+      canonical_description: z.string().optional(),
+    }),
+  )
 );
 
 /**
@@ -392,6 +424,31 @@ export default component$(() => {
       ? String(project.value.content_locale).trim()
       : '',
   );
+  const locale = useSpeakLocale();
+  const titleField = useSignal('');
+  const summaryField = useSignal('');
+  const descriptionField = useSignal('');
+
+  useTask$(({ track }) => {
+    track(() => project.value);
+    track(() => locale.lang);
+    track(() => langConfig.value.default_locale);
+    track(() => langConfig.value.site_languages);
+    track(() => contentLocaleDraft.value);
+    if (!project.value || typeof project.value !== 'object') {
+      return;
+    }
+    const m = mergeProjectFieldsForUiLocale(
+      project.value as Project,
+      locale.lang,
+      langConfig.value.site_languages,
+      langConfig.value.default_locale,
+      contentLocaleDraft.value.trim() !== '' ? contentLocaleDraft.value.trim() : null,
+    );
+    titleField.value = m.title;
+    summaryField.value = m.summary;
+    descriptionField.value = m.description;
+  });
 
   const categoryItems = categoriesAndSkills.value.categories.map((c) => ({
     id: c.id,
@@ -443,6 +500,21 @@ export default component$(() => {
           action={updateAction} 
           class="space-y-6"
         >
+          {/* Hidden: map saves back to primary columns vs translation rows when dashboard language ≠ primary */}
+          <input type="hidden" name="admin_ui_locale" value={locale.lang} />
+          <input type="hidden" name="form_site_default_locale" value={langConfig.value.default_locale} />
+          <input
+            type="hidden"
+            name="effective_primary_locale"
+            value={primaryLocaleForContent(
+              langConfig.value.site_languages,
+              langConfig.value.default_locale,
+              contentLocaleDraft.value.trim() !== '' ? contentLocaleDraft.value.trim() : null,
+            )}
+          />
+          <input type="hidden" name="canonical_title" value={(project.value as Project).title ?? ''} />
+          <input type="hidden" name="canonical_summary" value={(project.value as Project).summary ?? ''} />
+          <input type="hidden" name="canonical_description" value={(project.value as Project).description ?? ''} />
           <div class="grid gap-6 lg:grid-cols-[1fr_360px]">
             <div class="space-y-6">
               <div class="grid gap-4 md:grid-cols-2">
@@ -486,7 +558,10 @@ export default component$(() => {
                         id="title"
                         name="title"
                         type="text"
-                        value={project.value.title}
+                        value={titleField.value}
+                        onInput$={(e) => {
+                          titleField.value = (e.target as HTMLInputElement).value;
+                        }}
                         required
                         class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-primary-500 focus:outline-none focus:ring focus:ring-primary-200 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:focus:ring-primary-700/40"
                       />
@@ -531,7 +606,10 @@ export default component$(() => {
                         id="summary"
                         name="summary"
                         rows={2}
-                        value={project.value.summary || ''}
+                        value={summaryField.value}
+                        onInput$={(e) => {
+                          summaryField.value = (e.target as HTMLTextAreaElement).value;
+                        }}
                         class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-primary-500 focus:outline-none focus:ring focus:ring-primary-200 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:focus:ring-primary-700/40"
                       />
                     </div>
@@ -554,7 +632,10 @@ export default component$(() => {
                         id="description"
                         name="description"
                         rows={4}
-                        value={project.value.description || ''}
+                        value={descriptionField.value}
+                        onInput$={(e) => {
+                          descriptionField.value = (e.target as HTMLTextAreaElement).value;
+                        }}
                         class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-primary-500 focus:outline-none focus:ring focus:ring-primary-200 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:focus:ring-primary-700/40"
                       />
                     </div>

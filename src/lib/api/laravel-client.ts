@@ -1,5 +1,6 @@
 import type { ApiResponse, ApiError } from './types';
 import { getConfig } from '../config';
+import { readPreferredLocaleFromCookieHeader } from '../i18n/dashboard-locale';
 
 /**
  * Laravel-specific API client
@@ -10,13 +11,36 @@ export class LaravelApiClient {
   private csrfToken: string | null = null;
   private sanctum: boolean;
   private serverCookies: string | null = null; // For server-side requests
+  /** When false, never send X-Content-Locale (raw translatable fields). When string, force that locale. Otherwise infer from cookie/localStorage. */
+  private contentPresentationLocale: string | false | undefined;
 
-  constructor(baseUrl?: string, serverCookies?: string) {
+  constructor(baseUrl?: string, serverCookies?: string, contentPresentationLocale?: string | false) {
     const config = getConfig();
     this.baseUrl = baseUrl || config.api.baseUrl;
     this.sanctum = config.api.sanctum || false;
     this.serverCookies = serverCookies || null;
+    this.contentPresentationLocale = contentPresentationLocale;
     this.loadCsrfToken();
+  }
+
+  private getContentPresentationLocaleForRequest(): string | null {
+    if (this.contentPresentationLocale === false) {
+      return null;
+    }
+    if (typeof this.contentPresentationLocale === 'string' && this.contentPresentationLocale.trim() !== '') {
+      return this.contentPresentationLocale.trim();
+    }
+    const fromCookie = readPreferredLocaleFromCookieHeader(this.serverCookies);
+    if (fromCookie) {
+      return fromCookie;
+    }
+    if (typeof localStorage !== 'undefined') {
+      const ls = localStorage.getItem('preferred-locale');
+      if (ls && ls.trim()) {
+        return ls.trim();
+      }
+    }
+    return null;
   }
 
   /**
@@ -293,6 +317,11 @@ export class LaravelApiClient {
       xhr.setRequestHeader('Accept', 'application/json');
       xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
 
+      const presentLocale = this.getContentPresentationLocaleForRequest();
+      if (presentLocale) {
+        xhr.setRequestHeader('X-Content-Locale', presentLocale);
+      }
+
       // Add Authorization header if available
       if (authHeaders[config.auth.tokenHeader]) {
         xhr.setRequestHeader(config.auth.tokenHeader, authHeaders[config.auth.tokenHeader]);
@@ -387,6 +416,11 @@ export class LaravelApiClient {
       ...authHeaders,
       ...optionsHeaders,
     };
+
+    const presentLocale = this.getContentPresentationLocaleForRequest();
+    if (presentLocale) {
+      headers['X-Content-Locale'] = presentLocale;
+    }
 
     // Only set Content-Type for non-FormData requests
     // FormData needs to set Content-Type automatically with boundary

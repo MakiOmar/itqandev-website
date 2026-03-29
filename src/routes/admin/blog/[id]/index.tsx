@@ -1,7 +1,8 @@
-import { component$, useSignal, $, useVisibleTask$ } from '@builder.io/qwik';
+import { component$, useSignal, $, useVisibleTask$, useTask$ } from '@builder.io/qwik';
 import type { DocumentHead } from '@builder.io/qwik-city';
 import { routeLoader$, routeAction$, Form, zod$, z, useLocation } from '@builder.io/qwik-city';
 import { Link } from '@builder.io/qwik-city';
+import { useSpeakLocale } from 'qwik-speak';
 import { PageHeader } from '../../../../components/common/PageHeader';
 import { LoadingSpinner } from '../../../../components/common/LoadingSpinner';
 import { useTranslate } from '../../../../lib/i18n/useTranslate';
@@ -12,6 +13,11 @@ import {
   TranslationsFormRoot,
 } from '../../../../components/admin/PerFieldContentTranslations';
 import { initialTranslationsJson, parseTranslationsJson, secondaryLocalesForContent } from '../../../../lib/content-translations';
+import {
+  mergeBlogPostFieldsForUiLocale,
+  mergeSecondaryBlogTranslations,
+  primaryLocaleForContent,
+} from '../../../../lib/content-display-locale';
 import { useSiteLanguageConfig } from '../../layout';
 import { getApiClient, extractCookieHeader } from '../../../../lib/api/client';
 import { API_ENDPOINTS } from '../../../../lib/api/endpoints';
@@ -37,7 +43,7 @@ const blogPostSchema = z.object({
 export const useBlogPost = routeLoader$(async ({ params, fail, cookie, request }) => {
   try {
     const cookieHeader = extractCookieHeader(cookie, request);
-    const apiClient = getApiClient(cookieHeader);
+    const apiClient = getApiClient(cookieHeader, false);
     const response = await apiClient.get<BlogPost>(API_ENDPOINTS.BLOG.GET(params.id));
     return (response?.data ?? response) as BlogPost;
   } catch (error: any) {
@@ -52,13 +58,23 @@ export const useUpdateBlogPost = routeAction$(
   async (data, { params, cookie, request, redirect: redirectFn }) => {
     try {
       const cookieHeader = extractCookieHeader(cookie, request);
-      const apiClient = getApiClient(cookieHeader);
+      const apiClient = getApiClient(cookieHeader, false);
+      const ui = String((data as { admin_ui_locale?: string }).admin_ui_locale || 'en').toLowerCase();
+      const siteDef = String((data as { form_site_default_locale?: string }).form_site_default_locale || 'en').toLowerCase();
+      const effectivePrimary = String((data as { effective_primary_locale?: string }).effective_primary_locale || siteDef).toLowerCase();
+      const title = String(data.title || '');
+      const excerpt = String(data.excerpt ?? '');
+      const content = String(data.content ?? '');
+      const canonicalTitle = String((data as { canonical_title?: string }).canonical_title ?? '');
+      const canonicalExcerpt = String((data as { canonical_excerpt?: string }).canonical_excerpt ?? '');
+      const canonicalContent = String((data as { canonical_content?: string }).canonical_content ?? '');
+
       const payload: BlogPostUpdateInput = {
         id: Number(params.id),
-        title: data.title,
+        title: ui === effectivePrimary ? title : canonicalTitle,
         slug: data.slug || undefined,
-        excerpt: data.excerpt || undefined,
-        content: data.content || undefined,
+        excerpt: ui === effectivePrimary ? excerpt : canonicalExcerpt,
+        content: ui === effectivePrimary ? content : canonicalContent,
         status: (data.status as any) || 'draft',
         featured: data.featured === true || data.featured === '1' || data.featured === 'on',
         publishedAt: data.published_at || undefined,
@@ -69,8 +85,16 @@ export const useUpdateBlogPost = routeAction$(
         rawContentLocale && rawContentLocale.length > 0 ? rawContentLocale : null;
 
       const parsedTranslations = parseTranslationsJson((data as { translations_json?: string }).translations_json);
-      if (parsedTranslations) {
-        (payload as unknown as { translations?: unknown[] }).translations = parsedTranslations;
+      if (ui === effectivePrimary) {
+        if (parsedTranslations) {
+          (payload as unknown as { translations?: unknown[] }).translations = parsedTranslations;
+        }
+      } else {
+        (payload as unknown as { translations?: unknown[] }).translations = mergeSecondaryBlogTranslations(
+          (data as { translations_json?: string }).translations_json,
+          ui,
+          { title, excerpt, content },
+        );
       }
 
       await apiClient.put(API_ENDPOINTS.BLOG.UPDATE(params.id), payload);
@@ -88,7 +112,18 @@ export const useUpdateBlogPost = routeAction$(
       };
     }
   },
-  zod$(blogPostSchema.extend({ translations_json: z.string().optional(), content_locale: z.string().optional() }))
+  zod$(
+    blogPostSchema.extend({
+      translations_json: z.string().optional(),
+      content_locale: z.string().optional(),
+      admin_ui_locale: z.string().optional(),
+      form_site_default_locale: z.string().optional(),
+      effective_primary_locale: z.string().optional(),
+      canonical_title: z.string().optional(),
+      canonical_excerpt: z.string().optional(),
+      canonical_content: z.string().optional(),
+    }),
+  )
 );
 
 /**
@@ -127,6 +162,10 @@ export default component$(() => {
   const featuredImageFile = useSignal<File | null>(null);
   const showFeaturedImageSelector = useSignal(false);
   const contentLocaleDraft = useSignal('');
+  const locale = useSpeakLocale();
+  const titleField = useSignal('');
+  const excerptField = useSignal('');
+  const contentField = useSignal('');
 
   // Handle postMessage from media iframe
   // eslint-disable-next-line qwik/no-use-visible-task
@@ -163,6 +202,28 @@ export default component$(() => {
       contentLocaleDraft.value =
         cl != null && String(cl).trim() !== '' ? String(cl).trim() : '';
     }
+  });
+
+  // Main fields follow dashboard language (and draft primary locale), without mutating stored primary columns on save
+  useTask$(({ track }) => {
+    track(() => post.value);
+    track(() => locale.lang);
+    track(() => langConfig.value.default_locale);
+    track(() => langConfig.value.site_languages);
+    track(() => contentLocaleDraft.value);
+    if (!post.value || typeof post.value !== 'object') {
+      return;
+    }
+    const m = mergeBlogPostFieldsForUiLocale(
+      post.value as BlogPost,
+      locale.lang,
+      langConfig.value.site_languages,
+      langConfig.value.default_locale,
+      contentLocaleDraft.value.trim() !== '' ? contentLocaleDraft.value.trim() : null,
+    );
+    titleField.value = m.title;
+    excerptField.value = m.excerpt;
+    contentField.value = m.content;
   });
 
   const uploadFeaturedImage = $(async () => {
@@ -221,6 +282,21 @@ export default component$(() => {
 
       <div class="rounded-lg border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-800 dark:bg-gray-800">
         <Form action={updateAction} class="space-y-6">
+          {/* Hidden: map saves back to primary columns vs translation rows when dashboard language ≠ primary */}
+          <input type="hidden" name="admin_ui_locale" value={locale.lang} />
+          <input type="hidden" name="form_site_default_locale" value={langConfig.value.default_locale} />
+          <input
+            type="hidden"
+            name="effective_primary_locale"
+            value={primaryLocaleForContent(
+              langConfig.value.site_languages,
+              langConfig.value.default_locale,
+              contentLocaleDraft.value.trim() !== '' ? contentLocaleDraft.value.trim() : null,
+            )}
+          />
+          <input type="hidden" name="canonical_title" value={(post.value as BlogPost).title ?? ''} />
+          <input type="hidden" name="canonical_excerpt" value={(post.value as BlogPost).excerpt ?? ''} />
+          <input type="hidden" name="canonical_content" value={(post.value as BlogPost).content ?? ''} />
           <div class="grid gap-4 md:grid-cols-2">
             <TranslationsFormRoot
               kind="blog"
@@ -264,7 +340,10 @@ export default component$(() => {
                     id="title"
                     name="title"
                     type="text"
-                    value={post.value.title}
+                    value={titleField.value}
+                    onInput$={(e) => {
+                      titleField.value = (e.target as HTMLInputElement).value;
+                    }}
                     required
                     class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-primary-500 focus:outline-none focus:ring focus:ring-primary-200 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:focus:ring-primary-700/40"
                   />
@@ -345,7 +424,10 @@ export default component$(() => {
                     id="excerpt"
                     name="excerpt"
                     rows={2}
-                    value={post.value.excerpt || ''}
+                    value={excerptField.value}
+                    onInput$={(e) => {
+                      excerptField.value = (e.target as HTMLTextAreaElement).value;
+                    }}
                     class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-primary-500 focus:outline-none focus:ring focus:ring-primary-200 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:focus:ring-primary-700/40"
                   />
                 </div>
@@ -369,7 +451,10 @@ export default component$(() => {
                     id="content"
                     name="content"
                     rows={10}
-                    value={post.value.content || ''}
+                    value={contentField.value}
+                    onInput$={(e) => {
+                      contentField.value = (e.target as HTMLTextAreaElement).value;
+                    }}
                     class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-primary-500 focus:outline-none focus:ring focus:ring-primary-200 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:focus:ring-primary-700/40"
                   />
                 </div>

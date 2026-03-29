@@ -219,11 +219,12 @@ export const apiClient = new ApiClient();
  * Get API client based on configuration
  * Returns Laravel client if Sanctum is enabled, otherwise standard client
  * @param serverCookies - Optional cookie string for server-side requests
+ * @param contentPresentationLocale - Send X-Content-Locale for localized list payloads; false = never send (raw single-record fetches)
  */
-export function getApiClient(serverCookies?: string | null): ApiClient {
+export function getApiClient(serverCookies?: string | null, contentPresentationLocale?: string | false): ApiClient {
   const config = getConfig();
   if (config.api.sanctum) {
-    return new LaravelApiClient(undefined, serverCookies || undefined) as any as ApiClient;
+    return new LaravelApiClient(undefined, serverCookies || undefined, contentPresentationLocale) as any as ApiClient;
   }
   return apiClient;
 }
