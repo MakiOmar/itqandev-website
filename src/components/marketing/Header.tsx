@@ -6,7 +6,9 @@ import { ThemeToggle } from '~/components/marketing/ThemeToggle';
 import { Button } from '~/components/marketing/Button';
 import { Container } from '~/components/marketing/Container';
 import { UserDropdown } from '~/components/common/UserDropdown';
+import { SiteLanguageSwitcher } from '~/components/common/SiteLanguageSwitcher';
 import type { AuthSession } from '~/lib/auth/types';
+import type { SiteLanguageRow } from '~/types/site-language';
 
 const navLinks = [
   { label: 'Home', href: MARKETING_ROUTES.home },
@@ -23,6 +25,8 @@ interface HeaderBranding {
   logo?: string;
   logoDark?: string;
   logoLight?: string;
+  /** From settings API; used to show the language switcher when multiple UI locales are available */
+  site_languages?: SiteLanguageRow[];
 }
 
 interface HeaderProps {
@@ -108,8 +112,9 @@ export const Header = component$<HeaderProps>((props) => {
           ))}
         </nav>
 
-        {/* Right: theme + CTA + Login */}
+        {/* Right: language (when site has multiple) + theme + CTA + Login */}
         <div class="flex items-center gap-2">
+          <SiteLanguageSwitcher languages={props.branding?.site_languages} />
           <ThemeToggle />
           <div class="hidden sm:flex sm:items-center sm:gap-2">
             <Button href={MARKETING_ROUTES.contact} variant="primary">

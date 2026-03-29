@@ -60,47 +60,44 @@ export const RouterHead = component$(() => {
               setTheme('light');
             }
 
-            // Public marketing routes: show body immediately (no RTL flash concern)
             var path = (document.location.pathname || '/').replace(/\\/$/, '') || '/';
             var isPublicRoute = path === '/' || path === '' || path.indexOf('/services') === 0 || path.indexOf('/work') === 0 || path.indexOf('/about') === 0 || path.indexOf('/pricing') === 0 || path.indexOf('/contact') === 0 || path.indexOf('/blog') === 0;
-            function revealBodyForPublic() {
-              document.documentElement.setAttribute('dir', 'ltr');
-              document.documentElement.setAttribute('lang', 'en');
-              if (document.body) {
-                document.body.setAttribute('dir', 'ltr');
-                document.body.setAttribute('lang', 'en');
-                document.body.setAttribute('data-render-complete', 'true');
-              }
+
+            function decodeCookieVal(s) {
+              if (!s) return '';
+              try { return decodeURIComponent(s.trim()); } catch (e) { return s.trim(); }
             }
-            if (isPublicRoute) {
-              if (document.body) {
-                revealBodyForPublic();
-              } else {
-                document.addEventListener('DOMContentLoaded', revealBodyForPublic);
-              }
-            }
-            
-            // Initialize direction and language from cookie/localStorage
-            // This must run BEFORE any content renders to prevent visual shift
+
+            // Preferred UI locale + RTL hint (set by language switchers)
             var preferredLocale = null;
-            
-            // Try cookie first (for SSR)
+            var preferredRtl = null;
             var cookies = document.cookie.split(';');
             for (var i = 0; i < cookies.length; i++) {
               var cookie = cookies[i].trim();
               if (cookie.indexOf('preferred-locale=') === 0) {
                 preferredLocale = cookie.substring('preferred-locale='.length);
-                break;
+              }
+              if (cookie.indexOf('preferred-locale-rtl=') === 0) {
+                preferredRtl = cookie.substring('preferred-locale-rtl='.length);
               }
             }
-            
-            // Fallback to localStorage if no cookie
             if (!preferredLocale && typeof localStorage !== 'undefined') {
               preferredLocale = localStorage.getItem('preferred-locale');
             }
-            
-            // Normalize locale to supported values only.
-            var locale = preferredLocale === 'ar' ? 'ar' : 'en';
+            if (preferredRtl == null && typeof localStorage !== 'undefined') {
+              preferredRtl = localStorage.getItem('preferred-locale-rtl');
+            }
+
+            var rawLocale = decodeCookieVal(preferredLocale) || 'en';
+            var locale = rawLocale.toLowerCase();
+            if (!/^[a-z]{2}(-[a-z0-9]+)*$/i.test(locale)) {
+              locale = 'en';
+            }
+
+            var rtlFlag = preferredRtl != null ? String(preferredRtl).trim() : '';
+            var isRtl = (rtlFlag === '1') || (rtlFlag !== '0' && locale === 'ar');
+            var dir = isRtl ? 'rtl' : 'ltr';
+            var lang = locale;
 
             // Load Google fonts asynchronously to avoid render blocking.
             // Only request Cairo for Arabic locale; otherwise request Inter.
@@ -134,11 +131,24 @@ export const RouterHead = component$(() => {
               loadFontStylesheet('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
             }
 
-            // Set direction and lang immediately based on locale
-            // This ensures both language and direction are set before any rendering
-            var dir = locale === 'ar' ? 'rtl' : 'ltr';
-            var lang = locale;
-            
+            // Public marketing routes: reveal body using the same locale/dir as the rest of the app
+            function revealBodyForPublic() {
+              document.documentElement.setAttribute('dir', dir);
+              document.documentElement.setAttribute('lang', lang);
+              if (document.body) {
+                document.body.setAttribute('dir', dir);
+                document.body.setAttribute('lang', lang);
+                document.body.setAttribute('data-render-complete', 'true');
+              }
+            }
+            if (isPublicRoute) {
+              if (document.body) {
+                revealBodyForPublic();
+              } else {
+                document.addEventListener('DOMContentLoaded', revealBodyForPublic);
+              }
+            }
+
             // Ensure body stays hidden initially by removing data-render-complete if it exists (dashboard only)
             if (!isPublicRoute && document.body && document.body.hasAttribute('data-render-complete')) {
               document.body.removeAttribute('data-render-complete');

@@ -1,5 +1,6 @@
 import { component$, useSignal, $ } from '@builder.io/qwik';
 import { useSpeakLocale, useSpeakConfig } from 'qwik-speak';
+import { persistPreferredLocale } from '../../lib/i18n/preferred-locale-persist';
 
 /**
  * Language switcher component
@@ -25,29 +26,9 @@ export const LanguageSwitcher = component$(() => {
 
   // Change language
   const changeLanguage = $((lang: string) => {
-    // Store preference in localStorage FIRST (for immediate access by blocking script)
-    if (typeof localStorage !== 'undefined') {
-      localStorage.setItem('preferred-locale', lang);
-    }
-    
-    // Store preference in cookie for SSR
-    if (typeof document !== 'undefined') {
-      // Set cookie with 1 year expiration
-      const expirationDate = new Date();
-      expirationDate.setFullYear(expirationDate.getFullYear() + 1);
-      document.cookie = `preferred-locale=${lang}; path=/; expires=${expirationDate.toUTCString()}; SameSite=Lax`;
-      
-      // Update document attributes IMMEDIATELY before reload
-      // This ensures direction is set before page reloads
-      const dir = lang === 'ar' ? 'rtl' : 'ltr';
-      document.documentElement.setAttribute('dir', dir);
-      document.documentElement.setAttribute('lang', lang);
-      if (document.body) {
-        document.body.setAttribute('dir', dir);
-        document.body.setAttribute('lang', lang);
-      }
-    }
-    
+    const isRtl = lang === 'ar';
+    persistPreferredLocale(lang, isRtl);
+
     // Update locale using qwik-speak's changeLocale
     // This updates the locale context
     locale.lang = lang;

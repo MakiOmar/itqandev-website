@@ -116,17 +116,23 @@ export default component$(() => {
   // Initialize with current locale from qwik-speak (set by onRequest handler)
   // This ensures SSR renders with correct direction from the start, matching the blocking script
   const bodyLang = useSignal(locale.lang || speakConfig.defaultLocale.lang);
-  const bodyDir = useSignal((locale.lang === 'ar' ? 'rtl' : 'ltr'));
+  const bodyDir = useSignal(locale.lang === 'ar' ? 'rtl' : 'ltr');
+
+  const speakCodes = new Set(speakConfig.supportedLocales.map((l) => l.lang.toLowerCase()));
 
   // Initialize locale from localStorage on client-side and sync with qwik-speak
   // eslint-disable-next-line qwik/no-use-visible-task
   useVisibleTask$(() => {
     if (typeof localStorage !== 'undefined') {
       const savedLocale = localStorage.getItem('preferred-locale');
-      if (savedLocale && (savedLocale === 'en' || savedLocale === 'ar')) {
-        locale.lang = savedLocale;
-        bodyLang.value = savedLocale;
-        bodyDir.value = savedLocale === 'ar' ? 'rtl' : 'ltr';
+      const normalized = savedLocale?.trim().toLowerCase() ?? '';
+      const rtlStored = localStorage.getItem('preferred-locale-rtl');
+      const isRtl =
+        rtlStored === '1' || (rtlStored !== '0' && normalized === 'ar');
+      if (normalized && speakCodes.has(normalized)) {
+        locale.lang = normalized;
+        bodyLang.value = normalized;
+        bodyDir.value = isRtl ? 'rtl' : 'ltr';
       }
 
       ensureLocaleFont(normalizeLocale(savedLocale ?? locale.lang));
@@ -139,10 +145,12 @@ export default component$(() => {
     const trackedLang = track(() => locale.lang);
     const currentLocale = normalizeLocale(trackedLang);
     const currentLang = currentLocale;
-    
+
     bodyLang.value = currentLang;
-    // Set direction: RTL for Arabic, LTR for English and others
-    bodyDir.value = currentLang === 'ar' ? 'rtl' : 'ltr';
+    const rtlStored =
+      typeof localStorage !== 'undefined' ? localStorage.getItem('preferred-locale-rtl') : null;
+    const isRtl = rtlStored === '1' || (rtlStored !== '0' && currentLang === 'ar');
+    bodyDir.value = isRtl ? 'rtl' : 'ltr';
     
     // Update document body and html attributes
     if (typeof document !== 'undefined') {

@@ -8,6 +8,7 @@ import { auth } from '~/lib/auth';
 import { getApiClient, extractCookieHeader } from '~/lib/api/client';
 import { API_ENDPOINTS } from '~/lib/api/endpoints';
 import { getConfig } from '~/lib/config';
+import type { SiteLanguageRow } from '~/types/site-language';
 
 /**
  * Load site content once for layout (footer contact/socials).
@@ -48,11 +49,16 @@ export const usePublicBranding = routeLoader$(async ({ cookie, request }) => {
     const logoLight =
       settings?.logoLight || settings?.logo_light || settings?.light_logo || settings?.site_logo_light || '';
 
+    const site_languages = Array.isArray(settings?.site_languages)
+      ? (settings.site_languages as SiteLanguageRow[])
+      : [];
+
     return {
       name,
       logo,
       logoDark,
       logoLight,
+      site_languages,
     };
   } catch {
     return {
@@ -60,6 +66,7 @@ export const usePublicBranding = routeLoader$(async ({ cookie, request }) => {
       logo: '',
       logoDark: '',
       logoLight: '',
+      site_languages: [] as SiteLanguageRow[],
     };
   }
 });
