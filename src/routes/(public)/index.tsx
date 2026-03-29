@@ -5,6 +5,7 @@ import { routeLoader$ } from '@builder.io/qwik-city';
 import { getConfig } from '~/lib/config';
 import { getFeaturedCaseStudies, getTestimonials, getSiteContent, getBlogPosts } from '~/lib/marketing/content-layer';
 import { MARKETING_ROUTES } from '~/lib/marketing/constants';
+import { resolveServiceIconUrl } from '~/lib/marketing/service-icons';
 import { Container } from '~/components/marketing/Container';
 import { Section } from '~/components/marketing/Section';
 import { Button } from '~/components/marketing/Button';
@@ -83,37 +84,103 @@ export default component$(() => {
         </Container>
       </Section>
 
-      {/* Services teaser */}
+      {/* Services teaser — custom icons from /public/icons */}
       {services.length > 0 && (
-        <Section variant="muted">
-          <Container>
+        <Section variant="muted" class="relative overflow-hidden">
+          {/* Decorative glows */}
+          <div
+            class="pointer-events-none absolute -left-32 top-1/4 h-72 w-72 rounded-full bg-primary-400/15 blur-3xl dark:bg-primary-500/10"
+            aria-hidden="true"
+          />
+          <div
+            class="pointer-events-none absolute -right-24 bottom-0 h-64 w-64 rounded-full bg-sky-400/20 blur-3xl dark:bg-sky-600/15"
+            aria-hidden="true"
+          />
+          <Container class="relative">
             <AnimatedReveal>
               <div class="mx-auto max-w-2xl text-center">
-                <h2 class="text-3xl font-bold tracking-tight text-slate-900 dark:text-white sm:text-4xl">
+                <p class="text-sm font-semibold uppercase tracking-widest text-primary-600 dark:text-primary-400">
+                  Capabilities
+                </p>
+                <h2 class="mt-3 text-3xl font-bold tracking-tight text-slate-900 dark:text-white sm:text-4xl lg:text-5xl">
                   What we do
                 </h2>
-                <p class="mt-2 text-lg text-slate-600 dark:text-slate-400">
-                  Full-stack development for web and mobile.
+                <p class="mt-4 text-lg text-slate-600 dark:text-slate-400">
+                  Full-stack development for web and mobile — from interfaces to APIs and app stores.
                 </p>
               </div>
             </AnimatedReveal>
-            <ul class="mx-auto mt-12 grid max-w-5xl gap-8 sm:grid-cols-2 lg:grid-cols-3" role="list">
+            <ul
+              class="mx-auto mt-14 grid max-w-6xl gap-5 sm:grid-cols-2 sm:gap-6 lg:grid-cols-3 lg:gap-8"
+              role="list"
+            >
               {services.slice(0, 6).map((s, i) => (
                 <li key={s.id}>
-                  <AnimatedReveal delay={i * 80}>
+                  <AnimatedReveal delay={i * 70}>
                     <Link
                       href={`${MARKETING_ROUTES.services}#${s.slug}`}
-                      class="block rounded-xl border border-slate-200 bg-white/75 p-6 shadow-sm backdrop-blur-md transition-shadow hover:shadow-md dark:border-slate-700 dark:bg-slate-800/50 dark:backdrop-blur-none focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500"
+                      class="group relative flex h-full flex-col overflow-hidden rounded-2xl border border-slate-200/90 bg-white/80 p-6 shadow-sm backdrop-blur-md transition-all duration-300 hover:-translate-y-1 hover:border-primary-300/70 hover:shadow-xl hover:shadow-primary-500/10 dark:border-slate-600/50 dark:bg-slate-800/55 dark:backdrop-blur-none dark:hover:border-primary-500/40 dark:hover:shadow-primary-950/40 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-slate-900 sm:p-7"
                     >
-                      <h3 class="text-lg font-semibold text-slate-900 dark:text-white">{s.name}</h3>
-                      <p class="mt-2 text-sm text-slate-600 dark:text-slate-400">{s.shortDescription}</p>
+                      {/* Sheen on hover */}
+                      <div
+                        class="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-500 group-hover:opacity-100"
+                        aria-hidden="true"
+                      >
+                        <div class="absolute -inset-px rounded-2xl bg-gradient-to-br from-primary-500/0 via-primary-400/5 to-sky-500/10 dark:via-primary-500/10 dark:to-sky-500/5" />
+                      </div>
+                      <div class="relative flex flex-1 flex-col">
+                        <div class="mb-5 flex items-start justify-between gap-4">
+                          <div
+                            class="relative flex h-[4.5rem] w-[4.5rem] shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-primary-50 to-sky-50 shadow-inner ring-1 ring-primary-200/40 dark:from-primary-950/60 dark:to-slate-900 dark:ring-primary-500/25"
+                            aria-hidden="true"
+                          >
+                            <div class="absolute inset-1 rounded-xl bg-white/60 dark:bg-slate-900/40" />
+                            <img
+                              src={resolveServiceIconUrl(s)}
+                              alt=""
+                              width={56}
+                              height={56}
+                              decoding="async"
+                              class="relative z-[1] h-14 w-14 object-contain drop-shadow-sm transition-transform duration-300 group-hover:scale-110"
+                            />
+                          </div>
+                          <span class="mt-1 inline-flex h-9 w-9 items-center justify-center rounded-full border border-slate-200/80 bg-slate-50/80 text-slate-400 transition-all duration-300 group-hover:border-primary-200 group-hover:bg-primary-50 group-hover:text-primary-600 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-500 dark:group-hover:border-primary-500/30 dark:group-hover:bg-primary-950/50 dark:group-hover:text-primary-400">
+                            <svg
+                              class="h-4 w-4 -rotate-45 transition-transform duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 rtl:rotate-45"
+                              fill="none"
+                              viewBox="0 0 24 24"
+                              stroke="currentColor"
+                              aria-hidden="true"
+                            >
+                              <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                stroke-width="2"
+                                d="M14 5l7 7m0 0l-7 7m7-7H3"
+                              />
+                            </svg>
+                          </span>
+                        </div>
+                        <h3 class="text-lg font-semibold tracking-tight text-slate-900 dark:text-white">
+                          {s.name}
+                        </h3>
+                        <p class="mt-2 flex-1 text-sm leading-relaxed text-slate-600 dark:text-slate-400">
+                          {s.shortDescription}
+                        </p>
+                        <p class="mt-4 inline-flex items-center gap-1 text-sm font-medium text-primary-600 opacity-0 transition-all duration-300 group-hover:opacity-100 dark:text-primary-400">
+                          View details
+                          <span class="inline-block transition-transform group-hover:translate-x-1 rtl:-scale-x-100">
+                            →
+                          </span>
+                        </p>
+                      </div>
                     </Link>
                   </AnimatedReveal>
                 </li>
               ))}
             </ul>
-            <div class="mt-10 text-center">
-              <Button href={MARKETING_ROUTES.services} variant="outline">
+            <div class="mt-12 text-center">
+              <Button href={MARKETING_ROUTES.services} variant="outline" class="min-w-[200px]">
                 All services
               </Button>
             </div>
