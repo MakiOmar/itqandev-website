@@ -1,0 +1,337 @@
+import { component$, useSignal, $, useTask$ } from '@builder.io/qwik';
+import type { DocumentHead } from '@builder.io/qwik-city';
+import { routeLoader$, Link } from '@builder.io/qwik-city';
+import { PageHeader } from '../../../../components/common/PageHeader';
+import { useTranslate } from '../../../../lib/i18n/useTranslate';
+import { useSwal } from '../../../../lib/hooks/useSwal';
+import { getApiClient, extractCookieHeader } from '../../../../lib/api/client';
+import { API_ENDPOINTS } from '../../../../lib/api/endpoints';
+import { ROUTES } from '../../../../lib/constants/routes';
+import { useSiteLanguageConfig } from '../../layout';
+import { ContentEditingLanguageSelect } from '../../../../components/admin/PerFieldContentTranslations';
+import { secondaryLocalesForContent } from '../../../../lib/content-translations';
+import {
+  mergeCategoryFieldsForUiLocale,
+  normalizeEditingLocale,
+  primaryLocaleForContent,
+} from '../../../../lib/content-display-locale';
+import { useUpdateCategory } from '../../../../lib/admin/category-actions';
+import type { Category } from '../../../../types';
+
+function mapCategoryFromApi(raw: any): Category {
+  return {
+    id: Number(raw.id),
+    name: String(raw.name ?? ''),
+    slug: String(raw.slug ?? ''),
+    content_locale: raw.content_locale ?? null,
+    description: raw.description ?? '',
+    isFeatured: Boolean(raw.is_featured ?? raw.isFeatured),
+    projectsCount: raw.projects_count ?? raw.projectsCount,
+    translations: Array.isArray(raw.translations) ? raw.translations : [],
+    createdAt: raw.created_at ?? raw.createdAt ?? '',
+    updatedAt: raw.updated_at ?? raw.updatedAt ?? '',
+  };
+}
+
+export const useCategory = routeLoader$(async ({ params, cookie, request, fail }) => {
+  try {
+    const id = params.id;
+    if (!id) {
+      return fail(404, { message: 'Category not found' });
+    }
+    const cookieHeader = extractCookieHeader(cookie, request);
+    const apiClient = getApiClient(cookieHeader);
+    const response = await apiClient.get(API_ENDPOINTS.CATEGORIES.GET(id));
+    const raw = (response as any)?.data ?? response;
+    if (!raw || raw.id == null) {
+      return fail(404, { message: 'Category not found' });
+    }
+    return mapCategoryFromApi(raw);
+  } catch {
+    return fail(404, { message: 'Category not found' });
+  }
+});
+
+/**
+ * Edit category — no primary language selector (create-only)
+ */
+export default component$(() => {
+  const { t } = useTranslate();
+  const { success, error: showError } = useSwal();
+  const langConfig = useSiteLanguageConfig();
+  const categoryLoader = useCategory();
+  const updateAction = useUpdateCategory();
+  /** Latest category (loader or after save) so merge logic stays correct */
+  const liveCategory = useSignal<Category | null>(null);
+
+  const saveTranslations = {
+    successTitle: String(t('common.success')),
+    updatedText: String(t('common.updated')),
+  };
+
+  const contentLocaleDraft = useSignal('');
+  const editingLocaleDraft = useSignal(langConfig.value.default_locale);
+  const canonicalName = useSignal('');
+  const canonicalDescription = useSignal('');
+  const translationsJson = useSignal('[]');
+
+  const formData = useSignal({
+    name: '',
+    slug: '',
+    description: '',
+    is_featured: false,
+  });
+
+  const submitWithFormData = $(async (action: any, fields: Record<string, any>) => {
+    const fd = new FormData();
+    for (const [k, v] of Object.entries(fields)) {
+      if (v === undefined || v === null) continue;
+      if (Array.isArray(v)) {
+        for (const item of v) fd.append(`${k}[]`, String(item));
+      } else {
+        fd.append(k, String(v));
+      }
+    }
+    await action.submit(fd);
+    return (action as any).value;
+  });
+
+  useTask$(({ track }) => {
+    const c = track(() => categoryLoader.value) as Category | undefined;
+    if (!c?.id) return;
+    liveCategory.value = c;
+    contentLocaleDraft.value =
+      (c as any).content_locale != null && String((c as any).content_locale).trim() !== ''
+        ? String((c as any).content_locale).trim()
+        : '';
+    canonicalName.value = c.name ?? '';
+    canonicalDescription.value = c.description ?? '';
+    formData.value = {
+      name: c.name,
+      slug: c.slug || '',
+      description: c.description || '',
+      is_featured: (c as any).isFeatured || false,
+    };
+    const secondaries = secondaryLocalesForContent(
+      langConfig.value.site_languages,
+      langConfig.value.default_locale,
+      contentLocaleDraft.value.trim() !== '' ? contentLocaleDraft.value.trim() : null,
+    );
+    translationsJson.value = JSON.stringify(
+      secondaries.map((l) => {
+        const row = (c as any).translations?.find((x: any) => String(x?.locale).toLowerCase() === l.code.toLowerCase());
+        return { locale: l.code, name: row?.name ?? '', description: row?.description ?? '' };
+      }),
+    );
+  });
+
+  useTask$(({ track }) => {
+    track(() => editingLocaleDraft.value);
+    track(() => liveCategory.value);
+    track(() => categoryLoader.value);
+    track(() => langConfig.value.site_languages);
+    track(() => langConfig.value.default_locale);
+    track(() => contentLocaleDraft.value);
+    const c = (liveCategory.value ?? categoryLoader.value) as Category | undefined;
+    if (!c?.id) return;
+    const m = mergeCategoryFieldsForUiLocale(
+      c,
+      editingLocaleDraft.value,
+      langConfig.value.site_languages,
+      langConfig.value.default_locale,
+      contentLocaleDraft.value.trim() !== '' ? contentLocaleDraft.value.trim() : null,
+    );
+    formData.value = {
+      ...formData.value,
+      name: m.name,
+      description: m.description,
+      slug: c.slug || formData.value.slug,
+      is_featured: (c as any).isFeatured || false,
+    };
+  });
+
+  const handleSave = $(async () => {
+    const c = (liveCategory.value ?? categoryLoader.value) as Category | undefined;
+    if (!c?.id) return;
+
+    const val = await submitWithFormData(updateAction, {
+      id: String(c.id),
+      editing_locale: normalizeEditingLocale(
+        editingLocaleDraft.value,
+        langConfig.value.site_languages,
+        langConfig.value.default_locale,
+        contentLocaleDraft.value.trim() !== '' ? contentLocaleDraft.value.trim() : null,
+      ),
+      form_site_default_locale: langConfig.value.default_locale,
+      effective_primary_locale: primaryLocaleForContent(
+        langConfig.value.site_languages,
+        langConfig.value.default_locale,
+        contentLocaleDraft.value.trim() !== '' ? contentLocaleDraft.value.trim() : null,
+      ),
+      canonical_name: canonicalName.value,
+      canonical_description: canonicalDescription.value,
+      translations_json: translationsJson.value,
+      content_locale: contentLocaleDraft.value,
+      name: formData.value.name,
+      slug: formData.value.slug,
+      description: formData.value.description,
+      is_featured: formData.value.is_featured ? '1' : undefined,
+    });
+
+    if (val?.failed) {
+      await showError(val.message || 'Failed to update category');
+      return;
+    }
+
+    await success(saveTranslations.successTitle, { text: saveTranslations.updatedText });
+    const updated = val?.category as Category | undefined;
+    if (updated) {
+      liveCategory.value = mapCategoryFromApi(updated as any);
+      canonicalName.value = liveCategory.value.name ?? '';
+      canonicalDescription.value = liveCategory.value.description ?? '';
+      const secondaries = secondaryLocalesForContent(
+        langConfig.value.site_languages,
+        langConfig.value.default_locale,
+        contentLocaleDraft.value.trim() !== '' ? contentLocaleDraft.value.trim() : null,
+      );
+      translationsJson.value = JSON.stringify(
+        secondaries.map((l) => {
+          const row = (liveCategory.value as any)?.translations?.find(
+            (x: any) => String(x?.locale).toLowerCase() === l.code.toLowerCase(),
+          );
+          return { locale: l.code, name: row?.name ?? '', description: row?.description ?? '' };
+        }),
+      );
+    }
+  });
+
+  const cat = (liveCategory.value ?? categoryLoader.value) as Category | undefined;
+  if (!cat?.id) {
+    return (
+      <div class="p-6 text-center text-gray-600 dark:text-gray-300">
+        <p>{t('common.notFound') || 'Not found'}</p>
+        <Link href={ROUTES.ADMIN.CATEGORIES} class="mt-2 inline-block text-primary-600">
+          {t('common.back')}
+        </Link>
+      </div>
+    );
+  }
+
+  return (
+    <>
+      <PageHeader title={t('categories.edit')} description={t('categories.subtitle')}>
+        <Link
+          href={ROUTES.ADMIN.CATEGORIES}
+          class="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm transition hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 dark:hover:bg-gray-700"
+        >
+          {t('common.back')}
+        </Link>
+      </PageHeader>
+
+      <div class="mx-auto max-w-2xl rounded-lg border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-800 dark:bg-gray-800">
+        <div class="space-y-4">
+          <ContentEditingLanguageSelect
+            siteLanguages={langConfig.value.site_languages}
+            value={editingLocaleDraft.value}
+            effectivePrimaryLocale={primaryLocaleForContent(
+              langConfig.value.site_languages,
+              langConfig.value.default_locale,
+              contentLocaleDraft.value.trim() !== '' ? contentLocaleDraft.value.trim() : null,
+            )}
+            label={t('contentTranslations.sectionTitle')}
+            hintPrimary={t('contentTranslations.defaultHint')}
+            hintSecondary={t('contentTranslations.fallbackPlaceholderHint')}
+            secondarySavePrefix={t('contentTranslations.addTranslations')}
+            onChange$={$((code: string) => {
+              editingLocaleDraft.value = code;
+            })}
+          />
+
+          <div>
+            <label for="name" class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-200">
+              {t('categories.name')} *
+            </label>
+            <input
+              id="name"
+              name="name"
+              type="text"
+              value={formData.value.name}
+              onInput$={(e) => (formData.value = { ...formData.value, name: (e.target as HTMLInputElement).value })}
+              class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-primary-500 focus:outline-none focus:ring focus:ring-primary-200 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:focus:ring-primary-700/40"
+              required
+            />
+          </div>
+
+          <div>
+            <label for="slug" class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-200">
+              {t('categories.slug')}
+            </label>
+            <input
+              id="slug"
+              name="slug"
+              type="text"
+              value={formData.value.slug}
+              onInput$={(e) => (formData.value = { ...formData.value, slug: (e.target as HTMLInputElement).value })}
+              class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-primary-500 focus:outline-none focus:ring focus:ring-primary-200 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:focus:ring-primary-700/40"
+            />
+          </div>
+
+          <div>
+            <label for="description" class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-200">
+              {t('categories.description')}
+            </label>
+            <textarea
+              id="description"
+              name="description"
+              rows={3}
+              value={formData.value.description}
+              onInput$={(e) =>
+                (formData.value = { ...formData.value, description: (e.target as HTMLTextAreaElement).value })
+              }
+              class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-primary-500 focus:outline-none focus:ring focus:ring-primary-200 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:focus:ring-primary-700/40"
+            />
+          </div>
+
+          <div class="flex items-center gap-2">
+            <input
+              id="is_featured"
+              name="is_featured"
+              type="checkbox"
+              value="1"
+              checked={formData.value.is_featured}
+              onChange$={(e) =>
+                (formData.value = { ...formData.value, is_featured: (e.target as HTMLInputElement).checked })
+              }
+              class="h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+            />
+            <label for="is_featured" class="text-sm font-medium text-gray-700 dark:text-gray-200">
+              {t('categories.featured')}
+            </label>
+          </div>
+
+          <div class="flex gap-2">
+            <button
+              type="button"
+              preventdefault:click
+              onClick$={handleSave}
+              class="flex-1 rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-primary-700"
+            >
+              {t('common.update')}
+            </button>
+            <Link
+              href={ROUTES.ADMIN.CATEGORIES}
+              class="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm transition hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 dark:hover:bg-gray-700"
+            >
+              {t('common.cancel')}
+            </Link>
+          </div>
+        </div>
+      </div>
+    </>
+  );
+});
+
+export const head: DocumentHead = {
+  title: 'Edit category - Dashboard',
+  meta: [{ name: 'description', content: 'Edit category' }],
+};

@@ -26,6 +26,8 @@ export function getRoutes() {
       PROJECTS_NEW: `${config.routes.admin.prefix}/projects/new`,
       PROJECTS_EDIT: (id: string | number) => `${config.routes.admin.prefix}/projects/${id}`,
       CATEGORIES: `${config.routes.admin.prefix}/categories`,
+      CATEGORIES_NEW: `${config.routes.admin.prefix}/categories/new`,
+      CATEGORIES_EDIT: (id: string | number) => `${config.routes.admin.prefix}/categories/${id}`,
       SKILLS: `${config.routes.admin.prefix}/skills`,
       TESTIMONIALS: `${config.routes.admin.prefix}/testimonials`,
       BLOG: `${config.routes.admin.prefix}/blog`,

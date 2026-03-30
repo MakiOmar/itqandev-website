@@ -1,6 +1,6 @@
 import { component$, useSignal, $, useComputed$, useTask$ } from '@builder.io/qwik';
 import type { DocumentHead } from '@builder.io/qwik-city';
-import { routeLoader$, routeAction$, zod$, z, useNavigate } from '@builder.io/qwik-city';
+import { routeLoader$, routeAction$, zod$, z } from '@builder.io/qwik-city';
 import { PageHeader } from '../../../components/common/PageHeader';
 import { EmptyState } from '../../../components/common/EmptyState';
 import { useTranslate } from '../../../lib/i18n/useTranslate';
