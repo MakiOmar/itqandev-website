@@ -285,6 +285,37 @@ export default component$(() => {
   const selectedItems = useSignal<string[]>([]);
   const searchQuery = useSignal('');
 
+  const languageLabelByCode = new Map(
+    langConfig.value.site_languages.map((l) => [String(l.code).toLowerCase(), l.native_label || l.label || l.code]),
+  );
+
+  const mainLocaleLabel = (category: Category): string => {
+    const main = primaryLocaleForContent(
+      langConfig.value.site_languages,
+      langConfig.value.default_locale,
+      (category as any).content_locale ?? null,
+    );
+    return `${languageLabelByCode.get(main) || main} (${main})`;
+  };
+
+  const translationsLabel = (category: Category): string => {
+    const rows = (category as any).translations as Array<{ locale?: string | null }> | undefined;
+    const locales = Array.isArray(rows)
+      ? Array.from(
+          new Set(
+            rows
+              .map((r) => String(r?.locale ?? '').trim().toLowerCase())
+              .filter((x) => x.length > 0),
+          ),
+        )
+      : [];
+    if (locales.length === 0) {
+      return t('contentTranslations.noSecondaryLanguages') || '—';
+    }
+    const labels = locales.map((code) => `${languageLabelByCode.get(code) || code} (${code})`);
+    return `${locales.length}: ${labels.join(', ')}`;
+  };
+
   const filteredCategories = useComputed$(() => {
     const list = categoriesState.value || [];
     const q = (searchQuery.value || '').trim().toLowerCase();
@@ -772,6 +803,15 @@ export default component$(() => {
                       {category.description && (
                         <p class="mt-1 text-sm text-gray-600 dark:text-gray-300">{category.description}</p>
                       )}
+
+                      <div class="mt-1 flex flex-wrap gap-1">
+                        <span class="rounded bg-slate-100 px-2 py-0.5 text-xs text-slate-700 dark:bg-slate-700/30 dark:text-slate-200">
+                          {t('contentTranslations.contentPrimaryLanguage')}: {mainLocaleLabel(category)}
+                        </span>
+                        <span class="rounded bg-emerald-100 px-2 py-0.5 text-xs text-emerald-700 dark:bg-emerald-700/20 dark:text-emerald-300">
+                          {t('contentTranslations.addTranslations')}: {translationsLabel(category)}
+                        </span>
+                      </div>
 
                       {(category as any).isFeatured && (
                         <span class="mt-1 inline-block rounded-full bg-primary-100 px-2 py-0.5 text-xs font-medium text-primary-800 dark:bg-primary-900/20 dark:text-primary-400">
