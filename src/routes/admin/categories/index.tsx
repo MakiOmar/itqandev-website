@@ -8,6 +8,20 @@ import { useSwal } from '../../../lib/hooks/useSwal';
 import { getApiClient, extractCookieHeader } from '../../../lib/api/client';
 import { API_ENDPOINTS } from '../../../lib/api/endpoints';
 import type { Category, CategoryCreateInput, CategoryUpdateInput } from '../../../types';
+import { useSiteLanguageConfig } from '../layout';
+import { useLocaleAwareList } from '../../../lib/hooks/useLocaleAwareList';
+import {
+  ContentEditingLanguageSelect,
+  ContentPrimaryLanguageSelect,
+} from '../../../components/admin/PerFieldContentTranslations';
+import { parseTranslationsJson, secondaryLocalesForContent } from '../../../lib/content-translations';
+import {
+  mergeCategoryFieldsForUiLocale,
+  mergeSecondaryCategoryTranslations,
+  normalizeEditingLocale,
+  primaryLocaleForContent,
+  shouldWritePrimaryColumns,
+} from '../../../lib/content-display-locale';
 
 /**
  * API payload shape returned by Laravel index()
@@ -81,9 +95,32 @@ export const useCreateCategory = routeAction$(
         name: data.name,
         slug: data.slug || undefined,
         description: data.description || undefined,
-        // your backend field is is_featured, your TS type uses isFeatured:
         isFeatured: toBool((data as any).is_featured),
       };
+
+      const rawContentLocale = (data as { content_locale?: string }).content_locale?.trim();
+      (payload as CategoryCreateInput & { content_locale?: string | null }).content_locale =
+        rawContentLocale && rawContentLocale.length > 0 ? rawContentLocale : null;
+
+      const parsedTranslations = parseTranslationsJson((data as { translations_json?: string }).translations_json);
+      const siteDef = String((data as { form_site_default_locale?: string }).form_site_default_locale || 'en');
+      const effectivePrimary = String((data as { effective_primary_locale?: string }).effective_primary_locale || siteDef);
+      const editingLocale = String((data as { editing_locale?: string }).editing_locale || effectivePrimary);
+      const canonicalName = String((data as { canonical_name?: string }).canonical_name ?? '');
+      const canonicalDescription = String((data as { canonical_description?: string }).canonical_description ?? '');
+      if (shouldWritePrimaryColumns(editingLocale, effectivePrimary)) {
+        if (parsedTranslations) {
+          (payload as unknown as { translations?: unknown[] }).translations = parsedTranslations;
+        }
+      } else {
+        (payload as any).name = canonicalName;
+        (payload as any).description = canonicalDescription;
+        (payload as unknown as { translations?: unknown[] }).translations = mergeSecondaryCategoryTranslations(
+          (data as { translations_json?: string }).translations_json,
+          editingLocale,
+          { name: String(data.name || ''), description: String(data.description ?? '') },
+        );
+      }
 
       const response = await apiClient.post<Category>(API_ENDPOINTS.CATEGORIES.CREATE, payload);
       const created = (response as any)?.data ?? response;
@@ -112,6 +149,30 @@ export const useUpdateCategory = routeAction$(
         description: data.description || undefined,
         isFeatured: toBool((data as any).is_featured),
       };
+
+      const rawContentLocale = (data as { content_locale?: string }).content_locale?.trim();
+      (payload as CategoryUpdateInput & { content_locale?: string | null }).content_locale =
+        rawContentLocale && rawContentLocale.length > 0 ? rawContentLocale : null;
+
+      const parsedTranslations = parseTranslationsJson((data as { translations_json?: string }).translations_json);
+      const siteDef = String((data as { form_site_default_locale?: string }).form_site_default_locale || 'en');
+      const effectivePrimary = String((data as { effective_primary_locale?: string }).effective_primary_locale || siteDef);
+      const editingLocale = String((data as { editing_locale?: string }).editing_locale || effectivePrimary);
+      const canonicalName = String((data as { canonical_name?: string }).canonical_name ?? '');
+      const canonicalDescription = String((data as { canonical_description?: string }).canonical_description ?? '');
+      if (shouldWritePrimaryColumns(editingLocale, effectivePrimary)) {
+        if (parsedTranslations) {
+          (payload as unknown as { translations?: unknown[] }).translations = parsedTranslations;
+        }
+      } else {
+        (payload as any).name = canonicalName;
+        (payload as any).description = canonicalDescription;
+        (payload as unknown as { translations?: unknown[] }).translations = mergeSecondaryCategoryTranslations(
+          (data as { translations_json?: string }).translations_json,
+          editingLocale,
+          { name: String(data.name || ''), description: String(data.description ?? '') },
+        );
+      }
 
       const response = await apiClient.put<Category>(
         API_ENDPOINTS.CATEGORIES.UPDATE(String((data as any).id)),
@@ -169,12 +230,35 @@ export default component$(() => {
   const { confirm, success, error: showError } = useSwal();
 
   const categories = useCategories();
+  const langConfig = useSiteLanguageConfig();
 
   // local mutable state for instant UI updates (no navigation)
-  const categoriesState = useSignal<Category[]>(categories.value ?? []);
+  const { items: categoriesState, loading } = useLocaleAwareList<Category>(
+    categories.value ?? [],
+    $((loc) => {
+      const apiClient = getApiClient(undefined, loc);
+      return apiClient.get(API_ENDPOINTS.CATEGORIES.LIST).then((response: any) => {
+        let body: unknown = response?.data ?? response;
+        if (typeof body === 'string') {
+          try {
+            body = JSON.parse(body);
+          } catch {
+            return [];
+          }
+        }
+        if (body && typeof body === 'object' && 'data' in (body as any) && Array.isArray((body as any).data)) {
+          return (body as any).data as Category[];
+        }
+        if (Array.isArray(body)) {
+          return body as Category[];
+        }
+        return [];
+      });
+    }),
+  );
   useTask$(({ track }) => {
     track(() => categories.value);
-    categoriesState.value = categories.value ?? [];
+    // keep SSR loader data as baseline; locale-aware hook will refetch on locale changes
   });
 
   const createAction = useCreateCategory();
@@ -193,6 +277,11 @@ export default component$(() => {
 
   const showForm = useSignal(false);
   const editingId = useSignal<number | null>(null);
+  const contentLocaleDraft = useSignal('');
+  const editingLocaleDraft = useSignal(langConfig.value.default_locale);
+  const canonicalName = useSignal('');
+  const canonicalDescription = useSignal('');
+  const translationsJson = useSignal('[]');
   const selectedItems = useSignal<string[]>([]);
   const searchQuery = useSignal('');
 
@@ -224,9 +313,15 @@ export default component$(() => {
     formData.value = { name: '', slug: '', description: '', is_featured: false };
     editingId.value = null;
     showForm.value = false;
+    contentLocaleDraft.value = '';
+    canonicalName.value = '';
+    canonicalDescription.value = '';
+    translationsJson.value = '[]';
   });
 
   const editCategory = $((category: Category) => {
+    canonicalName.value = category.name ?? '';
+    canonicalDescription.value = category.description ?? '';
     formData.value = {
       name: category.name,
       slug: category.slug || '',
@@ -235,6 +330,52 @@ export default component$(() => {
     };
     editingId.value = category.id;
     showForm.value = true;
+    contentLocaleDraft.value =
+      (category as any).content_locale != null && String((category as any).content_locale).trim() !== ''
+        ? String((category as any).content_locale).trim()
+        : '';
+
+    const secondaries = secondaryLocalesForContent(
+      langConfig.value.site_languages,
+      langConfig.value.default_locale,
+      contentLocaleDraft.value.trim() !== '' ? contentLocaleDraft.value.trim() : null,
+    );
+    translationsJson.value = JSON.stringify(
+      secondaries.map((l) => {
+        const row = (category as any).translations?.find((x: any) => String(x?.locale).toLowerCase() === l.code.toLowerCase());
+        return { locale: l.code, name: row?.name ?? '', description: row?.description ?? '' };
+      }),
+    );
+  });
+
+  useTask$(({ track }) => {
+    track(() => editingLocaleDraft.value);
+    track(() => categoriesState.value);
+    track(() => editingId.value);
+    track(() => langConfig.value.site_languages);
+    track(() => langConfig.value.default_locale);
+    track(() => contentLocaleDraft.value);
+    if (!editingId.value) {
+      return;
+    }
+    const current = (categoriesState.value || []).find((c) => c.id === editingId.value);
+    if (!current) {
+      return;
+    }
+    const m = mergeCategoryFieldsForUiLocale(
+      current,
+      editingLocaleDraft.value,
+      langConfig.value.site_languages,
+      langConfig.value.default_locale,
+      contentLocaleDraft.value.trim() !== '' ? contentLocaleDraft.value.trim() : null,
+    );
+    formData.value = {
+      ...formData.value,
+      name: m.name,
+      description: m.description,
+      slug: current.slug || formData.value.slug,
+      is_featured: (current as any).isFeatured || false,
+    };
   });
 
   // Helper: submit a Qwik action with FormData (avoids “action is unauthorized” issues)
@@ -258,6 +399,22 @@ export default component$(() => {
     if (editingId.value) {
       const val = await submitWithFormData(updateAction, {
         id: String(editingId.value),
+        editing_locale: normalizeEditingLocale(
+          editingLocaleDraft.value,
+          langConfig.value.site_languages,
+          langConfig.value.default_locale,
+          contentLocaleDraft.value.trim() !== '' ? contentLocaleDraft.value.trim() : null,
+        ),
+        form_site_default_locale: langConfig.value.default_locale,
+        effective_primary_locale: primaryLocaleForContent(
+          langConfig.value.site_languages,
+          langConfig.value.default_locale,
+          contentLocaleDraft.value.trim() !== '' ? contentLocaleDraft.value.trim() : null,
+        ),
+        canonical_name: canonicalName.value,
+        canonical_description: canonicalDescription.value,
+        translations_json: translationsJson.value,
+        content_locale: contentLocaleDraft.value,
         name: formData.value.name,
         slug: formData.value.slug,
         description: formData.value.description,
@@ -296,6 +453,22 @@ export default component$(() => {
 
     // CREATE
     const val = await submitWithFormData(createAction, {
+      editing_locale: normalizeEditingLocale(
+        editingLocaleDraft.value,
+        langConfig.value.site_languages,
+        langConfig.value.default_locale,
+        contentLocaleDraft.value.trim() !== '' ? contentLocaleDraft.value.trim() : null,
+      ),
+      form_site_default_locale: langConfig.value.default_locale,
+      effective_primary_locale: primaryLocaleForContent(
+        langConfig.value.site_languages,
+        langConfig.value.default_locale,
+        contentLocaleDraft.value.trim() !== '' ? contentLocaleDraft.value.trim() : null,
+      ),
+      canonical_name: canonicalName.value,
+      canonical_description: canonicalDescription.value,
+      translations_json: translationsJson.value,
+      content_locale: contentLocaleDraft.value,
       name: formData.value.name,
       slug: formData.value.slug,
       description: formData.value.description,
@@ -418,6 +591,60 @@ export default component$(() => {
             {/* Real Qwik City form (like your Project edit page) */}
             <Form action={editingId.value ? updateAction : createAction} class="space-y-4">
               {editingId.value && <input type="hidden" name="id" value={String(editingId.value)} />}
+              <input type="hidden" name="translations_json" value={translationsJson.value} />
+              <input type="hidden" name="canonical_name" value={canonicalName.value} />
+              <input type="hidden" name="canonical_description" value={canonicalDescription.value} />
+              <input type="hidden" name="form_site_default_locale" value={langConfig.value.default_locale} />
+              <input
+                type="hidden"
+                name="effective_primary_locale"
+                value={primaryLocaleForContent(
+                  langConfig.value.site_languages,
+                  langConfig.value.default_locale,
+                  contentLocaleDraft.value.trim() !== '' ? contentLocaleDraft.value.trim() : null,
+                )}
+              />
+              <input
+                type="hidden"
+                name="editing_locale"
+                value={normalizeEditingLocale(
+                  editingLocaleDraft.value,
+                  langConfig.value.site_languages,
+                  langConfig.value.default_locale,
+                  contentLocaleDraft.value.trim() !== '' ? contentLocaleDraft.value.trim() : null,
+                )}
+              />
+
+              {!editingId.value ? (
+                <ContentPrimaryLanguageSelect
+                  siteLanguages={langConfig.value.site_languages}
+                  defaultLocale={langConfig.value.default_locale}
+                  value={contentLocaleDraft.value}
+                  label={t('contentTranslations.contentPrimaryLanguage')}
+                  hint={t('contentTranslations.contentPrimaryHint')}
+                  useSiteDefaultLabel={t('contentTranslations.useSiteDefault')}
+                  onChange$={$((code: string) => {
+                    contentLocaleDraft.value = code;
+                  })}
+                />
+              ) : null}
+
+              <ContentEditingLanguageSelect
+                siteLanguages={langConfig.value.site_languages}
+                value={editingLocaleDraft.value}
+                effectivePrimaryLocale={primaryLocaleForContent(
+                  langConfig.value.site_languages,
+                  langConfig.value.default_locale,
+                  contentLocaleDraft.value.trim() !== '' ? contentLocaleDraft.value.trim() : null,
+                )}
+                label={t('contentTranslations.sectionTitle')}
+                hintPrimary={t('contentTranslations.defaultHint')}
+                hintSecondary={t('contentTranslations.fallbackPlaceholderHint')}
+                secondarySavePrefix={t('contentTranslations.addTranslations')}
+                onChange$={$((code: string) => {
+                  editingLocaleDraft.value = code;
+                })}
+              />
 
               <div>
                 <label for="name" class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-200">
@@ -517,7 +744,9 @@ export default component$(() => {
             />
           </div>
 
-          {filteredCategories.value.length === 0 ? (
+          {loading.value ? (
+            <div class="py-6 text-center text-gray-500 dark:text-gray-400">{t('common.loading')}</div>
+          ) : filteredCategories.value.length === 0 ? (
             <EmptyState title={t('categories.noCategories')} />
           ) : (
             <ul class="space-y-2">

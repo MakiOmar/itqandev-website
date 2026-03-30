@@ -7,6 +7,7 @@ export interface Category {
   id: number;
   name: string;
   slug: string;
+  content_locale?: string | null;
   description?: string;
   isFeatured: boolean;
   createdAt: string;
@@ -15,16 +16,19 @@ export interface Category {
   icon?: Media;
   thumb?: Media;
   banner?: Media;
+  translations?: Array<{ locale: string; name?: string | null; description?: string | null }>;
 }
 
 export interface CategoryCreateInput {
   name: string;
   slug?: string;
+  content_locale?: string | null;
   description?: string;
   isFeatured?: boolean;
   iconId?: number;
   thumbId?: number;
   bannerId?: number;
+  translations?: Array<{ locale: string; name?: string | null; description?: string | null }>;
 }
 
 export interface CategoryUpdateInput extends Partial<CategoryCreateInput> {

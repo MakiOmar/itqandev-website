@@ -21,3 +21,9 @@ export interface BlogTranslationRow {
   excerpt?: string | null;
   content?: string | null;
 }
+
+export interface CategoryTranslationRow {
+  locale: string;
+  name?: string | null;
+  description?: string | null;
+}

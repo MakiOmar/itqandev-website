@@ -1,4 +1,4 @@
-import type { BlogTranslationRow, ProjectTranslationRow, SiteLanguageRow } from '../types/site-language';
+import type { BlogTranslationRow, CategoryTranslationRow, ProjectTranslationRow, SiteLanguageRow } from '../types/site-language';
 
 const defaultEnglish: SiteLanguageRow = {
   code: 'en',
@@ -35,7 +35,7 @@ export function secondaryLocalesForContent(
 
 /** Build JSON for hidden `translations_json` from the in-memory store. */
 export function serializeTranslationsJson(
-  kind: 'project' | 'blog',
+  kind: 'project' | 'blog' | 'category',
   locales: SiteLanguageRow[],
   store: Record<string, Record<string, string>>,
 ): string {
@@ -49,11 +49,18 @@ export function serializeTranslationsJson(
         description: r.description ?? '',
       };
     }
+    if (kind === 'blog') {
+      return {
+        locale: l.code,
+        title: r.title ?? '',
+        excerpt: r.excerpt ?? '',
+        content: r.content ?? '',
+      };
+    }
     return {
       locale: l.code,
-      title: r.title ?? '',
-      excerpt: r.excerpt ?? '',
-      content: r.content ?? '',
+      name: r.name ?? '',
+      description: r.description ?? '',
     };
   });
   return JSON.stringify(arr);
@@ -87,9 +94,9 @@ export function translationRowsFromJsonString(s: string): Map<string, Record<str
 
 /** JSON for hidden `translations_json` field (one row per secondary locale). */
 export function initialTranslationsJson(
-  kind: 'project' | 'blog',
+  kind: 'project' | 'blog' | 'category',
   locales: SiteLanguageRow[],
-  fromApi?: ProjectTranslationRow[] | BlogTranslationRow[] | null,
+  fromApi?: ProjectTranslationRow[] | BlogTranslationRow[] | CategoryTranslationRow[] | null,
 ): string {
   const arr = locales.map((l) => {
     const row = fromApi?.find((x) => String(x.locale).toLowerCase() === l.code.toLowerCase());
@@ -102,12 +109,20 @@ export function initialTranslationsJson(
         description: p?.description ?? '',
       };
     }
-    const b = row as BlogTranslationRow | undefined;
+    if (kind === 'blog') {
+      const b = row as BlogTranslationRow | undefined;
+      return {
+        locale: l.code,
+        title: b?.title ?? '',
+        excerpt: b?.excerpt ?? '',
+        content: b?.content ?? '',
+      };
+    }
+    const c = row as CategoryTranslationRow | undefined;
     return {
       locale: l.code,
-      title: b?.title ?? '',
-      excerpt: b?.excerpt ?? '',
-      content: b?.content ?? '',
+      name: c?.name ?? '',
+      description: c?.description ?? '',
     };
   });
   return JSON.stringify(arr);

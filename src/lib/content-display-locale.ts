@@ -1,4 +1,5 @@
 import type { BlogPost } from '../types/blog';
+import type { Category } from '../types/category';
 import type { Project } from '../types/project';
 import type { SiteLanguageRow } from '../types/site-language';
 import { parseTranslationsJson } from './content-translations';
@@ -92,6 +93,31 @@ export function mergeProjectFieldsForUiLocale(
   };
 }
 
+export function mergeCategoryFieldsForUiLocale(
+  category: Category,
+  uiLocale: string,
+  siteLanguages: SiteLanguageRow[] | undefined | null,
+  siteDefaultLocale: string | undefined | null,
+  contentLocaleOverride?: string | null,
+): { name: string; description: string } {
+  const primary = primaryLocaleForContent(
+    siteLanguages,
+    siteDefaultLocale,
+    contentLocaleOverride ?? (category as any).content_locale ?? null,
+  );
+  const u = uiLocale.toLowerCase();
+  const baseName = category.name ?? '';
+  const baseDescription = (category.description as any) ?? '';
+  if (u === primary) {
+    return { name: baseName, description: baseDescription };
+  }
+  const row = (category as any).translations?.find((t: any) => String(t?.locale).toLowerCase() === u);
+  return {
+    name: row?.name != null && row.name !== '' ? row.name : baseName,
+    description: row?.description != null && row.description !== '' ? row.description : baseDescription,
+  };
+}
+
 /**
  * Merge main-field edits for a secondary UI locale into translations_json rows (blog).
  */
@@ -134,6 +160,28 @@ export function mergeSecondaryProjectTranslations(
     return String((row as Record<string, unknown>).locale ?? '').toLowerCase() === u;
   });
   const row = { locale: u, title: edited.title, summary: edited.summary, description: edited.description };
+  if (idx >= 0) {
+    base[idx] = { ...(base[idx] as object), ...row };
+  } else {
+    base.push(row);
+  }
+  return base;
+}
+
+export function mergeSecondaryCategoryTranslations(
+  translationsJson: string | undefined,
+  uiLocale: string,
+  edited: { name: string; description: string },
+): unknown[] {
+  const base = parseTranslationsJson(translationsJson) ?? [];
+  const u = uiLocale.toLowerCase();
+  const idx = base.findIndex((row) => {
+    if (!row || typeof row !== 'object') {
+      return false;
+    }
+    return String((row as Record<string, unknown>).locale ?? '').toLowerCase() === u;
+  });
+  const row = { locale: u, name: edited.name, description: edited.description };
   if (idx >= 0) {
     base[idx] = { ...(base[idx] as object), ...row };
   } else {
