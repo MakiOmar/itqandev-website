@@ -1,4 +1,4 @@
-import type { BlogTranslationRow, CategoryTranslationRow, ProjectTranslationRow, SiteLanguageRow } from '../types/site-language';
+import type { BlogTranslationRow, CategoryTranslationRow, ProjectTranslationRow, SiteLanguageRow, SkillTranslationRow } from '../types/site-language';
 
 const defaultEnglish: SiteLanguageRow = {
   code: 'en',
@@ -35,7 +35,7 @@ export function secondaryLocalesForContent(
 
 /** Build JSON for hidden `translations_json` from the in-memory store. */
 export function serializeTranslationsJson(
-  kind: 'project' | 'blog' | 'category',
+  kind: 'project' | 'blog' | 'category' | 'skill',
   locales: SiteLanguageRow[],
   store: Record<string, Record<string, string>>,
 ): string {
@@ -55,6 +55,13 @@ export function serializeTranslationsJson(
         title: r.title ?? '',
         excerpt: r.excerpt ?? '',
         content: r.content ?? '',
+      };
+    }
+    if (kind === 'category') {
+      return {
+        locale: l.code,
+        name: r.name ?? '',
+        description: r.description ?? '',
       };
     }
     return {
@@ -94,9 +101,9 @@ export function translationRowsFromJsonString(s: string): Map<string, Record<str
 
 /** JSON for hidden `translations_json` field (one row per secondary locale). */
 export function initialTranslationsJson(
-  kind: 'project' | 'blog' | 'category',
+  kind: 'project' | 'blog' | 'category' | 'skill',
   locales: SiteLanguageRow[],
-  fromApi?: ProjectTranslationRow[] | BlogTranslationRow[] | CategoryTranslationRow[] | null,
+  fromApi?: ProjectTranslationRow[] | BlogTranslationRow[] | CategoryTranslationRow[] | SkillTranslationRow[] | null,
 ): string {
   const arr = locales.map((l) => {
     const row = fromApi?.find((x) => String(x.locale).toLowerCase() === l.code.toLowerCase());
@@ -118,7 +125,7 @@ export function initialTranslationsJson(
         content: b?.content ?? '',
       };
     }
-    const c = row as CategoryTranslationRow | undefined;
+    const c = row as CategoryTranslationRow | SkillTranslationRow | undefined;
     return {
       locale: l.code,
       name: c?.name ?? '',

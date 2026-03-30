@@ -27,3 +27,9 @@ export interface CategoryTranslationRow {
   name?: string | null;
   description?: string | null;
 }
+
+export interface SkillTranslationRow {
+  locale: string;
+  name?: string | null;
+  description?: string | null;
+}

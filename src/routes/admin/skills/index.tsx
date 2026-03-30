@@ -1,4 +1,4 @@
-import { component$, useSignal, $ } from '@builder.io/qwik';
+import { component$, useSignal, $, useComputed$, useTask$ } from '@builder.io/qwik';
 import type { DocumentHead } from '@builder.io/qwik-city';
 import { routeLoader$, routeAction$, zod$, z, useNavigate } from '@builder.io/qwik-city';
 import { PageHeader } from '../../../components/common/PageHeader';
@@ -8,6 +8,20 @@ import { useSwal } from '../../../lib/hooks/useSwal';
 import { getApiClient, extractCookieHeader } from '../../../lib/api/client';
 import { API_ENDPOINTS } from '../../../lib/api/endpoints';
 import type { Skill, SkillCreateInput, SkillUpdateInput } from '../../../types';
+import { useSiteLanguageConfig } from '../layout';
+import { useLocaleAwareList } from '../../../lib/hooks/useLocaleAwareList';
+import {
+  ContentEditingLanguageSelect,
+  ContentPrimaryLanguageSelect,
+} from '../../../components/admin/PerFieldContentTranslations';
+import { parseTranslationsJson, secondaryLocalesForContent } from '../../../lib/content-translations';
+import {
+  mergeSecondarySkillTranslations,
+  mergeSkillFieldsForUiLocale,
+  normalizeEditingLocale,
+  primaryLocaleForContent,
+  shouldWritePrimaryColumns,
+} from '../../../lib/content-display-locale';
 
 /**
  * Skill schema
@@ -17,6 +31,13 @@ const skillSchema = z.object({
   slug: z.string().optional(),
   description: z.string().optional(),
   icon_hint: z.string().optional(),
+  content_locale: z.string().optional(),
+  editing_locale: z.string().optional(),
+  form_site_default_locale: z.string().optional(),
+  effective_primary_locale: z.string().optional(),
+  canonical_name: z.string().optional(),
+  canonical_description: z.string().optional(),
+  translations_json: z.string().optional(),
 });
 
 /**
@@ -57,6 +78,27 @@ export const useCreateSkill = routeAction$(
       description: data.description || undefined,
       iconHint: data.icon_hint || undefined,
     };
+    (payload as SkillCreateInput & { content_locale?: string | null }).content_locale =
+      data.content_locale && data.content_locale.trim() !== '' ? data.content_locale : null;
+    const parsedTranslations = parseTranslationsJson((data as any).translations_json);
+    const siteDef = String((data as any).form_site_default_locale || 'en');
+    const effectivePrimary = String((data as any).effective_primary_locale || siteDef);
+    const editingLocale = String((data as any).editing_locale || effectivePrimary);
+    const canonicalName = String((data as any).canonical_name ?? '');
+    const canonicalDescription = String((data as any).canonical_description ?? '');
+    if (shouldWritePrimaryColumns(editingLocale, effectivePrimary)) {
+      if (parsedTranslations) {
+        (payload as any).translations = parsedTranslations;
+      }
+    } else {
+      (payload as any).name = canonicalName;
+      (payload as any).description = canonicalDescription;
+      (payload as any).translations = mergeSecondarySkillTranslations(
+        (data as any).translations_json,
+        editingLocale,
+        { name: String(data.name || ''), description: String(data.description ?? '') },
+      );
+    }
     const response = await apiClient.post<Skill>(API_ENDPOINTS.SKILLS.CREATE, payload);
     return { success: true, skill: response?.data ?? response };
   },
@@ -76,6 +118,27 @@ export const useUpdateSkill = routeAction$(
       description: data.description || undefined,
       iconHint: data.icon_hint || undefined,
     };
+    (payload as SkillUpdateInput & { content_locale?: string | null }).content_locale =
+      data.content_locale && data.content_locale.trim() !== '' ? data.content_locale : null;
+    const parsedTranslations = parseTranslationsJson((data as any).translations_json);
+    const siteDef = String((data as any).form_site_default_locale || 'en');
+    const effectivePrimary = String((data as any).effective_primary_locale || siteDef);
+    const editingLocale = String((data as any).editing_locale || effectivePrimary);
+    const canonicalName = String((data as any).canonical_name ?? '');
+    const canonicalDescription = String((data as any).canonical_description ?? '');
+    if (shouldWritePrimaryColumns(editingLocale, effectivePrimary)) {
+      if (parsedTranslations) {
+        (payload as any).translations = parsedTranslations;
+      }
+    } else {
+      (payload as any).name = canonicalName;
+      (payload as any).description = canonicalDescription;
+      (payload as any).translations = mergeSecondarySkillTranslations(
+        (data as any).translations_json,
+        editingLocale,
+        { name: String(data.name || ''), description: String(data.description ?? '') },
+      );
+    }
     await apiClient.put(API_ENDPOINTS.SKILLS.UPDATE(String(data.id)), payload);
     return { success: true };
   },
@@ -116,6 +179,19 @@ export default component$(() => {
   const { confirm, success, error: showError } = useSwal();
   const navigate = useNavigate();
   const skills = useSkills();
+  const langConfig = useSiteLanguageConfig();
+  const { items: skillsState, loading } = useLocaleAwareList<Skill>(
+    skills.value ?? [],
+    $((loc) => {
+      const apiClient = getApiClient(undefined, loc);
+      return apiClient.get<Skill[]>(API_ENDPOINTS.SKILLS.LIST).then((res: any) => {
+        const body = res?.data ?? res;
+        if (Array.isArray(body)) return body as Skill[];
+        if (body && Array.isArray(body.data)) return body.data as Skill[];
+        return [];
+      });
+    }),
+  );
   const createAction = useCreateSkill();
   const updateAction = useUpdateSkill();
   const deleteAction = useDeleteSkill();
@@ -126,7 +202,18 @@ export default component$(() => {
   const selectedItems = useSignal<string[]>([]);
   const searchQuery = useSignal('');
 
-  const filteredSkills = useSignal(skills.value);
+  const filteredSkills = useComputed$(() => {
+    const list = skillsState.value || [];
+    const query = (searchQuery.value || '').trim().toLowerCase();
+    if (!query) return list;
+    return list.filter(
+      (s: any) =>
+        String(s.name ?? '').toLowerCase().includes(query) ||
+        String(s.slug ?? '').toLowerCase().includes(query) ||
+        String(s.description ?? '').toLowerCase().includes(query) ||
+        String(s.iconHint ?? s.icon_hint ?? '').toLowerCase().includes(query)
+    );
+  });
 
   const formData = useSignal({
     name: '',
@@ -134,21 +221,14 @@ export default component$(() => {
     description: '',
     icon_hint: '',
   });
+  const contentLocaleDraft = useSignal('');
+  const editingLocaleDraft = useSignal(langConfig.value.default_locale);
+  const canonicalName = useSignal('');
+  const canonicalDescription = useSignal('');
+  const translationsJson = useSignal('[]');
 
   const handleSearch = $((value: string) => {
     searchQuery.value = value;
-    if (!value.trim()) {
-      filteredSkills.value = skills.value;
-    } else {
-      const query = value.toLowerCase();
-      filteredSkills.value = skills.value.filter(
-        (s) =>
-          s.name?.toLowerCase().includes(query) ||
-          s.slug?.toLowerCase().includes(query) ||
-          s.description?.toLowerCase().includes(query) ||
-          s.iconHint?.toLowerCase().includes(query)
-      );
-    }
   });
 
   const resetForm = $(() => {
@@ -160,6 +240,10 @@ export default component$(() => {
     };
     editingId.value = null;
     showForm.value = false;
+    contentLocaleDraft.value = '';
+    canonicalName.value = '';
+    canonicalDescription.value = '';
+    translationsJson.value = '[]';
   });
 
   // Pre-compute translation strings to avoid serialization issues
@@ -170,14 +254,48 @@ export default component$(() => {
   };
 
   const editSkill = $((skill: Skill) => {
+    canonicalName.value = (skill as any).name ?? '';
+    canonicalDescription.value = (skill as any).description ?? '';
     formData.value = {
       name: skill.name,
       slug: skill.slug,
       description: skill.description || '',
-      icon_hint: skill.iconHint || '',
+      icon_hint: (skill as any).iconHint || (skill as any).icon_hint || '',
     };
     editingId.value = skill.id;
     showForm.value = true;
+    contentLocaleDraft.value =
+      (skill as any).content_locale != null && String((skill as any).content_locale).trim() !== ''
+        ? String((skill as any).content_locale).trim()
+        : '';
+    const secondaries = secondaryLocalesForContent(
+      langConfig.value.site_languages,
+      langConfig.value.default_locale,
+      contentLocaleDraft.value.trim() !== '' ? contentLocaleDraft.value.trim() : null,
+    );
+    translationsJson.value = JSON.stringify(
+      secondaries.map((l) => {
+        const row = (skill as any).translations?.find((x: any) => String(x?.locale).toLowerCase() === l.code.toLowerCase());
+        return { locale: l.code, name: row?.name ?? '', description: row?.description ?? '' };
+      }),
+    );
+  });
+
+  useTask$(({ track }) => {
+    track(() => editingLocaleDraft.value);
+    track(() => skillsState.value);
+    track(() => editingId.value);
+    if (!editingId.value) return;
+    const current = (skillsState.value || []).find((s) => s.id === editingId.value);
+    if (!current) return;
+    const m = mergeSkillFieldsForUiLocale(
+      current,
+      editingLocaleDraft.value,
+      langConfig.value.site_languages,
+      langConfig.value.default_locale,
+      contentLocaleDraft.value.trim() !== '' ? contentLocaleDraft.value.trim() : null,
+    );
+    formData.value = { ...formData.value, name: m.name, description: m.description };
   });
 
   const handleSave = $(async () => {
@@ -188,6 +306,22 @@ export default component$(() => {
     if (editingId.value) {
       const response = await updateAction.submit({
         id: String(editingId.value),
+        editing_locale: normalizeEditingLocale(
+          editingLocaleDraft.value,
+          langConfig.value.site_languages,
+          langConfig.value.default_locale,
+          contentLocaleDraft.value.trim() !== '' ? contentLocaleDraft.value.trim() : null,
+        ),
+        form_site_default_locale: langConfig.value.default_locale,
+        effective_primary_locale: primaryLocaleForContent(
+          langConfig.value.site_languages,
+          langConfig.value.default_locale,
+          contentLocaleDraft.value.trim() !== '' ? contentLocaleDraft.value.trim() : null,
+        ),
+        canonical_name: canonicalName.value,
+        canonical_description: canonicalDescription.value,
+        translations_json: translationsJson.value,
+        content_locale: contentLocaleDraft.value,
         ...formData.value,
       });
       if (response.value?.failed) {
@@ -198,9 +332,27 @@ export default component$(() => {
         navigate(window.location.pathname);
       }
     } else {
-      const response = await createAction.submit(formData.value);
-      if (response.value?.failed) {
-        const errorMsg = (response.value as any).message || (response.value as any).error || 'Failed to create skill';
+      const response2 = await createAction.submit({
+        editing_locale: normalizeEditingLocale(
+          editingLocaleDraft.value,
+          langConfig.value.site_languages,
+          langConfig.value.default_locale,
+          contentLocaleDraft.value.trim() !== '' ? contentLocaleDraft.value.trim() : null,
+        ),
+        form_site_default_locale: langConfig.value.default_locale,
+        effective_primary_locale: primaryLocaleForContent(
+          langConfig.value.site_languages,
+          langConfig.value.default_locale,
+          contentLocaleDraft.value.trim() !== '' ? contentLocaleDraft.value.trim() : null,
+        ),
+        canonical_name: canonicalName.value,
+        canonical_description: canonicalDescription.value,
+        translations_json: translationsJson.value,
+        content_locale: contentLocaleDraft.value,
+        ...formData.value,
+      });
+      if (response2.value?.failed) {
+        const errorMsg = (response2.value as any).message || (response2.value as any).error || 'Failed to create skill';
         await showError(errorMsg);
       } else {
         await success(successTitle, { text: createdText });
@@ -327,6 +479,35 @@ export default component$(() => {
               {editingId.value ? t('skills.edit') : t('skills.addNew')}
             </h2>
             <div class="space-y-4">
+              {!editingId.value ? (
+                <ContentPrimaryLanguageSelect
+                  siteLanguages={langConfig.value.site_languages}
+                  defaultLocale={langConfig.value.default_locale}
+                  value={contentLocaleDraft.value}
+                  label={t('contentTranslations.contentPrimaryLanguage')}
+                  hint={t('contentTranslations.contentPrimaryHint')}
+                  useSiteDefaultLabel={t('contentTranslations.useSiteDefault')}
+                  onChange$={$((code: string) => {
+                    contentLocaleDraft.value = code;
+                  })}
+                />
+              ) : null}
+              <ContentEditingLanguageSelect
+                siteLanguages={langConfig.value.site_languages}
+                value={editingLocaleDraft.value}
+                effectivePrimaryLocale={primaryLocaleForContent(
+                  langConfig.value.site_languages,
+                  langConfig.value.default_locale,
+                  contentLocaleDraft.value.trim() !== '' ? contentLocaleDraft.value.trim() : null,
+                )}
+                label={t('contentTranslations.sectionTitle')}
+                hintPrimary={t('contentTranslations.defaultHint')}
+                hintSecondary={t('contentTranslations.fallbackPlaceholderHint')}
+                secondarySavePrefix={t('contentTranslations.addTranslations')}
+                onChange$={$((code: string) => {
+                  editingLocaleDraft.value = code;
+                })}
+              />
               <div>
                 <label
                   for="name"
@@ -432,7 +613,9 @@ export default component$(() => {
             />
           </div>
 
-          {filteredSkills.value.length === 0 ? (
+          {loading.value ? (
+            <div class="py-6 text-center text-gray-500 dark:text-gray-400">{t('common.loading')}</div>
+          ) : filteredSkills.value.length === 0 ? (
             <EmptyState title={t('skills.noSkills')} />
           ) : (
             <ul class="space-y-2">
@@ -449,8 +632,8 @@ export default component$(() => {
                       class="mt-1 h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
                     />
                     <div class="flex items-center gap-3">
-                      {skill.iconHint && (
-                        <span class="text-xl">{skill.iconHint}</span>
+                      {((skill as any).iconHint || (skill as any).icon_hint) && (
+                        <span class="text-xl">{(skill as any).iconHint || (skill as any).icon_hint}</span>
                       )}
                       <div>
                         <p class="font-medium text-gray-900 dark:text-gray-100">{skill.name}</p>
@@ -462,6 +645,16 @@ export default component$(() => {
                             {skill.description}
                           </p>
                         )}
+                        <div class="mt-1 flex flex-wrap gap-1">
+                          <span class="rounded bg-slate-100 px-2 py-0.5 text-xs text-slate-700 dark:bg-slate-700/30 dark:text-slate-200">
+                            {t('contentTranslations.contentPrimaryLanguage')}: {(skill as any).content_locale || langConfig.value.default_locale}
+                          </span>
+                          {Array.isArray((skill as any).translations) && (skill as any).translations.length > 0 ? (
+                            <span class="rounded bg-emerald-100 px-2 py-0.5 text-xs text-emerald-700 dark:bg-emerald-700/20 dark:text-emerald-300">
+                              {t('contentTranslations.addTranslations')}: {(skill as any).translations.map((r: any) => r?.locale).filter(Boolean).join(', ')}
+                            </span>
+                          ) : null}
+                        </div>
                       </div>
                     </div>
                   </div>

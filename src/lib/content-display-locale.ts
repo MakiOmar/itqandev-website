@@ -1,6 +1,7 @@
 import type { BlogPost } from '../types/blog';
 import type { Category } from '../types/category';
 import type { Project } from '../types/project';
+import type { Skill } from '../types/skill';
 import type { SiteLanguageRow } from '../types/site-language';
 import { parseTranslationsJson } from './content-translations';
 
@@ -169,6 +170,53 @@ export function mergeSecondaryProjectTranslations(
 }
 
 export function mergeSecondaryCategoryTranslations(
+  translationsJson: string | undefined,
+  uiLocale: string,
+  edited: { name: string; description: string },
+): unknown[] {
+  const base = parseTranslationsJson(translationsJson) ?? [];
+  const u = uiLocale.toLowerCase();
+  const idx = base.findIndex((row) => {
+    if (!row || typeof row !== 'object') {
+      return false;
+    }
+    return String((row as Record<string, unknown>).locale ?? '').toLowerCase() === u;
+  });
+  const row = { locale: u, name: edited.name, description: edited.description };
+  if (idx >= 0) {
+    base[idx] = { ...(base[idx] as object), ...row };
+  } else {
+    base.push(row);
+  }
+  return base;
+}
+
+export function mergeSkillFieldsForUiLocale(
+  skill: Skill,
+  uiLocale: string,
+  siteLanguages: SiteLanguageRow[] | undefined | null,
+  siteDefaultLocale: string | undefined | null,
+  contentLocaleOverride?: string | null,
+): { name: string; description: string } {
+  const primary = primaryLocaleForContent(
+    siteLanguages,
+    siteDefaultLocale,
+    contentLocaleOverride ?? (skill as any).content_locale ?? null,
+  );
+  const u = uiLocale.toLowerCase();
+  const baseName = skill.name ?? '';
+  const baseDescription = (skill.description as any) ?? '';
+  if (u === primary) {
+    return { name: baseName, description: baseDescription };
+  }
+  const row = (skill as any).translations?.find((t: any) => String(t?.locale).toLowerCase() === u);
+  return {
+    name: row?.name != null && row.name !== '' ? row.name : baseName,
+    description: row?.description != null && row.description !== '' ? row.description : baseDescription,
+  };
+}
+
+export function mergeSecondarySkillTranslations(
   translationsJson: string | undefined,
   uiLocale: string,
   edited: { name: string; description: string },
