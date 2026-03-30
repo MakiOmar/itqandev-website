@@ -280,3 +280,44 @@ export const ContentPrimaryLanguageSelect = component$<{
     </div>
   );
 });
+
+/**
+ * Editing language for the current form session.
+ * When it matches effective primary locale, main columns are edited; otherwise translation rows are edited.
+ */
+export const ContentEditingLanguageSelect = component$<{
+  siteLanguages: SiteLanguageRow[];
+  value: string;
+  label: string;
+  hintPrimary: string;
+  hintSecondary: string;
+  secondarySavePrefix: string;
+  effectivePrimaryLocale: string;
+  onChange$?: QRL<(code: string) => void>;
+}>((props) => {
+  const isPrimary = props.value.toLowerCase() === props.effectivePrimaryLocale.toLowerCase();
+  return (
+    <div class="md:col-span-2 rounded-lg border border-sky-100 bg-sky-50/60 p-4 dark:border-sky-900/40 dark:bg-sky-950/20">
+      <label for="editing_locale" class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-200">
+        {props.label}
+      </label>
+      <select
+        id="editing_locale"
+        name="editing_locale"
+        class="w-full max-w-md rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-primary-500 focus:outline-none focus:ring focus:ring-primary-200 dark:border-gray-600 dark:bg-gray-950 dark:text-gray-100"
+        value={props.value}
+        onChange$={(e) => {
+          const v = (e.target as HTMLSelectElement).value;
+          props.onChange$?.(v);
+        }}
+      >
+        {props.siteLanguages.map((l) => (
+          <option key={l.code} value={l.code}>{`${l.native_label || l.label} (${l.code})`}</option>
+        ))}
+      </select>
+      <p class="mt-2 text-xs text-gray-500 dark:text-gray-400">
+        {isPrimary ? props.hintPrimary : `${props.secondarySavePrefix} (${props.value}) — ${props.hintSecondary}`}
+      </p>
+    </div>
+  );
+});

@@ -19,6 +19,30 @@ export function primaryLocaleForContent(
   return raw && codes.has(raw) ? raw : def;
 }
 
+/** Normalized locale for form-level editing mode, constrained to enabled site languages. */
+export function normalizeEditingLocale(
+  requestedLocale: string | null | undefined,
+  siteLanguages: SiteLanguageRow[] | undefined | null,
+  siteDefaultLocale: string | undefined | null,
+  contentLocale: string | null | undefined,
+): string {
+  const list =
+    Array.isArray(siteLanguages) && siteLanguages.length > 0
+      ? siteLanguages
+      : [{ code: 'en', label: 'English', native_label: 'English', rtl: false }];
+  const codes = new Set(list.map((l) => String(l.code).toLowerCase()));
+  const req = requestedLocale != null ? String(requestedLocale).trim().toLowerCase() : '';
+  if (req && codes.has(req)) {
+    return req;
+  }
+  return primaryLocaleForContent(siteLanguages, siteDefaultLocale, contentLocale);
+}
+
+/** Whether selected editing locale should write into primary/base columns. */
+export function shouldWritePrimaryColumns(editingLocale: string, effectivePrimaryLocale: string): boolean {
+  return editingLocale.trim().toLowerCase() === effectivePrimaryLocale.trim().toLowerCase();
+}
+
 /** Fields to show in main form inputs for the current dashboard language. */
 export function mergeBlogPostFieldsForUiLocale(
   post: BlogPost,

@@ -2,7 +2,6 @@ import { component$, useSignal, $, useTask$ } from '@builder.io/qwik';
 import type { DocumentHead } from '@builder.io/qwik-city';
 import { routeLoader$, routeAction$, Form, zod$, z, useLocation } from '@builder.io/qwik-city';
 import { Link } from '@builder.io/qwik-city';
-import { useSpeakLocale } from 'qwik-speak';
 import { PageHeader } from '../../../../components/common/PageHeader';
 import { TagInput } from '../../../../components/common/TagInput';
 import { LoadingSpinner } from '../../../../components/common/LoadingSpinner';
@@ -13,6 +12,7 @@ import { getApiClient, extractCookieHeader } from '../../../../lib/api/client';
 import { API_ENDPOINTS } from '../../../../lib/api/endpoints';
 import { ROUTES } from '../../../../lib/constants/routes';
 import {
+  ContentEditingLanguageSelect,
   ContentPrimaryLanguageSelect,
   FieldTranslationGlobe,
   TranslationsFormRoot,
@@ -21,7 +21,9 @@ import { initialTranslationsJson, parseTranslationsJson, secondaryLocalesForCont
 import {
   mergeProjectFieldsForUiLocale,
   mergeSecondaryProjectTranslations,
+  normalizeEditingLocale,
   primaryLocaleForContent,
+  shouldWritePrimaryColumns,
 } from '../../../../lib/content-display-locale';
 import { useSiteLanguageConfig } from '../../layout';
 import type { Project, ProjectUpdateInput, Category, Skill, Media } from '../../../../types';
@@ -147,7 +149,7 @@ export const useUpdateProject = routeAction$(
         return [];
       };
 
-      const ui = String((data as { admin_ui_locale?: string }).admin_ui_locale || 'en').toLowerCase();
+      const ui = String((data as { editing_locale?: string }).editing_locale || 'en').toLowerCase();
       const siteDef = String((data as { form_site_default_locale?: string }).form_site_default_locale || 'en').toLowerCase();
       const effectivePrimary = String((data as { effective_primary_locale?: string }).effective_primary_locale || siteDef).toLowerCase();
       const title = String(data.title || '');
@@ -179,7 +181,7 @@ export const useUpdateProject = routeAction$(
         rawContentLocale && rawContentLocale.length > 0 ? rawContentLocale : null;
 
       const parsedTranslations = parseTranslationsJson((data as { translations_json?: string }).translations_json);
-      if (ui === effectivePrimary) {
+      if (shouldWritePrimaryColumns(ui, effectivePrimary)) {
         if (parsedTranslations) {
           (payload as unknown as { translations?: unknown[] }).translations = parsedTranslations;
         }
@@ -301,7 +303,7 @@ export const useUpdateProject = routeAction$(
       videoMedia: z.any().optional(),
       translations_json: z.string().optional(),
       content_locale: z.string().optional(),
-      admin_ui_locale: z.string().optional(),
+      editing_locale: z.string().optional(),
       form_site_default_locale: z.string().optional(),
       effective_primary_locale: z.string().optional(),
       canonical_title: z.string().optional(),
@@ -424,14 +426,20 @@ export default component$(() => {
       ? String(project.value.content_locale).trim()
       : '',
   );
-  const locale = useSpeakLocale();
+  const editingLocaleDraft = useSignal(
+    primaryLocaleForContent(
+      langConfig.value.site_languages,
+      langConfig.value.default_locale,
+      contentLocaleDraft.value.trim() !== '' ? contentLocaleDraft.value.trim() : null,
+    ),
+  );
   const titleField = useSignal('');
   const summaryField = useSignal('');
   const descriptionField = useSignal('');
 
   useTask$(({ track }) => {
     track(() => project.value);
-    track(() => locale.lang);
+    track(() => editingLocaleDraft.value);
     track(() => langConfig.value.default_locale);
     track(() => langConfig.value.site_languages);
     track(() => contentLocaleDraft.value);
@@ -440,7 +448,7 @@ export default component$(() => {
     }
     const m = mergeProjectFieldsForUiLocale(
       project.value as Project,
-      locale.lang,
+      editingLocaleDraft.value,
       langConfig.value.site_languages,
       langConfig.value.default_locale,
       contentLocaleDraft.value.trim() !== '' ? contentLocaleDraft.value.trim() : null,
@@ -501,7 +509,16 @@ export default component$(() => {
           class="space-y-6"
         >
           {/* Hidden: map saves back to primary columns vs translation rows when dashboard language ≠ primary */}
-          <input type="hidden" name="admin_ui_locale" value={locale.lang} />
+          <input
+            type="hidden"
+            name="editing_locale"
+            value={normalizeEditingLocale(
+              editingLocaleDraft.value,
+              langConfig.value.site_languages,
+              langConfig.value.default_locale,
+              contentLocaleDraft.value.trim() !== '' ? contentLocaleDraft.value.trim() : null,
+            )}
+          />
           <input type="hidden" name="form_site_default_locale" value={langConfig.value.default_locale} />
           <input
             type="hidden"
@@ -534,6 +551,23 @@ export default component$(() => {
                     useSiteDefaultLabel={translations.ctUseSiteDefault}
                     onChange$={$((code: string) => {
                       contentLocaleDraft.value = code;
+                    })}
+                  />
+
+                  <ContentEditingLanguageSelect
+                    siteLanguages={langConfig.value.site_languages}
+                    value={editingLocaleDraft.value}
+                    effectivePrimaryLocale={primaryLocaleForContent(
+                      langConfig.value.site_languages,
+                      langConfig.value.default_locale,
+                      contentLocaleDraft.value.trim() !== '' ? contentLocaleDraft.value.trim() : null,
+                    )}
+                    label={translations.ctSection}
+                    hintPrimary={translations.ctHint}
+                    hintSecondary={translations.ctFallbackHint}
+                    secondarySavePrefix={translations.ctAdd}
+                    onChange$={$((code: string) => {
+                      editingLocaleDraft.value = code;
                     })}
                   />
 

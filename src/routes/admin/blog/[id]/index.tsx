@@ -2,12 +2,12 @@ import { component$, useSignal, $, useVisibleTask$, useTask$ } from '@builder.io
 import type { DocumentHead } from '@builder.io/qwik-city';
 import { routeLoader$, routeAction$, Form, zod$, z, useLocation } from '@builder.io/qwik-city';
 import { Link } from '@builder.io/qwik-city';
-import { useSpeakLocale } from 'qwik-speak';
 import { PageHeader } from '../../../../components/common/PageHeader';
 import { LoadingSpinner } from '../../../../components/common/LoadingSpinner';
 import { useTranslate } from '../../../../lib/i18n/useTranslate';
 import { useSwal } from '../../../../lib/hooks/useSwal';
 import {
+  ContentEditingLanguageSelect,
   ContentPrimaryLanguageSelect,
   FieldTranslationGlobe,
   TranslationsFormRoot,
@@ -16,7 +16,9 @@ import { initialTranslationsJson, parseTranslationsJson, secondaryLocalesForCont
 import {
   mergeBlogPostFieldsForUiLocale,
   mergeSecondaryBlogTranslations,
+  normalizeEditingLocale,
   primaryLocaleForContent,
+  shouldWritePrimaryColumns,
 } from '../../../../lib/content-display-locale';
 import { useSiteLanguageConfig } from '../../layout';
 import { getApiClient, extractCookieHeader } from '../../../../lib/api/client';
@@ -59,7 +61,7 @@ export const useUpdateBlogPost = routeAction$(
     try {
       const cookieHeader = extractCookieHeader(cookie, request);
       const apiClient = getApiClient(cookieHeader, false);
-      const ui = String((data as { admin_ui_locale?: string }).admin_ui_locale || 'en').toLowerCase();
+      const ui = String((data as { editing_locale?: string }).editing_locale || 'en').toLowerCase();
       const siteDef = String((data as { form_site_default_locale?: string }).form_site_default_locale || 'en').toLowerCase();
       const effectivePrimary = String((data as { effective_primary_locale?: string }).effective_primary_locale || siteDef).toLowerCase();
       const title = String(data.title || '');
@@ -85,7 +87,7 @@ export const useUpdateBlogPost = routeAction$(
         rawContentLocale && rawContentLocale.length > 0 ? rawContentLocale : null;
 
       const parsedTranslations = parseTranslationsJson((data as { translations_json?: string }).translations_json);
-      if (ui === effectivePrimary) {
+      if (shouldWritePrimaryColumns(ui, effectivePrimary)) {
         if (parsedTranslations) {
           (payload as unknown as { translations?: unknown[] }).translations = parsedTranslations;
         }
@@ -116,7 +118,7 @@ export const useUpdateBlogPost = routeAction$(
     blogPostSchema.extend({
       translations_json: z.string().optional(),
       content_locale: z.string().optional(),
-      admin_ui_locale: z.string().optional(),
+      editing_locale: z.string().optional(),
       form_site_default_locale: z.string().optional(),
       effective_primary_locale: z.string().optional(),
       canonical_title: z.string().optional(),
@@ -162,7 +164,13 @@ export default component$(() => {
   const featuredImageFile = useSignal<File | null>(null);
   const showFeaturedImageSelector = useSignal(false);
   const contentLocaleDraft = useSignal('');
-  const locale = useSpeakLocale();
+  const editingLocaleDraft = useSignal(
+    primaryLocaleForContent(
+      langConfig.value.site_languages,
+      langConfig.value.default_locale,
+      post.value.content_locale ?? null,
+    ),
+  );
   const titleField = useSignal('');
   const excerptField = useSignal('');
   const contentField = useSignal('');
@@ -207,7 +215,7 @@ export default component$(() => {
   // Main fields follow dashboard language (and draft primary locale), without mutating stored primary columns on save
   useTask$(({ track }) => {
     track(() => post.value);
-    track(() => locale.lang);
+    track(() => editingLocaleDraft.value);
     track(() => langConfig.value.default_locale);
     track(() => langConfig.value.site_languages);
     track(() => contentLocaleDraft.value);
@@ -216,7 +224,7 @@ export default component$(() => {
     }
     const m = mergeBlogPostFieldsForUiLocale(
       post.value as BlogPost,
-      locale.lang,
+      editingLocaleDraft.value,
       langConfig.value.site_languages,
       langConfig.value.default_locale,
       contentLocaleDraft.value.trim() !== '' ? contentLocaleDraft.value.trim() : null,
@@ -283,7 +291,16 @@ export default component$(() => {
       <div class="rounded-lg border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-800 dark:bg-gray-800">
         <Form action={updateAction} class="space-y-6">
           {/* Hidden: map saves back to primary columns vs translation rows when dashboard language ≠ primary */}
-          <input type="hidden" name="admin_ui_locale" value={locale.lang} />
+          <input
+            type="hidden"
+            name="editing_locale"
+            value={normalizeEditingLocale(
+              editingLocaleDraft.value,
+              langConfig.value.site_languages,
+              langConfig.value.default_locale,
+              contentLocaleDraft.value.trim() !== '' ? contentLocaleDraft.value.trim() : null,
+            )}
+          />
           <input type="hidden" name="form_site_default_locale" value={langConfig.value.default_locale} />
           <input
             type="hidden"
@@ -314,6 +331,23 @@ export default component$(() => {
                 useSiteDefaultLabel={t('contentTranslations.useSiteDefault')}
                 onChange$={$((code: string) => {
                   contentLocaleDraft.value = code;
+                })}
+              />
+
+              <ContentEditingLanguageSelect
+                siteLanguages={langConfig.value.site_languages}
+                value={editingLocaleDraft.value}
+                effectivePrimaryLocale={primaryLocaleForContent(
+                  langConfig.value.site_languages,
+                  langConfig.value.default_locale,
+                  contentLocaleDraft.value.trim() !== '' ? contentLocaleDraft.value.trim() : null,
+                )}
+                label={t('contentTranslations.sectionTitle')}
+                hintPrimary={t('contentTranslations.defaultHint')}
+                hintSecondary={t('contentTranslations.fallbackPlaceholderHint')}
+                secondarySavePrefix={t('contentTranslations.addTranslations')}
+                onChange$={$((code: string) => {
+                  editingLocaleDraft.value = code;
                 })}
               />
 

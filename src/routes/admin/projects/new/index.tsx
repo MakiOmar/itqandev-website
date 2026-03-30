@@ -10,11 +10,18 @@ import { getApiClient, extractCookieHeader } from '../../../../lib/api/client';
 import { API_ENDPOINTS } from '../../../../lib/api/endpoints';
 import { ROUTES } from '../../../../lib/constants/routes';
 import {
+  ContentEditingLanguageSelect,
   ContentPrimaryLanguageSelect,
   FieldTranslationGlobe,
   TranslationsFormRoot,
 } from '../../../../components/admin/PerFieldContentTranslations';
 import { initialTranslationsJson, parseTranslationsJson, secondaryLocalesForContent } from '../../../../lib/content-translations';
+import {
+  mergeSecondaryProjectTranslations,
+  normalizeEditingLocale,
+  primaryLocaleForContent,
+  shouldWritePrimaryColumns,
+} from '../../../../lib/content-display-locale';
 import { useSiteLanguageConfig } from '../../layout';
 import type { ProjectCreateInput, Project, Category, Skill } from '../../../../types';
 
@@ -110,8 +117,23 @@ export const useCreateProject = routeAction$(
         rawContentLocale && rawContentLocale.length > 0 ? rawContentLocale : null;
 
       const parsedTranslations = parseTranslationsJson((data as { translations_json?: string }).translations_json);
-      if (parsedTranslations) {
-        (payload as unknown as { translations?: unknown[] }).translations = parsedTranslations;
+      const siteDef = String((data as { form_site_default_locale?: string }).form_site_default_locale || 'en');
+      const effectivePrimary = String((data as { effective_primary_locale?: string }).effective_primary_locale || siteDef);
+      const editingLocale = String((data as { editing_locale?: string }).editing_locale || effectivePrimary);
+      if (shouldWritePrimaryColumns(editingLocale, effectivePrimary)) {
+        if (parsedTranslations) {
+          (payload as unknown as { translations?: unknown[] }).translations = parsedTranslations;
+        }
+      } else {
+        (payload as unknown as { translations?: unknown[] }).translations = mergeSecondaryProjectTranslations(
+          (data as { translations_json?: string }).translations_json,
+          editingLocale,
+          {
+            title: String(data.title || ''),
+            summary: String(data.summary ?? ''),
+            description: String(data.description ?? ''),
+          },
+        );
       }
 
       const response = await apiClient.post<Project>(API_ENDPOINTS.PROJECTS.CREATE, payload);
@@ -176,6 +198,9 @@ export const useCreateProject = routeAction$(
     videoMedia: z.any().optional(),
     translations_json: z.string().optional(),
     content_locale: z.string().optional(),
+    editing_locale: z.string().optional(),
+    form_site_default_locale: z.string().optional(),
+    effective_primary_locale: z.string().optional(),
   }))
 );
 
@@ -208,6 +233,7 @@ export default component$(() => {
   const createdProjectId = useSignal<number | null>(null);
   const actionResult = useSignal<{ success?: boolean; projectId?: number; error?: string } | null>(null);
   const contentLocaleDraft = useSignal('');
+  const editingLocaleDraft = useSignal(langConfig.value.default_locale);
   
   // Extract submit method reference to avoid serialization issues
   const submitMethod = createAction.submit.bind(createAction);
@@ -319,6 +345,26 @@ export default component$(() => {
 
       <div class="rounded-lg border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-800 dark:bg-gray-800">
         <Form action={createAction} class="space-y-6">
+          <input
+            type="hidden"
+            name="editing_locale"
+            value={normalizeEditingLocale(
+              editingLocaleDraft.value,
+              langConfig.value.site_languages,
+              langConfig.value.default_locale,
+              contentLocaleDraft.value.trim() !== '' ? contentLocaleDraft.value.trim() : null,
+            )}
+          />
+          <input type="hidden" name="form_site_default_locale" value={langConfig.value.default_locale} />
+          <input
+            type="hidden"
+            name="effective_primary_locale"
+            value={primaryLocaleForContent(
+              langConfig.value.site_languages,
+              langConfig.value.default_locale,
+              contentLocaleDraft.value.trim() !== '' ? contentLocaleDraft.value.trim() : null,
+            )}
+          />
           <TranslationsFormRoot
             kind="project"
             locales={translationSecondaries}
@@ -336,6 +382,23 @@ export default component$(() => {
                 useSiteDefaultLabel={t('contentTranslations.useSiteDefault')}
                 onChange$={$((code: string) => {
                   contentLocaleDraft.value = code;
+                })}
+              />
+
+              <ContentEditingLanguageSelect
+                siteLanguages={langConfig.value.site_languages}
+                value={editingLocaleDraft.value}
+                effectivePrimaryLocale={primaryLocaleForContent(
+                  langConfig.value.site_languages,
+                  langConfig.value.default_locale,
+                  contentLocaleDraft.value.trim() !== '' ? contentLocaleDraft.value.trim() : null,
+                )}
+                label={t('contentTranslations.sectionTitle')}
+                hintPrimary={t('contentTranslations.defaultHint')}
+                hintSecondary={t('contentTranslations.fallbackPlaceholderHint')}
+                secondarySavePrefix={t('contentTranslations.addTranslations')}
+                onChange$={$((code: string) => {
+                  editingLocaleDraft.value = code;
                 })}
               />
 

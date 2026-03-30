@@ -2,11 +2,18 @@ import { component$, useSignal, $ } from '@builder.io/qwik';
 import type { DocumentHead } from '@builder.io/qwik-city';
 import { routeAction$, Form, zod$, z, Link } from '@builder.io/qwik-city';
 import {
+  ContentEditingLanguageSelect,
   ContentPrimaryLanguageSelect,
   FieldTranslationGlobe,
   TranslationsFormRoot,
 } from '../../../../components/admin/PerFieldContentTranslations';
 import { initialTranslationsJson, parseTranslationsJson, secondaryLocalesForContent } from '../../../../lib/content-translations';
+import {
+  mergeSecondaryBlogTranslations,
+  normalizeEditingLocale,
+  primaryLocaleForContent,
+  shouldWritePrimaryColumns,
+} from '../../../../lib/content-display-locale';
 import { useSiteLanguageConfig } from '../../layout';
 import { getApiClient, extractCookieHeader } from '../../../../lib/api/client';
 import { PageHeader } from '../../../../components/common/PageHeader';
@@ -51,8 +58,23 @@ export const useCreateBlogPost = routeAction$(
         rawContentLocale && rawContentLocale.length > 0 ? rawContentLocale : null;
 
       const parsedTranslations = parseTranslationsJson((data as { translations_json?: string }).translations_json);
-      if (parsedTranslations) {
-        (payload as unknown as { translations?: unknown[] }).translations = parsedTranslations;
+      const siteDef = String((data as { form_site_default_locale?: string }).form_site_default_locale || 'en');
+      const effectivePrimary = String((data as { effective_primary_locale?: string }).effective_primary_locale || siteDef);
+      const editingLocale = String((data as { editing_locale?: string }).editing_locale || effectivePrimary);
+      if (shouldWritePrimaryColumns(editingLocale, effectivePrimary)) {
+        if (parsedTranslations) {
+          (payload as unknown as { translations?: unknown[] }).translations = parsedTranslations;
+        }
+      } else {
+        (payload as unknown as { translations?: unknown[] }).translations = mergeSecondaryBlogTranslations(
+          (data as { translations_json?: string }).translations_json,
+          editingLocale,
+          {
+            title: String(data.title || ''),
+            excerpt: String(data.excerpt ?? ''),
+            content: String(data.content ?? ''),
+          },
+        );
       }
 
       const response = await apiClient.post<BlogPost>(API_ENDPOINTS.BLOG.CREATE, payload);
@@ -71,7 +93,15 @@ export const useCreateBlogPost = routeAction$(
       };
     }
   },
-  zod$(blogPostSchema.extend({ translations_json: z.string().optional(), content_locale: z.string().optional() }))
+  zod$(
+    blogPostSchema.extend({
+      translations_json: z.string().optional(),
+      content_locale: z.string().optional(),
+      editing_locale: z.string().optional(),
+      form_site_default_locale: z.string().optional(),
+      effective_primary_locale: z.string().optional(),
+    }),
+  )
 );
 
 /**
@@ -82,6 +112,7 @@ export default component$(() => {
   const langConfig = useSiteLanguageConfig();
   const createAction = useCreateBlogPost();
   const contentLocaleDraft = useSignal('');
+  const editingLocaleDraft = useSignal(langConfig.value.default_locale);
 
   const translationSecondaries = secondaryLocalesForContent(
     langConfig.value.site_languages,
@@ -108,6 +139,26 @@ export default component$(() => {
 
       <div class="rounded-lg border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-800 dark:bg-gray-800">
         <Form action={createAction} class="space-y-6">
+          <input
+            type="hidden"
+            name="editing_locale"
+            value={normalizeEditingLocale(
+              editingLocaleDraft.value,
+              langConfig.value.site_languages,
+              langConfig.value.default_locale,
+              contentLocaleDraft.value.trim() !== '' ? contentLocaleDraft.value.trim() : null,
+            )}
+          />
+          <input type="hidden" name="form_site_default_locale" value={langConfig.value.default_locale} />
+          <input
+            type="hidden"
+            name="effective_primary_locale"
+            value={primaryLocaleForContent(
+              langConfig.value.site_languages,
+              langConfig.value.default_locale,
+              contentLocaleDraft.value.trim() !== '' ? contentLocaleDraft.value.trim() : null,
+            )}
+          />
           <div class="grid gap-4 md:grid-cols-2">
             <TranslationsFormRoot
               kind="blog"
@@ -125,6 +176,23 @@ export default component$(() => {
                 useSiteDefaultLabel={t('contentTranslations.useSiteDefault')}
                 onChange$={$((code: string) => {
                   contentLocaleDraft.value = code;
+                })}
+              />
+
+              <ContentEditingLanguageSelect
+                siteLanguages={langConfig.value.site_languages}
+                value={editingLocaleDraft.value}
+                effectivePrimaryLocale={primaryLocaleForContent(
+                  langConfig.value.site_languages,
+                  langConfig.value.default_locale,
+                  contentLocaleDraft.value.trim() !== '' ? contentLocaleDraft.value.trim() : null,
+                )}
+                label={t('contentTranslations.sectionTitle')}
+                hintPrimary={t('contentTranslations.defaultHint')}
+                hintSecondary={t('contentTranslations.fallbackPlaceholderHint')}
+                secondarySavePrefix={t('contentTranslations.addTranslations')}
+                onChange$={$((code: string) => {
+                  editingLocaleDraft.value = code;
                 })}
               />
 
