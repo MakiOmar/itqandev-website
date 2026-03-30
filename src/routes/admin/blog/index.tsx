@@ -7,6 +7,8 @@ import { useSwal } from '../../../lib/hooks/useSwal';
 import { getApiClient, extractCookieHeader } from '../../../lib/api/client';
 import { API_ENDPOINTS } from '../../../lib/api/endpoints';
 import type { BlogPost } from '../../../types/blog';
+import { useSiteLanguageConfig } from '../layout';
+import { primaryLocaleForContent } from '../../../lib/content-display-locale';
 
 /**
  * Load blog posts
@@ -134,6 +136,7 @@ export default component$(() => {
   const { t } = useTranslate();
   const { confirm, success, error: showError } = useSwal();
   const postsLoader = useBlogPosts();
+  const langConfig = useSiteLanguageConfig();
   const saveAction = useSaveBlogPost();
   const uploadImageAction = useUploadFeaturedImage();
   const saveSeoAction = useSaveSeo();
@@ -170,6 +173,37 @@ export default component$(() => {
     meta_title: '',
     meta_description: '',
   });
+
+  const languageLabelByCode = new Map(
+    langConfig.value.site_languages.map((l) => [String(l.code).toLowerCase(), l.native_label || l.label || l.code]),
+  );
+
+  const mainLocaleLabel = (post: BlogPost): string => {
+    const main = primaryLocaleForContent(
+      langConfig.value.site_languages,
+      langConfig.value.default_locale,
+      (post as any).content_locale ?? null,
+    );
+    return `${languageLabelByCode.get(main) || main} (${main})`;
+  };
+
+  const translationsLabel = (post: BlogPost): string => {
+    const rows = (post as any).translations as Array<{ locale?: string | null }> | undefined;
+    const locales = Array.isArray(rows)
+      ? Array.from(
+          new Set(
+            rows
+              .map((r) => String(r?.locale ?? '').trim().toLowerCase())
+              .filter((x) => x.length > 0),
+          ),
+        )
+      : [];
+    if (locales.length === 0) {
+      return t('contentTranslations.noSecondaryLanguages') || '—';
+    }
+    const labels = locales.map((code) => `${languageLabelByCode.get(code) || code} (${code})`);
+    return `${locales.length}: ${labels.join(', ')}`;
+  };
 
   const loadPosts = $(async () => {
     loading.value = true;
@@ -459,6 +493,16 @@ export default component$(() => {
                         <div>
                           <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">{post.title}</h3>
                           <p class="text-sm text-gray-500 dark:text-gray-400">{t('blog.slug')}: {post.slug}</p>
+                          <div class="mt-1 flex flex-wrap items-center gap-2 text-xs text-gray-600 dark:text-gray-300">
+                            <span class="rounded bg-gray-100 px-2 py-0.5 dark:bg-gray-900/40">
+                              <span class="font-semibold">{t('contentTranslations.contentPrimaryLanguage') || 'Main'}:</span>{' '}
+                              {mainLocaleLabel(post)}
+                            </span>
+                            <span class="rounded bg-gray-100 px-2 py-0.5 dark:bg-gray-900/40">
+                              <span class="font-semibold">{t('contentTranslations.sectionTitle') || 'Translations'}:</span>{' '}
+                              {translationsLabel(post)}
+                            </span>
+                          </div>
                           {post.excerpt && (
                             <p class="mt-2 text-sm text-gray-600 dark:text-gray-300">{post.excerpt}</p>
                           )}
