@@ -13,7 +13,6 @@ import { API_ENDPOINTS } from '../../../../lib/api/endpoints';
 import { ROUTES } from '../../../../lib/constants/routes';
 import {
   ContentEditingLanguageSelect,
-  ContentPrimaryLanguageSelect,
   FieldTranslationGlobe,
   TranslationsFormRoot,
 } from '../../../../components/admin/PerFieldContentTranslations';
@@ -542,18 +541,6 @@ export default component$(() => {
                   rtlBadge={translations.ctRtl}
                   fallbackHintShort={translations.ctFallbackHint}
                 >
-                  <ContentPrimaryLanguageSelect
-                    siteLanguages={langConfig.value.site_languages}
-                    defaultLocale={langConfig.value.default_locale}
-                    value={contentLocaleDraft.value}
-                    label={translations.ctPrimaryLang}
-                    hint={translations.ctPrimaryHint}
-                    useSiteDefaultLabel={translations.ctUseSiteDefault}
-                    onChange$={$((code: string) => {
-                      contentLocaleDraft.value = code;
-                    })}
-                  />
-
                   <ContentEditingLanguageSelect
                     siteLanguages={langConfig.value.site_languages}
                     value={editingLocaleDraft.value}

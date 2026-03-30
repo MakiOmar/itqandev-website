@@ -8,7 +8,6 @@ import { useTranslate } from '../../../../lib/i18n/useTranslate';
 import { useSwal } from '../../../../lib/hooks/useSwal';
 import {
   ContentEditingLanguageSelect,
-  ContentPrimaryLanguageSelect,
   FieldTranslationGlobe,
   TranslationsFormRoot,
 } from '../../../../components/admin/PerFieldContentTranslations';
@@ -322,18 +321,6 @@ export default component$(() => {
               rtlBadge={t('contentTranslations.rtlBadge')}
               fallbackHintShort={t('contentTranslations.fallbackPlaceholderHint')}
             >
-              <ContentPrimaryLanguageSelect
-                siteLanguages={langConfig.value.site_languages}
-                defaultLocale={langConfig.value.default_locale}
-                value={contentLocaleDraft.value}
-                label={t('contentTranslations.contentPrimaryLanguage')}
-                hint={t('contentTranslations.contentPrimaryHint')}
-                useSiteDefaultLabel={t('contentTranslations.useSiteDefault')}
-                onChange$={$((code: string) => {
-                  contentLocaleDraft.value = code;
-                })}
-              />
-
               <ContentEditingLanguageSelect
                 siteLanguages={langConfig.value.site_languages}
                 value={editingLocaleDraft.value}
