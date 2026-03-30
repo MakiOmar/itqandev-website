@@ -9,6 +9,7 @@ import { API_ENDPOINTS } from '../../../lib/api/endpoints';
 import type { BlogPost } from '../../../types/blog';
 import { useSiteLanguageConfig } from '../layout';
 import { primaryLocaleForContent } from '../../../lib/content-display-locale';
+import { useLocaleAwareList } from '../../../lib/hooks/useLocaleAwareList';
 
 /**
  * Load blog posts
@@ -151,8 +152,24 @@ export default component$(() => {
     deleteConfirm: t('blog.deleteConfirm'),
   };
 
-  const posts = useSignal(postsLoader.value);
-  const loading = useSignal(false);
+  const { items: posts, loading, refetch } = useLocaleAwareList<BlogPost>(
+    postsLoader.value,
+    $((loc) => {
+      const apiClient = getApiClient(undefined, loc);
+      return apiClient.get<any>(API_ENDPOINTS.BLOG.LIST).then((response) => {
+        if (response && 'data' in response && (response as any).data) {
+          const data = (response as any).data;
+          if (Array.isArray(data)) {
+            return data as BlogPost[];
+          }
+          if (data && typeof data === 'object' && 'data' in data && Array.isArray((data as any).data)) {
+            return (data as any).data as BlogPost[];
+          }
+        }
+        return [];
+      });
+    }),
+  );
   const showForm = useSignal(false);
   const editingPostId = useSignal<number | null>(null);
   const featuredImageFile = useSignal<File | null>(null);
@@ -206,15 +223,10 @@ export default component$(() => {
   };
 
   const loadPosts = $(async () => {
-    loading.value = true;
     try {
-      const apiClient = getApiClient();
-      const response = await apiClient.get<BlogPost[]>(API_ENDPOINTS.BLOG.LIST);
-      posts.value = (response?.data ?? response ?? []) as BlogPost[];
+      await refetch();
     } catch (error: any) {
       await showError(error?.message || 'Failed to load posts');
-    } finally {
-      loading.value = false;
     }
   });
 

@@ -11,6 +11,7 @@ import { ROUTES } from '../../../lib/constants/routes';
 import type { Project } from '../../../types/project';
 import { useSiteLanguageConfig } from '../layout';
 import { primaryLocaleForContent } from '../../../lib/content-display-locale';
+import { useLocaleAwareList } from '../../../lib/hooks/useLocaleAwareList';
 
 /**
  * Load projects data
@@ -90,8 +91,26 @@ export default component$(() => {
   const deleteAction = useDeleteProject();
   const bulkDeleteAction = useBulkDeleteProjects();
 
-  const projects = useSignal(projectsLoader.value);
-  const loading = useSignal(false);
+  const { items: projects, loading } = useLocaleAwareList<Project>(
+    projectsLoader.value,
+    $((loc) => {
+      const apiClient = getApiClient(undefined, loc);
+      return apiClient.get<any>(API_ENDPOINTS.PROJECTS.LIST).then((response) => {
+        let out: Project[] = [];
+        if (response?.data) {
+          if (Array.isArray(response.data)) {
+            out = response.data as Project[];
+          } else if (response.data && typeof response.data === 'object' && 'data' in response.data) {
+            const paginatedData = (response.data as any).data;
+            if (Array.isArray(paginatedData)) {
+              out = paginatedData as Project[];
+            }
+          }
+        }
+        return out;
+      });
+    }),
+  );
   const selectedItems = useSignal<Set<string | number>>(new Set());
 
   // Pre-compute translation strings to avoid serialization issues

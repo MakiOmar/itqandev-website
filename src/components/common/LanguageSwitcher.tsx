@@ -41,6 +41,11 @@ export const LanguageSwitcher = component$(() => {
     // The blocking script in RouterHead will read the cookie/localStorage
     // and set direction immediately before any rendering, ensuring both change simultaneously
     if (typeof window !== 'undefined') {
+      // Hide dashboard immediately to prevent flash of old-locale content during reload.
+      // global.css hides body when data-render-complete is absent.
+      if (typeof document !== 'undefined' && document.body) {
+        document.body.removeAttribute('data-render-complete');
+      }
       window.location.reload();
     }
   });
