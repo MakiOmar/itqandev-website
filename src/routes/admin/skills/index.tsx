@@ -177,7 +177,6 @@ export const useBulkDeleteSkills = routeAction$(async (data, { fail }) => {
 export default component$(() => {
   const { t } = useTranslate();
   const { confirm, success, error: showError } = useSwal();
-  const navigate = useNavigate();
   const skills = useSkills();
   const langConfig = useSiteLanguageConfig();
   const { items: skillsState, loading } = useLocaleAwareList<Skill>(
@@ -328,8 +327,24 @@ export default component$(() => {
         await showError((response.value as any).message || 'Failed to update skill');
       } else {
         await success(successTitle, { text: updatedText });
-        resetForm();
-        navigate(window.location.pathname);
+        // keep edit form open after update (do not exit to list)
+        const updated = (response.value as any)?.skill as Skill | undefined;
+        if (updated) {
+          skillsState.value = skillsState.value.map((s) => (s.id === updated.id ? updated : s));
+        } else {
+          const id = editingId.value;
+          skillsState.value = skillsState.value.map((s) =>
+            s.id === id
+              ? ({
+                  ...s,
+                  name: formData.value.name,
+                  slug: formData.value.slug || (s as any).slug,
+                  description: formData.value.description || (s as any).description,
+                  iconHint: formData.value.icon_hint || (s as any).iconHint,
+                } as any)
+              : s,
+          );
+        }
       }
     } else {
       const response2 = await createAction.submit({
@@ -357,7 +372,11 @@ export default component$(() => {
       } else {
         await success(successTitle, { text: createdText });
         resetForm();
-        navigate(window.location.pathname);
+        // keep user on page; update list in-place
+        const created = (response2.value as any)?.skill as Skill | undefined;
+        if (created) {
+          skillsState.value = [created, ...skillsState.value];
+        }
       }
     }
   });
@@ -387,7 +406,8 @@ export default component$(() => {
       await showError((response.value as any).message || 'Failed to delete skill');
     } else {
       await success(successTitle, { text: deletedText });
-      navigate(window.location.pathname);
+      skillsState.value = skillsState.value.filter((s) => s.id !== skill.id);
+      selectedItems.value = selectedItems.value.filter((id) => id !== String(skill.id));
     }
   });
 
@@ -410,8 +430,9 @@ export default component$(() => {
       await showError((response.value as any).message || 'Failed to delete skills');
     } else {
       await success(successTitle, { text: deletedText });
+      const toDelete = new Set(selectedItems.value.map(String));
+      skillsState.value = skillsState.value.filter((s) => !toDelete.has(String(s.id)));
       selectedItems.value = [];
-      navigate(window.location.pathname);
     }
   });
 

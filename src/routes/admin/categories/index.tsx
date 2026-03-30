@@ -478,7 +478,26 @@ export default component$(() => {
         );
       }
 
-      resetForm();
+      // Keep edit form open after update (do not exit to list)
+      const current = updated ?? (categoriesState.value || []).find((c) => c.id === editingId.value);
+      if (current) {
+        canonicalName.value = current.name ?? canonicalName.value;
+        canonicalDescription.value = (current as any).description ?? canonicalDescription.value;
+        // keep translations_json in sync for follow-up edits
+        const secondaries = secondaryLocalesForContent(
+          langConfig.value.site_languages,
+          langConfig.value.default_locale,
+          contentLocaleDraft.value.trim() !== '' ? contentLocaleDraft.value.trim() : null,
+        );
+        translationsJson.value = JSON.stringify(
+          secondaries.map((l) => {
+            const row = (current as any).translations?.find(
+              (x: any) => String(x?.locale).toLowerCase() === l.code.toLowerCase(),
+            );
+            return { locale: l.code, name: row?.name ?? '', description: row?.description ?? '' };
+          }),
+        );
+      }
       return;
     }
 
