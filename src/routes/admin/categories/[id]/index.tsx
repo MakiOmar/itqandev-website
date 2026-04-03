@@ -14,6 +14,7 @@ import {
   mergeCategoryFieldsForUiLocale,
   normalizeEditingLocale,
   primaryLocaleForContent,
+  shouldWritePrimaryColumns,
 } from '../../../../lib/content-display-locale';
 import { useUpdateCategory } from '../../../../lib/admin/category-actions';
 import type { Category } from '../../../../types';
@@ -148,6 +149,30 @@ export default component$(() => {
       slug: c.slug || formData.value.slug,
       is_featured: (c as any).isFeatured || false,
     };
+  });
+
+  useTask$(({ track }) => {
+    track(() => formData.value.name);
+    track(() => formData.value.description);
+    track(() => editingLocaleDraft.value);
+    track(() => contentLocaleDraft.value);
+    track(() => langConfig.value.site_languages);
+    track(() => langConfig.value.default_locale);
+    const eff = primaryLocaleForContent(
+      langConfig.value.site_languages,
+      langConfig.value.default_locale,
+      contentLocaleDraft.value.trim() !== '' ? contentLocaleDraft.value.trim() : null,
+    );
+    const edit = normalizeEditingLocale(
+      editingLocaleDraft.value,
+      langConfig.value.site_languages,
+      langConfig.value.default_locale,
+      contentLocaleDraft.value.trim() !== '' ? contentLocaleDraft.value.trim() : null,
+    );
+    if (shouldWritePrimaryColumns(edit, eff)) {
+      canonicalName.value = formData.value.name;
+      canonicalDescription.value = formData.value.description;
+    }
   });
 
   const handleSave = $(async () => {

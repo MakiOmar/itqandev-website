@@ -1,12 +1,33 @@
 import { routeAction$, zod$, z } from '@builder.io/qwik-city';
 import { getApiClient, extractCookieHeader } from '../api/client';
 import { API_ENDPOINTS } from '../api/endpoints';
-import type { Category, CategoryCreateInput, CategoryUpdateInput } from '../../types';
+import type { Category } from '../../types';
 import { parseTranslationsJson } from '../content-translations';
 import {
   mergeSecondaryCategoryTranslations,
   shouldWritePrimaryColumns,
 } from '../content-display-locale';
+
+/** Laravel expects snake_case JSON keys (no global camelCase middleware). */
+function categoryPayloadForApi(data: {
+  name?: string;
+  slug?: string;
+  description?: string;
+  isFeatured?: boolean;
+  content_locale?: string | null;
+  translations?: unknown[];
+}): Record<string, unknown> {
+  const body: Record<string, unknown> = {};
+  if (data.name !== undefined) body.name = data.name;
+  if (data.slug !== undefined) body.slug = data.slug;
+  if (data.description !== undefined) body.description = data.description;
+  if (data.isFeatured !== undefined) body.is_featured = data.isFeatured;
+  if (data.content_locale !== undefined) body.content_locale = data.content_locale;
+  if (data.translations !== undefined && Array.isArray(data.translations)) {
+    body.translations = data.translations;
+  }
+  return body;
+}
 
 /**
  * Category schema (used by Qwik City action validation)
@@ -30,16 +51,8 @@ export const useCreateCategory = routeAction$(
       const cookieHeader = extractCookieHeader(cookie, request as any);
       const apiClient = getApiClient(cookieHeader);
 
-      const payload: CategoryCreateInput = {
-        name: data.name,
-        slug: data.slug || undefined,
-        description: data.description || undefined,
-        isFeatured: toBool((data as any).is_featured),
-      };
-
       const rawContentLocale = (data as { content_locale?: string }).content_locale?.trim();
-      (payload as CategoryCreateInput & { content_locale?: string | null }).content_locale =
-        rawContentLocale && rawContentLocale.length > 0 ? rawContentLocale : null;
+      const contentLocale = rawContentLocale && rawContentLocale.length > 0 ? rawContentLocale : null;
 
       const parsedTranslations = parseTranslationsJson((data as { translations_json?: string }).translations_json);
       const siteDef = String((data as { form_site_default_locale?: string }).form_site_default_locale || 'en');
@@ -47,21 +60,35 @@ export const useCreateCategory = routeAction$(
       const editingLocale = String((data as { editing_locale?: string }).editing_locale || effectivePrimary);
       const canonicalName = String((data as { canonical_name?: string }).canonical_name ?? '');
       const canonicalDescription = String((data as { canonical_description?: string }).canonical_description ?? '');
+
+      let name = String(data.name || '');
+      let description = data.description !== undefined && data.description !== null ? String(data.description) : undefined;
+      let translationsOut: unknown[] | undefined;
+
       if (shouldWritePrimaryColumns(editingLocale, effectivePrimary)) {
         if (parsedTranslations) {
-          (payload as unknown as { translations?: unknown[] }).translations = parsedTranslations;
+          translationsOut = parsedTranslations;
         }
       } else {
-        (payload as any).name = canonicalName;
-        (payload as any).description = canonicalDescription;
-        (payload as unknown as { translations?: unknown[] }).translations = mergeSecondaryCategoryTranslations(
+        name = canonicalName;
+        description = canonicalDescription;
+        translationsOut = mergeSecondaryCategoryTranslations(
           (data as { translations_json?: string }).translations_json,
           editingLocale,
           { name: String(data.name || ''), description: String(data.description ?? '') },
         );
       }
 
-      const response = await apiClient.post<Category>(API_ENDPOINTS.CATEGORIES.CREATE, payload);
+      const apiBody = categoryPayloadForApi({
+        name,
+        slug: data.slug || undefined,
+        description,
+        isFeatured: toBool((data as any).is_featured),
+        content_locale: contentLocale,
+        translations: translationsOut,
+      });
+
+      const response = await apiClient.post<Category>(API_ENDPOINTS.CATEGORIES.CREATE, apiBody);
       const created = (response as any)?.data ?? response;
 
       return { success: true, category: created as Category };
@@ -81,17 +108,8 @@ export const useUpdateCategory = routeAction$(
       const cookieHeader = extractCookieHeader(cookie, request as any);
       const apiClient = getApiClient(cookieHeader);
 
-      const payload: CategoryUpdateInput = {
-        id: Number((data as any).id),
-        name: data.name,
-        slug: data.slug || undefined,
-        description: data.description || undefined,
-        isFeatured: toBool((data as any).is_featured),
-      };
-
       const rawContentLocale = (data as { content_locale?: string }).content_locale?.trim();
-      (payload as CategoryUpdateInput & { content_locale?: string | null }).content_locale =
-        rawContentLocale && rawContentLocale.length > 0 ? rawContentLocale : null;
+      const contentLocale = rawContentLocale && rawContentLocale.length > 0 ? rawContentLocale : null;
 
       const parsedTranslations = parseTranslationsJson((data as { translations_json?: string }).translations_json);
       const siteDef = String((data as { form_site_default_locale?: string }).form_site_default_locale || 'en');
@@ -99,23 +117,37 @@ export const useUpdateCategory = routeAction$(
       const editingLocale = String((data as { editing_locale?: string }).editing_locale || effectivePrimary);
       const canonicalName = String((data as { canonical_name?: string }).canonical_name ?? '');
       const canonicalDescription = String((data as { canonical_description?: string }).canonical_description ?? '');
+
+      let name = String(data.name || '');
+      let description = data.description !== undefined && data.description !== null ? String(data.description) : undefined;
+      let translationsOut: unknown[] | undefined;
+
       if (shouldWritePrimaryColumns(editingLocale, effectivePrimary)) {
         if (parsedTranslations) {
-          (payload as unknown as { translations?: unknown[] }).translations = parsedTranslations;
+          translationsOut = parsedTranslations;
         }
       } else {
-        (payload as any).name = canonicalName;
-        (payload as any).description = canonicalDescription;
-        (payload as unknown as { translations?: unknown[] }).translations = mergeSecondaryCategoryTranslations(
+        name = canonicalName;
+        description = canonicalDescription;
+        translationsOut = mergeSecondaryCategoryTranslations(
           (data as { translations_json?: string }).translations_json,
           editingLocale,
           { name: String(data.name || ''), description: String(data.description ?? '') },
         );
       }
 
+      const apiBody = categoryPayloadForApi({
+        name,
+        slug: data.slug || undefined,
+        description,
+        isFeatured: toBool((data as any).is_featured),
+        content_locale: contentLocale,
+        translations: translationsOut,
+      });
+
       const response = await apiClient.put<Category>(
         API_ENDPOINTS.CATEGORIES.UPDATE(String((data as any).id)),
-        payload,
+        apiBody,
       );
 
       const updated = (response as any)?.data ?? response;

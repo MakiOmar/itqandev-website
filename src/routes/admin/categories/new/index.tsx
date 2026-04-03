@@ -10,7 +10,11 @@ import {
   ContentPrimaryLanguageSelect,
 } from '../../../../components/admin/PerFieldContentTranslations';
 import { secondaryLocalesForContent } from '../../../../lib/content-translations';
-import { normalizeEditingLocale, primaryLocaleForContent } from '../../../../lib/content-display-locale';
+import {
+  normalizeEditingLocale,
+  primaryLocaleForContent,
+  shouldWritePrimaryColumns,
+} from '../../../../lib/content-display-locale';
 import { useCreateCategory } from '../../../../lib/admin/category-actions';
 import { ROUTES } from '../../../../lib/constants/routes';
 import type { Category } from '../../../../types';
@@ -55,6 +59,31 @@ export default component$(() => {
     translationsJson.value = JSON.stringify(
       secondaries.map((l) => ({ locale: l.code, name: '', description: '' })),
     );
+  });
+
+  // Keep canonical primary text in sync while editing the primary language (required for secondary-locale saves).
+  useTask$(({ track }) => {
+    track(() => formData.value.name);
+    track(() => formData.value.description);
+    track(() => editingLocaleDraft.value);
+    track(() => contentLocaleDraft.value);
+    track(() => langConfig.value.site_languages);
+    track(() => langConfig.value.default_locale);
+    const eff = primaryLocaleForContent(
+      langConfig.value.site_languages,
+      langConfig.value.default_locale,
+      contentLocaleDraft.value.trim() !== '' ? contentLocaleDraft.value.trim() : null,
+    );
+    const edit = normalizeEditingLocale(
+      editingLocaleDraft.value,
+      langConfig.value.site_languages,
+      langConfig.value.default_locale,
+      contentLocaleDraft.value.trim() !== '' ? contentLocaleDraft.value.trim() : null,
+    );
+    if (shouldWritePrimaryColumns(edit, eff)) {
+      canonicalName.value = formData.value.name;
+      canonicalDescription.value = formData.value.description;
+    }
   });
 
   const submitWithFormData = $(async (action: any, fields: Record<string, any>) => {
