@@ -6,7 +6,7 @@ import { Footer } from '~/components/marketing/Footer';
 import { ParticlesBackground } from '~/components/marketing/ParticlesBackground';
 import { auth } from '~/lib/auth';
 import { getApiClient, extractCookieHeader } from '~/lib/api/client';
-import { API_ENDPOINTS } from '~/lib/api/endpoints';
+import { MARKETING_ENDPOINTS } from '~/lib/marketing/endpoints';
 import { getConfig } from '~/lib/config';
 import type { SiteLanguageRow } from '~/types/site-language';
 
@@ -30,8 +30,8 @@ export const usePublicAuth = routeLoader$(async ({ cookie }) => {
 });
 
 /**
- * Load public branding from settings API so marketing pages can use uploaded logos.
- * Supports compatibility aliases and falls back to config branding name.
+ * Load public branding from unauthenticated GET /api/public/site-meta (logos + site_languages).
+ * Authenticated GET /settings is not available to guests, so the header used to hide the language switcher until login.
  */
 export const usePublicBranding = routeLoader$(async ({ cookie, request }) => {
   const fallbackName = getConfig().branding.name;
@@ -39,7 +39,7 @@ export const usePublicBranding = routeLoader$(async ({ cookie, request }) => {
   try {
     const cookieHeader = extractCookieHeader(cookie, request);
     const apiClient = getApiClient(cookieHeader);
-    const response = await apiClient.get<Record<string, any>>(API_ENDPOINTS.SETTINGS.GET);
+    const response = await apiClient.get<Record<string, any>>(MARKETING_ENDPOINTS.siteMeta);
     const settings = (response?.data ?? response) as Record<string, any>;
 
     const name = settings?.site_name || settings?.name || fallbackName;
