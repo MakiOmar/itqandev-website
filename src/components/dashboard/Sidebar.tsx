@@ -186,10 +186,10 @@ export const Sidebar = component$<SidebarProps>((props) => {
       {/* Component: Sidebar */}
       {/* Sidebar - RTL aware positioning */}
       <aside
-        class={`fixed top-0 left-0 right-0 z-50 h-screen w-72 bg-white/80 dark:bg-slate-800/80 backdrop-blur-xl shadow-xl transition-all duration-300 ease-in-out ${
-          isRTL.value 
-            ? `${props.isOpen ? 'translate-x-0' : 'translate-x-full'} border-l border-slate-200/60 dark:border-slate-700/60`
-            : `${props.isOpen ? 'translate-x-0' : '-translate-x-full'} border-r border-slate-200/60 dark:border-slate-700/60`
+        class={`fixed top-0 z-50 h-screen w-72 bg-white/80 dark:bg-slate-800/80 backdrop-blur-xl shadow-xl transition-all duration-300 ease-in-out ${
+          isRTL.value
+            ? `right-0 ${props.isOpen ? 'translate-x-0' : 'translate-x-full'} border-l border-slate-200/60 dark:border-slate-700/60`
+            : `left-0 ${props.isOpen ? 'translate-x-0' : '-translate-x-full'} border-r border-slate-200/60 dark:border-slate-700/60`
         }`}
       >
         <div class="flex h-full flex-col">
