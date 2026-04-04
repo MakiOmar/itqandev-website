@@ -153,7 +153,7 @@ export default component$(() => {
   };
 
   const { items: posts, loading, refetch } = useLocaleAwareList<BlogPost>(
-    postsLoader.value,
+    postsLoader,
     $((loc) => {
       const apiClient = getApiClient(undefined, loc);
       return apiClient.get<any>(API_ENDPOINTS.BLOG.LIST).then((response) => {

@@ -180,7 +180,7 @@ export default component$(() => {
   const skills = useSkills();
   const langConfig = useSiteLanguageConfig();
   const { items: skillsState, loading } = useLocaleAwareList<Skill>(
-    skills.value ?? [],
+    skills,
     $((loc) => {
       const apiClient = getApiClient(undefined, loc);
       return apiClient.get<Skill[]>(API_ENDPOINTS.SKILLS.LIST).then((res: any) => {

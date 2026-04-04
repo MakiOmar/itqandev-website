@@ -92,7 +92,7 @@ export default component$(() => {
   const bulkDeleteAction = useBulkDeleteProjects();
 
   const { items: projects, loading } = useLocaleAwareList<Project>(
-    projectsLoader.value,
+    projectsLoader,
     $((loc) => {
       const apiClient = getApiClient(undefined, loc);
       return apiClient.get<any>(API_ENDPOINTS.PROJECTS.LIST).then((response) => {

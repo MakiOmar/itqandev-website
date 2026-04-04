@@ -69,7 +69,7 @@ export default component$(() => {
   const langConfig = useSiteLanguageConfig();
 
   const { items: categoriesState, loading } = useLocaleAwareList<Category>(
-    categories.value ?? [],
+    categories,
     $((loc) => {
       const apiClient = getApiClient(undefined, loc);
       return apiClient.get(API_ENDPOINTS.CATEGORIES.LIST).then((response: any) => {

@@ -1,4 +1,4 @@
-import { $, useSignal, useVisibleTask$, type QRL, type Signal } from '@builder.io/qwik';
+import { $, useSignal, useTask$, useVisibleTask$, type QRL, type Signal } from '@builder.io/qwik';
 import { useSpeakLocale } from 'qwik-speak';
 
 interface UseLocaleAwareListResult<T> {
@@ -7,18 +7,36 @@ interface UseLocaleAwareListResult<T> {
   refetch: QRL<() => Promise<void>>;
 }
 
+/** Route loader (or any reactive source) exposing `.value` for the initial list payload */
+export type LocaleAwareListLoader<T> = {
+  readonly value: T[] | undefined;
+};
+
 /**
  * Keeps list content consistent with the current UI locale.
  * On locale change, clears items immediately (hides table/cards) and refetches.
+ * Pass the route loader object (not `.value`) so when the loader resolves after SPA navigation,
+ * the list updates — `useSignal(initial)` alone only captures the first render.
  */
 export function useLocaleAwareList<T>(
-  initialItems: T[],
+  initialLoader: LocaleAwareListLoader<T>,
   fetchForLocale$: QRL<(locale: string) => Promise<T[]>>,
 ): UseLocaleAwareListResult<T> {
   const locale = useSpeakLocale();
-  const items = useSignal<T[]>(initialItems);
+  const initialSnapshot = initialLoader.value;
+  const items = useSignal<T[]>(Array.isArray(initialSnapshot) ? [...initialSnapshot] : []);
   const loading = useSignal(false);
   const lastLocale = useSignal<string>(String(locale.lang || 'en'));
+
+  // Sync when routeLoader.value updates (client-side navigation); do not track locale here
+  // so locale-driven refetch results are not overwritten by stale SSR loader data.
+  useTask$(({ track }) => {
+    const next = track(() => initialLoader.value);
+    if (next === undefined) {
+      return;
+    }
+    items.value = Array.isArray(next) ? [...next] : [];
+  });
 
   const refetch = $(async () => {
     const loc = String(locale.lang || 'en').toLowerCase();
