@@ -20,7 +20,7 @@ export const useHomeData = routeLoader$(async ({ request }) => {
   const uiLocale = readPreferredLocaleFromCookieHeader(cookie) ?? undefined;
   const [caseStudies, testimonials, siteContent, blogPosts] = await Promise.all([
     getFeaturedCaseStudies(3, uiLocale),
-    getTestimonials(),
+    getTestimonials(uiLocale),
     getSiteContent(),
     getBlogPosts(),
   ]);

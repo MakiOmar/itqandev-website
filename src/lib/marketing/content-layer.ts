@@ -62,6 +62,75 @@ function mapPublicProjectToCaseStudy(raw: Record<string, unknown>): CaseStudy {
   };
 }
 
+async function fetchTestimonialsFromApi(locale?: string): Promise<Testimonial[]> {
+  if (!getMarketingApiBaseUrl().trim()) {
+    return [];
+  }
+  try {
+    const q = new URLSearchParams();
+    q.set('per_page', '48');
+    const path = `${MARKETING_ENDPOINTS.testimonials}?${q.toString()}`;
+    const payload = await marketingGet<unknown>(path, locale);
+    const list = unwrapMarketingListRecords(payload as Record<string, unknown>);
+    return list
+      .map((raw) => mapPublicTestimonialRecord(raw))
+      .filter((t) => t.quote.length > 0 && t.approved !== false);
+  } catch (e) {
+    console.warn('[marketing] fetch public testimonials failed', e);
+    return [];
+  }
+}
+
+function mapPublicTestimonialRecord(raw: Record<string, unknown>): Testimonial {
+  const quote =
+    typeof raw.quote === 'string'
+      ? raw.quote
+      : typeof raw.content === 'string'
+        ? raw.content
+        : '';
+  const authorName =
+    typeof raw.authorName === 'string'
+      ? raw.authorName
+      : typeof raw.client_name === 'string'
+        ? raw.client_name
+        : '';
+  const authorRole =
+    typeof raw.authorRole === 'string'
+      ? raw.authorRole
+      : [raw.client_role, raw.company]
+          .map((x) => (typeof x === 'string' ? x.trim() : ''))
+          .filter(Boolean)
+          .join(', ') || undefined;
+  const projectTitle =
+    typeof raw.projectTitle === 'string'
+      ? raw.projectTitle
+      : typeof raw.project_title === 'string'
+        ? raw.project_title
+        : undefined;
+  const rating =
+    typeof raw.rating === 'number'
+      ? raw.rating
+      : typeof raw.rating === 'string'
+        ? Number.parseInt(raw.rating, 10)
+        : undefined;
+
+  return {
+    id: (raw.id as string | number) ?? '',
+    quote,
+    authorName,
+    authorRole: authorRole || undefined,
+    authorAvatar:
+      typeof raw.authorAvatar === 'string'
+        ? raw.authorAvatar
+        : typeof raw.author_avatar === 'string'
+          ? raw.author_avatar
+          : undefined,
+    projectTitle: projectTitle || undefined,
+    rating: Number.isFinite(rating as number) ? (rating as number) : undefined,
+    approved: raw.approved !== false,
+  };
+}
+
 async function fetchPublishedProjectsFromApi(options: {
   featured?: boolean;
   per_page: number;
@@ -151,12 +220,28 @@ export async function getFeaturedCaseStudies(limit = 3, locale?: string): Promis
   return all.slice(0, limit);
 }
 
-/** Get all testimonials. */
-export async function getTestimonials(): Promise<Testimonial[]> {
+/** Get approved testimonials (from API when configured, else local JSON). Respects locale via X-Content-Locale when using the API. */
+export async function getTestimonials(locale?: string): Promise<Testimonial[]> {
+  const live = await fetchTestimonialsFromApi(locale);
+  if (live.length > 0) {
+    return live;
+  }
+
   if (contentSource === 'api') {
-    const data = await marketingGet<{ data?: Testimonial[] }>(MARKETING_ENDPOINTS.testimonials);
-    const list = Array.isArray(data) ? data : (data?.data ?? []);
-    return list.filter((t) => t.approved !== false);
+    try {
+      const q = new URLSearchParams();
+      q.set('per_page', '48');
+      const path = `${MARKETING_ENDPOINTS.testimonials}?${q.toString()}`;
+      const payload = await marketingGet<unknown>(path, locale);
+      const list = unwrapMarketingListRecords(payload as Record<string, unknown>)
+        .map((raw) => mapPublicTestimonialRecord(raw))
+        .filter((t) => t.quote.length > 0 && t.approved !== false);
+      if (list.length > 0) {
+        return list;
+      }
+    } catch {
+      /* fall through */
+    }
   }
   return Promise.resolve(testimonials.filter((t) => t.approved !== false));
 }
