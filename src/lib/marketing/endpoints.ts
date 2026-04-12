@@ -21,6 +21,8 @@ export const MARKETING_ENDPOINTS = {
   contact: '/contact',
   /** GET site content (services, pricing, FAQ, etc.) - optional */
   siteContent: '/public/site-content',
+  /** GET published services (localized via X-Content-Locale) */
+  services: '/public/services',
   /** GET branding + enabled UI locales for public header (no auth) */
   siteMeta: '/public/site-meta',
 } as const;

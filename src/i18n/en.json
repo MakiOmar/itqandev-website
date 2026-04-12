@@ -133,6 +133,25 @@
     "deleteConfirm": "Are you sure you want to delete this skill?",
     "noSkills": "No skills"
   },
+  "services": {
+    "title": "Services",
+    "subtitle": "Manage marketing services and translations",
+    "addNew": "Add Service",
+    "edit": "Edit Service",
+    "list": "Services List",
+    "name": "Name",
+    "slug": "Slug",
+    "shortDescription": "Short description",
+    "description": "Description",
+    "processLines": "Process steps (one per line)",
+    "deliverablesLines": "Deliverables (one per line)",
+    "icon": "Icon key",
+    "sortOrder": "Sort order",
+    "published": "Published on website",
+    "draft": "Draft",
+    "deleteConfirm": "Are you sure you want to delete this service?",
+    "empty": "No services yet"
+  },
   "testimonials": {
     "title": "Testimonials",
     "subtitle": "Manage customer testimonials",
@@ -367,6 +386,7 @@
     "projects": "Projects",
     "categories": "Categories",
     "skills": "Skills",
+    "services": "Services",
     "testimonials": "Testimonials",
     "blog": "Blog",
     "media": "Media Library",

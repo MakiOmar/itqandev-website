@@ -17,6 +17,7 @@ import {
   ProjectsIcon,
   CategoriesIcon,
   SkillsIcon,
+  ServicesIcon,
   TestimonialsIcon,
   BlogIcon,
   MediaIcon,
@@ -107,6 +108,11 @@ export const Sidebar = component$<SidebarProps>((props) => {
       label: t('sidebar.skills'),
       href: ROUTES.ADMIN.SKILLS,
       icon: SkillsIcon,
+    },
+    {
+      label: t('sidebar.services'),
+      href: ROUTES.ADMIN.SERVICES,
+      icon: ServicesIcon,
     },
     {
       label: t('sidebar.testimonials'),

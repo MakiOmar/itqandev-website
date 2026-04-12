@@ -133,6 +133,25 @@
     "deleteConfirm": "هل أنت متأكد من حذف هذه المهارة؟",
     "noSkills": "لا توجد مهارات"
   },
+  "services": {
+    "title": "الخدمات",
+    "subtitle": "إدارة خدمات الموقع والترجمات",
+    "addNew": "إضافة خدمة",
+    "edit": "تعديل خدمة",
+    "list": "قائمة الخدمات",
+    "name": "الاسم",
+    "slug": "المعرف (slug)",
+    "shortDescription": "وصف قصير",
+    "description": "الوصف",
+    "processLines": "خطوات العمل (سطر لكل خطوة)",
+    "deliverablesLines": "المخرجات (سطر لكل بند)",
+    "icon": "مفتاح الأيقونة",
+    "sortOrder": "ترتيب العرض",
+    "published": "منشور على الموقع",
+    "draft": "مسودة",
+    "deleteConfirm": "هل أنت متأكد من حذف هذه الخدمة؟",
+    "empty": "لا توجد خدمات بعد"
+  },
   "testimonials": {
     "title": "الشهادات",
     "subtitle": "إدارة شهادات العملاء",
@@ -367,6 +386,7 @@
     "projects": "المشاريع",
     "categories": "التصنيفات",
     "skills": "المهارات",
+    "services": "الخدمات",
     "testimonials": "الشهادات",
     "blog": "المدونة",
     "media": "المكتبة الإعلامية",

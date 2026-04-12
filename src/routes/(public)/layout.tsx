@@ -1,6 +1,7 @@
 import { component$, Slot } from '@builder.io/qwik';
 import { routeLoader$ } from '@builder.io/qwik-city';
 import { getSiteContent } from '~/lib/marketing/content-layer';
+import { readPreferredLocaleFromCookieHeader } from '~/lib/i18n/dashboard-locale';
 import { Header } from '~/components/marketing/Header';
 import { Footer } from '~/components/marketing/Footer';
 import { ParticlesBackground } from '~/components/marketing/ParticlesBackground';
@@ -13,8 +14,10 @@ import type { SiteLanguageRow } from '~/types/site-language';
 /**
  * Load site content once for layout (footer contact/socials).
  */
-export const useSiteContent = routeLoader$(async () => {
-  return getSiteContent();
+export const useSiteContent = routeLoader$(async ({ request }) => {
+  const cookie = request.headers.get('cookie') || '';
+  const uiLocale = readPreferredLocaleFromCookieHeader(cookie) ?? undefined;
+  return getSiteContent(uiLocale);
 });
 
 /**

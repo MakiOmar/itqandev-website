@@ -1,6 +1,7 @@
 import type { BlogPost } from '../types/blog';
 import type { Category } from '../types/category';
 import type { Project } from '../types/project';
+import type { AdminService } from '../types/service';
 import type { Skill } from '../types/skill';
 import type { SiteLanguageRow } from '../types/site-language';
 import { parseTranslationsJson } from './content-translations';
@@ -230,6 +231,91 @@ export function mergeSecondarySkillTranslations(
     return String((row as Record<string, unknown>).locale ?? '').toLowerCase() === u;
   });
   const row = { locale: u, name: edited.name, description: edited.description };
+  if (idx >= 0) {
+    base[idx] = { ...(base[idx] as object), ...row };
+  } else {
+    base.push(row);
+  }
+  return base;
+}
+
+function normalizeStringArray(v: unknown): string[] {
+  if (!Array.isArray(v)) {
+    return [];
+  }
+  return v.map((x) => String(x ?? '').trim()).filter((s) => s.length > 0);
+}
+
+export function mergeServiceFieldsForUiLocale(
+  service: AdminService,
+  uiLocale: string,
+  siteLanguages: SiteLanguageRow[] | undefined | null,
+  siteDefaultLocale: string | undefined | null,
+  contentLocaleOverride?: string | null,
+): {
+  name: string;
+  short_description: string;
+  description: string;
+  process: string[];
+  deliverables: string[];
+} {
+  const primary = primaryLocaleForContent(
+    siteLanguages,
+    siteDefaultLocale,
+    contentLocaleOverride ?? service.content_locale ?? null,
+  );
+  const u = uiLocale.toLowerCase();
+  const baseName = service.name ?? '';
+  const baseShort = service.short_description ?? '';
+  const baseDesc = service.description ?? '';
+  const baseProcess = normalizeStringArray(service.process);
+  const baseDel = normalizeStringArray(service.deliverables);
+  if (u === primary) {
+    return {
+      name: baseName,
+      short_description: baseShort,
+      description: baseDesc,
+      process: baseProcess,
+      deliverables: baseDel,
+    };
+  }
+  const row = service.translations?.find((t) => String(t?.locale).toLowerCase() === u);
+  return {
+    name: row?.name != null && row.name !== '' ? row.name : baseName,
+    short_description: row?.short_description != null && row.short_description !== '' ? row.short_description : baseShort,
+    description: row?.description != null && row.description !== '' ? row.description : baseDesc,
+    process: normalizeStringArray(row?.process).length > 0 ? normalizeStringArray(row?.process) : baseProcess,
+    deliverables: normalizeStringArray(row?.deliverables).length > 0 ? normalizeStringArray(row?.deliverables) : baseDel,
+  };
+}
+
+export function mergeSecondaryServiceTranslations(
+  translationsJson: string | undefined,
+  uiLocale: string,
+  edited: {
+    name: string;
+    short_description: string;
+    description: string;
+    process: string[];
+    deliverables: string[];
+  },
+): unknown[] {
+  const base = parseTranslationsJson(translationsJson) ?? [];
+  const u = uiLocale.toLowerCase();
+  const idx = base.findIndex((row) => {
+    if (!row || typeof row !== 'object') {
+      return false;
+    }
+    return String((row as Record<string, unknown>).locale ?? '').toLowerCase() === u;
+  });
+  const row = {
+    locale: u,
+    name: edited.name,
+    short_description: edited.short_description,
+    description: edited.description,
+    process: edited.process,
+    deliverables: edited.deliverables,
+  };
   if (idx >= 0) {
     base[idx] = { ...(base[idx] as object), ...row };
   } else {

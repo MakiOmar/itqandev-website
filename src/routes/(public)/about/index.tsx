@@ -3,12 +3,17 @@ import type { DocumentHead } from '@builder.io/qwik-city';
 import { routeLoader$ } from '@builder.io/qwik-city';
 import { getConfig } from '~/lib/config';
 import { getSiteContent } from '~/lib/marketing/content-layer';
+import { readPreferredLocaleFromCookieHeader } from '~/lib/i18n/dashboard-locale';
 import { Container } from '~/components/marketing/Container';
 import { Section } from '~/components/marketing/Section';
 import { AnimatedReveal } from '~/components/marketing/AnimatedReveal';
 import { AnimatedCounter } from '~/components/marketing/AnimatedCounter';
 
-export const useAboutData = routeLoader$(async () => getSiteContent());
+export const useAboutData = routeLoader$(async ({ request }) => {
+  const cookie = request.headers.get('cookie') || '';
+  const uiLocale = readPreferredLocaleFromCookieHeader(cookie) ?? undefined;
+  return getSiteContent(uiLocale);
+});
 
 export default component$(() => {
   const data = useAboutData();

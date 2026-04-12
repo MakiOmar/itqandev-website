@@ -71,6 +71,14 @@ export const API_ENDPOINTS = {
     DELETE: (id: string | number) => `/v1/skills/${id}`,
     BULK_DELETE: '/v1/skills/bulk-delete',
   },
+  SERVICES: {
+    LIST: '/v1/services',
+    GET: (id: string | number) => `/v1/services/${id}`,
+    CREATE: '/v1/services',
+    UPDATE: (id: string | number) => `/v1/services/${id}`,
+    DELETE: (id: string | number) => `/v1/services/${id}`,
+    BULK_DELETE: '/v1/services/bulk-delete',
+  },
   // Testimonials
   TESTIMONIALS: {
     LIST: '/v1/testimonials',

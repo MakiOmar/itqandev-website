@@ -21,7 +21,7 @@ export const useHomeData = routeLoader$(async ({ request }) => {
   const [caseStudies, testimonials, siteContent, blogPosts] = await Promise.all([
     getFeaturedCaseStudies(3, uiLocale),
     getTestimonials(uiLocale),
-    getSiteContent(),
+    getSiteContent(uiLocale),
     getBlogPosts(),
   ]);
   return { caseStudies, testimonials, siteContent, blogPosts: blogPosts.slice(0, 3) };

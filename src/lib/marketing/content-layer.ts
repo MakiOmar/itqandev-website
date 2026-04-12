@@ -4,7 +4,7 @@
  * Published projects are loaded from Laravel `/api/public/projects` when the API base URL is set.
  */
 
-import type { CaseStudy, BlogPost, Testimonial, SiteContent } from './types';
+import type { CaseStudy, BlogPost, Testimonial, SiteContent, Service } from './types';
 import { getMarketingApiBaseUrl, marketingGet } from './api-client';
 import { MARKETING_ENDPOINTS } from './endpoints';
 
@@ -246,17 +246,59 @@ export async function getTestimonials(locale?: string): Promise<Testimonial[]> {
   return Promise.resolve(testimonials.filter((t) => t.approved !== false));
 }
 
-/** Get site content (services, pricing, FAQ, contact, about). */
-export async function getSiteContent(): Promise<SiteContent> {
+function normalizeServiceFromPublicApi(raw: Record<string, unknown>): Service {
+  return {
+    id: String(raw.id ?? ''),
+    slug: String(raw.slug ?? ''),
+    name: String(raw.name ?? ''),
+    shortDescription: String(raw.shortDescription ?? raw.short_description ?? ''),
+    description: String(raw.description ?? ''),
+    process: Array.isArray(raw.process) ? (raw.process as string[]) : undefined,
+    deliverables: Array.isArray(raw.deliverables) ? (raw.deliverables as string[]) : undefined,
+    icon: typeof raw.icon === 'string' ? raw.icon : undefined,
+  };
+}
+
+/**
+ * Get site content (services, pricing, FAQ, contact, about).
+ * When `VITE_MARKETING_API_URL` / `VITE_API_BASE_URL` is set, merges `GET /public/services` (optional `locale` → X-Content-Locale) over local `site.json` for the `services` array only.
+ */
+export async function getSiteContent(locale?: string | null): Promise<SiteContent> {
+  let merged: SiteContent = siteContent;
+
   if (contentSource === 'api') {
     try {
-      const data = await marketingGet<SiteContent>(MARKETING_ENDPOINTS.siteContent);
-      return data ?? siteContent;
+      const data = await marketingGet<SiteContent>(MARKETING_ENDPOINTS.siteContent, locale ?? undefined);
+      if (data) {
+        merged = { ...merged, ...data };
+      }
     } catch {
-      return siteContent;
+      /* keep merged from local */
     }
   }
-  return Promise.resolve(siteContent);
+
+  if (getMarketingApiBaseUrl().trim()) {
+    try {
+      const payload = await marketingGet<unknown>(MARKETING_ENDPOINTS.services, locale ?? undefined);
+      const arr = Array.isArray(payload)
+        ? payload
+        : payload && typeof payload === 'object' && Array.isArray((payload as { data?: unknown }).data)
+          ? (payload as { data: unknown[] }).data
+          : [];
+      if (arr.length > 0) {
+        merged = {
+          ...merged,
+          services: arr
+            .filter((row) => row && typeof row === 'object')
+            .map((row) => normalizeServiceFromPublicApi(row as Record<string, unknown>)),
+        };
+      }
+    } catch (e) {
+      console.warn('[marketing] fetch public services failed', e);
+    }
+  }
+
+  return Promise.resolve(merged);
 }
 
 /** Get all blog posts (sorted by date desc). */
