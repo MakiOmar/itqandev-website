@@ -4,31 +4,17 @@ import { Link, routeLoader$, useNavigate } from '@builder.io/qwik-city';
 import { PageHeader } from '../../../../components/common/PageHeader';
 import { useTranslate } from '../../../../lib/i18n/useTranslate';
 import { useSwal } from '../../../../lib/hooks/useSwal';
-import { getApiClient, extractCookieHeader } from '../../../../lib/api/client';
-import { API_ENDPOINTS } from '../../../../lib/api/endpoints';
 import { ROUTES } from '../../../../lib/constants/routes';
-import type { Project } from '../../../../types';
 import { useCreateTestimonial } from '../../../../lib/admin/testimonial-actions';
+import { loadTestimonialProjectsContext } from '../../../../lib/admin/testimonial-form-context';
 
-/**
- * Projects dropdown for testimonial form
- */
+/** Projects + feature flag (shared logic with edit page). */
 export const useProjectsForNewTestimonialPage = routeLoader$(async ({ cookie, request }) => {
   try {
-    const cookieHeader = extractCookieHeader(cookie, request);
-    const apiClient = getApiClient(cookieHeader);
-    const projectsRes = await apiClient.get<Project[]>(API_ENDPOINTS.PROJECTS.LIST);
-    const body = (projectsRes as { data?: unknown })?.data ?? projectsRes;
-    if (Array.isArray(body)) {
-      return body as Project[];
-    }
-    if (body && typeof body === 'object' && 'data' in (body as object) && Array.isArray((body as { data: Project[] }).data)) {
-      return (body as { data: Project[] }).data;
-    }
-    return [] as Project[];
+    return await loadTestimonialProjectsContext(cookie, request);
   } catch (e) {
-    console.error('Failed to load projects:', e);
-    return [] as Project[];
+    console.error('Failed to load testimonial form context:', e);
+    return { projects: [], projectsManagementEnabled: false };
   }
 });
 
@@ -36,7 +22,7 @@ export default component$(() => {
   const { t } = useTranslate();
   const { success, error: showError } = useSwal();
   const navigate = useNavigate();
-  const projects = useProjectsForNewTestimonialPage();
+  const projectsContext = useProjectsForNewTestimonialPage();
   const createAction = useCreateTestimonial();
 
   const saveTranslations = {
@@ -84,26 +70,28 @@ export default component$(() => {
 
       <div class="max-w-3xl rounded-lg border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-800 dark:bg-gray-800">
         <div class="space-y-4">
-          <div>
-            <label for="project_id" class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-200">
-              {t('testimonials.project')}
-            </label>
-            <select
-              id="project_id"
-              value={formData.value.project_id}
-              onChange$={(e) => {
-                formData.value = { ...formData.value, project_id: (e.target as HTMLSelectElement).value };
-              }}
-              class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-primary-500 focus:outline-none focus:ring focus:ring-primary-200 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:focus:ring-primary-700/40"
-            >
-              <option value="">{t('testimonials.noProject')}</option>
-              {projects.value.map((proj) => (
-                <option key={proj.id} value={String(proj.id)}>
-                  {proj.title}
-                </option>
-              ))}
-            </select>
-          </div>
+          {projectsContext.value.projectsManagementEnabled && projectsContext.value.projects.length > 0 ? (
+            <div>
+              <label for="project_id" class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-200">
+                {t('testimonials.project')}
+              </label>
+              <select
+                id="project_id"
+                value={formData.value.project_id}
+                onChange$={(e) => {
+                  formData.value = { ...formData.value, project_id: (e.target as HTMLSelectElement).value };
+                }}
+                class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-primary-500 focus:outline-none focus:ring focus:ring-primary-200 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:focus:ring-primary-700/40"
+              >
+                <option value="">{t('testimonials.noProject')}</option>
+                {projectsContext.value.projects.map((proj) => (
+                  <option key={proj.id} value={String(proj.id)}>
+                    {proj.title}
+                  </option>
+                ))}
+              </select>
+            </div>
+          ) : null}
           <div>
             <label for="client_name" class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-200">
               {t('testimonials.clientName')} *
