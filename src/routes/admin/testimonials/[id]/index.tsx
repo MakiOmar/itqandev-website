@@ -10,9 +10,13 @@ import { ROUTES } from '../../../../lib/constants/routes';
 import type { Project, Testimonial } from '../../../../types';
 import { mapTestimonialFromApi, useUpdateTestimonial } from '../../../../lib/admin/testimonial-actions';
 
-export const useTestimonialForEdit = routeLoader$(async ({ params, cookie, request, fail }) => {
+export const useTestimonialForEdit = routeLoader$(async ({ params, cookie, request, fail, redirect: redirectFn }) => {
   try {
     const id = params.id;
+    // Static "new" must be handled by /testimonials/new; if the router matched this segment first, redirect.
+    if (id === 'new') {
+      throw redirectFn(302, ROUTES.ADMIN.TESTIMONIALS_NEW);
+    }
     if (!id) {
       return fail(404, { message: 'Not found' });
     }
@@ -29,7 +33,7 @@ export const useTestimonialForEdit = routeLoader$(async ({ params, cookie, reque
   }
 });
 
-export const useProjectsForTestimonialForm = routeLoader$(async ({ cookie, request }) => {
+export const useProjectsForEditTestimonialPage = routeLoader$(async ({ cookie, request }) => {
   try {
     const cookieHeader = extractCookieHeader(cookie, request);
     const apiClient = getApiClient(cookieHeader);
@@ -53,7 +57,7 @@ export default component$(() => {
   const { success, error: showError } = useSwal();
   const navigate = useNavigate();
   const testimonialLoader = useTestimonialForEdit();
-  const projects = useProjectsForTestimonialForm();
+  const projects = useProjectsForEditTestimonialPage();
   const updateAction = useUpdateTestimonial();
 
   const saveTranslations = {

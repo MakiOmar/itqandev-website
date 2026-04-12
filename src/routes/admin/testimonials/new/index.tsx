@@ -13,7 +13,7 @@ import { useCreateTestimonial } from '../../../../lib/admin/testimonial-actions'
 /**
  * Projects dropdown for testimonial form
  */
-export const useProjectsForTestimonialForm = routeLoader$(async ({ cookie, request }) => {
+export const useProjectsForNewTestimonialPage = routeLoader$(async ({ cookie, request }) => {
   try {
     const cookieHeader = extractCookieHeader(cookie, request);
     const apiClient = getApiClient(cookieHeader);
@@ -36,7 +36,7 @@ export default component$(() => {
   const { t } = useTranslate();
   const { success, error: showError } = useSwal();
   const navigate = useNavigate();
-  const projects = useProjectsForTestimonialForm();
+  const projects = useProjectsForNewTestimonialPage();
   const createAction = useCreateTestimonial();
 
   const saveTranslations = {
