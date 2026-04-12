@@ -33,6 +33,8 @@ export function getRoutes() {
       SERVICES_NEW: `${config.routes.admin.prefix}/services/new`,
       SERVICES_EDIT: (id: string | number) => `${config.routes.admin.prefix}/services/${id}`,
       TESTIMONIALS: `${config.routes.admin.prefix}/testimonials`,
+      TESTIMONIALS_NEW: `${config.routes.admin.prefix}/testimonials/new`,
+      TESTIMONIALS_EDIT: (id: string | number) => `${config.routes.admin.prefix}/testimonials/${id}`,
       BLOG: `${config.routes.admin.prefix}/blog`,
       BLOG_NEW: `${config.routes.admin.prefix}/blog/new`,
       BLOG_EDIT: (id: string | number) => `${config.routes.admin.prefix}/blog/${id}`,

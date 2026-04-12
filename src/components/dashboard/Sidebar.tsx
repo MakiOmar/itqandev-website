@@ -27,6 +27,8 @@ interface NavItem {
   label: string;
   href?: string;
   icon: Component<any>;
+  /** When true, nav item stays active for nested paths (e.g. list + new + edit). */
+  activeOnChildPaths?: boolean;
   children?: Array<{
     label: string;
     href: string;
@@ -98,11 +100,13 @@ export const Sidebar = component$<SidebarProps>((props) => {
       label: t('sidebar.projects'),
       href: ROUTES.ADMIN.PROJECTS,
       icon: ProjectsIcon,
+      activeOnChildPaths: true,
     },
     {
       label: t('sidebar.categories'),
       href: ROUTES.ADMIN.CATEGORIES,
       icon: CategoriesIcon,
+      activeOnChildPaths: true,
     },
     {
       label: t('sidebar.skills'),
@@ -113,16 +117,19 @@ export const Sidebar = component$<SidebarProps>((props) => {
       label: t('sidebar.services'),
       href: ROUTES.ADMIN.SERVICES,
       icon: ServicesIcon,
+      activeOnChildPaths: true,
     },
     {
       label: t('sidebar.testimonials'),
       href: ROUTES.ADMIN.TESTIMONIALS,
       icon: TestimonialsIcon,
+      activeOnChildPaths: true,
     },
     {
       label: t('sidebar.blog'),
       href: ROUTES.ADMIN.BLOG,
       icon: BlogIcon,
+      activeOnChildPaths: true,
     },
     {
       label: t('sidebar.media'),
@@ -323,7 +330,11 @@ export const Sidebar = component$<SidebarProps>((props) => {
                   );
                 }
 
-                const active = item.href ? isActive(item.href) : false;
+                const active = item.href
+                  ? item.activeOnChildPaths
+                    ? isInSection(item.href)
+                    : isActive(item.href)
+                  : false;
                 return (
                   <Link
                     key={item.href || item.label}

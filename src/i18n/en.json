@@ -155,6 +155,7 @@
   "testimonials": {
     "title": "Testimonials",
     "subtitle": "Manage customer testimonials",
+    "backToList": "Back to list",
     "addNew": "Add Testimonial",
     "edit": "Edit Testimonial",
     "list": "Testimonials List",
