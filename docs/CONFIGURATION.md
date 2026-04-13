@@ -2,6 +2,8 @@
 
 Complete reference for all configuration options in Qwik Dashboard.
 
+**Backend Laravel env, API settings, feature flags, and ops:** see the repo root **[docs/CONFIGURATION.md](../../docs/CONFIGURATION.md)**.
+
 ## Table of Contents
 
 1. [Environment Variables](#environment-variables)
