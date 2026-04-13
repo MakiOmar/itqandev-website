@@ -25,8 +25,8 @@ export function extractProjectsListFromApiResponse(response: unknown): Project[]
 }
 
 /**
- * When `settings.features.projects` is explicitly false, skip project linking in testimonials.
- * Missing key or any other value = enabled (backward compatible).
+ * When `settings.features.projects` is false, skip project linking in testimonials.
+ * Values come from Laravel `config/features.php` / `.env` only (whitelabel), not from persisted settings.
  */
 export function readProjectsManagementEnabled(settings: Record<string, unknown>): boolean {
   const raw = settings.features;
