@@ -5,6 +5,7 @@ import { getApiClient, extractCookieHeader } from '../../../lib/api/client';
 import { API_ENDPOINTS } from '../../../lib/api/endpoints';
 import { ROUTES } from '../../../lib/constants/routes';
 import { clearProjectSettingsCache } from '../../../lib/api/project-settings';
+import { readProjectsManagementEnabled } from '../../../lib/admin/testimonial-form-context';
 import type { SiteLanguageRow } from '../../../types/site-language';
 
 export interface SettingsFormData {
@@ -26,6 +27,10 @@ export interface SettingsFormData {
   secondaryColor: string;
   site_languages: SiteLanguageRow[];
   default_locale: string;
+  /** When true, testimonial forms may link to projects (`features.projects` not explicitly false). */
+  feature_projects: boolean;
+  /** When true, `FEATURE_PROJECTS` env overrides persistence; admin cannot change projects flag. */
+  features_projects_env_locked: boolean;
 }
 
 export const defaultSettings: SettingsFormData = {
@@ -49,6 +54,8 @@ export const defaultSettings: SettingsFormData = {
     { code: 'en', label: 'English', native_label: 'English', rtl: false },
   ],
   default_locale: 'en',
+  feature_projects: true,
+  features_projects_env_locked: false,
 };
 
 function normalizeSettings(input: Partial<SettingsFormData> | undefined | null): SettingsFormData {
@@ -94,6 +101,8 @@ function normalizeSettings(input: Partial<SettingsFormData> | undefined | null):
       (input as any)?.secondaryColor || (input as any)?.secondary_color || defaultSettings.secondaryColor,
     site_languages: normalizeSiteLanguages((input as any)?.site_languages),
     default_locale: normalizeDefaultLocale((input as any)?.default_locale, (input as any)?.site_languages),
+    feature_projects: readProjectsManagementEnabled((input ?? {}) as Record<string, unknown>),
+    features_projects_env_locked: !!(input as any)?.settings_meta?.features?.projects_env_locked,
   };
 }
 
@@ -251,6 +260,12 @@ export const useUpdateSettings = routeAction$(
         }
       }
 
+      if (has('feature_projects')) {
+        const raw = (data as any).feature_projects;
+        const enabled = raw === true || raw === 'true' || raw === '1' || raw === 1;
+        payload.features = { projects: enabled };
+      }
+
       await apiClient.put(API_ENDPOINTS.SETTINGS.UPDATE, payload);
       clearProjectSettingsCache();
 
@@ -292,6 +307,7 @@ export const useUpdateSettings = routeAction$(
       .or(z.literal('')),
     site_languages_json: z.string().optional(),
     default_locale: z.string().optional(),
+    feature_projects: z.union([z.string(), z.boolean()]).optional(),
   }),
 );
 
@@ -370,6 +386,7 @@ export default component$(() => {
     { label: t('media.title'), href: ROUTES.ADMIN.SETTINGS_MEDIA },
     { label: t('settings.branding'), href: ROUTES.ADMIN.SETTINGS_BRANDING },
     { label: t('settings.languagesNav'), href: ROUTES.ADMIN.SETTINGS_LANGUAGES },
+    { label: t('settings.featuresNav'), href: ROUTES.ADMIN.SETTINGS_FEATURES },
   ];
 
   return (

@@ -351,7 +351,17 @@
     "removeLanguage": "إزالة",
     "searchLanguage": "ابحث بالاسم أو الرمز…",
     "languageCodeEmpty": "اكتب للبحث أو مرّر القائمة.",
-    "languageNoResults": "لا توجد لغات مطابقة لبحثك."
+    "languageNoResults": "لا توجد لغات مطابقة لبحثك.",
+    "featuresNav": "الميزات",
+    "featuresTitle": "تبديل الميزات",
+    "featuresSubtitle": "التحكم بسلوك اختياري يُحفظ في إعدادات المشروع (وليس في ملف البيئة على الخادم).",
+    "featureProjectsLabel": "الشهادات ↔ المشاريع",
+    "featureProjectsHelp": "عند التفعيل، يمكن ربط الشهادة بمشروع في نماذج الإنشاء/التعديل وتحميل قائمة المشاريع. عند الإيقاف، يُخفى ذلك ولا يُستدعى واجهة المشاريع من تلك الشاشات.",
+    "featureProjectsOn": "مفعّل (إظهار ربط المشروع في الشهادات)",
+    "featureProjectsOff": "معطّل (إخفاء ربط المشروع)",
+    "featureProjectsEnvLocked": "هذا الخيار يُتحكم به بمتغير البيئة FEATURE_PROJECTS ولا يمكن تغييره من هنا.",
+    "featureProjectsStateOn": "القيمة الفعلية حالياً: مفعّل.",
+    "featureProjectsStateOff": "القيمة الفعلية حالياً: معطّل."
   },
   "contentTranslations": {
     "addTranslations": "إضافة ترجمات",

@@ -351,7 +351,17 @@
     "removeLanguage": "Remove",
     "searchLanguage": "Search by name or code…",
     "languageCodeEmpty": "Type to search, or scroll the list.",
-    "languageNoResults": "No languages match your search."
+    "languageNoResults": "No languages match your search.",
+    "featuresNav": "Features",
+    "featuresTitle": "Feature toggles",
+    "featuresSubtitle": "Control optional product behavior stored in project settings (not server .env).",
+    "featureProjectsLabel": "Testimonials ↔ projects",
+    "featureProjectsHelp": "When enabled, testimonial create/edit forms can link a testimonial to a project and load the projects list. When disabled, that UI is hidden and the projects API is not requested from those screens.",
+    "featureProjectsOn": "Enabled (show project linking in testimonials)",
+    "featureProjectsOff": "Disabled (hide project linking)",
+    "featureProjectsEnvLocked": "This option is controlled by the FEATURE_PROJECTS environment variable and cannot be changed here.",
+    "featureProjectsStateOn": "Current effective value: enabled.",
+    "featureProjectsStateOff": "Current effective value: disabled."
   },
   "contentTranslations": {
     "addTranslations": "Add translations",
