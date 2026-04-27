@@ -84,7 +84,9 @@ export const useAuth = routeLoader$(async ({ cookie, url, redirect: redirectFn }
     } catch (error) {
       // If getSession fails (e.g., API not available), allow access to login page
       // This prevents redirect loops when Laravel backend is not accessible
-      console.warn('Auth check on login page failed, allowing access:', error);
+      if (import.meta.env.DEV) {
+        console.warn('Auth check on login page failed, allowing access:', error);
+      }
     }
     // Not logged in, allow access to login page
     return null;

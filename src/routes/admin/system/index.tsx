@@ -1,184 +1,108 @@
 import { component$ } from '@builder.io/qwik';
-import type { DocumentHead, RequestEvent  } from '@builder.io/qwik-city';
+import type { DocumentHead } from '@builder.io/qwik-city';
 import { routeLoader$ } from '@builder.io/qwik-city';
 import { PageHeader } from '../../../components/common/PageHeader';
 import { useTranslate } from '../../../lib/i18n/useTranslate';
 import { StatCard } from '../../../components/common/StatCard';
-import { formatFileSize } from '../../../lib/utils/formatters';
-import { mockAuth } from '../../../lib/auth/mock-auth';
-import {
-  ServerIcon,
-  DatabaseIcon,
-  QueueIcon,
-  LinkIcon,
-} from '../../../components/dashboard/icons';
-import { ROUTES } from '../../../lib/constants/routes'; // adjust path if needed
+import { auth } from '../../../lib/auth';
+import { getConfig } from '../../../lib/config';
+import { extractCookieHeader, getApiClient } from '../../../lib/api/client';
+import { ServerIcon, DatabaseIcon, QueueIcon } from '../../../components/dashboard/icons';
 
-/**
- * System health interface
- */
-interface SystemHealth {
-  serverStatus: string;
-  databaseStatus: string;
-  queueStatus: string;
-  storageUsed: number;
-  storageTotal: number;
-  cacheHitRate: number;
-  activeConnections: number;
-  failedJobs: number;
+interface SystemHealthApi {
+  app_env: string;
+  php_version: string;
+  laravel_version: string;
+  database: { status: string; connection: string; error: string | null };
+  cache: { store: string };
+  queue: { connection: string };
 }
-// ✅ Guard runs before loader + rendering
-export const onRequest = ({ cookie, redirect }: RequestEvent) => {
-  const session = mockAuth.getSession(cookie);
 
-  if (!session || session.user.role !== 'super_admin') {
-    throw redirect(302, ROUTES.ADMIN.HOME);
+function canAccessSystemHealth(session: { user: { permissions?: string[]; role: string } } | null): boolean {
+  if (!session?.user) {
+    return false;
   }
-};
+  const perms = session.user.permissions ?? [];
+  if (perms.includes('manage system')) {
+    return true;
+  }
+  return session.user.role === 'super_admin';
+}
 
-/**
- * System health route loader
- */
-export const useSystemHealth = routeLoader$(async () => {
-    
-    // Simulate API delay
-    await new Promise((resolve) => setTimeout(resolve, 100));
-    // Mock system health data
-    return {
-    serverStatus: 'healthy',
-    databaseStatus: 'connected',
-    queueStatus: 'running',
-    storageUsed: 45.2 * 1024 * 1024 * 1024, // 45.2 GB
-    storageTotal: 100 * 1024 * 1024 * 1024, // 100 GB
-    cacheHitRate: 92.5,
-    activeConnections: 234,
-    failedJobs: 3,
-  } as SystemHealth;
+export const useSystemHealth = routeLoader$(async ({ cookie, request, redirect: redirectFn }) => {
+  const config = getConfig();
+  const session = await auth.getSession(cookie);
+  if (!canAccessSystemHealth(session)) {
+    throw redirectFn(302, config.routes.admin.home);
+  }
+
+  const api = getApiClient(extractCookieHeader(cookie, request) ?? undefined);
+  try {
+    const res = await api.get<SystemHealthApi>('/v1/system/health');
+    if (!res.success || !res.data) {
+      return { error: true as const };
+    }
+    return { error: false as const, data: res.data };
+  } catch {
+    return { error: true as const };
+  }
 });
 
 /**
- * System health page (Super Admin only)
+ * System health (Laravel — requires manage system or super_admin)
  */
 export default component$(() => {
-  const systemStats = useSystemHealth();
+  const health = useSystemHealth();
   const { t } = useTranslate();
-  const storagePercentage = (systemStats.value.storageUsed / systemStats.value.storageTotal) * 100;
+
+  if (health.value.error || !('data' in health.value) || !health.value.data) {
+    return (
+      <div>
+        <PageHeader title={t('system.title')} description={t('system.subtitle')} />
+        <p class="text-sm text-gray-600 dark:text-gray-400">Unable to load system health from the API.</p>
+      </div>
+    );
+  }
+
+  const d = health.value.data;
+  const dbOk = d.database.status === 'ok';
 
   return (
     <>
       {/* Component: SystemPage */}
       <div>
-      <PageHeader
-        title={t('system.title')}
-        description={t('system.subtitle')}
-      />
+        <PageHeader title={t('system.title')} description={t('system.subtitle')} />
 
-      {/* System Status Cards */}
-      <div class="mb-8 grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-        <StatCard
-          title="Server Status"
-          value={systemStats.value.serverStatus}
-          icon={ServerIcon}
-        />
-        <StatCard
-          title="Database Status"
-          value={systemStats.value.databaseStatus}
-          icon={DatabaseIcon}
-        />
-        <StatCard
-          title="Queue Status"
-          value={systemStats.value.queueStatus}
-          icon={QueueIcon}
-        />
-        <StatCard
-          title="Active Connections"
-          value={systemStats.value.activeConnections.toString()}
-          icon={LinkIcon}
-        />
-      </div>
+        <div class="mb-8 grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+          <StatCard title="Environment" value={d.app_env} icon={ServerIcon} />
+          <StatCard title="PHP" value={d.php_version} icon={ServerIcon} />
+          <StatCard
+            title="Database"
+            value={dbOk ? d.database.connection : 'error'}
+            icon={DatabaseIcon}
+          />
+          <StatCard title="Queue" value={d.queue.connection} icon={QueueIcon} />
+        </div>
 
-      {/* Storage Usage */}
-      <div class="mb-8 bg-white dark:bg-gray-800 rounded-lg shadow p-6">
-        <h2 class="mb-4 text-xl font-semibold text-gray-900 dark:text-white">
-          Storage Usage
-        </h2>
-        <div class="space-y-2">
-          <div class="flex justify-between text-sm">
-            <span class="text-gray-600 dark:text-gray-400">Used</span>
-            <span class="font-medium text-gray-900 dark:text-white">
-              {formatFileSize(systemStats.value.storageUsed)} /{' '}
-              {formatFileSize(systemStats.value.storageTotal)}
-            </span>
+        <div class="mb-8 grid gap-6 md:grid-cols-2">
+          <div class="rounded-lg bg-white p-6 shadow dark:bg-gray-800">
+            <h2 class="mb-2 text-lg font-semibold text-gray-900 dark:text-white">Laravel</h2>
+            <p class="text-sm text-gray-600 dark:text-gray-400">{d.laravel_version}</p>
           </div>
-          <div class="h-4 w-full overflow-hidden rounded-full bg-muted">
-            <div
-              class="h-full bg-primary-600 transition-all"
-              style={`width: ${storagePercentage}%`}
-            ></div>
-          </div>
-          <div class="text-right text-xs text-gray-600 dark:text-gray-400">
-            {storagePercentage.toFixed(1)}% used
+          <div class="rounded-lg bg-white p-6 shadow dark:bg-gray-800">
+            <h2 class="mb-2 text-lg font-semibold text-gray-900 dark:text-white">Cache store</h2>
+            <p class="text-sm text-gray-600 dark:text-gray-400">{d.cache.store}</p>
           </div>
         </div>
-      </div>
 
-      {/* Cache Statistics */}
-      <div class="mb-8 bg-white dark:bg-gray-800 rounded-lg shadow p-6">
-        <h2 class="mb-4 text-xl font-semibold text-gray-900 dark:text-white">
-          Cache Statistics
-        </h2>
-        <div class="grid gap-4 md:grid-cols-2">
-          <div>
-            <p class="text-sm text-gray-600 dark:text-gray-400">Cache Hit Rate</p>
-            <p class="text-2xl font-bold text-gray-900 dark:text-white">
-              {systemStats.value.cacheHitRate}%
-            </p>
+        {d.database.error && (
+          <div class="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900 dark:border-amber-900/40 dark:bg-amber-950/30 dark:text-amber-200">
+            Database check: {d.database.error}
           </div>
-          <div>
-            <p class="text-sm text-gray-600 dark:text-gray-400">Failed Jobs</p>
-            <p class="text-2xl font-bold text-gray-900 dark:text-white">
-              {systemStats.value.failedJobs}
-            </p>
-          </div>
-        </div>
-      </div>
+        )}
 
-      {/* Scheduled Tasks */}
-      <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
-        <h2 class="mb-4 text-xl font-semibold text-gray-900 dark:text-white">
-          Scheduled Tasks
-        </h2>
-        <div class="space-y-4">
-          <div class="flex items-center justify-between border-b border-gray-200 dark:border-gray-700 pb-4">
-            <div>
-              <p class="font-medium text-gray-900 dark:text-white">Database Backup</p>
-              <p class="text-sm text-gray-600 dark:text-gray-400">Runs daily at 2:00 AM</p>
-            </div>
-            <span class="rounded-full bg-success-100 text-success-800 dark:bg-success-900/20 dark:text-success-400 px-3 py-1 text-xs font-medium">
-              Active
-            </span>
-          </div>
-          <div class="flex items-center justify-between border-b border-gray-200 dark:border-gray-700 pb-4">
-            <div>
-              <p class="font-medium text-gray-900 dark:text-white">Cache Cleanup</p>
-              <p class="text-sm text-gray-600 dark:text-gray-400">Runs every 6 hours</p>
-            </div>
-            <span class="rounded-full bg-success-100 text-success-800 dark:bg-success-900/20 dark:text-success-400 px-3 py-1 text-xs font-medium">
-              Active
-            </span>
-          </div>
-          <div class="flex items-center justify-between">
-            <div>
-              <p class="font-medium text-gray-900 dark:text-white">Log Rotation</p>
-              <p class="text-sm text-gray-600 dark:text-gray-400">Runs weekly on Sunday</p>
-            </div>
-            <span class="rounded-full bg-success-100 text-success-800 dark:bg-success-900/20 dark:text-success-400 px-3 py-1 text-xs font-medium">
-              Active
-            </span>
-          </div>
-        </div>
+        <p class="mt-8 text-xs text-gray-500 dark:text-gray-500">Data from GET /api/v1/system/health</p>
       </div>
-    </div>
     </>
   );
 });

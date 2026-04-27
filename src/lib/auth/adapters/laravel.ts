@@ -144,7 +144,8 @@ export class LaravelAuthAdapter implements AuthAdapter {
           name: laravelUser.name,
           avatar: laravelUser.avatar,
           // Map roles array to single role (take first role or highest priority)
-          role: laravelUser.roles?.[0]?.name || 'user',
+          role: (laravelUser as any).role || laravelUser.roles?.[0]?.name || 'user',
+          permissions: Array.isArray((laravelUser as any).permissions) ? (laravelUser as any).permissions : undefined,
           status: laravelUser.status || 'active',
           createdAt: laravelUser.created_at,
           updatedAt: laravelUser.updated_at,
@@ -204,7 +205,8 @@ export class LaravelAuthAdapter implements AuthAdapter {
                   email: user.email,
                   name: user.name,
                   avatar: user.avatar,
-                  role: user.roles?.[0]?.name || 'user',
+                  role: user.role || user.roles?.[0]?.name || 'user',
+                  permissions: Array.isArray(user.permissions) ? user.permissions : undefined,
                   status: user.status || 'active',
                   createdAt: user.created_at || user.createdAt,
                   updatedAt: user.updated_at || user.updatedAt,
@@ -227,9 +229,11 @@ export class LaravelAuthAdapter implements AuthAdapter {
         return null;
       }
       
-      // For other errors, log but don't throw
+      // For other errors, log but don't throw (dev only)
       // This prevents redirect loops when API is not accessible
-      console.warn('getSession API error (non-auth):', error?.message || error);
+      if (import.meta.env.DEV) {
+        console.warn('getSession API error (non-auth):', error?.message || error);
+      }
     }
 
     // Fallback to cookie/localStorage only if API call didn't fail with auth error
@@ -247,7 +251,8 @@ export class LaravelAuthAdapter implements AuthAdapter {
               email: user.email,
               name: user.name,
               avatar: user.avatar,
-              role: user.roles?.[0]?.name || 'user',
+              role: user.role || user.roles?.[0]?.name || 'user',
+              permissions: Array.isArray(user.permissions) ? user.permissions : undefined,
               status: user.status || 'active',
               createdAt: user.created_at || user.createdAt,
               updatedAt: user.updated_at || user.updatedAt,

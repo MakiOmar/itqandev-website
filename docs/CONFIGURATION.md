@@ -47,6 +47,8 @@ VITE_AUTH_REFRESH_TOKEN=false
 VITE_AUTH_STORAGE=cookie
 ```
 
+**Behavior:** the dashboard is aligned with the Laravel API’s **Bearer token** from `POST /api/auth/login`. `GET /api/me` must return `user.permissions` (Spatie) so the sidebar can show modules the user is allowed to manage. Cookie-only SPA mode remains documented in [LARAVEL_INTEGRATION.md](./LARAVEL_INTEGRATION.md) if you add Sanctum stateful middleware on the server.
+
 ### Branding Configuration
 
 ```env

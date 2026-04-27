@@ -27,17 +27,21 @@ Reference guide for Laravel API endpoints expected by Qwik Dashboard.
 **Success Response (200):**
 ```json
 {
+  "token": "1|...",
   "user": {
-    "id": "1",
+    "id": 1,
     "name": "John Doe",
     "email": "user@example.com",
     "role": "admin",
-    "status": "active",
-    "createdAt": "2024-01-01T00:00:00.000Z",
-    "updatedAt": "2024-01-01T00:00:00.000Z"
+    "roles": [{ "id": 1, "name": "admin" }],
+    "permissions": ["manage projects", "manage users"],
+    "created_at": "...",
+    "updated_at": "..."
   }
 }
 ```
+
+The `token` is a Sanctum personal access token. The Qwik client stores it and sends `Authorization: Bearer {token}`. The `user.permissions` array lists effective Spatie permission names (for dashboard navigation and UI checks).
 
 **Error Response (422):**
 ```json
@@ -49,24 +53,32 @@ Reference guide for Laravel API endpoints expected by Qwik Dashboard.
 }
 ```
 
-### GET `/api/auth/me`
+### GET `/api/me`
 
 **Headers:**
-- `Cookie: laravel_session=...` (for Sanctum)
-- OR `Authorization: Bearer {token}` (for token-based)
+
+- `Authorization: Bearer {token}` (primary)
+- `Cookie: laravel_session=...` (only if you use Sanctum SPA / cookie mode)
 
 **Success Response (200):**
 ```json
 {
   "user": {
-    "id": "1",
+    "id": 1,
     "name": "John Doe",
     "email": "user@example.com",
     "role": "admin",
-    "status": "active"
+    "roles": [{ "id": 1, "name": "admin" }],
+    "permissions": ["manage projects", "manage system"],
+    "created_at": "...",
+    "updated_at": "..."
   }
 }
 ```
+
+### GET `/api/v1/system/health`
+
+Requires `Authorization` as above. Responds **403** if the user cannot run system diagnostics (`manage system` permission or `admin` / `super_admin` role). Returns app, PHP, Laravel versions, database ping status, default cache store, and queue connection name.
 
 **Error Response (401):**
 ```json

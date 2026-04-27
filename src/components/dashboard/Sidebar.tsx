@@ -33,6 +33,8 @@ interface NavItem {
     label: string;
     href: string;
   }>;
+  /** Spatie permission name from GET /api/me */
+  permission?: string;
   roles?: string[];
 }
 
@@ -52,6 +54,7 @@ export const Sidebar = component$<SidebarProps>((props) => {
   const { t } = useTranslate();
   const locale = useSpeakLocale();
   const userRole = auth.value?.user.role || 'user';
+  const permissionSet = new Set(auth.value?.user.permissions ?? []);
   const settingsMenuOpen = useSignal(false);
   
   // Check direction directly from document attribute (set immediately by blocking script)
@@ -101,40 +104,47 @@ export const Sidebar = component$<SidebarProps>((props) => {
       href: ROUTES.ADMIN.PROJECTS,
       icon: ProjectsIcon,
       activeOnChildPaths: true,
+      permission: 'manage projects',
     },
     {
       label: t('sidebar.categories'),
       href: ROUTES.ADMIN.CATEGORIES,
       icon: CategoriesIcon,
       activeOnChildPaths: true,
+      permission: 'manage categories',
     },
     {
       label: t('sidebar.skills'),
       href: ROUTES.ADMIN.SKILLS,
       icon: SkillsIcon,
+      permission: 'manage skills',
     },
     {
       label: t('sidebar.services'),
       href: ROUTES.ADMIN.SERVICES,
       icon: ServicesIcon,
       activeOnChildPaths: true,
+      permission: 'manage services',
     },
     {
       label: t('sidebar.testimonials'),
       href: ROUTES.ADMIN.TESTIMONIALS,
       icon: TestimonialsIcon,
       activeOnChildPaths: true,
+      permission: 'manage testimonials',
     },
     {
       label: t('sidebar.blog'),
       href: ROUTES.ADMIN.BLOG,
       icon: BlogIcon,
       activeOnChildPaths: true,
+      permission: 'manage blog',
     },
     {
       label: t('sidebar.media'),
       href: ROUTES.ADMIN.MEDIA,
       icon: MediaIcon,
+      permission: 'manage media',
     },
     {
       label: t('sidebar.profile'),
@@ -145,7 +155,7 @@ export const Sidebar = component$<SidebarProps>((props) => {
       label: t('sidebar.users'),
       href: ROUTES.ADMIN.USERS,
       icon: UsersIcon,
-      roles: ['admin', 'super_admin'],
+      permission: 'manage users',
     },
     {
       label: t('sidebar.settings'),
@@ -173,13 +183,18 @@ export const Sidebar = component$<SidebarProps>((props) => {
       label: t('sidebar.systemHealth'),
       href: ROUTES.ADMIN.SYSTEM,
       icon: SystemHealthIcon,
-      roles: ['super_admin'],
+      permission: 'manage system',
     },
   ];
 
   const filteredNavItems = navItems.filter((item) => {
-    if (!item.roles) return true;
-    return item.roles.includes(userRole);
+    if (item.permission && !permissionSet.has(item.permission)) {
+      return false;
+    }
+    if (item.roles && !item.roles.includes(userRole)) {
+      return false;
+    }
+    return true;
   });
 
   const isActive = (href: string) => {

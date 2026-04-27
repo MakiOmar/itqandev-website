@@ -1,156 +1,83 @@
-import { component$, useSignal, $ } from '@builder.io/qwik';
+import { component$, $ } from '@builder.io/qwik';
 import type { DocumentHead } from '@builder.io/qwik-city';
-import { routeLoader$, useNavigate } from '@builder.io/qwik-city';
+import { routeLoader$ } from '@builder.io/qwik-city';
 import { PageHeader } from '../../../components/common/PageHeader';
 import { useTranslate } from '../../../lib/i18n/useTranslate';
 import { DataTable, type Column } from '../../../components/common/DataTable';
-import { mockActivityLogs, type ActivityLog } from '../../../lib/api/mock-data';
-import { formatDate, formatRelativeTime } from '../../../lib/utils/formatters';
-import { mockAuth } from '../../../lib/auth/mock-auth';
+import { auth } from '../../../lib/auth';
+import { getConfig } from '../../../lib/config';
+import type { ActivityLog } from '../../../lib/api/mock-data';
 
 /**
- * Activity logs route loader with pagination and search
+ * Activity logs — UI shell only; audit trail API is not wired yet.
  */
-export const useActivityLogs = routeLoader$(async ({ url, cookie }) => {
-  try {
-    // Check auth
-    const session = mockAuth.getSession(cookie);
-    if (!session || (session.user.role !== 'admin' && session.user.role !== 'super_admin')) {
-      throw new Error('Unauthorized');
-    }
-
-    // Get query parameters
-    const page = parseInt(url.searchParams.get('page') || '1', 10);
-    const perPage = parseInt(url.searchParams.get('perPage') || '10', 10);
-    const search = url.searchParams.get('search') || '';
-
-    // Simulate API delay
-    await new Promise((resolve) => setTimeout(resolve, 100));
-
-    // Filter logs
-    let filtered = [...mockActivityLogs];
-    if (search) {
-      const query = search.toLowerCase();
-      filtered = filtered.filter(
-        (log) =>
-          log.userName.toLowerCase().includes(query) ||
-          log.action.toLowerCase().includes(query) ||
-          log.resource.toLowerCase().includes(query),
-      );
-    }
-
-    // Paginate
-    const total = filtered.length;
-    const start = (page - 1) * perPage;
-    const end = start + perPage;
-    const paginated = filtered.slice(start, end);
-
-    // Format data
-    const processed = paginated.map((log) => ({
-      ...log,
-      createdAt: `${formatDate(log.createdAt)} (${formatRelativeTime(log.createdAt)})`,
-    }));
-
-    return {
-      logs: processed,
-      pagination: {
-        currentPage: page,
-        perPage,
-        total,
-        totalPages: Math.ceil(total / perPage),
-      },
-    };
-  } catch (error: any) {
-    throw new Error(error.message || 'Failed to load activity logs');
+export const useActivityLogs = routeLoader$(async ({ cookie, redirect: redirectFn }) => {
+  const config = getConfig();
+  const session = await auth.getSession(cookie);
+  const allowed =
+    session &&
+    (session.user.role === 'admin' || session.user.role === 'super_admin');
+  if (!allowed) {
+    throw redirectFn(302, config.routes.admin.home);
   }
+
+  return {
+    logs: [] as unknown as ActivityLog[],
+    pagination: {
+      currentPage: 1,
+      perPage: 10,
+      total: 0,
+      totalPages: 0,
+    },
+  };
 });
 
 /**
- * Activity logs page (Admin only)
+ * Activity logs page (admin / super_admin only; list empty until backend exists)
  */
 export default component$(() => {
   const activityData = useActivityLogs();
-  const navigate = useNavigate();
-  const searchQuery = useSignal('');
   const { t } = useTranslate();
 
-  // Convert all callbacks to QRLs
-  const handleSearch = $((value: string) => {
-    searchQuery.value = value;
-    const url = new URL(window.location.href);
-    url.searchParams.set('search', value);
-    url.searchParams.set('page', '1');
-    navigate(url.pathname + url.search);
-  });
-
-  const handlePageChange = $((page: number) => {
-    const url = new URL(window.location.href);
-    url.searchParams.set('page', page.toString());
-    navigate(url.pathname + url.search);
-  });
-
-  const handlePerPageChange = $((newPerPage: number) => {
-    const url = new URL(window.location.href);
-    url.searchParams.set('perPage', newPerPage.toString());
-    url.searchParams.set('page', '1');
-    navigate(url.pathname + url.search);
-  });
-
-  // Columns definition - no render functions needed as data is pre-processed
   const columns: Column<ActivityLog>[] = [
-    {
-      key: 'userName',
-      label: 'User',
-      sortable: true,
-    },
-    {
-      key: 'action',
-      label: 'Action',
-      sortable: true,
-    },
-    {
-      key: 'resource',
-      label: 'Resource',
-      sortable: true,
-    },
-    {
-      key: 'ipAddress',
-      label: 'IP Address',
-    },
-    {
-      key: 'createdAt',
-      label: 'Date',
-      sortable: true,
-    },
+    { key: 'userName', label: 'User', sortable: true },
+    { key: 'action', label: 'Action', sortable: true },
+    { key: 'resource', label: 'Resource', sortable: true },
+    { key: 'ipAddress', label: 'IP Address' },
+    { key: 'createdAt', label: 'Date', sortable: true },
   ];
 
   return (
     <>
       {/* Component: ActivityPage */}
       <div>
-      <PageHeader
-        title={t('activity.title')}
-        description={t('activity.subtitle')}
-      />
+        <PageHeader
+          title={t('activity.title')}
+          description={t('activity.subtitle')}
+        />
 
-      <DataTable
-        columns={columns}
-        data={activityData.value.logs}
-        search={{
-          value: searchQuery.value,
-          onSearch: handleSearch,
-          placeholder: 'Search activity logs...',
-        }}
-        pagination={{
-          currentPage: activityData.value.pagination.currentPage,
-          perPage: activityData.value.pagination.perPage,
-          total: activityData.value.pagination.total,
-          onPageChange: handlePageChange,
-          onPerPageChange: handlePerPageChange,
-        }}
-        emptyMessage="No activity logs found"
-      />
-    </div>
+        <p class="mb-4 text-sm text-gray-600 dark:text-gray-400">
+          Activity history will appear here when an audit API is connected.
+        </p>
+
+        <DataTable
+          columns={columns}
+          data={activityData.value.logs}
+          search={{
+            value: '',
+            onSearch: $(() => {}),
+            placeholder: 'Search activity logs...',
+          }}
+          pagination={{
+            currentPage: activityData.value.pagination.currentPage,
+            perPage: activityData.value.pagination.perPage,
+            total: activityData.value.pagination.total,
+            onPageChange: $(() => {}),
+            onPerPageChange: $(() => {}),
+          }}
+          emptyMessage="No activity logs yet"
+        />
+      </div>
     </>
   );
 });
