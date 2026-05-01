@@ -239,20 +239,31 @@ export default component$(() => {
       return;
     }
 
+    const normalizedEditLocale = normalizeEditingLocale(
+      editingLocaleDraft.value,
+      langConfig.value.site_languages,
+      langConfig.value.default_locale,
+      contentLocaleDraft.value.trim() !== '' ? contentLocaleDraft.value.trim() : null,
+    );
+    const effectivePrimarySubmit = primaryLocaleForContent(
+      langConfig.value.site_languages,
+      langConfig.value.default_locale,
+      contentLocaleDraft.value.trim() !== '' ? contentLocaleDraft.value.trim() : null,
+    );
+    console.log('[service-save] FormData snapshot', {
+      id: String(s.id),
+      editingLocaleDraft: editingLocaleDraft.value,
+      normalizedEditingLocale: normalizedEditLocale,
+      effectivePrimary: effectivePrimarySubmit,
+      contentLocaleDraft: contentLocaleDraft.value.trim(),
+      translationsJsonLen: translationsJson.value.length,
+    });
+
     const val = await submitWithFormData(updateAction, {
       id: String(s.id),
-      editing_locale: normalizeEditingLocale(
-        editingLocaleDraft.value,
-        langConfig.value.site_languages,
-        langConfig.value.default_locale,
-        contentLocaleDraft.value.trim() !== '' ? contentLocaleDraft.value.trim() : null,
-      ),
+      editing_locale: normalizedEditLocale,
       form_site_default_locale: langConfig.value.default_locale,
-      effective_primary_locale: primaryLocaleForContent(
-        langConfig.value.site_languages,
-        langConfig.value.default_locale,
-        contentLocaleDraft.value.trim() !== '' ? contentLocaleDraft.value.trim() : null,
-      ),
+      effective_primary_locale: effectivePrimarySubmit,
       canonical_name: canonicalName.value,
       canonical_short_description: canonicalShortDescription.value,
       canonical_description: canonicalDescription.value,

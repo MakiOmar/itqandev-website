@@ -18,38 +18,6 @@ function linesToList(raw: string | undefined | null): string[] {
     .filter((s) => s.length > 0);
 }
 
-/** Awaited so the process does not exit before append (fire-and-forget loses logs on short-lived workers). */
-async function appendSessionDebugLog(ndjsonLine: string): Promise<void> {
-  try {
-    const fs = await import('node:fs');
-    const path = await import('node:path');
-    const { fileURLToPath } = await import('node:url');
-    const here = path.dirname(fileURLToPath(import.meta.url));
-    const fromSourceFile = path.join(here, '..', '..', '..', '..', 'debug-08cfc0.log');
-    const candidates = [
-      fromSourceFile,
-      path.join(process.cwd(), 'debug-08cfc0.log'),
-      path.join(process.cwd(), '..', 'debug-08cfc0.log'),
-      path.join(process.cwd(), '..', '..', 'debug-08cfc0.log'),
-      path.join(process.cwd(), 'backend', 'database', 'debug-08cfc0.log'),
-      path.join(process.cwd(), '..', 'backend', 'database', 'debug-08cfc0.log'),
-    ];
-    for (const p of candidates) {
-      try {
-        fs.appendFileSync(p, ndjsonLine);
-        return;
-      } catch {
-        /* try next candidate */
-      }
-    }
-  } catch {
-    /* non-Node or missing module */
-  }
-  if (typeof console !== 'undefined' && typeof console.error === 'function') {
-    console.error('[debug-08cfc0] file append failed; payload:', ndjsonLine.trim());
-  }
-}
-
 function formatServiceApiError(err: unknown): string {
   const e = err as { message?: string; status?: number; errors?: Record<string, string[] | string> };
   const base = String(e?.message ?? 'Request failed');
@@ -311,67 +279,37 @@ export const useUpdateService = routeAction$(
         translations: translationsOut,
       });
 
-      // #region agent log
-      {
-        const writePrimary = shouldWritePrimaryColumns(editingLocale, effectivePrimary);
-        const tLocales = Array.isArray(translationsOut)
-          ? translationsOut.map((t) => String((t as Record<string, unknown>)?.locale ?? ''))
-          : [];
-        const ndjson =
-          JSON.stringify({
-            sessionId: '08cfc0',
-            hypothesisId: 'H1-H2',
-            location: 'service-actions.ts:useUpdateService',
-            message: 'payload before PUT',
-            data: {
-              editingLocale,
-              effectivePrimary,
-              writePrimary,
-              contentLocale,
-              translationsCount: Array.isArray(translationsOut) ? translationsOut.length : -1,
-              translationLocales: tLocales,
-              hasBodyTranslations: Object.prototype.hasOwnProperty.call(apiBody, 'translations'),
-            },
-            timestamp: Date.now(),
-          }) + '\n';
-        fetch('http://127.0.0.1:7469/ingest/ed85bb2c-c192-44f6-8c60-9fe04360649a', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'X-Debug-Session-Id': '08cfc0' },
-          body: ndjson.trim(),
-        }).catch(() => {});
-        await appendSessionDebugLog(ndjson);
-      }
-      // #endregion
+      const writePrimaryDbg = shouldWritePrimaryColumns(editingLocale, effectivePrimary);
+      const translationLocalesDbg = Array.isArray(translationsOut)
+        ? translationsOut.map((t) => String((t as Record<string, unknown>)?.locale ?? ''))
+        : [];
+      console.log('[service-update] PUT payload', {
+        serviceId: String((data as any).id),
+        editingLocale,
+        effectivePrimary,
+        writePrimary: writePrimaryDbg,
+        contentLocale,
+        translationsRowCount: Array.isArray(translationsOut) ? translationsOut.length : -1,
+        translationLocales: translationLocalesDbg,
+        jsonBodyHasTranslationsKey: Object.prototype.hasOwnProperty.call(apiBody, 'translations'),
+        namePreview: String(name).slice(0, 80),
+      });
 
       const response = await apiClient.put<AdminService>(
         API_ENDPOINTS.SERVICES.UPDATE(String((data as any).id)),
         apiBody,
       );
       const updated = (response as any)?.data ?? response;
+      console.log('[service-update] PUT ok', {
+        serviceId: String((data as any).id),
+        returnedNamePreview: String((updated as any)?.name ?? '').slice(0, 80),
+      });
       return { success: true, service: updated as AdminService };
     } catch (err: any) {
-      // #region agent log
-      {
-        const ndjson =
-          JSON.stringify({
-            sessionId: '08cfc0',
-            hypothesisId: 'H4',
-            location: 'service-actions.ts:useUpdateService:catch',
-            message: 'update failed',
-            data: {
-              status: err?.status ?? err?.response?.status ?? null,
-              msg: String(err?.message ?? '').slice(0, 240),
-            },
-            timestamp: Date.now(),
-          }) + '\n';
-        fetch('http://127.0.0.1:7469/ingest/ed85bb2c-c192-44f6-8c60-9fe04360649a', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'X-Debug-Session-Id': '08cfc0' },
-          body: ndjson.trim(),
-        }).catch(() => {});
-        await appendSessionDebugLog(ndjson);
-      }
-      // #endregion
+      console.error('[service-update] PUT failed', {
+        status: err?.status ?? err?.response?.status ?? null,
+        message: String(err?.message ?? '').slice(0, 300),
+      });
       return fail(err?.status === 422 ? 422 : 500, { message: formatServiceApiError(err) || 'Failed to update service' });
     }
   },
