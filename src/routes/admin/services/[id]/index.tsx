@@ -116,8 +116,8 @@ export default component$(() => {
         fd.append(k, String(v));
       }
     }
-    await action.submit(fd);
-    return (action as any).value;
+    const submitted = await action.submit(fd);
+    return submitted.value;
   });
 
   useTask$(({ track }) => {
@@ -287,7 +287,7 @@ export default component$(() => {
       return;
     }
 
-    console.log('[service-save] action result (DEV echoes routeAction)', (val as { _debug?: unknown })?._debug ?? val);
+    console.log('[service-save] action result', (val as { serviceUpdateDebug?: unknown })?.serviceUpdateDebug ?? val);
 
     await success(saveTranslations.successTitle, { text: saveTranslations.updatedText });
     // Refetch routeLoader$ + signals from DB — avoids stale merged state after PUT (matches admin/blog featured-image pattern).

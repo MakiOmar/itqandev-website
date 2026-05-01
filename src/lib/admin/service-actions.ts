@@ -327,7 +327,10 @@ export const useUpdateService = routeAction$(
       };
 
       const base = { success: true as const, service: updated as AdminService };
-      return import.meta.env.DEV ? { ...base, _debug: devDebug } : base;
+      const dbg =
+        typeof import.meta !== 'undefined' &&
+        Boolean((import.meta as ImportMeta).env?.DEV || (import.meta as ImportMeta).env?.MODE === 'development');
+      return dbg ? { ...base, serviceUpdateDebug: devDebug } : base;
     } catch (err: any) {
       console.error('[service-update] PUT failed', {
         status: err?.status ?? err?.response?.status ?? null,
