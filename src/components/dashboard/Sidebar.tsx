@@ -4,6 +4,7 @@ import { useSpeakLocale } from 'qwik-speak';
 import { ROUTES } from '../../lib/constants/routes';
 import { useAdminAuth } from '../../routes/admin/layout';
 import { ProjectSettingsContext } from '../../stores/project-settings-store';
+import { isFeatureModuleEnabled, type FeatureModuleKey } from '../../lib/api/project-settings';
 import { useTranslate } from '../../lib/i18n/useTranslate';
 import {
   DashboardIcon,
@@ -32,10 +33,14 @@ interface NavItem {
   children?: Array<{
     label: string;
     href: string;
+    /** Hide child link when module off (backend config/features.php). */
+    featureModule?: FeatureModuleKey;
   }>;
   /** Spatie permission name from GET /api/me */
   permission?: string;
   roles?: string[];
+  /** Backend module toggle from GET /api/settings features */
+  featureModule?: FeatureModuleKey;
 }
 
 interface SidebarProps {
@@ -92,6 +97,7 @@ export const Sidebar = component$<SidebarProps>((props) => {
   
   // Project name from Laravel (logo is shown only in the dashboard header)
   const projectName = projectSettings.settings?.name || 'Dashboard';
+  const featureFlags = projectSettings.settings?.features;
 
   const navItems: NavItem[] = [
     {
@@ -105,6 +111,7 @@ export const Sidebar = component$<SidebarProps>((props) => {
       icon: ProjectsIcon,
       activeOnChildPaths: true,
       permission: 'manage projects',
+      featureModule: 'projects',
     },
     {
       label: t('sidebar.categories'),
@@ -112,12 +119,14 @@ export const Sidebar = component$<SidebarProps>((props) => {
       icon: CategoriesIcon,
       activeOnChildPaths: true,
       permission: 'manage categories',
+      featureModule: 'categories',
     },
     {
       label: t('sidebar.skills'),
       href: ROUTES.ADMIN.SKILLS,
       icon: SkillsIcon,
       permission: 'manage skills',
+      featureModule: 'skills',
     },
     {
       label: t('sidebar.services'),
@@ -125,6 +134,7 @@ export const Sidebar = component$<SidebarProps>((props) => {
       icon: ServicesIcon,
       activeOnChildPaths: true,
       permission: 'manage services',
+      featureModule: 'services',
     },
     {
       label: t('sidebar.testimonials'),
@@ -132,6 +142,7 @@ export const Sidebar = component$<SidebarProps>((props) => {
       icon: TestimonialsIcon,
       activeOnChildPaths: true,
       permission: 'manage testimonials',
+      featureModule: 'testimonials',
     },
     {
       label: t('sidebar.blog'),
@@ -139,12 +150,14 @@ export const Sidebar = component$<SidebarProps>((props) => {
       icon: BlogIcon,
       activeOnChildPaths: true,
       permission: 'manage blog',
+      featureModule: 'blog',
     },
     {
       label: t('sidebar.media'),
       href: ROUTES.ADMIN.MEDIA,
       icon: MediaIcon,
       permission: 'manage media',
+      featureModule: 'media',
     },
     {
       label: t('sidebar.profile'),
@@ -156,6 +169,7 @@ export const Sidebar = component$<SidebarProps>((props) => {
       href: ROUTES.ADMIN.USERS,
       icon: UsersIcon,
       permission: 'manage users',
+      featureModule: 'users',
     },
     {
       label: t('sidebar.settings'),
@@ -163,7 +177,7 @@ export const Sidebar = component$<SidebarProps>((props) => {
       children: [
         { label: t('settings.general'), href: ROUTES.ADMIN.SETTINGS_GENERAL },
         { label: t('settings.socialMedia'), href: ROUTES.ADMIN.SETTINGS_SOCIAL },
-        { label: t('media.title'), href: ROUTES.ADMIN.SETTINGS_MEDIA },
+        { label: t('media.title'), href: ROUTES.ADMIN.SETTINGS_MEDIA, featureModule: 'media' },
         { label: t('settings.branding'), href: ROUTES.ADMIN.SETTINGS_BRANDING },
       ],
       roles: ['admin', 'super_admin'],
@@ -187,15 +201,29 @@ export const Sidebar = component$<SidebarProps>((props) => {
     },
   ];
 
-  const filteredNavItems = navItems.filter((item) => {
-    if (item.permission && !permissionSet.has(item.permission)) {
-      return false;
-    }
-    if (item.roles && !item.roles.includes(userRole)) {
-      return false;
-    }
-    return true;
-  });
+  const filteredNavItems = navItems
+    .map((item) => {
+      if (!item.children?.length) {
+        return item;
+      }
+      const children = item.children.filter(
+        (ch) =>
+          !ch.featureModule || isFeatureModuleEnabled(featureFlags, ch.featureModule),
+      );
+      return { ...item, children };
+    })
+    .filter((item) => {
+      if (item.featureModule && !isFeatureModuleEnabled(featureFlags, item.featureModule)) {
+        return false;
+      }
+      if (item.permission && !permissionSet.has(item.permission)) {
+        return false;
+      }
+      if (item.roles && !item.roles.includes(userRole)) {
+        return false;
+      }
+      return true;
+    });
 
   const isActive = (href: string) => {
     const current = location.url.pathname.replace(/\/+$/, '') || '/';

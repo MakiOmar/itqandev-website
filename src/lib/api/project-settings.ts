@@ -2,6 +2,41 @@ import type { ApiResponse } from './types';
 import { API_ENDPOINTS } from './endpoints';
 import { getApiClient } from './client';
 
+/** Backend config/features.php module keys (GET /api/settings `features`). */
+export type FeatureModuleKey =
+  | 'projects'
+  | 'categories'
+  | 'skills'
+  | 'services'
+  | 'testimonials'
+  | 'blog'
+  | 'media'
+  | 'users'
+  | 'seo';
+
+/** Defaults when API is unavailable; mirrors backend canonical keys (all enabled). */
+export const DEFAULT_FEATURE_MODULES: Record<FeatureModuleKey, boolean> = {
+  projects: true,
+  categories: true,
+  skills: true,
+  services: true,
+  testimonials: true,
+  blog: true,
+  media: true,
+  users: true,
+  seo: true,
+};
+
+export function isFeatureModuleEnabled(
+  features: Record<string, boolean> | undefined,
+  key: FeatureModuleKey,
+): boolean {
+  if (!features || !(key in features)) {
+    return true;
+  }
+  return features[key] !== false;
+}
+
 /**
  * Project settings interface
  * These are project-specific settings that come from Laravel
@@ -21,10 +56,8 @@ export interface ProjectSettings {
   supportEmail?: string;
   supportPhone?: string;
   
-  // Feature flags (project-specific)
-  features?: {
-    [key: string]: boolean;
-  };
+  /** Module toggles from Laravel config/features.php (not persisted). */
+  features?: Partial<Record<FeatureModuleKey, boolean>> & Record<string, boolean>;
 
   /** Max upload file size in bytes (from server config). Used for client-side validation before submit. */
   max_file_size?: number;
@@ -40,6 +73,7 @@ export interface ProjectSettings {
 export const defaultProjectSettings: ProjectSettings = {
   name: 'Dashboard',
   description: '',
+  features: { ...DEFAULT_FEATURE_MODULES },
 };
 
 function normalizeProjectSettings(raw: Record<string, any>): ProjectSettings {
@@ -54,8 +88,20 @@ function normalizeProjectSettings(raw: Record<string, any>): ProjectSettings {
           : uploadMaxSize
         : undefined;
 
+  const mergedFeatures: Record<FeatureModuleKey, boolean> = { ...DEFAULT_FEATURE_MODULES };
+  const rawFeatures = raw?.features;
+  if (rawFeatures && typeof rawFeatures === 'object') {
+    for (const key of Object.keys(DEFAULT_FEATURE_MODULES) as FeatureModuleKey[]) {
+      const v = rawFeatures[key];
+      if (typeof v === 'boolean') {
+        mergedFeatures[key] = v;
+      }
+    }
+  }
+
   return {
     ...raw,
+    features: mergedFeatures,
     name: raw?.name || raw?.site_name || defaultProjectSettings.name,
     logo: raw?.logo || raw?.site_logo || undefined,
     logoDark:
