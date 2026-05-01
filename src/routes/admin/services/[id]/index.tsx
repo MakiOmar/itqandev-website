@@ -121,6 +121,9 @@ export default component$(() => {
   });
 
   useTask$(({ track }) => {
+    // Must track lang config too; otherwise translations_json stays stale if site languages resolve after the service loader (Arabic rows missing from payload).
+    track(() => langConfig.value.site_languages);
+    track(() => langConfig.value.default_locale);
     const s = track(() => serviceLoader.value) as AdminService | undefined;
     if (!s?.id) {
       return;
