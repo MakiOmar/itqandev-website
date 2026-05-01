@@ -30,9 +30,10 @@ const loadTranslation$ = $(async (lang: string, asset: string) => {
     return null;
   }
   
-  // Return the asset namespace if it exists
+  // Merge leaf payload so Speak's translation[lang] matches keys like "common.loading"
+  // (getValue walks from the merged root; wrapping as { app: {...} } would require "app.common.loading").
   if (asset && langData[asset]) {
-    return { [asset]: langData[asset] };
+    return langData[asset];
   }
   
   // If no asset specified, return all translations for the language
