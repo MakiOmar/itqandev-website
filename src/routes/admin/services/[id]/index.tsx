@@ -117,29 +117,51 @@ export default component$(() => {
       }
     }
     const submitted = await action.submit(fd);
-    const storeVal = (action as any).value as unknown;
+    // Runtime evidence: submit() can resolve with { status: 200, value: undefined } before ActionStore.value updates.
+    await Promise.resolve();
+    await Promise.resolve();
+    await Promise.resolve();
+    let storeVal = (action as any).value as unknown;
+    if (storeVal === undefined || storeVal === null) {
+      await new Promise<void>((r) => requestAnimationFrame(() => r()));
+      storeVal = (action as any).value as unknown;
+    }
+
     const fromEnvelope =
       submitted != null && typeof submitted === 'object' && 'value' in submitted
         ? (submitted as { value: unknown }).value
         : undefined;
-    const looksLikePayload =
-      submitted != null &&
-      typeof submitted === 'object' &&
-      ('success' in (submitted as object) ||
-        'service' in (submitted as object) ||
-        'failed' in (submitted as object) ||
-        'serviceUpdateDebugJson' in (submitted as object));
-    const out = looksLikePayload
-      ? submitted
-      : fromEnvelope !== undefined && fromEnvelope !== null
+
+    const looksLikePayload = (x: unknown) =>
+      x != null &&
+      typeof x === 'object' &&
+      ('success' in (x as object) ||
+        'service' in (x as object) ||
+        'failed' in (x as object) ||
+        'serviceUpdateDebugJson' in (x as object));
+
+    let out: unknown =
+      fromEnvelope !== undefined && fromEnvelope !== null
         ? fromEnvelope
         : storeVal !== undefined && storeVal !== null
           ? storeVal
-          : submitted;
+          : looksLikePayload(submitted)
+            ? submitted
+            : undefined;
+
+    if (
+      out != null &&
+      typeof out === 'object' &&
+      'status' in out &&
+      'value' in out &&
+      (out as { value: unknown }).value === undefined
+    ) {
+      out = storeVal !== undefined && storeVal !== null ? storeVal : undefined;
+    }
+
     console.log('[service-save] submit envelope', {
-      looksLikePayload,
-      hasEnvelopeValue: fromEnvelope !== undefined,
-      hasStoreValue: storeVal !== undefined,
+      hasEnvelopeValue: fromEnvelope !== undefined && fromEnvelope !== null,
+      hasStoreValue: storeVal !== undefined && storeVal !== null,
       outKeys: out != null && typeof out === 'object' ? Object.keys(out as object) : typeof out,
     });
     return out;
