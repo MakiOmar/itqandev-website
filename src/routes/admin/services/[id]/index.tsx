@@ -287,6 +287,8 @@ export default component$(() => {
       return;
     }
 
+    console.log('[service-save] action result (DEV echoes routeAction)', (val as { _debug?: unknown })?._debug ?? val);
+
     await success(saveTranslations.successTitle, { text: saveTranslations.updatedText });
     // Refetch routeLoader$ + signals from DB — avoids stale merged state after PUT (matches admin/blog featured-image pattern).
     window.location.reload();

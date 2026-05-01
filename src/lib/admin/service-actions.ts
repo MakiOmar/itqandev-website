@@ -300,11 +300,34 @@ export const useUpdateService = routeAction$(
         apiBody,
       );
       const updated = (response as any)?.data ?? response;
+      const rt = (updated as any)?.translations;
+      const returnedTranslationLocales = Array.isArray(rt)
+        ? rt.map((t: { locale?: string }) => String(t?.locale ?? '').toLowerCase())
+        : [];
       console.log('[service-update] PUT ok', {
         serviceId: String((data as any).id),
         returnedNamePreview: String((updated as any)?.name ?? '').slice(0, 80),
+        returnedTranslationLocales,
       });
-      return { success: true, service: updated as AdminService };
+
+      const devDebug = {
+        editingLocale,
+        effectivePrimary,
+        writePrimary: writePrimaryDbg,
+        contentLocale,
+        jsonBodyHasTranslationsKey: Object.prototype.hasOwnProperty.call(apiBody, 'translations'),
+        translationsRowCount: Array.isArray(translationsOut) ? translationsOut.length : -1,
+        translationLocales: translationLocalesDbg,
+        firstTranslationNameLen:
+          Array.isArray(translationsOut) && translationsOut[0] && typeof translationsOut[0] === 'object'
+            ? String((translationsOut[0] as Record<string, unknown>).name ?? '').length
+            : 0,
+        returnedNamePreview: String((updated as any)?.name ?? '').slice(0, 80),
+        returnedTranslationLocales,
+      };
+
+      const base = { success: true as const, service: updated as AdminService };
+      return import.meta.env.DEV ? { ...base, _debug: devDebug } : base;
     } catch (err: any) {
       console.error('[service-update] PUT failed', {
         status: err?.status ?? err?.response?.status ?? null,
