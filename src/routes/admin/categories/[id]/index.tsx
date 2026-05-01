@@ -10,6 +10,7 @@ import { ROUTES } from '../../../../lib/constants/routes';
 import { useSiteLanguageConfig } from '../../layout';
 import {
   ContentEditingLanguageSelect,
+  ContentPrimaryLanguageSelect,
   EditingLocaleFieldsShell,
 } from '../../../../components/admin/PerFieldContentTranslations';
 import { secondaryLocalesForContent } from '../../../../lib/content-translations';
@@ -56,9 +57,7 @@ export const useCategory = routeLoader$(async ({ params, cookie, request, fail }
   }
 });
 
-/**
- * Edit category — no primary language selector (create-only)
- */
+/** Edit category — mirrors create form (primary language + translations). */
 export default component$(() => {
   const { lang } = useTranslate();
   const { success, error: showError } = useSwal();
@@ -101,6 +100,8 @@ export default component$(() => {
   });
 
   useTask$(({ track }) => {
+    track(() => langConfig.value.site_languages);
+    track(() => langConfig.value.default_locale);
     const c = track(() => categoryLoader.value) as Category | undefined;
     if (!c?.id) return;
     liveCategory.value = c;
@@ -258,6 +259,32 @@ export default component$(() => {
 
       <div class="mx-auto max-w-2xl rounded-lg border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-800 dark:bg-gray-800">
         <div class="space-y-4">
+          <ContentPrimaryLanguageSelect
+            siteLanguages={langConfig.value.site_languages}
+            defaultLocale={langConfig.value.default_locale}
+            value={contentLocaleDraft.value}
+            label={translateApp(lang, 'contentTranslations.contentPrimaryLanguage')}
+            hint={translateApp(lang, 'contentTranslations.contentPrimaryHint')}
+            useSiteDefaultLabel={translateApp(lang, 'contentTranslations.useSiteDefault')}
+            onChange$={$((code: string) => {
+              contentLocaleDraft.value = code;
+              const c = (liveCategory.value ?? categoryLoader.value) as Category | undefined;
+              const secondaries = secondaryLocalesForContent(
+                langConfig.value.site_languages,
+                langConfig.value.default_locale,
+                contentLocaleDraft.value.trim() !== '' ? contentLocaleDraft.value.trim() : null,
+              );
+              translationsJson.value = JSON.stringify(
+                secondaries.map((l) => {
+                  const row = (c as any)?.translations?.find(
+                    (x: any) => String(x?.locale).toLowerCase() === l.code.toLowerCase(),
+                  );
+                  return { locale: l.code, name: row?.name ?? '', description: row?.description ?? '' };
+                }),
+              );
+            })}
+          />
+
           <ContentEditingLanguageSelect
             siteLanguages={langConfig.value.site_languages}
             value={editingLocaleDraft.value}

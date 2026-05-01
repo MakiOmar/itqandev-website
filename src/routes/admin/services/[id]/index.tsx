@@ -56,7 +56,7 @@ export const useService = routeLoader$(async ({ params, cookie, request, fail })
       return fail(404, { message: 'Service not found' });
     }
     const cookieHeader = extractCookieHeader(cookie, request);
-    const apiClient = getApiClient(cookieHeader, false);
+    const apiClient = getApiClient(cookieHeader);
     const response = await apiClient.get(API_ENDPOINTS.SERVICES.GET(id));
     const raw = (response as any)?.data ?? response;
     if (!raw || raw.id == null) {

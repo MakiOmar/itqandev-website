@@ -73,7 +73,8 @@ function servicePayloadForApi(data: {
  */
 export const serviceSchema = z.object({
   name: z.string().min(1, 'Name is required'),
-  slug: z.string().min(1, 'Slug is required'),
+  /** Same as categories: optional here — Laravel validates required slug on create / sometimes on update. */
+  slug: z.string().optional(),
   short_description: z.string().optional(),
   description: z.string().optional(),
   process_lines: z.string().optional(),
