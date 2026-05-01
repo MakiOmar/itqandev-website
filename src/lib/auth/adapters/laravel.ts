@@ -43,11 +43,36 @@ export class LaravelAuthAdapter implements AuthAdapter {
         name: laravelUser.name,
         avatar: laravelUser.avatar,
         // Map roles array to single role (take first role or highest priority)
-        role: laravelUser.roles?.[0]?.name || 'user',
+        role: (laravelUser as any).role || laravelUser.roles?.[0]?.name || 'user',
+        permissions: Array.isArray((laravelUser as any).permissions)
+          ? (laravelUser as any).permissions
+          : undefined,
         status: laravelUser.status || 'active',
         createdAt: laravelUser.created_at,
         updatedAt: laravelUser.updated_at,
       };
+      // #region agent log
+      if (typeof fetch !== 'undefined') {
+        fetch('http://127.0.0.1:7469/ingest/ed85bb2c-c192-44f6-8c60-9fe04360649a', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'X-Debug-Session-Id': '71ed8d' },
+          body: JSON.stringify({
+            sessionId: '71ed8d',
+            hypothesisId: 'D',
+            location: 'laravel.ts:login:afterMap',
+            message: 'login mapped user (no permissions field)',
+            data: {
+              loginPayloadHasPermissions: Array.isArray((laravelUser as any).permissions),
+              loginPermissionsLen: Array.isArray((laravelUser as any).permissions)
+                ? (laravelUser as any).permissions.length
+                : -1,
+              role: user.role,
+            },
+            timestamp: Date.now(),
+          }),
+        }).catch(() => {});
+      }
+      // #endregion
 
       // Laravel Sanctum uses cookie-based auth, but we also need to store token
       // in localStorage for client-side JavaScript requests
@@ -150,6 +175,29 @@ export class LaravelAuthAdapter implements AuthAdapter {
           createdAt: laravelUser.created_at,
           updatedAt: laravelUser.updated_at,
         };
+        // #region agent log
+        if (typeof fetch !== 'undefined') {
+          fetch('http://127.0.0.1:7469/ingest/ed85bb2c-c192-44f6-8c60-9fe04360649a', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-Debug-Session-Id': '71ed8d' },
+            body: JSON.stringify({
+              sessionId: '71ed8d',
+              hypothesisId: 'D',
+              location: 'laravel.ts:getSession:afterMe',
+              message: 'mapped user from /me',
+              data: {
+                rawPermissionsLen: Array.isArray((laravelUser as any).permissions)
+                  ? (laravelUser as any).permissions.length
+                  : -1,
+                mappedPermissionsLen: user.permissions?.length ?? -1,
+                role: user.role,
+                hasManageBlog: user.permissions?.includes('manage blog') ?? false,
+              },
+              timestamp: Date.now(),
+            }),
+          }).catch(() => {});
+        }
+        // #endregion
 
         const session: AuthSession = {
           user,
