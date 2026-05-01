@@ -18,6 +18,59 @@ function linesToList(raw: string | undefined | null): string[] {
     .filter((s) => s.length > 0);
 }
 
+/** Awaited so the process does not exit before append (fire-and-forget loses logs on short-lived workers). */
+async function appendSessionDebugLog(ndjsonLine: string): Promise<void> {
+  try {
+    const fs = await import('node:fs');
+    const path = await import('node:path');
+    const { fileURLToPath } = await import('node:url');
+    const here = path.dirname(fileURLToPath(import.meta.url));
+    const fromSourceFile = path.join(here, '..', '..', '..', '..', 'debug-08cfc0.log');
+    const candidates = [
+      fromSourceFile,
+      path.join(process.cwd(), 'debug-08cfc0.log'),
+      path.join(process.cwd(), '..', 'debug-08cfc0.log'),
+      path.join(process.cwd(), '..', '..', 'debug-08cfc0.log'),
+      path.join(process.cwd(), 'backend', 'database', 'debug-08cfc0.log'),
+      path.join(process.cwd(), '..', 'backend', 'database', 'debug-08cfc0.log'),
+    ];
+    for (const p of candidates) {
+      try {
+        fs.appendFileSync(p, ndjsonLine);
+        return;
+      } catch {
+        /* try next candidate */
+      }
+    }
+  } catch {
+    /* non-Node or missing module */
+  }
+  if (typeof console !== 'undefined' && typeof console.error === 'function') {
+    console.error('[debug-08cfc0] file append failed; payload:', ndjsonLine.trim());
+  }
+}
+
+function formatServiceApiError(err: unknown): string {
+  const e = err as { message?: string; status?: number; errors?: Record<string, string[] | string> };
+  const base = String(e?.message ?? 'Request failed');
+  if (e?.status === 422 && e.errors && typeof e.errors === 'object') {
+    const lines: string[] = [];
+    for (const [k, v] of Object.entries(e.errors)) {
+      if (Array.isArray(v)) {
+        for (const m of v) {
+          lines.push(`${k}: ${m}`);
+        }
+      } else if (v != null) {
+        lines.push(`${k}: ${String(v)}`);
+      }
+    }
+    if (lines.length > 0) {
+      return `${base} — ${lines.slice(0, 8).join('; ')}`.slice(0, 800);
+    }
+  }
+  return base.slice(0, 600);
+}
+
 function servicePayloadForApi(data: {
   name?: string;
   slug?: string;
@@ -177,7 +230,7 @@ export const useCreateService = routeAction$(
 
       return { success: true, service: created as AdminService };
     } catch (err: any) {
-      return fail(500, { message: err?.message || 'Failed to create service' });
+      return fail(err?.status === 422 ? 422 : 500, { message: formatServiceApiError(err) || 'Failed to create service' });
     }
   },
   zod$(serviceSchema),
@@ -259,6 +312,38 @@ export const useUpdateService = routeAction$(
         translations: translationsOut,
       });
 
+      // #region agent log
+      {
+        const writePrimary = shouldWritePrimaryColumns(editingLocale, effectivePrimary);
+        const tLocales = Array.isArray(translationsOut)
+          ? translationsOut.map((t) => String((t as Record<string, unknown>)?.locale ?? ''))
+          : [];
+        const ndjson =
+          JSON.stringify({
+            sessionId: '08cfc0',
+            hypothesisId: 'H1-H2',
+            location: 'service-actions.ts:useUpdateService',
+            message: 'payload before PUT',
+            data: {
+              editingLocale,
+              effectivePrimary,
+              writePrimary,
+              contentLocale,
+              translationsCount: Array.isArray(translationsOut) ? translationsOut.length : -1,
+              translationLocales: tLocales,
+              hasBodyTranslations: Object.prototype.hasOwnProperty.call(apiBody, 'translations'),
+            },
+            timestamp: Date.now(),
+          }) + '\n';
+        fetch('http://127.0.0.1:7469/ingest/ed85bb2c-c192-44f6-8c60-9fe04360649a', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'X-Debug-Session-Id': '08cfc0' },
+          body: ndjson.trim(),
+        }).catch(() => {});
+        await appendSessionDebugLog(ndjson);
+      }
+      // #endregion
+
       const response = await apiClient.put<AdminService>(
         API_ENDPOINTS.SERVICES.UPDATE(String((data as any).id)),
         apiBody,
@@ -266,7 +351,29 @@ export const useUpdateService = routeAction$(
       const updated = (response as any)?.data ?? response;
       return { success: true, service: updated as AdminService };
     } catch (err: any) {
-      return fail(500, { message: err?.message || 'Failed to update service' });
+      // #region agent log
+      {
+        const ndjson =
+          JSON.stringify({
+            sessionId: '08cfc0',
+            hypothesisId: 'H4',
+            location: 'service-actions.ts:useUpdateService:catch',
+            message: 'update failed',
+            data: {
+              status: err?.status ?? err?.response?.status ?? null,
+              msg: String(err?.message ?? '').slice(0, 240),
+            },
+            timestamp: Date.now(),
+          }) + '\n';
+        fetch('http://127.0.0.1:7469/ingest/ed85bb2c-c192-44f6-8c60-9fe04360649a', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'X-Debug-Session-Id': '08cfc0' },
+          body: ndjson.trim(),
+        }).catch(() => {});
+        await appendSessionDebugLog(ndjson);
+      }
+      // #endregion
+      return fail(err?.status === 422 ? 422 : 500, { message: formatServiceApiError(err) || 'Failed to update service' });
     }
   },
   zod$(serviceSchema.extend({ id: z.string() })),
