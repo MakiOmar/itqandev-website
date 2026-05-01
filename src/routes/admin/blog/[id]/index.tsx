@@ -4,7 +4,7 @@ import { routeLoader$, routeAction$, Form, zod$, z, useLocation } from '@builder
 import { Link } from '@builder.io/qwik-city';
 import { PageHeader } from '../../../../components/common/PageHeader';
 import { LoadingSpinner } from '../../../../components/common/LoadingSpinner';
-import { useTranslate } from '../../../../lib/i18n/useTranslate';
+import { useTranslate, translateApp } from '../../../../lib/i18n/useTranslate';
 import { useSwal } from '../../../../lib/hooks/useSwal';
 import {
   ContentEditingLanguageSelect,
@@ -149,7 +149,7 @@ export const useUploadFeaturedImage = routeAction$(async (data, { fail }) => {
  * Blog post edit page
  */
 export default component$(() => {
-  const { t } = useTranslate();
+  const { lang } = useTranslate();
   const { success, error: showError } = useSwal();
   const location = useLocation();
   const post = useBlogPost();
@@ -158,7 +158,7 @@ export default component$(() => {
   const uploadImageAction = useUploadFeaturedImage();
 
   // Pre-compute translation strings to avoid serialization issues
-  const successTitle = t('common.success');
+  const successTitle = translateApp(lang, 'common.success');
 
   const featuredImage = useSignal<any>((post.value as any)?.featured_image || null);
   const featuredImageFile = useSignal<File | null>(null);
@@ -275,15 +275,15 @@ export default component$(() => {
   return (
     <>
       <PageHeader
-        title={`${t('blog.edit')} #${location.params.id}`}
-        description={t('blog.subtitle')}
+        title={`${translateApp(lang, 'blog.edit')} #${location.params.id}`}
+        description={translateApp(lang, 'blog.subtitle')}
       >
         <div class="flex gap-2">
           <Link
             href={ROUTES.ADMIN.BLOG}
             class="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm transition hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 dark:hover:bg-gray-700"
           >
-            {t('common.back')}
+            {translateApp(lang, 'common.back')}
           </Link>
         </div>
       </PageHeader>
@@ -319,8 +319,8 @@ export default component$(() => {
               kind="blog"
               locales={translationSecondaries}
               initialJson={blogTranslationsJson}
-              rtlBadge={t('contentTranslations.rtlBadge')}
-              fallbackHintShort={t('contentTranslations.fallbackPlaceholderHint')}
+              rtlBadge={translateApp(lang, 'contentTranslations.rtlBadge')}
+              fallbackHintShort={translateApp(lang, 'contentTranslations.fallbackPlaceholderHint')}
             >
               <ContentEditingLanguageSelect
                 siteLanguages={langConfig.value.site_languages}
@@ -330,10 +330,10 @@ export default component$(() => {
                   langConfig.value.default_locale,
                   contentLocaleDraft.value.trim() !== '' ? contentLocaleDraft.value.trim() : null,
                 )}
-                label={t('contentTranslations.sectionTitle')}
-                hintPrimary={t('contentTranslations.defaultHint')}
-                hintSecondary={t('contentTranslations.fallbackPlaceholderHint')}
-                secondarySavePrefix={t('contentTranslations.addTranslations')}
+                label={translateApp(lang, 'contentTranslations.sectionTitle')}
+                hintPrimary={translateApp(lang, 'contentTranslations.defaultHint')}
+                hintSecondary={translateApp(lang, 'contentTranslations.fallbackPlaceholderHint')}
+                secondarySavePrefix={translateApp(lang, 'contentTranslations.addTranslations')}
                 onChange$={$((code: string) => {
                   editingLocaleDraft.value = code;
                 })}
@@ -346,14 +346,14 @@ export default component$(() => {
               >
               {!translationSecondaries.length ? (
                 <p class="md:col-span-2 text-sm text-gray-600 dark:text-gray-400">
-                  {t('contentTranslations.noSecondaryLanguages')}
+                  {translateApp(lang, 'contentTranslations.noSecondaryLanguages')}
                 </p>
               ) : null}
 
               <FieldTranslationGlobe
                 fieldKey="title"
                 gridSpan="one"
-                globeAriaLabel={t('contentTranslations.globeTitle')}
+                globeAriaLabel={translateApp(lang, 'contentTranslations.globeTitle')}
                 fallbackText={post.value.title ?? ''}
               >
                 <div>
@@ -361,7 +361,7 @@ export default component$(() => {
                     for="title"
                     class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-200"
                   >
-                    {t('blog.name')} *
+                    {translateApp(lang, 'blog.name')} *
                   </label>
                   <input
                     id="title"
@@ -387,7 +387,7 @@ export default component$(() => {
                   for="slug"
                   class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-200"
                 >
-                  {t('blog.slug')}
+                  {translateApp(lang, 'blog.slug')}
                 </label>
                 <input
                   id="slug"
@@ -403,7 +403,7 @@ export default component$(() => {
                   for="status"
                   class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-200"
                 >
-                  {t('blog.status')}
+                  {translateApp(lang, 'blog.status')}
                 </label>
                 <select
                   id="status"
@@ -411,9 +411,9 @@ export default component$(() => {
                   value={post.value.status}
                   class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-primary-500 focus:outline-none focus:ring focus:ring-primary-200 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:focus:ring-primary-700/40"
                 >
-                  <option value="draft">{t('blog.statusDraft')}</option>
-                  <option value="published">{t('blog.statusPublished')}</option>
-                  <option value="archived">{t('blog.statusArchived')}</option>
+                  <option value="draft">{translateApp(lang, 'blog.statusDraft')}</option>
+                  <option value="published">{translateApp(lang, 'blog.statusPublished')}</option>
+                  <option value="archived">{translateApp(lang, 'blog.statusArchived')}</option>
                 </select>
               </div>
 
@@ -430,14 +430,14 @@ export default component$(() => {
                   for="featured"
                   class="text-sm font-medium text-gray-700 dark:text-gray-200"
                 >
-                  {t('blog.featured')}
+                  {translateApp(lang, 'blog.featured')}
                 </label>
               </div>
 
               <FieldTranslationGlobe
                 fieldKey="excerpt"
                 gridSpan="full"
-                globeAriaLabel={t('contentTranslations.globeExcerpt')}
+                globeAriaLabel={translateApp(lang, 'contentTranslations.globeExcerpt')}
                 fallbackText={post.value.excerpt || ''}
               >
                 <div>
@@ -445,7 +445,7 @@ export default component$(() => {
                     for="excerpt"
                     class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-200"
                   >
-                    {t('blog.excerpt')}
+                    {translateApp(lang, 'blog.excerpt')}
                   </label>
                   <textarea
                     id="excerpt"
@@ -463,7 +463,7 @@ export default component$(() => {
               <FieldTranslationGlobe
                 fieldKey="content"
                 gridSpan="full"
-                globeAriaLabel={t('contentTranslations.globeContent')}
+                globeAriaLabel={translateApp(lang, 'contentTranslations.globeContent')}
                 fallbackText={post.value.content || ''}
                 secondaryTextareaRows={10}
               >
@@ -472,7 +472,7 @@ export default component$(() => {
                     for="content"
                     class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-200"
                   >
-                    {t('blog.content')}
+                    {translateApp(lang, 'blog.content')}
                   </label>
                   <textarea
                     id="content"
@@ -498,7 +498,7 @@ export default component$(() => {
                 for="published_at"
                 class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-200"
               >
-                {t('blog.publishedAt')}
+                {translateApp(lang, 'blog.publishedAt')}
               </label>
               <input
                 id="published_at"
@@ -514,7 +514,7 @@ export default component$(() => {
           {/* Featured Image Section - Matching Blog List Page */}
           <div class="mt-6 border-t border-gray-200 pt-6 dark:border-gray-700">
             <h3 class="mb-3 text-lg font-semibold text-gray-900 dark:text-gray-100">
-              {t('blog.featuredImage') || 'Featured Image'}
+              {translateApp(lang, 'blog.featuredImage') || 'Featured Image'}
             </h3>
             {featuredImage.value ? (
               <div class="mb-3 flex items-center gap-3">
@@ -603,7 +603,7 @@ export default component$(() => {
                   disabled={uploadImageAction.isRunning}
                   class="rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-primary-700 disabled:opacity-60"
                 >
-                  {uploadImageAction.isRunning ? t('common.loading') : t('blog.uploadImage') || 'Upload Image'}
+                  {uploadImageAction.isRunning ? translateApp(lang, 'common.loading') : translateApp(lang, 'blog.uploadImage') || 'Upload Image'}
                 </button>
               )}
               <button
@@ -629,14 +629,14 @@ export default component$(() => {
               href={ROUTES.ADMIN.BLOG}
               class="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm transition hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 dark:hover:bg-gray-700"
             >
-              {t('common.cancel')}
+              {translateApp(lang, 'common.cancel')}
             </Link>
             <button
               type="submit"
               disabled={updateAction.isRunning}
               class="rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-primary-700 disabled:opacity-60"
             >
-              {updateAction.isRunning ? t('common.loading') : t('common.save')}
+              {updateAction.isRunning ? translateApp(lang, 'common.loading') : translateApp(lang, 'common.save')}
             </button>
           </div>
         </Form>
@@ -647,13 +647,13 @@ export default component$(() => {
             <div class="container mx-auto max-w-screen-2xl p-6">
               <div class="mb-4 flex items-center justify-between">
                 <h2 class="text-xl font-semibold text-gray-900 dark:text-gray-100">
-                  {t('media.selectMedia') || 'Select Featured Image'}
+                  {translateApp(lang, 'media.selectMedia') || 'Select Featured Image'}
                 </h2>
                 <button
                   onClick$={() => (showFeaturedImageSelector.value = false)}
                   class="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 dark:hover:bg-gray-700"
                 >
-                  {t('common.cancel')}
+                  {translateApp(lang, 'common.cancel')}
                 </button>
               </div>
               <iframe

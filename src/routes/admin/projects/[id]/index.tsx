@@ -6,7 +6,7 @@ import { PageHeader } from '../../../../components/common/PageHeader';
 import { TagInput } from '../../../../components/common/TagInput';
 import { LoadingSpinner } from '../../../../components/common/LoadingSpinner';
 import { MediaSelector } from '../../../../components/common/MediaSelector';
-import { useTranslate } from '../../../../lib/i18n/useTranslate';
+import { useTranslate, translateApp } from '../../../../lib/i18n/useTranslate';
 import { useSwal } from '../../../../lib/hooks/useSwal';
 import { getApiClient, extractCookieHeader } from '../../../../lib/api/client';
 import { API_ENDPOINTS } from '../../../../lib/api/endpoints';
@@ -317,67 +317,65 @@ export const useUpdateProject = routeAction$(
  * Project edit page
  */
 export default component$(() => {
-  const { t } = useTranslate();
+  const { lang } = useTranslate();
   
-  // Pre-compute ALL translation strings at component level to avoid serialization issues
-  // The `t` function cannot be serialized, so we compute all strings immediately
-  // and use the strings instead of calling `t()` in JSX
+  // Pre-compute strings used heavily in this screen (readable JSX + avoids repeating translateApp calls).
   const translations = {
-    back: t('common.back'),
-    loading: t('common.loading'),
-    save: t('common.save'),
-    cancel: t('common.cancel'),
-    close: t('common.close'),
-    done: t('common.done'),
-    success: t('common.success'),
-    edit: t('projects.edit'),
-    subtitle: t('projects.subtitle'),
-    name: t('projects.name'),
-    slug: t('projects.slug'),
-    status: t('projects.status'),
-    statusDraft: t('projects.statusDraft'),
-    statusPublished: t('projects.statusPublished'),
-    statusArchived: t('projects.statusArchived'),
-    featured: t('projects.featured'),
-    categories: t('projects.categories'),
-    searchCategories: t('projects.searchCategories'),
-    noCategoriesFound: t('projects.noCategoriesFound'),
-    skills: t('projects.skills'),
-    searchSkills: t('projects.searchSkills'),
-    noSkillsFound: t('projects.noSkillsFound'),
-    summary: t('projects.summary'),
-    description: t('projects.description'),
-    linkUrl: t('projects.linkUrl'),
-    repoUrl: t('projects.repoUrl'),
-    demoUrl: t('projects.demoUrl'),
-    publishedAt: t('projects.publishedAt'),
-    updated: t('projects.updated'),
-    preview: t('projects.preview'),
-    selectMedia: t('media.selectMedia'),
-    ctAdd: t('contentTranslations.addTranslations'),
-    ctCollapseTranslations: t('contentTranslations.collapseTranslations'),
-    ctSection: t('contentTranslations.sectionTitle'),
-    ctHint: t('contentTranslations.defaultHint'),
-    ctNoLangs: t('contentTranslations.noSecondaryLanguages'),
-    ctRtl: t('contentTranslations.rtlBadge'),
-    ctPrimaryLang: t('contentTranslations.contentPrimaryLanguage'),
-    ctPrimaryHint: t('contentTranslations.contentPrimaryHint'),
-    ctUseSiteDefault: t('contentTranslations.useSiteDefault'),
-    ctFallbackHint: t('contentTranslations.fallbackPlaceholderHint'),
-    ctGlobeTitle: t('contentTranslations.globeTitle'),
-    ctGlobeSummary: t('contentTranslations.globeSummary'),
-    ctGlobeDescription: t('contentTranslations.globeDescription'),
+    back: translateApp(lang, 'common.back'),
+    loading: translateApp(lang, 'common.loading'),
+    save: translateApp(lang, 'common.save'),
+    cancel: translateApp(lang, 'common.cancel'),
+    close: translateApp(lang, 'common.close'),
+    done: translateApp(lang, 'common.done'),
+    success: translateApp(lang, 'common.success'),
+    edit: translateApp(lang, 'projects.edit'),
+    subtitle: translateApp(lang, 'projects.subtitle'),
+    name: translateApp(lang, 'projects.name'),
+    slug: translateApp(lang, 'projects.slug'),
+    status: translateApp(lang, 'projects.status'),
+    statusDraft: translateApp(lang, 'projects.statusDraft'),
+    statusPublished: translateApp(lang, 'projects.statusPublished'),
+    statusArchived: translateApp(lang, 'projects.statusArchived'),
+    featured: translateApp(lang, 'projects.featured'),
+    categories: translateApp(lang, 'projects.categories'),
+    searchCategories: translateApp(lang, 'projects.searchCategories'),
+    noCategoriesFound: translateApp(lang, 'projects.noCategoriesFound'),
+    skills: translateApp(lang, 'projects.skills'),
+    searchSkills: translateApp(lang, 'projects.searchSkills'),
+    noSkillsFound: translateApp(lang, 'projects.noSkillsFound'),
+    summary: translateApp(lang, 'projects.summary'),
+    description: translateApp(lang, 'projects.description'),
+    linkUrl: translateApp(lang, 'projects.linkUrl'),
+    repoUrl: translateApp(lang, 'projects.repoUrl'),
+    demoUrl: translateApp(lang, 'projects.demoUrl'),
+    publishedAt: translateApp(lang, 'projects.publishedAt'),
+    updated: translateApp(lang, 'projects.updated'),
+    preview: translateApp(lang, 'projects.preview'),
+    selectMedia: translateApp(lang, 'media.selectMedia'),
+    ctAdd: translateApp(lang, 'contentTranslations.addTranslations'),
+    ctCollapseTranslations: translateApp(lang, 'contentTranslations.collapseTranslations'),
+    ctSection: translateApp(lang, 'contentTranslations.sectionTitle'),
+    ctHint: translateApp(lang, 'contentTranslations.defaultHint'),
+    ctNoLangs: translateApp(lang, 'contentTranslations.noSecondaryLanguages'),
+    ctRtl: translateApp(lang, 'contentTranslations.rtlBadge'),
+    ctPrimaryLang: translateApp(lang, 'contentTranslations.contentPrimaryLanguage'),
+    ctPrimaryHint: translateApp(lang, 'contentTranslations.contentPrimaryHint'),
+    ctUseSiteDefault: translateApp(lang, 'contentTranslations.useSiteDefault'),
+    ctFallbackHint: translateApp(lang, 'contentTranslations.fallbackPlaceholderHint'),
+    ctGlobeTitle: translateApp(lang, 'contentTranslations.globeTitle'),
+    ctGlobeSummary: translateApp(lang, 'contentTranslations.globeSummary'),
+    ctGlobeDescription: translateApp(lang, 'contentTranslations.globeDescription'),
   };
   
   const { success } = useSwal({
-    confirmTitle: t('common.confirm'),
-    yes: t('common.yes'),
-    no: t('common.no'),
-    alertTitle: t('common.alert'),
-    ok: t('common.ok'),
+    confirmTitle: translateApp(lang, 'common.confirm'),
+    yes: translateApp(lang, 'common.yes'),
+    no: translateApp(lang, 'common.no'),
+    alertTitle: translateApp(lang, 'common.alert'),
+    ok: translateApp(lang, 'common.ok'),
     successTitle: translations.success,
-    errorTitle: t('common.error'),
-    warningTitle: t('common.warning'),
+    errorTitle: translateApp(lang, 'common.error'),
+    warningTitle: translateApp(lang, 'common.warning'),
   });
   
   const location = useLocation();

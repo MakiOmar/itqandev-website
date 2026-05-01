@@ -2,7 +2,7 @@ import { component$ } from '@builder.io/qwik';
 import type { DocumentHead } from '@builder.io/qwik-city';
 import { routeLoader$, routeAction$, Form, zod$, z } from '@builder.io/qwik-city';
 import { PageHeader } from '../../../components/common/PageHeader';
-import { useTranslate } from '../../../lib/i18n/useTranslate';
+import { useTranslate, translateApp } from '../../../lib/i18n/useTranslate';
 import { mockAuth } from '../../../lib/auth/mock-auth';
 
 /**
@@ -110,22 +110,22 @@ export default component$(() => {
   const user = useUserProfile();
   const updateProfileAction = useUpdateProfile();
   const changePasswordAction = useChangePassword();
-  const { t } = useTranslate();
+  const { lang } = useTranslate();
 
   return (
     <>
       {/* Component: ProfilePage */}
       <div>
       <PageHeader
-        title={t('profile.title')}
-        description={t('profile.description')}
+        title={translateApp(lang, 'profile.title')}
+        description={translateApp(lang, 'profile.description')}
       />
 
       <div class="space-y-6">
         {/* Profile Information */}
         <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
           <h2 class="mb-4 text-xl font-semibold text-gray-900 dark:text-white">
-            {t('profile.profileInformation')}
+            {translateApp(lang, 'profile.profileInformation')}
           </h2>
           <Form action={updateProfileAction} class="space-y-4">
             <div>
@@ -133,7 +133,7 @@ export default component$(() => {
                 for="name"
                 class="block text-sm font-medium text-gray-700 dark:text-gray-300"
               >
-                {t('profile.fullName')}
+                {translateApp(lang, 'profile.fullName')}
               </label>
               <input
                 id="name"
@@ -153,7 +153,7 @@ export default component$(() => {
                 for="email"
                 class="block text-sm font-medium text-gray-700 dark:text-gray-300"
               >
-                {t('profile.emailAddress')}
+                {translateApp(lang, 'profile.emailAddress')}
               </label>
               <input
                 id="email"
@@ -170,7 +170,7 @@ export default component$(() => {
             </div>
             <div>
               <label class="block text-sm font-medium text-foreground">
-                {t('profile.role')}
+                {translateApp(lang, 'profile.role')}
               </label>
               <p class="mt-1 text-sm text-gray-600 dark:text-gray-400 capitalize">
                 {user.value?.role 
@@ -185,7 +185,7 @@ export default component$(() => {
             )}
             {updateProfileAction.value?.success && (
               <div class="rounded-md bg-green-50 p-3 text-sm text-green-800">
-                {t('profile.profileUpdatedSuccess')}
+                {translateApp(lang, 'profile.profileUpdatedSuccess')}
               </div>
             )}
             <button
@@ -193,7 +193,7 @@ export default component$(() => {
               disabled={updateProfileAction.isRunning}
               class="rounded-lg bg-primary-600 text-white px-4 py-2 text-sm font-medium hover:bg-primary-700 transition-colors disabled:opacity-50"
             >
-              {updateProfileAction.isRunning ? t('settings.saving') : t('profile.saveChanges')}
+              {updateProfileAction.isRunning ? translateApp(lang, 'settings.saving') : translateApp(lang, 'profile.saveChanges')}
             </button>
           </Form>
         </div>
@@ -201,7 +201,7 @@ export default component$(() => {
         {/* Change Password */}
         <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
           <h2 class="mb-4 text-xl font-semibold text-gray-900 dark:text-white">
-            {t('profile.changePassword')}
+            {translateApp(lang, 'profile.changePassword')}
           </h2>
           <Form action={changePasswordAction} class="space-y-4">
             <div>
@@ -209,7 +209,7 @@ export default component$(() => {
                 for="current-password"
                 class="block text-sm font-medium text-gray-700 dark:text-gray-300"
               >
-                {t('profile.currentPassword')}
+                {translateApp(lang, 'profile.currentPassword')}
               </label>
               <input
                 id="current-password"
@@ -228,7 +228,7 @@ export default component$(() => {
                 for="new-password"
                 class="block text-sm font-medium text-gray-700 dark:text-gray-300"
               >
-                {t('profile.newPassword')}
+                {translateApp(lang, 'profile.newPassword')}
               </label>
               <input
                 id="new-password"
@@ -247,7 +247,7 @@ export default component$(() => {
                 for="confirm-password"
                 class="block text-sm font-medium text-gray-700 dark:text-gray-300"
               >
-                {t('profile.confirmNewPassword')}
+                {translateApp(lang, 'profile.confirmNewPassword')}
               </label>
               <input
                 id="confirm-password"
@@ -268,7 +268,7 @@ export default component$(() => {
             )}
             {changePasswordAction.value?.success && (
               <div class="rounded-md bg-green-50 p-3 text-sm text-green-800">
-                {t('profile.passwordChangedSuccess')}
+                {translateApp(lang, 'profile.passwordChangedSuccess')}
               </div>
             )}
             <button
@@ -276,7 +276,7 @@ export default component$(() => {
               disabled={changePasswordAction.isRunning}
               class="rounded-lg bg-primary-600 text-white px-4 py-2 text-sm font-medium hover:bg-primary-700 transition-colors disabled:opacity-50"
             >
-              {changePasswordAction.isRunning ? t('profile.changing') : t('profile.changePasswordButton')}
+              {changePasswordAction.isRunning ? translateApp(lang, 'profile.changing') : translateApp(lang, 'profile.changePasswordButton')}
             </button>
           </Form>
         </div>

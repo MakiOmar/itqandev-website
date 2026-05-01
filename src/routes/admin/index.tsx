@@ -2,7 +2,7 @@ import { component$ } from '@builder.io/qwik';
 import type { DocumentHead } from '@builder.io/qwik-city';
 import { routeLoader$ } from '@builder.io/qwik-city';
 import { Link } from '@builder.io/qwik-city';
-import { useTranslate } from '../../lib/i18n/useTranslate';
+import { useTranslate, translateApp } from '../../lib/i18n/useTranslate';
 import { getApiClient, extractCookieHeader } from '../../lib/api/client';
 import { API_ENDPOINTS } from '../../lib/api/endpoints';
 import { ROUTES } from '../../lib/constants/routes';
@@ -126,7 +126,7 @@ export const useUserSession = routeLoader$(async ({ cookie }) => {
  * Admin dashboard home page
  */
 export default component$(() => {
-  const { t } = useTranslate();
+  const { lang } = useTranslate();
   const metrics = useDashboardMetrics();
   const userSession = useUserSession();
   const userName = userSession.value?.user?.name || 'User';
@@ -137,9 +137,9 @@ export default component$(() => {
       <div>
         <div class="mb-6">
           <h1 class="text-2xl font-bold text-gray-900 dark:text-gray-100">
-            {t('dashboard.welcome', { name: userName })}
+            {translateApp(lang, 'dashboard.welcome', { name: userName })}
           </h1>
-          <p class="text-gray-600 dark:text-gray-400">{t('dashboard.overview')}</p>
+          <p class="text-gray-600 dark:text-gray-400">{translateApp(lang, 'dashboard.overview')}</p>
           <p class="text-sm text-gray-500 dark:text-gray-400">
             Your role: <span class="font-semibold capitalize">{userSession.value?.user?.role || 'Unknown'}</span>
           </p>
@@ -151,11 +151,11 @@ export default component$(() => {
           <div class="rounded-lg border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-800 dark:bg-gray-800">
             <div class="flex items-center justify-between">
               <div>
-                <p class="text-sm font-medium text-gray-600 dark:text-gray-400">{t('dashboard.projects')}</p>
+                <p class="text-sm font-medium text-gray-600 dark:text-gray-400">{translateApp(lang, 'dashboard.projects')}</p>
                 <p class="mt-2 text-3xl font-bold text-gray-900 dark:text-gray-100">{metrics.value.projects.total}</p>
                 <div class="mt-2 flex gap-4 text-xs text-gray-500 dark:text-gray-400">
-                  <span>{t('dashboard.published')}: {metrics.value.projects.published}</span>
-                  <span>{t('dashboard.draft')}: {metrics.value.projects.draft}</span>
+                  <span>{translateApp(lang, 'dashboard.published')}: {metrics.value.projects.published}</span>
+                  <span>{translateApp(lang, 'dashboard.draft')}: {metrics.value.projects.draft}</span>
                 </div>
               </div>
               <div class="rounded-full bg-primary-100 p-3 dark:bg-primary-900/20">
@@ -168,7 +168,7 @@ export default component$(() => {
           <div class="rounded-lg border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-800 dark:bg-gray-800">
             <div class="flex items-center justify-between">
               <div>
-                <p class="text-sm font-medium text-gray-600 dark:text-gray-400">{t('dashboard.categories')}</p>
+                <p class="text-sm font-medium text-gray-600 dark:text-gray-400">{translateApp(lang, 'dashboard.categories')}</p>
                 <p class="mt-2 text-3xl font-bold text-gray-900 dark:text-gray-100">{metrics.value.categories.total}</p>
               </div>
               <div class="rounded-full bg-blue-100 p-3 dark:bg-blue-900/20">
@@ -181,7 +181,7 @@ export default component$(() => {
           <div class="rounded-lg border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-800 dark:bg-gray-800">
             <div class="flex items-center justify-between">
               <div>
-                <p class="text-sm font-medium text-gray-600 dark:text-gray-400">{t('dashboard.skills')}</p>
+                <p class="text-sm font-medium text-gray-600 dark:text-gray-400">{translateApp(lang, 'dashboard.skills')}</p>
                 <p class="mt-2 text-3xl font-bold text-gray-900 dark:text-gray-100">{metrics.value.skills.total}</p>
               </div>
               <div class="rounded-full bg-green-100 p-3 dark:bg-green-900/20">
@@ -194,7 +194,7 @@ export default component$(() => {
           <div class="rounded-lg border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-800 dark:bg-gray-800">
             <div class="flex items-center justify-between">
               <div>
-                <p class="text-sm font-medium text-gray-600 dark:text-gray-400">{t('dashboard.testimonials')}</p>
+                <p class="text-sm font-medium text-gray-600 dark:text-gray-400">{translateApp(lang, 'dashboard.testimonials')}</p>
                 <p class="mt-2 text-3xl font-bold text-gray-900 dark:text-gray-100">{metrics.value.testimonials.total}</p>
               </div>
               <div class="rounded-full bg-yellow-100 p-3 dark:bg-yellow-900/20">
@@ -206,7 +206,7 @@ export default component$(() => {
 
         {/* Quick Actions Section - Matching Vue Dashboard */}
         <div class="mt-8 rounded-lg border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-800 dark:bg-gray-800">
-          <h2 class="mb-4 text-lg font-semibold text-gray-900 dark:text-gray-100">{t('dashboard.quickActions')}</h2>
+          <h2 class="mb-4 text-lg font-semibold text-gray-900 dark:text-gray-100">{translateApp(lang, 'dashboard.quickActions')}</h2>
           <div class="grid gap-4 md:grid-cols-3">
             <Link
               href={ROUTES.ADMIN.PROJECTS_NEW}
@@ -214,8 +214,8 @@ export default component$(() => {
             >
               <span class="text-2xl">➕</span>
               <div>
-                <p class="font-medium text-gray-900 dark:text-gray-100">{t('dashboard.addNewProject')}</p>
-                <p class="text-sm text-gray-500 dark:text-gray-400">{t('dashboard.addNewProjectDesc')}</p>
+                <p class="font-medium text-gray-900 dark:text-gray-100">{translateApp(lang, 'dashboard.addNewProject')}</p>
+                <p class="text-sm text-gray-500 dark:text-gray-400">{translateApp(lang, 'dashboard.addNewProjectDesc')}</p>
               </div>
             </Link>
             <Link
@@ -224,8 +224,8 @@ export default component$(() => {
             >
               <span class="text-2xl">📁</span>
               <div>
-                <p class="font-medium text-gray-900 dark:text-gray-100">{t('dashboard.manageCategories')}</p>
-                <p class="text-sm text-gray-500 dark:text-gray-400">{t('dashboard.manageCategoriesDesc')}</p>
+                <p class="font-medium text-gray-900 dark:text-gray-100">{translateApp(lang, 'dashboard.manageCategories')}</p>
+                <p class="text-sm text-gray-500 dark:text-gray-400">{translateApp(lang, 'dashboard.manageCategoriesDesc')}</p>
               </div>
             </Link>
             <Link
@@ -234,8 +234,8 @@ export default component$(() => {
             >
               <span class="text-2xl">⚡</span>
               <div>
-                <p class="font-medium text-gray-900 dark:text-gray-100">{t('dashboard.manageSkills')}</p>
-                <p class="text-sm text-gray-500 dark:text-gray-400">{t('dashboard.manageSkillsDesc')}</p>
+                <p class="font-medium text-gray-900 dark:text-gray-100">{translateApp(lang, 'dashboard.manageSkills')}</p>
+                <p class="text-sm text-gray-500 dark:text-gray-400">{translateApp(lang, 'dashboard.manageSkillsDesc')}</p>
               </div>
             </Link>
           </div>

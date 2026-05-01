@@ -1,7 +1,7 @@
 import { component$, useSignal, useVisibleTask$, $ } from '@builder.io/qwik';
 import type { DocumentHead } from '@builder.io/qwik-city';
 import { Form } from '@builder.io/qwik-city';
-import { useTranslate } from '../../../../lib/i18n/useTranslate';
+import { useTranslate, translateApp } from '../../../../lib/i18n/useTranslate';
 import { useSwal } from '../../../../lib/hooks/useSwal';
 import { MediaSelector } from '../../../../components/common/MediaSelector';
 import {
@@ -12,7 +12,7 @@ import {
 import type { Media } from '../../../../types';
 
 export default component$(() => {
-  const { t } = useTranslate();
+  const { lang } = useTranslate();
   const { success: showSuccess, error: showError } = useSwal();
   const settings = useSettings();
   const updateAction = useUpdateSettings();
@@ -25,12 +25,12 @@ export default component$(() => {
   const showLogoLightSelector = useSignal(false);
   const showFaviconSelector = useSignal(false);
 
-  const successTitle = String(t('common.success'));
-  const savedText = String(t('settings.saveSuccess'));
-  const errorTitle = String(t('common.error'));
-  const errorText = String(t('settings.saveFailed'));
-  const darkModeLogoLabel = `${String(t('settings.logo'))} (${String(t('common.darkMode'))})`;
-  const lightModeLogoLabel = `${String(t('settings.logo'))} (${String(t('common.lightMode'))})`;
+  const successTitle = String(translateApp(lang, 'common.success'));
+  const savedText = String(translateApp(lang, 'settings.saveSuccess'));
+  const errorTitle = String(translateApp(lang, 'common.error'));
+  const errorText = String(translateApp(lang, 'settings.saveFailed'));
+  const darkModeLogoLabel = `${String(translateApp(lang, 'settings.logo'))} (${String(translateApp(lang, 'common.darkMode'))})`;
+  const lightModeLogoLabel = `${String(translateApp(lang, 'settings.logo'))} (${String(translateApp(lang, 'common.lightMode'))})`;
 
   // eslint-disable-next-line qwik/no-use-visible-task
   useVisibleTask$(({ track }) => {
@@ -67,7 +67,7 @@ export default component$(() => {
   return (
     <>
       <div class="rounded-lg border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-800 dark:bg-gray-800">
-        <h2 class="mb-4 text-lg font-semibold">{t('settings.branding')}</h2>
+        <h2 class="mb-4 text-lg font-semibold">{translateApp(lang, 'settings.branding')}</h2>
         <Form action={updateAction} class="space-y-4">
           <input type="hidden" name="logo" value={logoUrl.value} />
           <input type="hidden" name="logoDark" value={logoDarkUrl.value} />
@@ -77,7 +77,7 @@ export default component$(() => {
           <div class="grid gap-4 md:grid-cols-2">
             <div class="rounded-lg border border-gray-200 p-4 dark:border-gray-700">
               <label class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-200">
-                {t('settings.logo')}
+                {translateApp(lang, 'settings.logo')}
               </label>
               <div class="mb-3 flex h-24 items-center justify-center rounded-lg border border-dashed border-gray-300 bg-gray-50 dark:border-gray-600 dark:bg-gray-900">
                 {logoUrl.value ? (
@@ -108,7 +108,7 @@ export default component$(() => {
                   }}
                   class="rounded-lg bg-primary-600 px-3 py-2 text-xs font-medium text-white hover:bg-primary-700"
                 >
-                  {t('media.selectMedia')}
+                  {translateApp(lang, 'media.selectMedia')}
                 </button>
                 <button
                   type="button"
@@ -117,7 +117,7 @@ export default component$(() => {
                   }}
                   class="rounded-lg border border-gray-300 px-3 py-2 text-xs font-medium text-gray-700 hover:bg-gray-100 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
                 >
-                  {t('common.delete')}
+                  {translateApp(lang, 'common.delete')}
                 </button>
               </div>
             </div>
@@ -155,7 +155,7 @@ export default component$(() => {
                   }}
                   class="rounded-lg bg-primary-600 px-3 py-2 text-xs font-medium text-white hover:bg-primary-700"
                 >
-                  {t('media.selectMedia')}
+                  {translateApp(lang, 'media.selectMedia')}
                 </button>
                 <button
                   type="button"
@@ -164,7 +164,7 @@ export default component$(() => {
                   }}
                   class="rounded-lg border border-gray-300 px-3 py-2 text-xs font-medium text-gray-700 hover:bg-gray-100 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
                 >
-                  {t('common.delete')}
+                  {translateApp(lang, 'common.delete')}
                 </button>
               </div>
             </div>
@@ -202,7 +202,7 @@ export default component$(() => {
                   }}
                   class="rounded-lg bg-primary-600 px-3 py-2 text-xs font-medium text-white hover:bg-primary-700"
                 >
-                  {t('media.selectMedia')}
+                  {translateApp(lang, 'media.selectMedia')}
                 </button>
                 <button
                   type="button"
@@ -211,14 +211,14 @@ export default component$(() => {
                   }}
                   class="rounded-lg border border-gray-300 px-3 py-2 text-xs font-medium text-gray-700 hover:bg-gray-100 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
                 >
-                  {t('common.delete')}
+                  {translateApp(lang, 'common.delete')}
                 </button>
               </div>
             </div>
 
             <div class="rounded-lg border border-gray-200 p-4 dark:border-gray-700">
               <label class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-200">
-                {t('settings.favicon')}
+                {translateApp(lang, 'settings.favicon')}
               </label>
               <div class="mb-3 flex h-24 items-center justify-center rounded-lg border border-dashed border-gray-300 bg-gray-50 dark:border-gray-600 dark:bg-gray-900">
                 {faviconUrl.value ? (
@@ -249,7 +249,7 @@ export default component$(() => {
                   }}
                   class="rounded-lg bg-primary-600 px-3 py-2 text-xs font-medium text-white hover:bg-primary-700"
                 >
-                  {t('media.selectMedia')}
+                  {translateApp(lang, 'media.selectMedia')}
                 </button>
                 <button
                   type="button"
@@ -258,7 +258,7 @@ export default component$(() => {
                   }}
                   class="rounded-lg border border-gray-300 px-3 py-2 text-xs font-medium text-gray-700 hover:bg-gray-100 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
                 >
-                  {t('common.delete')}
+                  {translateApp(lang, 'common.delete')}
                 </button>
               </div>
             </div>
@@ -267,7 +267,7 @@ export default component$(() => {
           <div class="grid gap-4 md:grid-cols-2">
             <div>
               <label class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-200">
-                {t('settings.primaryColor')}
+                {translateApp(lang, 'settings.primaryColor')}
               </label>
               <input
                 name="primaryColor"
@@ -279,7 +279,7 @@ export default component$(() => {
             </div>
             <div>
               <label class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-200">
-                {t('settings.secondaryColor')}
+                {translateApp(lang, 'settings.secondaryColor')}
               </label>
               <input
                 name="secondaryColor"
@@ -299,7 +299,7 @@ export default component$(() => {
 
       {showLogoSelector.value && (
         <MediaSelector
-          title={t('settings.logo')}
+          title={translateApp(lang, 'settings.logo')}
           accept="image/*"
           onSelect={$((media: Media) => {
             logoUrl.value = media.url || media.thumbnailUrl || '';
@@ -341,7 +341,7 @@ export default component$(() => {
 
       {showFaviconSelector.value && (
         <MediaSelector
-          title={t('settings.favicon')}
+          title={translateApp(lang, 'settings.favicon')}
           accept="image/*"
           onSelect={$((media: Media) => {
             faviconUrl.value = media.url || media.thumbnailUrl || '';

@@ -2,7 +2,7 @@ import { component$, $ } from '@builder.io/qwik';
 import type { DocumentHead } from '@builder.io/qwik-city';
 import { routeLoader$ } from '@builder.io/qwik-city';
 import { PageHeader } from '../../../components/common/PageHeader';
-import { useTranslate } from '../../../lib/i18n/useTranslate';
+import { useTranslate, translateApp } from '../../../lib/i18n/useTranslate';
 import { DataTable, type Column } from '../../../components/common/DataTable';
 import { auth } from '../../../lib/auth';
 import { getConfig } from '../../../lib/config';
@@ -37,7 +37,7 @@ export const useActivityLogs = routeLoader$(async ({ cookie, redirect: redirectF
  */
 export default component$(() => {
   const activityData = useActivityLogs();
-  const { t } = useTranslate();
+  const { lang } = useTranslate();
 
   const columns: Column<ActivityLog>[] = [
     { key: 'userName', label: 'User', sortable: true },
@@ -52,8 +52,8 @@ export default component$(() => {
       {/* Component: ActivityPage */}
       <div>
         <PageHeader
-          title={t('activity.title')}
-          description={t('activity.subtitle')}
+          title={translateApp(lang, 'activity.title')}
+          description={translateApp(lang, 'activity.subtitle')}
         />
 
         <p class="mb-4 text-sm text-gray-600 dark:text-gray-400">

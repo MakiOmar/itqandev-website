@@ -4,7 +4,7 @@ import { routeLoader$, routeAction$, Form, zod$, z, useNavigate } from '@builder
 import { Link } from '@builder.io/qwik-city';
 import { PageHeader } from '../../../../components/common/PageHeader';
 import { TagInput } from '../../../../components/common/TagInput';
-import { useTranslate } from '../../../../lib/i18n/useTranslate';
+import { useTranslate, translateApp } from '../../../../lib/i18n/useTranslate';
 import { useSwal } from '../../../../lib/hooks/useSwal';
 import { getApiClient, extractCookieHeader } from '../../../../lib/api/client';
 import { API_ENDPOINTS } from '../../../../lib/api/endpoints';
@@ -209,7 +209,7 @@ export const useCreateProject = routeAction$(
  * Project create page
  */
 export default component$(() => {
-  const { t } = useTranslate();
+  const { lang } = useTranslate();
   const { success, error: showError } = useSwal();
   const navigate = useNavigate();
   const categoriesAndSkills = useCategoriesAndSkills();
@@ -218,9 +218,9 @@ export default component$(() => {
 
   // Pre-compute translation strings to avoid serialization issues
   const translations = {
-    success: t('common.success'),
-    error: t('common.error'),
-    created: t('projects.created') || 'Project created successfully',
+    success: translateApp(lang, 'common.success'),
+    error: translateApp(lang, 'common.error'),
+    created: translateApp(lang, 'projects.created') || 'Project created successfully',
   };
 
   const categoryIds = useSignal<(string | number)[]>([]);
@@ -331,15 +331,15 @@ export default component$(() => {
   return (
     <>
       <PageHeader
-        title={t('projects.create')}
-        description={t('projects.subtitle')}
+        title={translateApp(lang, 'projects.create')}
+        description={translateApp(lang, 'projects.subtitle')}
       >
         <div class="flex gap-2">
           <Link
             href={ROUTES.ADMIN.PROJECTS}
             class="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm transition hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 dark:hover:bg-gray-700"
           >
-            {t('common.back')}
+            {translateApp(lang, 'common.back')}
           </Link>
         </div>
       </PageHeader>
@@ -370,17 +370,17 @@ export default component$(() => {
             kind="project"
             locales={translationSecondaries}
             initialJson={projectTranslationsJson}
-            rtlBadge={t('contentTranslations.rtlBadge')}
-            fallbackHintShort={t('contentTranslations.fallbackPlaceholderHint')}
+            rtlBadge={translateApp(lang, 'contentTranslations.rtlBadge')}
+            fallbackHintShort={translateApp(lang, 'contentTranslations.fallbackPlaceholderHint')}
           >
             <div class="grid gap-4 md:grid-cols-2">
               <ContentPrimaryLanguageSelect
                 siteLanguages={langConfig.value.site_languages}
                 defaultLocale={langConfig.value.default_locale}
                 value={contentLocaleDraft.value}
-                label={t('contentTranslations.contentPrimaryLanguage')}
-                hint={t('contentTranslations.contentPrimaryHint')}
-                useSiteDefaultLabel={t('contentTranslations.useSiteDefault')}
+                label={translateApp(lang, 'contentTranslations.contentPrimaryLanguage')}
+                hint={translateApp(lang, 'contentTranslations.contentPrimaryHint')}
+                useSiteDefaultLabel={translateApp(lang, 'contentTranslations.useSiteDefault')}
                 onChange$={$((code: string) => {
                   contentLocaleDraft.value = code;
                 })}
@@ -394,10 +394,10 @@ export default component$(() => {
                   langConfig.value.default_locale,
                   contentLocaleDraft.value.trim() !== '' ? contentLocaleDraft.value.trim() : null,
                 )}
-                label={t('contentTranslations.sectionTitle')}
-                hintPrimary={t('contentTranslations.defaultHint')}
-                hintSecondary={t('contentTranslations.fallbackPlaceholderHint')}
-                secondarySavePrefix={t('contentTranslations.addTranslations')}
+                label={translateApp(lang, 'contentTranslations.sectionTitle')}
+                hintPrimary={translateApp(lang, 'contentTranslations.defaultHint')}
+                hintSecondary={translateApp(lang, 'contentTranslations.fallbackPlaceholderHint')}
+                secondarySavePrefix={translateApp(lang, 'contentTranslations.addTranslations')}
                 onChange$={$((code: string) => {
                   editingLocaleDraft.value = code;
                 })}
@@ -410,14 +410,14 @@ export default component$(() => {
               >
               {!translationSecondaries.length ? (
                 <p class="md:col-span-2 text-sm text-gray-600 dark:text-gray-400">
-                  {t('contentTranslations.noSecondaryLanguages')}
+                  {translateApp(lang, 'contentTranslations.noSecondaryLanguages')}
                 </p>
               ) : null}
 
               <FieldTranslationGlobe
                 fieldKey="title"
                 gridSpan="one"
-                globeAriaLabel={t('contentTranslations.globeTitle')}
+                globeAriaLabel={translateApp(lang, 'contentTranslations.globeTitle')}
                 fallbackText=""
               >
                 <div>
@@ -425,7 +425,7 @@ export default component$(() => {
                     for="title"
                     class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-200"
                   >
-                    {t('projects.name')} *
+                    {translateApp(lang, 'projects.name')} *
                   </label>
                   <input
                     id="title"
@@ -447,7 +447,7 @@ export default component$(() => {
                   for="slug"
                   class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-200"
                 >
-                  {t('projects.slug')}
+                  {translateApp(lang, 'projects.slug')}
                 </label>
                 <input
                   id="slug"
@@ -462,16 +462,16 @@ export default component$(() => {
                 for="status"
                 class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-200"
               >
-                {t('projects.status')}
+                {translateApp(lang, 'projects.status')}
               </label>
               <select
                 id="status"
                 name="status"
                 class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-primary-500 focus:outline-none focus:ring focus:ring-primary-200 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:focus:ring-primary-700/40"
               >
-                <option value="draft">{t('projects.statusDraft')}</option>
-                <option value="published">{t('projects.statusPublished')}</option>
-                <option value="archived">{t('projects.statusArchived')}</option>
+                <option value="draft">{translateApp(lang, 'projects.statusDraft')}</option>
+                <option value="published">{translateApp(lang, 'projects.statusPublished')}</option>
+                <option value="archived">{translateApp(lang, 'projects.statusArchived')}</option>
               </select>
             </div>
 
@@ -487,7 +487,7 @@ export default component$(() => {
                 for="featured"
                 class="text-sm font-medium text-gray-700 dark:text-gray-200"
               >
-                {t('projects.featured')}
+                {translateApp(lang, 'projects.featured')}
               </label>
             </div>
 
@@ -495,9 +495,9 @@ export default component$(() => {
               <TagInput
                 value={categoryIds.value}
                 items={categoryItems}
-                label={t('projects.categories')}
-                placeholder={t('projects.searchCategories')}
-                noResultsText={t('projects.noCategoriesFound')}
+                label={translateApp(lang, 'projects.categories')}
+                placeholder={translateApp(lang, 'projects.searchCategories')}
+                noResultsText={translateApp(lang, 'projects.noCategoriesFound')}
                 onValueChange={$((value: (string | number)[]) => {
                   categoryIds.value = value;
                 })}
@@ -516,9 +516,9 @@ export default component$(() => {
               <TagInput
                 value={skillIds.value}
                 items={skillItems}
-                label={t('projects.skills')}
-                placeholder={t('projects.searchSkills')}
-                noResultsText={t('projects.noSkillsFound')}
+                label={translateApp(lang, 'projects.skills')}
+                placeholder={translateApp(lang, 'projects.searchSkills')}
+                noResultsText={translateApp(lang, 'projects.noSkillsFound')}
                 onValueChange={$((value: (string | number)[]) => {
                   skillIds.value = value;
                 })}
@@ -536,7 +536,7 @@ export default component$(() => {
               <FieldTranslationGlobe
                 fieldKey="summary"
                 gridSpan="full"
-                globeAriaLabel={t('contentTranslations.globeSummary')}
+                globeAriaLabel={translateApp(lang, 'contentTranslations.globeSummary')}
                 fallbackText=""
               >
                 <div>
@@ -544,7 +544,7 @@ export default component$(() => {
                     for="summary"
                     class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-200"
                   >
-                    {t('projects.summary')}
+                    {translateApp(lang, 'projects.summary')}
                   </label>
                   <textarea
                     id="summary"
@@ -558,7 +558,7 @@ export default component$(() => {
               <FieldTranslationGlobe
                 fieldKey="description"
                 gridSpan="full"
-                globeAriaLabel={t('contentTranslations.globeDescription')}
+                globeAriaLabel={translateApp(lang, 'contentTranslations.globeDescription')}
                 fallbackText=""
               >
                 <div>
@@ -566,7 +566,7 @@ export default component$(() => {
                     for="description"
                     class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-200"
                   >
-                    {t('projects.description')}
+                    {translateApp(lang, 'projects.description')}
                   </label>
                   <textarea
                     id="description"
@@ -582,7 +582,7 @@ export default component$(() => {
                 for="link_url"
                 class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-200"
               >
-                {t('projects.linkUrl')}
+                {translateApp(lang, 'projects.linkUrl')}
               </label>
               <input
                 id="link_url"
@@ -597,7 +597,7 @@ export default component$(() => {
                 for="repo_url"
                 class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-200"
               >
-                {t('projects.repoUrl')}
+                {translateApp(lang, 'projects.repoUrl')}
               </label>
               <input
                 id="repo_url"
@@ -612,7 +612,7 @@ export default component$(() => {
                 for="demo_url"
                 class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-200"
               >
-                {t('projects.demoUrl')}
+                {translateApp(lang, 'projects.demoUrl')}
               </label>
               <input
                 id="demo_url"
@@ -627,7 +627,7 @@ export default component$(() => {
                 for="published_at"
                 class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-200"
               >
-                {t('projects.publishedAt')}
+                {translateApp(lang, 'projects.publishedAt')}
               </label>
               <input
                 id="published_at"
@@ -850,7 +850,7 @@ export default component$(() => {
               href={ROUTES.ADMIN.PROJECTS}
               class="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm transition hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 dark:hover:bg-gray-700"
             >
-              {t('common.cancel')}
+              {translateApp(lang, 'common.cancel')}
             </Link>
             <button
               type="submit"
@@ -874,7 +874,7 @@ export default component$(() => {
               }}
               class="rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-primary-700 disabled:opacity-60"
             >
-              {createAction.isRunning ? t('common.loading') : t('common.save')}
+              {createAction.isRunning ? translateApp(lang, 'common.loading') : translateApp(lang, 'common.save')}
             </button>
           </div>
         </Form>
@@ -885,13 +885,13 @@ export default component$(() => {
             <div class="container mx-auto max-w-screen-2xl p-6">
               <div class="mb-4 flex items-center justify-between">
                 <h2 class="text-xl font-semibold text-gray-900 dark:text-gray-100">
-                  {t('media.selectMedia') || 'Select Hero Image'}
+                  {translateApp(lang, 'media.selectMedia') || 'Select Hero Image'}
                 </h2>
                 <button
                   onClick$={() => (showHeroSelector.value = false)}
                   class="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 dark:hover:bg-gray-700"
                 >
-                  {t('common.cancel')}
+                  {translateApp(lang, 'common.cancel')}
                 </button>
               </div>
               <iframe
@@ -907,13 +907,13 @@ export default component$(() => {
             <div class="container mx-auto max-w-screen-2xl p-6">
               <div class="mb-4 flex items-center justify-between">
                 <h2 class="text-xl font-semibold text-gray-900 dark:text-gray-100">
-                  {t('media.selectMedia') || 'Select Video'}
+                  {translateApp(lang, 'media.selectMedia') || 'Select Video'}
                 </h2>
                 <button
                   onClick$={() => (showVideoSelector.value = false)}
                   class="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 dark:hover:bg-gray-700"
                 >
-                  {t('common.cancel')}
+                  {translateApp(lang, 'common.cancel')}
                 </button>
               </div>
               <iframe
@@ -946,7 +946,7 @@ export default component$(() => {
               <div class="sticky top-0 z-10 border-b border-gray-200 bg-white px-6 py-4 dark:border-gray-700 dark:bg-gray-800">
                 <div class="flex items-center justify-between">
                   <h2 class="text-xl font-bold text-gray-900 dark:text-gray-100">
-                    {t('projects.preview') || 'Project Preview'}
+                    {translateApp(lang, 'projects.preview') || 'Project Preview'}
                   </h2>
                   <button
                     onClick$={() => {
@@ -961,7 +961,7 @@ export default component$(() => {
                     }}
                     class="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm transition hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 dark:hover:bg-gray-700"
                   >
-                    {t('common.close') || 'Close'}
+                    {translateApp(lang, 'common.close') || 'Close'}
                   </button>
                 </div>
               </div>

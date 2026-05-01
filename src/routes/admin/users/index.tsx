@@ -3,7 +3,7 @@ import type { DocumentHead } from '@builder.io/qwik-city';
 import { routeLoader$, routeAction$, Form, zod$, z, useNavigate } from '@builder.io/qwik-city';
 import { PageHeader } from '../../../components/common/PageHeader';
 import { LoadingSpinner } from '../../../components/common/LoadingSpinner';
-import { useTranslate } from '../../../lib/i18n/useTranslate';
+import { useTranslate, translateApp } from '../../../lib/i18n/useTranslate';
 import { useSwal } from '../../../lib/hooks/useSwal';
 import { getApiClient, extractCookieHeader } from '../../../lib/api/client';
 import { API_ENDPOINTS } from '../../../lib/api/endpoints';
@@ -148,7 +148,7 @@ export const useDeleteUser = routeAction$(
  * User management page (Admin only) - Matching Vue Dashboard
  */
 export default component$(() => {
-  const { t } = useTranslate();
+  const { lang } = useTranslate();
   const { confirm, error: showError, success } = useSwal();
   const usersLoader = useUsers();
   const rolesLoader = useRoles();
@@ -197,16 +197,16 @@ export default component$(() => {
 
   // Pre-compute translation strings to avoid serialization issues
   const saveTranslations = {
-    successTitle: String(t('common.success')),
-    updatedText: String(t('common.updated')),
-    createdText: String(t('common.created')),
+    successTitle: String(translateApp(lang, 'common.success')),
+    updatedText: String(translateApp(lang, 'common.updated')),
+    createdText: String(translateApp(lang, 'common.created')),
   };
   const deleteTranslations = {
-    confirmText: String(t('users.deleteConfirm')),
-    title: String(t('common.delete')),
-    successTitle: String(t('common.success')),
-    deletedText: String(t('common.deleted')),
-    failedText: String(t('users.deleteFailed')),
+    confirmText: String(translateApp(lang, 'users.deleteConfirm')),
+    title: String(translateApp(lang, 'common.delete')),
+    successTitle: String(translateApp(lang, 'common.success')),
+    deletedText: String(translateApp(lang, 'common.deleted')),
+    failedText: String(translateApp(lang, 'users.deleteFailed')),
   };
 
   const handleSave = $(async () => {
@@ -254,8 +254,8 @@ export default component$(() => {
       {/* Component: UsersPage */}
       <div>
         <PageHeader
-          title={t('users.title')}
-          description={t('users.subtitle')}
+          title={translateApp(lang, 'users.title')}
+          description={translateApp(lang, 'users.subtitle')}
         >
           <div class="flex gap-2">
             {!showForm.value ? (
@@ -263,14 +263,14 @@ export default component$(() => {
                 onClick$={() => (showForm.value = true)}
                 class="rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-primary-700"
               >
-                {t('users.addNew')}
+                {translateApp(lang, 'users.addNew')}
               </button>
             ) : (
               <button
                 onClick$={resetForm}
                 class="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm transition hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 dark:hover:bg-gray-700"
               >
-                {t('common.cancel')}
+                {translateApp(lang, 'common.cancel')}
               </button>
             )}
           </div>
@@ -280,14 +280,14 @@ export default component$(() => {
         {showForm.value && (
           <div class="mb-6 rounded-lg border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-800 dark:bg-gray-800">
             <h2 class="mb-4 text-lg font-semibold">
-              {editingUserId.value ? t('users.edit') : t('users.addNew')}
+              {editingUserId.value ? translateApp(lang, 'users.edit') : translateApp(lang, 'users.addNew')}
             </h2>
             <Form action={saveAction} class="space-y-4">
               <input type="hidden" name="id" value={formUser.value.id || ''} />
               <div class="grid gap-4 md:grid-cols-2">
                 <div>
                   <label class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-200">
-                    {t('users.name')}
+                    {translateApp(lang, 'users.name')}
                   </label>
                   <input
                     name="name"
@@ -300,7 +300,7 @@ export default component$(() => {
                 </div>
                 <div>
                   <label class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-200">
-                    {t('users.email')}
+                    {translateApp(lang, 'users.email')}
                   </label>
                   <input
                     name="email"
@@ -314,7 +314,7 @@ export default component$(() => {
               </div>
               <div>
                 <label class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-200">
-                  {t('users.password')} {editingUserId.value ? t('users.passwordHint') : ''}
+                  {translateApp(lang, 'users.password')} {editingUserId.value ? translateApp(lang, 'users.passwordHint') : ''}
                 </label>
                 <input
                   name="password"
@@ -327,7 +327,7 @@ export default component$(() => {
               </div>
               <div>
                 <label class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-200">
-                  {t('users.roles')}
+                  {translateApp(lang, 'users.roles')}
                 </label>
                 <select
                   name="role_ids[]"
@@ -356,14 +356,14 @@ export default component$(() => {
                   disabled={saveAction.isRunning}
                   class="rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-primary-700 disabled:opacity-50"
                 >
-                  {editingUserId.value ? t('common.update') : t('common.add')}
+                  {editingUserId.value ? translateApp(lang, 'common.update') : translateApp(lang, 'common.add')}
                 </button>
                 <button
                   type="button"
                   onClick$={resetForm}
                   class="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm transition hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 dark:hover:bg-gray-700"
                 >
-                  {t('common.cancel')}
+                  {translateApp(lang, 'common.cancel')}
                 </button>
               </div>
             </Form>
@@ -373,14 +373,14 @@ export default component$(() => {
         {/* Users List */}
         <div class="rounded-lg border border-gray-200 bg-white shadow-sm dark:border-gray-800 dark:bg-gray-800">
           <div class="border-b border-gray-200 p-4 dark:border-gray-700">
-            <h2 class="text-lg font-semibold">{t('users.list')}</h2>
+            <h2 class="text-lg font-semibold">{translateApp(lang, 'users.list')}</h2>
           </div>
           {loading.value ? (
             <div class="py-8 text-center text-gray-500 dark:text-gray-400">
               <LoadingSpinner />
             </div>
           ) : users.value.length === 0 ? (
-            <div class="py-8 text-center text-gray-500 dark:text-gray-400">{t('users.noUsers')}</div>
+            <div class="py-8 text-center text-gray-500 dark:text-gray-400">{translateApp(lang, 'users.noUsers')}</div>
           ) : (
             <div class="divide-y divide-gray-200 dark:divide-gray-700">
               {users.value.map((user: any) => (
@@ -415,13 +415,13 @@ export default component$(() => {
                       onClick$={() => editUser(user)}
                       class="rounded-lg px-3 py-1 text-xs font-medium text-primary-600 hover:bg-primary-50 dark:text-primary-400 dark:hover:bg-primary-900/20"
                     >
-                      {t('common.edit')}
+                      {translateApp(lang, 'common.edit')}
                     </button>
                     <button
                       onClick$={() => handleDelete(user.id)}
                       class="rounded-lg px-3 py-1 text-xs font-medium text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/20"
                     >
-                      {t('common.delete')}
+                      {translateApp(lang, 'common.delete')}
                     </button>
                   </div>
                 </div>

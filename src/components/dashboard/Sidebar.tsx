@@ -5,7 +5,7 @@ import { ROUTES } from '../../lib/constants/routes';
 import { useAdminAuth } from '../../routes/admin/layout';
 import { ProjectSettingsContext } from '../../stores/project-settings-store';
 import { isFeatureModuleEnabled, type FeatureModuleKey } from '../../lib/api/project-settings';
-import { useTranslate } from '../../lib/i18n/useTranslate';
+import { useTranslate, translateApp } from '../../lib/i18n/useTranslate';
 import {
   DashboardIcon,
   ProfileIcon,
@@ -56,7 +56,7 @@ export const Sidebar = component$<SidebarProps>((props) => {
   const location = useLocation();
   const auth = useAdminAuth();
   const projectSettings = useContext(ProjectSettingsContext);
-  const { t } = useTranslate();
+  const { lang } = useTranslate();
   const locale = useSpeakLocale();
   const userRole = auth.value?.user.role || 'user';
   const permissionSet = new Set(auth.value?.user.permissions ?? []);
@@ -101,12 +101,12 @@ export const Sidebar = component$<SidebarProps>((props) => {
 
   const navItems: NavItem[] = [
     {
-      label: t('sidebar.dashboard'),
+      label: translateApp(lang, 'sidebar.dashboard'),
       href: ROUTES.ADMIN.HOME,
       icon: DashboardIcon,
     },
     {
-      label: t('sidebar.projects'),
+      label: translateApp(lang, 'sidebar.projects'),
       href: ROUTES.ADMIN.PROJECTS,
       icon: ProjectsIcon,
       activeOnChildPaths: true,
@@ -114,7 +114,7 @@ export const Sidebar = component$<SidebarProps>((props) => {
       featureModule: 'projects',
     },
     {
-      label: t('sidebar.categories'),
+      label: translateApp(lang, 'sidebar.categories'),
       href: ROUTES.ADMIN.CATEGORIES,
       icon: CategoriesIcon,
       activeOnChildPaths: true,
@@ -122,14 +122,14 @@ export const Sidebar = component$<SidebarProps>((props) => {
       featureModule: 'categories',
     },
     {
-      label: t('sidebar.skills'),
+      label: translateApp(lang, 'sidebar.skills'),
       href: ROUTES.ADMIN.SKILLS,
       icon: SkillsIcon,
       permission: 'manage skills',
       featureModule: 'skills',
     },
     {
-      label: t('sidebar.services'),
+      label: translateApp(lang, 'sidebar.services'),
       href: ROUTES.ADMIN.SERVICES,
       icon: ServicesIcon,
       activeOnChildPaths: true,
@@ -137,7 +137,7 @@ export const Sidebar = component$<SidebarProps>((props) => {
       featureModule: 'services',
     },
     {
-      label: t('sidebar.testimonials'),
+      label: translateApp(lang, 'sidebar.testimonials'),
       href: ROUTES.ADMIN.TESTIMONIALS,
       icon: TestimonialsIcon,
       activeOnChildPaths: true,
@@ -145,7 +145,7 @@ export const Sidebar = component$<SidebarProps>((props) => {
       featureModule: 'testimonials',
     },
     {
-      label: t('sidebar.blog'),
+      label: translateApp(lang, 'sidebar.blog'),
       href: ROUTES.ADMIN.BLOG,
       icon: BlogIcon,
       activeOnChildPaths: true,
@@ -153,48 +153,48 @@ export const Sidebar = component$<SidebarProps>((props) => {
       featureModule: 'blog',
     },
     {
-      label: t('sidebar.media'),
+      label: translateApp(lang, 'sidebar.media'),
       href: ROUTES.ADMIN.MEDIA,
       icon: MediaIcon,
       permission: 'manage media',
       featureModule: 'media',
     },
     {
-      label: t('sidebar.profile'),
+      label: translateApp(lang, 'sidebar.profile'),
       href: ROUTES.ADMIN.PROFILE,
       icon: ProfileIcon,
     },
     {
-      label: t('sidebar.users'),
+      label: translateApp(lang, 'sidebar.users'),
       href: ROUTES.ADMIN.USERS,
       icon: UsersIcon,
       permission: 'manage users',
       featureModule: 'users',
     },
     {
-      label: t('sidebar.settings'),
+      label: translateApp(lang, 'sidebar.settings'),
       icon: SettingsIcon,
       children: [
-        { label: t('settings.general'), href: ROUTES.ADMIN.SETTINGS_GENERAL },
-        { label: t('settings.socialMedia'), href: ROUTES.ADMIN.SETTINGS_SOCIAL },
-        { label: t('media.title'), href: ROUTES.ADMIN.SETTINGS_MEDIA, featureModule: 'media' },
-        { label: t('settings.branding'), href: ROUTES.ADMIN.SETTINGS_BRANDING },
+        { label: translateApp(lang, 'settings.general'), href: ROUTES.ADMIN.SETTINGS_GENERAL },
+        { label: translateApp(lang, 'settings.socialMedia'), href: ROUTES.ADMIN.SETTINGS_SOCIAL },
+        { label: translateApp(lang, 'media.title'), href: ROUTES.ADMIN.SETTINGS_MEDIA, featureModule: 'media' },
+        { label: translateApp(lang, 'settings.branding'), href: ROUTES.ADMIN.SETTINGS_BRANDING },
       ],
       roles: ['admin', 'super_admin'],
     },
     {
-      label: t('sidebar.activityLogs'),
+      label: translateApp(lang, 'sidebar.activityLogs'),
       href: ROUTES.ADMIN.ACTIVITY,
       icon: ActivityIcon,
       roles: ['super_admin'],
     },
     {
-      label: t('sidebar.notifications'),
+      label: translateApp(lang, 'sidebar.notifications'),
       href: ROUTES.ADMIN.NOTIFICATIONS,
       icon: NotificationsIcon,
     },
     {
-      label: t('sidebar.systemHealth'),
+      label: translateApp(lang, 'sidebar.systemHealth'),
       href: ROUTES.ADMIN.SYSTEM,
       icon: SystemHealthIcon,
       permission: 'manage system',

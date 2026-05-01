@@ -4,7 +4,7 @@ import { Link } from '@builder.io/qwik-city';
 import { routeLoader$, useNavigate } from '@builder.io/qwik-city';
 import { PageHeader } from '../../../components/common/PageHeader';
 import { EmptyState } from '../../../components/common/EmptyState';
-import { useTranslate } from '../../../lib/i18n/useTranslate';
+import { useTranslate, translateApp } from '../../../lib/i18n/useTranslate';
 import { useSwal } from '../../../lib/hooks/useSwal';
 import { getApiClient, extractCookieHeader } from '../../../lib/api/client';
 import { API_ENDPOINTS } from '../../../lib/api/endpoints';
@@ -45,7 +45,7 @@ export const useTestimonialsList = routeLoader$(async ({ cookie, request }) => {
 });
 
 export default component$(() => {
-  const { t } = useTranslate();
+  const { lang } = useTranslate();
   const { confirm, success, error: showError } = useSwal();
   const navigate = useNavigate();
   const data = useTestimonialsList();
@@ -79,10 +79,10 @@ export default component$(() => {
   });
 
   const deleteTranslations = {
-    confirmText: String(t('testimonials.deleteConfirm')),
-    title: String(t('common.delete')),
-    successTitle: String(t('common.success')),
-    deletedText: String(t('common.deleted')),
+    confirmText: String(translateApp(lang, 'testimonials.deleteConfirm')),
+    title: String(translateApp(lang, 'common.delete')),
+    successTitle: String(translateApp(lang, 'common.success')),
+    deletedText: String(translateApp(lang, 'common.deleted')),
   };
 
   const handleDelete = $(async (testimonial: Testimonial) => {
@@ -147,7 +147,7 @@ export default component$(() => {
 
   return (
     <>
-      <PageHeader title={t('testimonials.title')} description={t('testimonials.subtitle')}>
+      <PageHeader title={translateApp(lang, 'testimonials.title')} description={translateApp(lang, 'testimonials.subtitle')}>
         <div class="flex flex-wrap gap-2">
           {selectedItems.value.length > 0 && (
             <>
@@ -156,14 +156,14 @@ export default component$(() => {
                 onClick$={handleBulkDelete}
                 class="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-red-700"
               >
-                {t('common.delete')} ({selectedItems.value.length})
+                {translateApp(lang, 'common.delete')} ({selectedItems.value.length})
               </button>
               <button
                 type="button"
                 onClick$={deselectAll}
                 class="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm transition hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 dark:hover:bg-gray-700"
               >
-                {t('common.cancel')}
+                {translateApp(lang, 'common.cancel')}
               </button>
             </>
           )}
@@ -171,26 +171,26 @@ export default component$(() => {
             href={ROUTES.ADMIN.TESTIMONIALS_NEW}
             class="inline-flex items-center justify-center rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-primary-700"
           >
-            {t('testimonials.addNew')}
+            {translateApp(lang, 'testimonials.addNew')}
           </Link>
         </div>
       </PageHeader>
 
       <div class="rounded-lg border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-800 dark:bg-gray-800">
-        <h2 class="mb-4 text-lg font-semibold text-gray-900 dark:text-gray-100">{t('testimonials.list')}</h2>
+        <h2 class="mb-4 text-lg font-semibold text-gray-900 dark:text-gray-100">{translateApp(lang, 'testimonials.list')}</h2>
 
         <div class="mb-4">
           <input
             type="text"
             value={searchQuery.value}
             onInput$={(e) => handleSearch((e.target as HTMLInputElement).value)}
-            placeholder={t('common.search')}
+            placeholder={translateApp(lang, 'common.search')}
             class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-primary-500 focus:outline-none focus:ring focus:ring-primary-200 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:focus:ring-primary-700/40"
           />
         </div>
 
         {filteredTestimonials.value.length === 0 ? (
-          <EmptyState title={t('testimonials.noTestimonials')} />
+          <EmptyState title={translateApp(lang, 'testimonials.noTestimonials')} />
         ) : (
           <ul class="space-y-4">
             {filteredTestimonials.value.map((testimonial) => (
@@ -211,7 +211,7 @@ export default component$(() => {
                         </span>
                         {testimonial.approved && (
                           <span class="rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-800 dark:bg-green-900/20 dark:text-green-400">
-                            {t('testimonials.approvedLabel')}
+                            {translateApp(lang, 'testimonials.approvedLabel')}
                           </span>
                         )}
                       </div>
@@ -222,7 +222,7 @@ export default component$(() => {
                       )}
                       {testimonial.project && (
                         <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                          {t('projects.title')}: {testimonial.project.title}
+                          {translateApp(lang, 'projects.title')}: {testimonial.project.title}
                         </p>
                       )}
                       <p class="mt-2 text-sm text-gray-700 dark:text-gray-200">{testimonial.content}</p>
@@ -234,7 +234,7 @@ export default component$(() => {
                             rel="noopener noreferrer"
                             class="text-xs text-primary-600 hover:underline dark:text-primary-400"
                           >
-                            {t('testimonials.videoLink')}
+                            {translateApp(lang, 'testimonials.videoLink')}
                           </a>
                         </p>
                       )}
@@ -245,14 +245,14 @@ export default component$(() => {
                       href={ROUTES.ADMIN.TESTIMONIALS_EDIT(testimonial.id)}
                       class="rounded-lg bg-primary-600 px-3 py-1.5 text-xs font-medium text-white transition hover:bg-primary-700"
                     >
-                      {t('common.edit')}
+                      {translateApp(lang, 'common.edit')}
                     </Link>
                     <button
                       type="button"
                       onClick$={() => handleDelete(testimonial)}
                       class="rounded-lg border border-red-300 px-3 py-1.5 text-xs font-medium text-red-600 transition hover:bg-red-50 dark:border-red-700 dark:text-red-400 dark:hover:bg-red-900/20"
                     >
-                      {t('common.delete')}
+                      {translateApp(lang, 'common.delete')}
                     </button>
                   </div>
                 </div>

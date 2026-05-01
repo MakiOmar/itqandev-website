@@ -1,5 +1,5 @@
 import { component$, useSignal, $, type QRL } from '@builder.io/qwik';
-import { useTranslate } from '../../lib/i18n/useTranslate';
+import { useTranslate, translateApp } from '../../lib/i18n/useTranslate';
 import { MediaLibrary } from '../media/MediaLibrary';
 import type { Media } from '../../types/media';
 
@@ -16,7 +16,7 @@ interface MediaSelectorProps {
  * Uses standalone MediaLibrary component instead of iframe
  */
 export const MediaSelector = component$<MediaSelectorProps>((props) => {
-  const { t } = useTranslate();
+  const { lang } = useTranslate();
   const isOpen = useSignal(true);
 
   const handleClose = $(() => {
@@ -46,7 +46,7 @@ export const MediaSelector = component$<MediaSelectorProps>((props) => {
         {/* Header */}
         <div class="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700 flex-shrink-0">
           <h2 class="text-xl font-semibold text-gray-900 dark:text-gray-100">
-            {props.title || t('media.selectMedia') || 'Select Media'}
+            {props.title || translateApp(lang, 'media.selectMedia') || 'Select Media'}
           </h2>
           <button
             onClick$={handleClose}

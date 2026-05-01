@@ -1,5 +1,5 @@
 import { useSignal, useStore, $ } from '@builder.io/qwik';
-import { useTranslate } from '../i18n/useTranslate';
+import { useTranslate, translateApp } from '../i18n/useTranslate';
 import { useSwal } from './useSwal';
 import { getApiClient } from '../api/client';
 
@@ -33,7 +33,7 @@ export function useCrud<T = any>(
   resourcePath: string,
   options: { autoLoad?: boolean } = {}
 ): CrudState<T> {
-  const { t } = useTranslate();
+  const { lang } = useTranslate();
   const { success, error: showError, confirm } = useSwal();
   const apiClient = getApiClient();
 
@@ -69,8 +69,8 @@ export function useCrud<T = any>(
     saving.value = true;
     try {
       const result = await apiClient.post<T>(resourcePath, data);
-      await success(t('common.success'), {
-        text: t('common.created') || 'Created successfully',
+      await success(translateApp(lang, 'common.success'), {
+        text: translateApp(lang, 'common.created') || 'Created successfully',
       });
       return result;
     } catch (err: any) {
@@ -85,8 +85,8 @@ export function useCrud<T = any>(
     saving.value = true;
     try {
       const result = await apiClient.put<T>(`${resourcePath}/${id}`, data);
-      await success(t('common.success'), {
-        text: t('common.updated') || 'Updated successfully',
+      await success(translateApp(lang, 'common.success'), {
+        text: translateApp(lang, 'common.updated') || 'Updated successfully',
       });
       return result;
     } catch (err: any) {
@@ -98,9 +98,9 @@ export function useCrud<T = any>(
   });
 
   const remove = $(async (id: string | number) => {
-    const result = await confirm(t('common.deleteConfirm'), {
+    const result = await confirm(translateApp(lang, 'common.deleteConfirm'), {
       icon: 'warning',
-      title: t('common.delete'),
+      title: translateApp(lang, 'common.delete'),
     });
     if (!result.isConfirmed) return false;
 
@@ -110,8 +110,8 @@ export function useCrud<T = any>(
       const newSelected = new Set(selectedItems.value);
       newSelected.delete(id);
       selectedItems.value = newSelected;
-      await success(t('common.success'), {
-        text: t('common.deleted') || 'Deleted successfully',
+      await success(translateApp(lang, 'common.success'), {
+        text: translateApp(lang, 'common.deleted') || 'Deleted successfully',
       });
       return true;
     } catch (err: any) {
@@ -123,9 +123,9 @@ export function useCrud<T = any>(
   const bulkDelete = $(async (ids: (string | number)[]) => {
     if (!ids || ids.length === 0) return false;
 
-    const result = await confirm(t('common.deleteConfirm'), {
+    const result = await confirm(translateApp(lang, 'common.deleteConfirm'), {
       icon: 'warning',
-      title: t('common.delete'),
+      title: translateApp(lang, 'common.delete'),
     });
     if (!result.isConfirmed) return false;
 
@@ -137,8 +137,8 @@ export function useCrud<T = any>(
       const newSelected = new Set(selectedItems.value);
       ids.forEach((id) => newSelected.delete(id));
       selectedItems.value = newSelected;
-      await success(t('common.success'), {
-        text: t('common.deleted') || 'Deleted successfully',
+      await success(translateApp(lang, 'common.success'), {
+        text: translateApp(lang, 'common.deleted') || 'Deleted successfully',
       });
       return true;
     } catch (err: any) {

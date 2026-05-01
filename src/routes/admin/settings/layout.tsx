@@ -1,6 +1,6 @@
 import { component$, Slot } from '@builder.io/qwik';
 import { Link, routeAction$, routeLoader$, z, zod$, useLocation } from '@builder.io/qwik-city';
-import { useTranslate } from '../../../lib/i18n/useTranslate';
+import { useTranslate, translateApp } from '../../../lib/i18n/useTranslate';
 import { getApiClient, extractCookieHeader } from '../../../lib/api/client';
 import { API_ENDPOINTS } from '../../../lib/api/endpoints';
 import { ROUTES } from '../../../lib/constants/routes';
@@ -344,7 +344,7 @@ export const SettingsHiddenFields = component$<SettingsHiddenFieldsProps>(({ exc
 });
 
 export const SettingsSaveButton = component$(() => {
-  const { t } = useTranslate();
+  const { lang } = useTranslate();
   const action = useUpdateSettings();
   return (
     <button
@@ -352,7 +352,7 @@ export const SettingsSaveButton = component$(() => {
       disabled={action.isRunning}
       class="rounded-lg bg-primary-600 px-6 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-primary-700 disabled:opacity-50"
     >
-      {action.isRunning ? t('settings.saving') : t('settings.save')}
+      {action.isRunning ? translateApp(lang, 'settings.saving') : translateApp(lang, 'settings.save')}
     </button>
   );
 });
@@ -361,22 +361,22 @@ export const SettingsSaveButton = component$(() => {
  * Settings section layout with WordPress-like sub-menu pages.
  */
 export default component$(() => {
-  const { t } = useTranslate();
+  const { lang } = useTranslate();
   const location = useLocation();
 
   const tabs = [
-    { label: t('settings.general'), href: ROUTES.ADMIN.SETTINGS_GENERAL },
-    { label: t('settings.socialMedia'), href: ROUTES.ADMIN.SETTINGS_SOCIAL },
-    { label: t('media.title'), href: ROUTES.ADMIN.SETTINGS_MEDIA },
-    { label: t('settings.branding'), href: ROUTES.ADMIN.SETTINGS_BRANDING },
-    { label: t('settings.languagesNav'), href: ROUTES.ADMIN.SETTINGS_LANGUAGES },
+    { label: translateApp(lang, 'settings.general'), href: ROUTES.ADMIN.SETTINGS_GENERAL },
+    { label: translateApp(lang, 'settings.socialMedia'), href: ROUTES.ADMIN.SETTINGS_SOCIAL },
+    { label: translateApp(lang, 'media.title'), href: ROUTES.ADMIN.SETTINGS_MEDIA },
+    { label: translateApp(lang, 'settings.branding'), href: ROUTES.ADMIN.SETTINGS_BRANDING },
+    { label: translateApp(lang, 'settings.languagesNav'), href: ROUTES.ADMIN.SETTINGS_LANGUAGES },
   ];
 
   return (
     <div>
       <div class="mb-6">
-        <h1 class="text-2xl font-bold text-gray-900 dark:text-gray-100">{t('settings.title')}</h1>
-        <p class="text-gray-600 dark:text-gray-400">{t('settings.subtitle')}</p>
+        <h1 class="text-2xl font-bold text-gray-900 dark:text-gray-100">{translateApp(lang, 'settings.title')}</h1>
+        <p class="text-gray-600 dark:text-gray-400">{translateApp(lang, 'settings.subtitle')}</p>
       </div>
 
       <div class="mb-6 rounded-lg border border-gray-200 bg-white p-3 shadow-sm dark:border-gray-800 dark:bg-gray-800">

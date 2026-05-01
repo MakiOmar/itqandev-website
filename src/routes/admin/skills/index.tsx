@@ -3,7 +3,7 @@ import type { DocumentHead } from '@builder.io/qwik-city';
 import { routeLoader$, routeAction$, zod$, z } from '@builder.io/qwik-city';
 import { PageHeader } from '../../../components/common/PageHeader';
 import { EmptyState } from '../../../components/common/EmptyState';
-import { useTranslate } from '../../../lib/i18n/useTranslate';
+import { useTranslate, translateApp } from '../../../lib/i18n/useTranslate';
 import { useSwal } from '../../../lib/hooks/useSwal';
 import { getApiClient, extractCookieHeader } from '../../../lib/api/client';
 import { API_ENDPOINTS } from '../../../lib/api/endpoints';
@@ -176,7 +176,7 @@ export const useBulkDeleteSkills = routeAction$(async (data, { fail }) => {
  * Skills page
  */
 export default component$(() => {
-  const { t } = useTranslate();
+  const { lang } = useTranslate();
   const { confirm, success, error: showError } = useSwal();
   const skills = useSkills();
   const langConfig = useSiteLanguageConfig();
@@ -248,9 +248,9 @@ export default component$(() => {
 
   // Pre-compute translation strings to avoid serialization issues
   const saveTranslations = {
-    successTitle: String(t('common.success')),
-    updatedText: String(t('common.updated')),
-    createdText: String(t('common.created')),
+    successTitle: String(translateApp(lang, 'common.success')),
+    updatedText: String(translateApp(lang, 'common.updated')),
+    createdText: String(translateApp(lang, 'common.created')),
   };
 
   const editSkill = $((skill: Skill) => {
@@ -384,10 +384,10 @@ export default component$(() => {
 
   // Pre-compute delete translations
   const deleteTranslations = {
-    confirmText: String(t('skills.deleteConfirm')),
-    title: String(t('common.delete')),
-    successTitle: String(t('common.success')),
-    deletedText: String(t('common.deleted')),
+    confirmText: String(translateApp(lang, 'skills.deleteConfirm')),
+    title: String(translateApp(lang, 'common.delete')),
+    successTitle: String(translateApp(lang, 'common.success')),
+    deletedText: String(translateApp(lang, 'common.deleted')),
   };
 
   const handleDelete = $(async (skill: Skill) => {
@@ -455,8 +455,8 @@ export default component$(() => {
   return (
     <>
       <PageHeader
-        title={t('skills.title')}
-        description={t('skills.subtitle')}
+        title={translateApp(lang, 'skills.title')}
+        description={translateApp(lang, 'skills.subtitle')}
       >
         <div class="flex gap-2">
             {selectedItems.value.length > 0 && (
@@ -465,13 +465,13 @@ export default component$(() => {
                   onClick$={handleBulkDelete}
                   class="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-red-700"
                 >
-                  {t('common.delete')} ({selectedItems.value.length})
+                  {translateApp(lang, 'common.delete')} ({selectedItems.value.length})
                 </button>
                 <button
                   onClick$={deselectAll}
                   class="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm transition hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 dark:hover:bg-gray-700"
                 >
-                  {t('common.cancel')}
+                  {translateApp(lang, 'common.cancel')}
                 </button>
               </>
             )}
@@ -480,14 +480,14 @@ export default component$(() => {
                 onClick$={() => (showForm.value = true)}
                 class="rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-primary-700"
               >
-                {t('skills.addNew')}
+                {translateApp(lang, 'skills.addNew')}
               </button>
             ) : (
               <button
                 onClick$={resetForm}
                 class="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm transition hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 dark:hover:bg-gray-700"
               >
-                {t('common.cancel')}
+                {translateApp(lang, 'common.cancel')}
               </button>
             )}
           </div>
@@ -498,7 +498,7 @@ export default component$(() => {
         {showForm.value && (
           <div class="rounded-lg border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-800 dark:bg-gray-800">
             <h2 class="mb-4 text-lg font-semibold text-gray-900 dark:text-gray-100">
-              {editingId.value ? t('skills.edit') : t('skills.addNew')}
+              {editingId.value ? translateApp(lang, 'skills.edit') : translateApp(lang, 'skills.addNew')}
             </h2>
             <div class="space-y-4">
               {!editingId.value ? (
@@ -506,9 +506,9 @@ export default component$(() => {
                   siteLanguages={langConfig.value.site_languages}
                   defaultLocale={langConfig.value.default_locale}
                   value={contentLocaleDraft.value}
-                  label={t('contentTranslations.contentPrimaryLanguage')}
-                  hint={t('contentTranslations.contentPrimaryHint')}
-                  useSiteDefaultLabel={t('contentTranslations.useSiteDefault')}
+                  label={translateApp(lang, 'contentTranslations.contentPrimaryLanguage')}
+                  hint={translateApp(lang, 'contentTranslations.contentPrimaryHint')}
+                  useSiteDefaultLabel={translateApp(lang, 'contentTranslations.useSiteDefault')}
                   onChange$={$((code: string) => {
                     contentLocaleDraft.value = code;
                   })}
@@ -522,10 +522,10 @@ export default component$(() => {
                   langConfig.value.default_locale,
                   contentLocaleDraft.value.trim() !== '' ? contentLocaleDraft.value.trim() : null,
                 )}
-                label={t('contentTranslations.sectionTitle')}
-                hintPrimary={t('contentTranslations.defaultHint')}
-                hintSecondary={t('contentTranslations.fallbackPlaceholderHint')}
-                secondarySavePrefix={t('contentTranslations.addTranslations')}
+                label={translateApp(lang, 'contentTranslations.sectionTitle')}
+                hintPrimary={translateApp(lang, 'contentTranslations.defaultHint')}
+                hintSecondary={translateApp(lang, 'contentTranslations.fallbackPlaceholderHint')}
+                secondarySavePrefix={translateApp(lang, 'contentTranslations.addTranslations')}
                 onChange$={$((code: string) => {
                   editingLocaleDraft.value = code;
                 })}
@@ -539,7 +539,7 @@ export default component$(() => {
                   for="name"
                   class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-200"
                 >
-                  {t('skills.name')} *
+                  {translateApp(lang, 'skills.name')} *
                 </label>
                 <input
                   id="name"
@@ -557,7 +557,7 @@ export default component$(() => {
                   for="slug"
                   class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-200"
                 >
-                  {t('skills.slug')}
+                  {translateApp(lang, 'skills.slug')}
                 </label>
                 <input
                   id="slug"
@@ -574,7 +574,7 @@ export default component$(() => {
                   for="icon_hint"
                   class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-200"
                 >
-                  {t('skills.iconHint')}
+                  {translateApp(lang, 'skills.iconHint')}
                 </label>
                 <input
                   id="icon_hint"
@@ -592,7 +592,7 @@ export default component$(() => {
                   for="description"
                   class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-200"
                 >
-                  {t('skills.description')}
+                  {translateApp(lang, 'skills.description')}
                 </label>
                 <textarea
                   id="description"
@@ -609,13 +609,13 @@ export default component$(() => {
                   onClick$={handleSave}
                   class="flex-1 rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-primary-700"
                 >
-                  {editingId.value ? t('common.update') : t('common.add')}
+                  {editingId.value ? translateApp(lang, 'common.update') : translateApp(lang, 'common.add')}
                 </button>
                 <button
                   onClick$={resetForm}
                   class="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm transition hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 dark:hover:bg-gray-700"
                 >
-                  {t('common.cancel')}
+                  {translateApp(lang, 'common.cancel')}
                 </button>
               </div>
               </EditingLocaleFieldsShell>
@@ -626,7 +626,7 @@ export default component$(() => {
         {/* List */}
         <div class="rounded-lg border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-800 dark:bg-gray-800">
           <h2 class="mb-4 text-lg font-semibold text-gray-900 dark:text-gray-100">
-            {t('skills.list')}
+            {translateApp(lang, 'skills.list')}
           </h2>
 
           {/* Search */}
@@ -635,15 +635,15 @@ export default component$(() => {
               type="text"
               value={searchQuery.value}
               onInput$={(e) => handleSearch((e.target as HTMLInputElement).value)}
-              placeholder={t('common.search')}
+              placeholder={translateApp(lang, 'common.search')}
               class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-primary-500 focus:outline-none focus:ring focus:ring-primary-200 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:focus:ring-primary-700/40"
             />
           </div>
 
           {loading.value ? (
-            <div class="py-6 text-center text-gray-500 dark:text-gray-400">{t('common.loading')}</div>
+            <div class="py-6 text-center text-gray-500 dark:text-gray-400">{translateApp(lang, 'common.loading')}</div>
           ) : filteredSkills.value.length === 0 ? (
-            <EmptyState title={t('skills.noSkills')} />
+            <EmptyState title={translateApp(lang, 'skills.noSkills')} />
           ) : (
             <ul class="space-y-2">
               {filteredSkills.value.map((skill) => (
@@ -665,7 +665,7 @@ export default component$(() => {
                       <div>
                         <p class="font-medium text-gray-900 dark:text-gray-100">{skill.name}</p>
                         <p class="text-xs text-gray-500 dark:text-gray-400">
-                          {t('skills.slug')}: {skill.slug}
+                          {translateApp(lang, 'skills.slug')}: {skill.slug}
                         </p>
                         {skill.description && (
                           <p class="mt-1 text-sm text-gray-600 dark:text-gray-300">
@@ -674,11 +674,11 @@ export default component$(() => {
                         )}
                         <div class="mt-1 flex flex-wrap gap-1">
                           <span class="rounded bg-slate-100 px-2 py-0.5 text-xs text-slate-700 dark:bg-slate-700/30 dark:text-slate-200">
-                            {t('contentTranslations.contentPrimaryLanguage')}: {(skill as any).content_locale || langConfig.value.default_locale}
+                            {translateApp(lang, 'contentTranslations.contentPrimaryLanguage')}: {(skill as any).content_locale || langConfig.value.default_locale}
                           </span>
                           {Array.isArray((skill as any).translations) && (skill as any).translations.length > 0 ? (
                             <span class="rounded bg-emerald-100 px-2 py-0.5 text-xs text-emerald-700 dark:bg-emerald-700/20 dark:text-emerald-300">
-                              {t('contentTranslations.addTranslations')}: {(skill as any).translations.map((r: any) => r?.locale).filter(Boolean).join(', ')}
+                              {translateApp(lang, 'contentTranslations.addTranslations')}: {(skill as any).translations.map((r: any) => r?.locale).filter(Boolean).join(', ')}
                             </span>
                           ) : null}
                         </div>
@@ -687,19 +687,19 @@ export default component$(() => {
                   </div>
                   <div class="flex items-center gap-2">
                     <span class="text-xs text-gray-500 dark:text-gray-400">
-                      {t('skills.projectsCount', { count: skill.projectsCount ?? 0 })}
+                      {translateApp(lang, 'skills.projectsCount', { count: skill.projectsCount ?? 0 })}
                     </span>
                     <button
                       onClick$={() => editSkill(skill)}
                       class="rounded-lg px-3 py-1 text-xs text-primary-600 hover:bg-primary-50 dark:text-primary-400 dark:hover:bg-primary-900/20"
                     >
-                      {t('common.edit')}
+                      {translateApp(lang, 'common.edit')}
                     </button>
                     <button
                       onClick$={() => handleDelete(skill)}
                       class="rounded-lg px-3 py-1 text-xs text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/20"
                     >
-                      {t('common.delete')}
+                      {translateApp(lang, 'common.delete')}
                     </button>
                   </div>
                 </li>

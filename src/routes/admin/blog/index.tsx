@@ -2,7 +2,7 @@ import { component$, useSignal, $ } from '@builder.io/qwik';
 import type { DocumentHead } from '@builder.io/qwik-city';
 import { routeLoader$, routeAction$, zod$, z } from '@builder.io/qwik-city';
 import { LoadingSpinner } from '../../../components/common/LoadingSpinner';
-import { useTranslate } from '../../../lib/i18n/useTranslate';
+import { useTranslate, translateApp } from '../../../lib/i18n/useTranslate';
 import { useSwal } from '../../../lib/hooks/useSwal';
 import { getApiClient, extractCookieHeader } from '../../../lib/api/client';
 import { API_ENDPOINTS } from '../../../lib/api/endpoints';
@@ -134,7 +134,7 @@ export const useDeleteBlogPost = routeAction$(async (data, { fail }) => {
  * Blog list page - Matching Vue Dashboard
  */
 export default component$(() => {
-  const { t } = useTranslate();
+  const { lang } = useTranslate();
   const { confirm, success, error: showError } = useSwal();
   const postsLoader = useBlogPosts();
   const langConfig = useSiteLanguageConfig();
@@ -145,11 +145,11 @@ export default component$(() => {
 
   // Pre-compute commonly used translation strings to avoid serialization issues
   const translations = {
-    success: t('common.success'),
-    updated: t('common.updated'),
-    created: t('common.created'),
-    deleted: t('common.deleted'),
-    deleteConfirm: t('blog.deleteConfirm'),
+    success: translateApp(lang, 'common.success'),
+    updated: translateApp(lang, 'common.updated'),
+    created: translateApp(lang, 'common.created'),
+    deleted: translateApp(lang, 'common.deleted'),
+    deleteConfirm: translateApp(lang, 'blog.deleteConfirm'),
   };
 
   const { items: posts, loading, refetch } = useLocaleAwareList<BlogPost>(
@@ -216,7 +216,7 @@ export default component$(() => {
         )
       : [];
     if (locales.length === 0) {
-      return t('contentTranslations.noSecondaryLanguages') || '—';
+      return translateApp(lang, 'contentTranslations.noSecondaryLanguages') || '—';
     }
     const labels = locales.map((code) => `${languageLabelByCode.get(code) || code} (${code})`);
     return `${locales.length}: ${labels.join(', ')}`;
@@ -344,8 +344,8 @@ export default component$(() => {
       <div>
         <div class="mb-6 flex items-center justify-between">
           <div>
-            <h1 class="text-2xl font-bold text-gray-900 dark:text-gray-100">{t('blog.title')}</h1>
-            <p class="text-gray-600 dark:text-gray-400">{t('blog.subtitle')}</p>
+            <h1 class="text-2xl font-bold text-gray-900 dark:text-gray-100">{translateApp(lang, 'blog.title')}</h1>
+            <p class="text-gray-600 dark:text-gray-400">{translateApp(lang, 'blog.subtitle')}</p>
           </div>
           <div class="flex gap-2">
             {!showForm.value ? (
@@ -353,14 +353,14 @@ export default component$(() => {
                 onClick$={() => (showForm.value = true)}
                 class="rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-primary-700"
               >
-                {t('blog.addNew')}
+                {translateApp(lang, 'blog.addNew')}
               </button>
             ) : (
               <button
                 onClick$={resetForm}
                 class="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm transition hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 dark:hover:bg-gray-700"
               >
-                {t('common.cancel')}
+                {translateApp(lang, 'common.cancel')}
               </button>
             )}
           </div>
@@ -370,13 +370,13 @@ export default component$(() => {
         {showForm.value && (
           <div class="mb-6 rounded-lg border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-800 dark:bg-gray-800">
             <h2 class="mb-4 text-lg font-semibold">
-              {editingPostId.value ? t('blog.edit') : t('blog.addNew')}
+              {editingPostId.value ? translateApp(lang, 'blog.edit') : translateApp(lang, 'blog.addNew')}
             </h2>
             <form class="space-y-4" onSubmit$={savePost} preventdefault:submit>
               <div class="grid gap-4 md:grid-cols-2">
                 <div>
                   <label class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-200">
-                    {t('blog.name')}
+                    {translateApp(lang, 'blog.name')}
                   </label>
                   <input
                     type="text"
@@ -388,7 +388,7 @@ export default component$(() => {
                 </div>
                 <div>
                   <label class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-200">
-                    {t('blog.slug')}
+                    {translateApp(lang, 'blog.slug')}
                   </label>
                   <input
                     type="text"
@@ -401,7 +401,7 @@ export default component$(() => {
               </div>
               <div>
                 <label class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-200">
-                  {t('blog.excerpt')}
+                  {translateApp(lang, 'blog.excerpt')}
                 </label>
                 <textarea
                   rows={2}
@@ -412,7 +412,7 @@ export default component$(() => {
               </div>
               <div>
                 <label class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-200">
-                  {t('blog.content')}
+                  {translateApp(lang, 'blog.content')}
                 </label>
                 <textarea
                   rows={8}
@@ -425,21 +425,21 @@ export default component$(() => {
               <div class="grid gap-4 md:grid-cols-3">
                 <div>
                   <label class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-200">
-                    {t('blog.status')}
+                    {translateApp(lang, 'blog.status')}
                   </label>
                   <select
                     value={formPost.value.status}
                     onChange$={(e: any) => (formPost.value.status = e.target.value)}
                     class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-primary-500 focus:outline-none focus:ring focus:ring-primary-200 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:focus:ring-primary-700/40"
                   >
-                    <option value="draft">{t('blog.statusDraft')}</option>
-                    <option value="published">{t('blog.statusPublished')}</option>
-                    <option value="archived">{t('blog.statusArchived')}</option>
+                    <option value="draft">{translateApp(lang, 'blog.statusDraft')}</option>
+                    <option value="published">{translateApp(lang, 'blog.statusPublished')}</option>
+                    <option value="archived">{translateApp(lang, 'blog.statusArchived')}</option>
                   </select>
                 </div>
                 <div>
                   <label class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-200">
-                    {t('blog.publishedAt')}
+                    {translateApp(lang, 'blog.publishedAt')}
                   </label>
                   <input
                     type="datetime-local"
@@ -456,7 +456,7 @@ export default component$(() => {
                       onChange$={(e: any) => (formPost.value.featured = e.target.checked)}
                       class="h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
                     />
-                    {t('blog.featured')}
+                    {translateApp(lang, 'blog.featured')}
                   </label>
                 </div>
               </div>
@@ -467,14 +467,14 @@ export default component$(() => {
                   disabled={saveAction.isRunning}
                   class="flex-1 rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-primary-700 disabled:opacity-50"
                 >
-                  {editingPostId.value ? t('common.update') : t('common.add')}
+                  {editingPostId.value ? translateApp(lang, 'common.update') : translateApp(lang, 'common.add')}
                 </button>
                 <button
                   type="button"
                   onClick$={resetForm}
                   class="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm transition hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 dark:hover:bg-gray-700"
                 >
-                  {t('common.cancel')}
+                  {translateApp(lang, 'common.cancel')}
                 </button>
               </div>
             </form>
@@ -484,14 +484,14 @@ export default component$(() => {
         {/* Posts List */}
         <div class="rounded-lg border border-gray-200 bg-white shadow-sm dark:border-gray-800 dark:bg-gray-800">
           <div class="border-b border-gray-200 p-4 dark:border-gray-700">
-            <h2 class="text-lg font-semibold">{t('blog.list')}</h2>
+            <h2 class="text-lg font-semibold">{translateApp(lang, 'blog.list')}</h2>
           </div>
           {loading.value ? (
             <div class="py-8 text-center text-gray-500 dark:text-gray-400">
               <LoadingSpinner />
             </div>
           ) : posts.value.length === 0 ? (
-            <div class="py-8 text-center text-gray-500 dark:text-gray-400">{t('blog.noPosts')}</div>
+            <div class="py-8 text-center text-gray-500 dark:text-gray-400">{translateApp(lang, 'blog.noPosts')}</div>
           ) : (
             <div class="divide-y divide-gray-200 dark:divide-gray-700">
               {posts.value.map((post) => (
@@ -504,14 +504,14 @@ export default component$(() => {
                       <div class="flex items-start justify-between">
                         <div>
                           <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">{post.title}</h3>
-                          <p class="text-sm text-gray-500 dark:text-gray-400">{t('blog.slug')}: {post.slug}</p>
+                          <p class="text-sm text-gray-500 dark:text-gray-400">{translateApp(lang, 'blog.slug')}: {post.slug}</p>
                           <div class="mt-1 flex flex-wrap items-center gap-2 text-xs text-gray-600 dark:text-gray-300">
                             <span class="rounded bg-gray-100 px-2 py-0.5 dark:bg-gray-900/40">
-                              <span class="font-semibold">{t('contentTranslations.contentPrimaryLanguage') || 'Main'}:</span>{' '}
+                              <span class="font-semibold">{translateApp(lang, 'contentTranslations.contentPrimaryLanguage') || 'Main'}:</span>{' '}
                               {mainLocaleLabel(post)}
                             </span>
                             <span class="rounded bg-gray-100 px-2 py-0.5 dark:bg-gray-900/40">
-                              <span class="font-semibold">{t('contentTranslations.sectionTitle') || 'Translations'}:</span>{' '}
+                              <span class="font-semibold">{translateApp(lang, 'contentTranslations.sectionTitle') || 'Translations'}:</span>{' '}
                               {translationsLabel(post)}
                             </span>
                           </div>
@@ -529,19 +529,19 @@ export default component$(() => {
                               }`}
                             >
                               {post.status === 'published'
-                                ? t('blog.statusPublished')
+                                ? translateApp(lang, 'blog.statusPublished')
                                 : post.status === 'draft'
-                                  ? t('blog.statusDraft')
-                                  : t('blog.statusArchived')}
+                                  ? translateApp(lang, 'blog.statusDraft')
+                                  : translateApp(lang, 'blog.statusArchived')}
                             </span>
                             {post.featured && (
                               <span class="rounded-full bg-primary-100 px-2 py-1 text-xs font-medium text-primary-800 dark:bg-primary-900/20 dark:text-primary-400">
-                                {t('blog.featured')}
+                                {translateApp(lang, 'blog.featured')}
                               </span>
                             )}
                             {post.author && (
                               <span class="text-xs text-gray-500 dark:text-gray-400">
-                                {t('blog.author', { name: (post.author as any)?.name || 'Unknown' })}
+                                {translateApp(lang, 'blog.author', { name: (post.author as any)?.name || 'Unknown' })}
                               </span>
                             )}
                           </div>
@@ -554,18 +554,18 @@ export default component$(() => {
                           onClick$={() => editPost(post)}
                           class="flex-1 rounded-lg bg-primary-600 px-3 py-1.5 text-xs font-medium text-white transition hover:bg-primary-700"
                         >
-                          {t('common.edit')}
+                          {translateApp(lang, 'common.edit')}
                         </button>
                         <button
                           onClick$={() => deletePost(post.id)}
                           class="flex-1 rounded-lg border border-red-300 px-3 py-1.5 text-xs font-medium text-red-600 transition hover:bg-red-50 dark:border-red-700 dark:text-red-400 dark:hover:bg-red-900/20"
                         >
-                          {t('common.delete')}
+                          {translateApp(lang, 'common.delete')}
                         </button>
                       </div>
                       <div class="flex flex-col gap-2">
                         <label class="text-sm font-medium text-gray-700 dark:text-gray-200">
-                          {t('blog.featuredImage')}
+                          {translateApp(lang, 'blog.featuredImage')}
                         </label>
                         <input
                           type="file"
@@ -581,12 +581,12 @@ export default component$(() => {
                           disabled={!featuredImageFile.value || selectedPostId.value !== post.id}
                           class="w-full rounded-lg bg-primary-600 px-3 py-1.5 text-xs font-medium text-white transition hover:bg-primary-700 disabled:opacity-50"
                         >
-                          {t('blog.uploadImage')}
+                          {translateApp(lang, 'blog.uploadImage')}
                         </button>
                       </div>
                       <div class="flex flex-col gap-2">
                         <label class="text-sm font-medium text-gray-700 dark:text-gray-200">
-                          {t('seo.title')}
+                          {translateApp(lang, 'seo.title')}
                         </label>
                         <input
                           type="text"
@@ -595,7 +595,7 @@ export default component$(() => {
                             formSeo.value.meta_title = e.target.value;
                             selectedPostId.value = post.id as number;
                           }}
-                          placeholder={t('seo.metaTitle')}
+                          placeholder={translateApp(lang, 'seo.metaTitle')}
                           class="w-full rounded-lg border border-gray-300 bg-white px-2 py-1 text-xs dark:border-gray-700 dark:bg-gray-900"
                         />
                         <input
@@ -605,7 +605,7 @@ export default component$(() => {
                             formSeo.value.meta_description = e.target.value;
                             selectedPostId.value = post.id as number;
                           }}
-                          placeholder={t('seo.metaDescription')}
+                          placeholder={translateApp(lang, 'seo.metaDescription')}
                           class="w-full rounded-lg border border-gray-300 bg-white px-2 py-1 text-xs dark:border-gray-700 dark:bg-gray-900"
                         />
                         <button
@@ -613,7 +613,7 @@ export default component$(() => {
                           disabled={selectedPostId.value !== post.id}
                           class="w-full rounded-lg bg-primary-600 px-3 py-1.5 text-xs font-medium text-white transition hover:bg-primary-700 disabled:opacity-50"
                         >
-                          {t('seo.save')}
+                          {translateApp(lang, 'seo.save')}
                         </button>
                       </div>
                     </div>

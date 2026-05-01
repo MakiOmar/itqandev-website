@@ -2,7 +2,7 @@ import { component$, useSignal, $ } from '@builder.io/qwik';
 import { Link, useNavigate } from '@builder.io/qwik-city';
 import type { User } from '../../lib/auth/types';
 import { ROUTES } from '../../lib/constants/routes';
-import { useTranslate } from '../../lib/i18n/useTranslate';
+import { useTranslate, translateApp } from '../../lib/i18n/useTranslate';
 import { getConfig } from '../../lib/config';
 import { getApiClient } from '../../lib/api/client';
 import { API_ENDPOINTS } from '../../lib/api/endpoints';
@@ -16,7 +16,7 @@ interface UserDropdownProps {
  */
 export const UserDropdown = component$<UserDropdownProps>((props) => {
   const isOpen = useSignal(false);
-  const { t } = useTranslate();
+  const { lang } = useTranslate();
   const navigate = useNavigate();
   
   // Handle logout
@@ -92,13 +92,13 @@ export const UserDropdown = component$<UserDropdownProps>((props) => {
                 href={ROUTES.PROFILE}
                 class="block rounded-lg px-4 py-3 text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors mb-1"
               >
-                {t('header.profile')}
+                {translateApp(lang, 'header.profile')}
               </Link>
               <button
                 onClick$={handleLogout}
                 class="w-full rounded-lg px-4 py-3 text-left text-sm font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
               >
-                {t('header.logout')}
+                {translateApp(lang, 'header.logout')}
               </button>
             </div>
           </div>

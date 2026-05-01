@@ -2,7 +2,7 @@ import { component$ } from '@builder.io/qwik';
 import type { DocumentHead } from '@builder.io/qwik-city';
 import { routeLoader$ } from '@builder.io/qwik-city';
 import { PageHeader } from '../../../components/common/PageHeader';
-import { useTranslate } from '../../../lib/i18n/useTranslate';
+import { useTranslate, translateApp } from '../../../lib/i18n/useTranslate';
 import { StatCard } from '../../../components/common/StatCard';
 import { auth } from '../../../lib/auth';
 import { getConfig } from '../../../lib/config';
@@ -53,12 +53,12 @@ export const useSystemHealth = routeLoader$(async ({ cookie, request, redirect: 
  */
 export default component$(() => {
   const health = useSystemHealth();
-  const { t } = useTranslate();
+  const { lang } = useTranslate();
 
   if (health.value.error || !('data' in health.value) || !health.value.data) {
     return (
       <div>
-        <PageHeader title={t('system.title')} description={t('system.subtitle')} />
+        <PageHeader title={translateApp(lang, 'system.title')} description={translateApp(lang, 'system.subtitle')} />
         <p class="text-sm text-gray-600 dark:text-gray-400">Unable to load system health from the API.</p>
       </div>
     );
@@ -71,7 +71,7 @@ export default component$(() => {
     <>
       {/* Component: SystemPage */}
       <div>
-        <PageHeader title={t('system.title')} description={t('system.subtitle')} />
+        <PageHeader title={translateApp(lang, 'system.title')} description={translateApp(lang, 'system.subtitle')} />
 
         <div class="mb-8 grid gap-6 md:grid-cols-2 lg:grid-cols-4">
           <StatCard title="Environment" value={d.app_env} icon={ServerIcon} />

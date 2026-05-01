@@ -1,7 +1,7 @@
 import { component$, useVisibleTask$ } from '@builder.io/qwik';
 import type { DocumentHead } from '@builder.io/qwik-city';
 import { Form } from '@builder.io/qwik-city';
-import { useTranslate } from '../../../../lib/i18n/useTranslate';
+import { useTranslate, translateApp } from '../../../../lib/i18n/useTranslate';
 import { useSwal } from '../../../../lib/hooks/useSwal';
 import {
   SettingsSaveButton,
@@ -10,15 +10,15 @@ import {
 } from '../layout';
 
 export default component$(() => {
-  const { t } = useTranslate();
+  const { lang } = useTranslate();
   const { success: showSuccess, error: showError } = useSwal();
   const settings = useSettings();
   const updateAction = useUpdateSettings();
 
-  const successTitle = String(t('common.success'));
-  const savedText = String(t('settings.saveSuccess'));
-  const errorTitle = String(t('common.error'));
-  const errorText = String(t('settings.saveFailed'));
+  const successTitle = String(translateApp(lang, 'common.success'));
+  const savedText = String(translateApp(lang, 'settings.saveSuccess'));
+  const errorTitle = String(translateApp(lang, 'common.error'));
+  const errorText = String(translateApp(lang, 'settings.saveFailed'));
 
   // eslint-disable-next-line qwik/no-use-visible-task
   useVisibleTask$(({ track }) => {
@@ -37,12 +37,12 @@ export default component$(() => {
 
   return (
     <div class="rounded-lg border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-800 dark:bg-gray-800">
-      <h2 class="mb-4 text-lg font-semibold">{t('settings.socialMedia')}</h2>
+      <h2 class="mb-4 text-lg font-semibold">{translateApp(lang, 'settings.socialMedia')}</h2>
       <Form action={updateAction} class="space-y-4">
         <div class="grid gap-4 md:grid-cols-2">
           <div>
             <label class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-200">
-              {t('settings.facebook')}
+              {translateApp(lang, 'settings.facebook')}
             </label>
             <input
               name="social_facebook"
@@ -54,7 +54,7 @@ export default component$(() => {
           </div>
           <div>
             <label class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-200">
-              {t('settings.twitter')}
+              {translateApp(lang, 'settings.twitter')}
             </label>
             <input
               name="social_twitter"
@@ -66,7 +66,7 @@ export default component$(() => {
           </div>
           <div>
             <label class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-200">
-              {t('settings.linkedin')}
+              {translateApp(lang, 'settings.linkedin')}
             </label>
             <input
               name="social_linkedin"
@@ -78,7 +78,7 @@ export default component$(() => {
           </div>
           <div>
             <label class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-200">
-              {t('settings.instagram')}
+              {translateApp(lang, 'settings.instagram')}
             </label>
             <input
               name="social_instagram"

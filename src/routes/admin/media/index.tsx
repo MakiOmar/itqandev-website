@@ -2,7 +2,7 @@ import { component$, useSignal, $, useVisibleTask$ } from '@builder.io/qwik';
 import type { DocumentHead } from '@builder.io/qwik-city';
 import { routeLoader$, routeAction$, useNavigate, useLocation, zod$, z } from '@builder.io/qwik-city';
 import { LoadingSpinner } from '../../../components/common/LoadingSpinner';
-import { useTranslate } from '../../../lib/i18n/useTranslate';
+import { useTranslate, translateApp } from '../../../lib/i18n/useTranslate';
 import { useSwal } from '../../../lib/hooks/useSwal';
 import { getApiClient, extractCookieHeader } from '../../../lib/api/client';
 import { API_ENDPOINTS } from '../../../lib/api/endpoints';
@@ -223,7 +223,7 @@ export const useBulkDeleteMedia = routeAction$(async (data, { fail, cookie, requ
  * Media page - Matching Vue Dashboard
  */
 export default component$(() => {
-  const { t } = useTranslate();
+  const { lang } = useTranslate();
   const { confirm, success, error: showError } = useSwal();
   const navigate = useNavigate();
   const location = useLocation();
@@ -379,15 +379,15 @@ export default component$(() => {
 
   // Pre-compute translation strings to avoid serialization issues
   // Get base translation strings as plain strings
-  const deleteMultipleConfirmBase = String(t('media.deleteMultipleConfirm', { count: 0 }));
+  const deleteMultipleConfirmBase = String(translateApp(lang, 'media.deleteMultipleConfirm', { count: 0 }));
   
   const translations = {
-    uploadFailed: t('media.uploadFailed'),
-    fileTooLargeTemplate: t('media.fileTooLarge'),
-    deleteConfirm: t('media.deleteConfirm'),
-    deleteTitle: t('common.delete'),
-    successTitle: t('common.success'),
-    deleteSuccess: t('media.deleteSuccess'),
+    uploadFailed: translateApp(lang, 'media.uploadFailed'),
+    fileTooLargeTemplate: translateApp(lang, 'media.fileTooLarge'),
+    deleteConfirm: translateApp(lang, 'media.deleteConfirm'),
+    deleteTitle: translateApp(lang, 'common.delete'),
+    successTitle: translateApp(lang, 'common.success'),
+    deleteSuccess: translateApp(lang, 'media.deleteSuccess'),
     // Store the delete multiple confirm template as a plain string
     deleteMultipleConfirmTemplate: deleteMultipleConfirmBase,
   };
@@ -571,11 +571,11 @@ export default component$(() => {
 
   // Pre-compute model type labels to avoid serialization issues
   const modelTypeLabels: Record<string, string> = {
-    'App\\Models\\Project': t('media.modelType.project'),
-    'App\\Models\\Category': t('media.modelType.category'),
-    'App\\Models\\Skill': t('media.modelType.skill'),
-    'App\\Models\\BlogPost': t('media.modelType.blogPost'),
-    'App\\Models\\MediaLibrary': t('media.modelType.library') || 'Media Library',
+    'App\\Models\\Project': translateApp(lang, 'media.modelType.project'),
+    'App\\Models\\Category': translateApp(lang, 'media.modelType.category'),
+    'App\\Models\\Skill': translateApp(lang, 'media.modelType.skill'),
+    'App\\Models\\BlogPost': translateApp(lang, 'media.modelType.blogPost'),
+    'App\\Models\\MediaLibrary': translateApp(lang, 'media.modelType.library') || 'Media Library',
   };
 
   const getModelTypeLabel = ((type: string) => {
@@ -613,8 +613,8 @@ export default component$(() => {
 
   // Pre-compute save media translations
   const saveMediaTranslations = {
-    successTitle: t('common.success'),
-    updateSuccess: t('media.updateSuccess'),
+    successTitle: translateApp(lang, 'common.success'),
+    updateSuccess: translateApp(lang, 'media.updateSuccess'),
   };
 
   const saveMedia = $(async () => {
@@ -645,10 +645,10 @@ export default component$(() => {
 
   // Pre-compute create folder translations
   const createFolderTranslations = {
-    folderNameRequired: t('media.folderNameRequired') || 'Folder name is required',
-    folderCreateFailed: t('media.folderCreateFailed'),
-    successTitle: t('common.success'),
-    folderCreated: t('media.folderCreated'),
+    folderNameRequired: translateApp(lang, 'media.folderNameRequired') || 'Folder name is required',
+    folderCreateFailed: translateApp(lang, 'media.folderCreateFailed'),
+    successTitle: translateApp(lang, 'common.success'),
+    folderCreated: translateApp(lang, 'media.folderCreated'),
   };
 
   const createFolder = $(async () => {
@@ -730,10 +730,10 @@ export default component$(() => {
                   />
                 </svg>
                 <p class="mt-4 text-lg font-semibold text-gray-900 dark:text-gray-100">
-                  {t('media.dropFiles')}
+                  {translateApp(lang, 'media.dropFiles')}
                 </p>
                 <p class="mt-2 text-sm text-gray-600 dark:text-gray-400">
-                  {t('media.supportedFormats')}
+                  {translateApp(lang, 'media.supportedFormats')}
                 </p>
               </div>
             </div>
@@ -744,14 +744,14 @@ export default component$(() => {
         <div class="mb-6 flex items-center justify-between">
           <div>
             <h1 class="text-2xl font-bold text-gray-900 dark:text-gray-100">
-              {isSelectionMode ? (t('media.selectMedia') || 'Select Media') : t('media.title')}
+              {isSelectionMode ? (translateApp(lang, 'media.selectMedia') || 'Select Media') : translateApp(lang, 'media.title')}
             </h1>
-            <p class="text-gray-600 dark:text-gray-400">{t('media.subtitle')}</p>
+            <p class="text-gray-600 dark:text-gray-400">{translateApp(lang, 'media.subtitle')}</p>
           </div>
           <div class="flex items-center gap-4">
             {!isSelectionMode && (
               <span class="text-sm text-gray-500 dark:text-gray-400">
-                {pagination.value.total} {t('media.file')}
+                {pagination.value.total} {translateApp(lang, 'media.file')}
               </span>
             )}
             {isSelectionMode && selectedItems.value.size > 0 && (
@@ -759,7 +759,7 @@ export default component$(() => {
                 onClick$={selectMedia}
                 class="rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-primary-700"
               >
-                {t('common.select') || 'Select'}
+                {translateApp(lang, 'common.select') || 'Select'}
               </button>
             )}
             <input
@@ -775,7 +775,7 @@ export default component$(() => {
               disabled={uploadLoading.value}
               class="rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-primary-700 disabled:opacity-50"
             >
-              {uploadLoading.value ? t('media.uploading') : t('media.uploadFile')}
+              {uploadLoading.value ? translateApp(lang, 'media.uploading') : translateApp(lang, 'media.uploadFile')}
             </button>
           </div>
         </div>
@@ -784,11 +784,11 @@ export default component$(() => {
         {maxFileSize.value && (
           <div class="mb-4 rounded-lg bg-blue-50 px-4 py-2 text-sm text-blue-800 dark:bg-blue-900/20 dark:text-blue-300">
             <span class="font-medium">
-              {t('media.maxFileSizeNote').replace('{{max}}', formatFileSize(maxFileSize.value))}
+              {translateApp(lang, 'media.maxFileSizeNote').replace('{{max}}', formatFileSize(maxFileSize.value))}
               {maxFileSizeSource.value === 'server'
-                ? ` (${t('media.maxFileSizeSourceServer') || 'Server limit'})`
+                ? ` (${translateApp(lang, 'media.maxFileSizeSourceServer') || 'Server limit'})`
                 : maxFileSizeSource.value === 'application'
-                  ? ` (${t('media.maxFileSizeSourceApplication') || 'Application limit'})`
+                  ? ` (${translateApp(lang, 'media.maxFileSizeSourceApplication') || 'Application limit'})`
                   : ''}
             </span>
           </div>
@@ -801,7 +801,7 @@ export default component$(() => {
               type="text"
               value={searchQuery.value}
               onInput$={(e: any) => (searchQuery.value = e.target.value)}
-              placeholder={t('media.searchMedia')}
+              placeholder={translateApp(lang, 'media.searchMedia')}
               class="w-full rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm text-gray-900 shadow-sm focus:border-primary-500 focus:outline-none focus:ring focus:ring-primary-200 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:focus:ring-primary-700/40"
             />
           </div>
@@ -814,9 +814,9 @@ export default component$(() => {
               }}
               class="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-primary-500 focus:outline-none focus:ring focus:ring-primary-200 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:focus:ring-primary-700/40"
             >
-              <option value="created_at">{t('media.sortNewest')}</option>
-              <option value="name">{t('media.sortName')}</option>
-              <option value="size">{t('media.sortSize')}</option>
+              <option value="created_at">{translateApp(lang, 'media.sortNewest')}</option>
+              <option value="name">{translateApp(lang, 'media.sortName')}</option>
+              <option value="size">{translateApp(lang, 'media.sortSize')}</option>
             </select>
             <button
               onClick$={() => {
@@ -835,7 +835,7 @@ export default component$(() => {
           <div class="mb-4 rounded-lg border border-primary-200 bg-primary-50 p-3 dark:border-primary-800 dark:bg-primary-900/20">
             <div class="flex items-center justify-between">
               <span class="text-sm font-medium text-primary-900 dark:text-primary-100">
-                {t('media.selectedItems', { count: selectedItems.value.size })}
+                {translateApp(lang, 'media.selectedItems', { count: selectedItems.value.size })}
               </span>
               <div class="flex items-center gap-2">
                 {!isSelectionMode && (
@@ -843,21 +843,21 @@ export default component$(() => {
                     onClick$={bulkDownload}
                     class="rounded-lg px-3 py-1 text-sm text-primary-700 hover:bg-primary-100 dark:text-primary-300 dark:hover:bg-primary-800"
                   >
-                    {t('media.downloadSelected')}
+                    {translateApp(lang, 'media.downloadSelected')}
                   </button>
                 )}
                 <button
                   onClick$={deselectAll}
                   class="rounded-lg px-3 py-1 text-sm text-primary-700 hover:bg-primary-100 dark:text-primary-300 dark:hover:bg-primary-800"
                 >
-                  {t('media.deselectAll')}
+                  {translateApp(lang, 'media.deselectAll')}
                 </button>
                 {!isSelectionMode && (
                   <button
                     onClick$={bulkDelete}
                     class="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-red-700"
                   >
-                    {t('media.deleteSelected')}
+                    {translateApp(lang, 'media.deleteSelected')}
                   </button>
                 )}
               </div>
@@ -870,7 +870,7 @@ export default component$(() => {
           <div class="grid gap-4 md:grid-cols-4">
             <div>
               <label class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-200">
-                {t('media.fileType')}
+                {translateApp(lang, 'media.fileType')}
               </label>
               <select
                 value={filters.value.file_type}
@@ -880,16 +880,16 @@ export default component$(() => {
                 }}
                 class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-primary-500 focus:outline-none focus:ring focus:ring-primary-200 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:focus:ring-primary-700/40"
               >
-                <option value="">{t('media.all')}</option>
-                <option value="image">{t('media.images')}</option>
-                <option value="video">{t('media.video')}</option>
-                <option value="audio">{t('media.audio')}</option>
-                <option value="document">{t('media.documents')}</option>
+                <option value="">{translateApp(lang, 'media.all')}</option>
+                <option value="image">{translateApp(lang, 'media.images')}</option>
+                <option value="video">{translateApp(lang, 'media.video')}</option>
+                <option value="audio">{translateApp(lang, 'media.audio')}</option>
+                <option value="document">{translateApp(lang, 'media.documents')}</option>
               </select>
             </div>
             <div>
               <label class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-200">
-                {t('media.folders')}
+                {translateApp(lang, 'media.folders')}
               </label>
               <div class="flex gap-2">
                 <select
@@ -900,7 +900,7 @@ export default component$(() => {
                   }}
                   class="flex-1 rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-primary-500 focus:outline-none focus:ring focus:ring-primary-200 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:focus:ring-primary-700/40"
                 >
-                  <option value="">{t('media.all')}</option>
+                  <option value="">{translateApp(lang, 'media.all')}</option>
                   {folders.value.map((folder) => (
                     <option key={folder.id} value={String(folder.id)}>
                       {folder.name}
@@ -910,7 +910,7 @@ export default component$(() => {
                 <button
                   onClick$={() => (showFolderModal.value = true)}
                   class="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 shadow-sm transition hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:hover:bg-gray-700"
-                  title={t('media.createFolder')}
+                  title={translateApp(lang, 'media.createFolder')}
                 >
                   <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path
@@ -925,7 +925,7 @@ export default component$(() => {
             </div>
             <div>
               <label class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-200">
-                {t('media.uploadToFolder')}
+                {translateApp(lang, 'media.uploadToFolder')}
               </label>
               <select
                 value={uploadFolderId.value || ''}
@@ -934,7 +934,7 @@ export default component$(() => {
                 }}
                 class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-primary-500 focus:outline-none focus:ring focus:ring-primary-200 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:focus:ring-primary-700/40"
               >
-                <option value="">{t('media.rootFolder')}</option>
+                <option value="">{translateApp(lang, 'media.rootFolder')}</option>
                 {folders.value.map((folder) => (
                   <option key={folder.id} value={String(folder.id)}>
                     {folder.name}
@@ -953,7 +953,7 @@ export default component$(() => {
                 }}
                 class="w-full rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm transition hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:hover:bg-gray-700"
               >
-                {t('common.reset')}
+                {translateApp(lang, 'common.reset')}
               </button>
             </div>
           </div>
@@ -966,8 +966,8 @@ export default component$(() => {
           </div>
         ) : media.value.length === 0 ? (
           <div class="py-12 text-center text-gray-500 dark:text-gray-400">
-            <p>{t('media.noFiles')}</p>
-            <p class="mt-2 text-sm">{t('media.uploadFirstFile')}</p>
+            <p>{translateApp(lang, 'media.noFiles')}</p>
+            <p class="mt-2 text-sm">{translateApp(lang, 'media.uploadFirstFile')}</p>
           </div>
         ) : (
           <div class="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
@@ -1025,7 +1025,7 @@ export default component$(() => {
                         <button
                           onClick$={() => editMedia(item)}
                           class="rounded-lg bg-white/90 p-2 text-primary-600 shadow-lg transition hover:bg-white hover:text-primary-700 dark:bg-gray-800/90 dark:text-primary-400 dark:hover:bg-gray-800"
-                          title={t('common.edit')}
+                          title={translateApp(lang, 'common.edit')}
                         >
                           <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path
@@ -1041,7 +1041,7 @@ export default component$(() => {
                             window.open(item.url, '_blank');
                           }}
                           class="rounded-lg bg-white/90 p-2 text-primary-600 shadow-lg transition hover:bg-white hover:text-primary-700 dark:bg-gray-800/90 dark:text-primary-400 dark:hover:bg-gray-800"
-                          title={t('media.download')}
+                          title={translateApp(lang, 'media.download')}
                         >
                           <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path
@@ -1055,7 +1055,7 @@ export default component$(() => {
                         <button
                           onClick$={() => deleteMedia(item.id)}
                           class="rounded-lg bg-white/90 p-2 text-red-600 shadow-lg transition hover:bg-white hover:text-red-700 dark:bg-gray-800/90 dark:text-red-400 dark:hover:bg-gray-800"
-                          title={t('common.delete')}
+                          title={translateApp(lang, 'common.delete')}
                         >
                           <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path
@@ -1098,10 +1098,10 @@ export default component$(() => {
               disabled={pagination.value.currentPage === 1}
               class="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm transition hover:bg-gray-50 disabled:opacity-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 dark:hover:bg-gray-700"
             >
-              {t('common.previous')}
+              {translateApp(lang, 'common.previous')}
             </button>
             <span class="px-4 text-sm text-gray-600 dark:text-gray-400">
-              {t('media.page', {
+              {translateApp(lang, 'media.page', {
                 current: pagination.value.currentPage,
                 total: pagination.value.totalPages,
               })}
@@ -1111,7 +1111,7 @@ export default component$(() => {
               disabled={pagination.value.currentPage === pagination.value.totalPages}
               class="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm transition hover:bg-gray-50 disabled:opacity-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 dark:hover:bg-gray-700"
             >
-              {t('common.next')}
+              {translateApp(lang, 'common.next')}
             </button>
           </div>
         )}
@@ -1130,7 +1130,7 @@ export default component$(() => {
               onClick$={(e) => e.stopPropagation()}
             >
               <div class="sticky top-0 z-10 border-b border-gray-200 bg-white px-6 py-4 dark:border-gray-700 dark:bg-gray-800">
-                <h2 class="text-xl font-bold text-gray-900 dark:text-gray-100">{t('media.editMedia')}</h2>
+                <h2 class="text-xl font-bold text-gray-900 dark:text-gray-100">{translateApp(lang, 'media.editMedia')}</h2>
               </div>
 
               <div class="p-6">
@@ -1161,12 +1161,12 @@ export default component$(() => {
                     {/* File Information */}
                     <div class="rounded-lg border border-gray-200 bg-gray-50 p-4 dark:border-gray-700 dark:bg-gray-900">
                       <h3 class="mb-3 text-sm font-semibold text-gray-900 dark:text-gray-100">
-                        {t('media.fileName')}
+                        {translateApp(lang, 'media.fileName')}
                       </h3>
                       <dl class="space-y-2 text-sm">
                         <div class="flex justify-between">
                           <dt class="font-medium text-gray-500 dark:text-gray-400">
-                            {t('media.fileName')}:
+                            {translateApp(lang, 'media.fileName')}:
                           </dt>
                           <dd class="text-gray-900 dark:text-gray-100">
                             {(editingMedia.value as any).file_name || editingMedia.value.name}
@@ -1174,7 +1174,7 @@ export default component$(() => {
                         </div>
                         <div class="flex justify-between">
                           <dt class="font-medium text-gray-500 dark:text-gray-400">
-                            {t('media.fileSize')}:
+                            {translateApp(lang, 'media.fileSize')}:
                           </dt>
                           <dd class="text-gray-900 dark:text-gray-100">
                             {formatSize(editingMedia.value.size || 0)}
@@ -1182,7 +1182,7 @@ export default component$(() => {
                         </div>
                         <div class="flex justify-between">
                           <dt class="font-medium text-gray-500 dark:text-gray-400">
-                            {t('media.mimeType')}:
+                            {translateApp(lang, 'media.mimeType')}:
                           </dt>
                           <dd class="text-gray-900 dark:text-gray-100">
                             {editingMedia.value.mimeType || (editingMedia.value as any).mime_type || ''}
@@ -1190,7 +1190,7 @@ export default component$(() => {
                         </div>
                         <div class="flex justify-between">
                           <dt class="font-medium text-gray-500 dark:text-gray-400">
-                            {t('media.uploadedOn')}:
+                            {translateApp(lang, 'media.uploadedOn')}:
                           </dt>
                           <dd class="text-gray-900 dark:text-gray-100">
                             {editingMedia.value.createdAt
@@ -1222,7 +1222,7 @@ export default component$(() => {
                     {/* Name */}
                     <div>
                       <label class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-200">
-                        {t('media.fileName')}
+                        {translateApp(lang, 'media.fileName')}
                       </label>
                       <input
                         type="text"
@@ -1235,7 +1235,7 @@ export default component$(() => {
                     {/* Alt Text */}
                     <div>
                       <label class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-200">
-                        {t('media.altText')}
+                        {translateApp(lang, 'media.altText')}
                       </label>
                       <input
                         type="text"
@@ -1252,7 +1252,7 @@ export default component$(() => {
                     {/* Description */}
                     <div>
                       <label class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-200">
-                        {t('media.description')}
+                        {translateApp(lang, 'media.description')}
                       </label>
                       <textarea
                         rows={4}
@@ -1266,7 +1266,7 @@ export default component$(() => {
                     {/* Folder */}
                     <div>
                       <label class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-200">
-                        {t('media.folders')}
+                        {translateApp(lang, 'media.folders')}
                       </label>
                       <select
                         value={String((editingMedia.value as any).folder_id || '')}
@@ -1277,7 +1277,7 @@ export default component$(() => {
                         }}
                         class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-primary-500 focus:outline-none focus:ring focus:ring-primary-200 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:focus:ring-primary-700/40"
                       >
-                        <option value="">{`${t('media.all')} (${t('media.noFolders')})`}</option>
+                        <option value="">{`${translateApp(lang, 'media.all')} (${translateApp(lang, 'media.noFolders')})`}</option>
                         {folders.value.map((folder) => (
                           <option key={folder.id} value={String(folder.id)}>
                             {folder.name}
@@ -1289,7 +1289,7 @@ export default component$(() => {
                     {/* Tags */}
                     <div>
                       <label class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-200">
-                        {t('media.tags')}
+                        {translateApp(lang, 'media.tags')}
                       </label>
                       <div class="space-y-2">
                         {/* Tag Input */}
@@ -1304,7 +1304,7 @@ export default component$(() => {
                                 addTag();
                               }
                             }}
-                            placeholder={t('media.addTags')}
+                            placeholder={translateApp(lang, 'media.addTags')}
                             class="flex-1 rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-primary-500 focus:outline-none focus:ring focus:ring-primary-200 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:focus:ring-primary-700/40"
                           />
                           <button
@@ -1312,7 +1312,7 @@ export default component$(() => {
                             type="button"
                             class="rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-primary-700"
                           >
-                            {t('common.add')}
+                            {translateApp(lang, 'common.add')}
                           </button>
                         </div>
                         {/* Tags List */}
@@ -1336,7 +1336,7 @@ export default component$(() => {
                           </div>
                         ) : (
                           <p class="text-xs text-gray-500 dark:text-gray-400">
-                            {t('media.noTags') || 'No tags'}
+                            {translateApp(lang, 'media.noTags') || 'No tags'}
                           </p>
                         )}
                       </div>
@@ -1355,13 +1355,13 @@ export default component$(() => {
                     }}
                     class="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm transition hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 dark:hover:bg-gray-700"
                   >
-                    {t('common.cancel')}
+                    {translateApp(lang, 'common.cancel')}
                   </button>
                   <button
                     onClick$={saveMedia}
                     class="rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-primary-700"
                   >
-                    {t('common.save')}
+                    {translateApp(lang, 'common.save')}
                   </button>
                 </div>
               </div>
@@ -1384,31 +1384,31 @@ export default component$(() => {
             >
               <div class="border-b border-gray-200 px-6 py-4 dark:border-gray-700">
                 <h2 class="text-lg font-semibold text-gray-900 dark:text-gray-100">
-                  {t('media.createFolder')}
+                  {translateApp(lang, 'media.createFolder')}
                 </h2>
               </div>
               <div class="px-6 py-4 space-y-4">
                 <div>
                   <label class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-200">
-                    {t('media.folderName')}
+                    {translateApp(lang, 'media.folderName')}
                   </label>
                   <input
                     type="text"
                     value={folderForm.value.name}
                     onInput$={(e: any) => (folderForm.value.name = e.target.value)}
-                    placeholder={t('media.folderName')}
+                    placeholder={translateApp(lang, 'media.folderName')}
                     class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-primary-500 focus:outline-none focus:ring focus:ring-primary-200 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:focus:ring-primary-700/40"
                   />
                 </div>
                 <div>
                   <label class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-200">
-                    {t('media.description')}
+                    {translateApp(lang, 'media.description')}
                   </label>
                   <textarea
                     rows={3}
                     value={folderForm.value.description}
                     onInput$={(e: any) => (folderForm.value.description = e.target.value)}
-                    placeholder={t('media.folderDescription')}
+                    placeholder={translateApp(lang, 'media.folderDescription')}
                     class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-primary-500 focus:outline-none focus:ring focus:ring-primary-200 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:focus:ring-primary-700/40"
                   />
                 </div>
@@ -1422,13 +1422,13 @@ export default component$(() => {
                     }}
                     class="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm transition hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 dark:hover:bg-gray-700"
                   >
-                    {t('common.cancel')}
+                    {translateApp(lang, 'common.cancel')}
                   </button>
                   <button
                     onClick$={createFolder}
                     class="rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-primary-700"
                   >
-                    {t('common.create')}
+                    {translateApp(lang, 'common.create')}
                   </button>
                 </div>
               </div>

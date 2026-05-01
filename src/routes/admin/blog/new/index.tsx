@@ -18,7 +18,7 @@ import {
 import { useSiteLanguageConfig } from '../../layout';
 import { getApiClient, extractCookieHeader } from '../../../../lib/api/client';
 import { PageHeader } from '../../../../components/common/PageHeader';
-import { useTranslate } from '../../../../lib/i18n/useTranslate';
+import { useTranslate, translateApp } from '../../../../lib/i18n/useTranslate';
 import { API_ENDPOINTS } from '../../../../lib/api/endpoints';
 import { ROUTES } from '../../../../lib/constants/routes';
 import type { BlogPost, BlogPostCreateInput } from '../../../../types';
@@ -109,7 +109,7 @@ export const useCreateBlogPost = routeAction$(
  * Blog post create page
  */
 export default component$(() => {
-  const { t } = useTranslate();
+  const { lang } = useTranslate();
   const langConfig = useSiteLanguageConfig();
   const createAction = useCreateBlogPost();
   const contentLocaleDraft = useSignal('');
@@ -125,15 +125,15 @@ export default component$(() => {
   return (
     <>
       <PageHeader
-        title={t('blog.addNew')}
-        description={t('blog.subtitle')}
+        title={translateApp(lang, 'blog.addNew')}
+        description={translateApp(lang, 'blog.subtitle')}
       >
         <div class="flex gap-2">
           <Link
             href={ROUTES.ADMIN.BLOG}
             class="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm transition hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 dark:hover:bg-gray-700"
           >
-            {t('common.back')}
+            {translateApp(lang, 'common.back')}
           </Link>
         </div>
       </PageHeader>
@@ -165,16 +165,16 @@ export default component$(() => {
               kind="blog"
               locales={translationSecondaries}
               initialJson={blogTranslationsJson}
-              rtlBadge={t('contentTranslations.rtlBadge')}
-              fallbackHintShort={t('contentTranslations.fallbackPlaceholderHint')}
+              rtlBadge={translateApp(lang, 'contentTranslations.rtlBadge')}
+              fallbackHintShort={translateApp(lang, 'contentTranslations.fallbackPlaceholderHint')}
             >
               <ContentPrimaryLanguageSelect
                 siteLanguages={langConfig.value.site_languages}
                 defaultLocale={langConfig.value.default_locale}
                 value={contentLocaleDraft.value}
-                label={t('contentTranslations.contentPrimaryLanguage')}
-                hint={t('contentTranslations.contentPrimaryHint')}
-                useSiteDefaultLabel={t('contentTranslations.useSiteDefault')}
+                label={translateApp(lang, 'contentTranslations.contentPrimaryLanguage')}
+                hint={translateApp(lang, 'contentTranslations.contentPrimaryHint')}
+                useSiteDefaultLabel={translateApp(lang, 'contentTranslations.useSiteDefault')}
                 onChange$={$((code: string) => {
                   contentLocaleDraft.value = code;
                 })}
@@ -188,10 +188,10 @@ export default component$(() => {
                   langConfig.value.default_locale,
                   contentLocaleDraft.value.trim() !== '' ? contentLocaleDraft.value.trim() : null,
                 )}
-                label={t('contentTranslations.sectionTitle')}
-                hintPrimary={t('contentTranslations.defaultHint')}
-                hintSecondary={t('contentTranslations.fallbackPlaceholderHint')}
-                secondarySavePrefix={t('contentTranslations.addTranslations')}
+                label={translateApp(lang, 'contentTranslations.sectionTitle')}
+                hintPrimary={translateApp(lang, 'contentTranslations.defaultHint')}
+                hintSecondary={translateApp(lang, 'contentTranslations.fallbackPlaceholderHint')}
+                secondarySavePrefix={translateApp(lang, 'contentTranslations.addTranslations')}
                 onChange$={$((code: string) => {
                   editingLocaleDraft.value = code;
                 })}
@@ -204,14 +204,14 @@ export default component$(() => {
               >
               {!translationSecondaries.length ? (
                 <p class="md:col-span-2 text-sm text-gray-600 dark:text-gray-400">
-                  {t('contentTranslations.noSecondaryLanguages')}
+                  {translateApp(lang, 'contentTranslations.noSecondaryLanguages')}
                 </p>
               ) : null}
 
               <FieldTranslationGlobe
                 fieldKey="title"
                 gridSpan="one"
-                globeAriaLabel={t('contentTranslations.globeTitle')}
+                globeAriaLabel={translateApp(lang, 'contentTranslations.globeTitle')}
                 fallbackText=""
               >
                 <div>
@@ -219,7 +219,7 @@ export default component$(() => {
                     for="title"
                     class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-200"
                   >
-                    {t('blog.name')} *
+                    {translateApp(lang, 'blog.name')} *
                   </label>
                   <input
                     id="title"
@@ -241,7 +241,7 @@ export default component$(() => {
                   for="slug"
                   class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-200"
                 >
-                  {t('blog.slug')}
+                  {translateApp(lang, 'blog.slug')}
                 </label>
                 <input
                   id="slug"
@@ -256,16 +256,16 @@ export default component$(() => {
                   for="status"
                   class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-200"
                 >
-                  {t('blog.status')}
+                  {translateApp(lang, 'blog.status')}
                 </label>
                 <select
                   id="status"
                   name="status"
                   class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-primary-500 focus:outline-none focus:ring focus:ring-primary-200 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:focus:ring-primary-700/40"
                 >
-                  <option value="draft">{t('blog.statusDraft')}</option>
-                  <option value="published">{t('blog.statusPublished')}</option>
-                  <option value="archived">{t('blog.statusArchived')}</option>
+                  <option value="draft">{translateApp(lang, 'blog.statusDraft')}</option>
+                  <option value="published">{translateApp(lang, 'blog.statusPublished')}</option>
+                  <option value="archived">{translateApp(lang, 'blog.statusArchived')}</option>
                 </select>
               </div>
 
@@ -281,14 +281,14 @@ export default component$(() => {
                   for="featured"
                   class="text-sm font-medium text-gray-700 dark:text-gray-200"
                 >
-                  {t('blog.featured')}
+                  {translateApp(lang, 'blog.featured')}
                 </label>
               </div>
 
               <FieldTranslationGlobe
                 fieldKey="excerpt"
                 gridSpan="full"
-                globeAriaLabel={t('contentTranslations.globeExcerpt')}
+                globeAriaLabel={translateApp(lang, 'contentTranslations.globeExcerpt')}
                 fallbackText=""
               >
                 <div>
@@ -296,7 +296,7 @@ export default component$(() => {
                     for="excerpt"
                     class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-200"
                   >
-                    {t('blog.excerpt')}
+                    {translateApp(lang, 'blog.excerpt')}
                   </label>
                   <textarea
                     id="excerpt"
@@ -310,7 +310,7 @@ export default component$(() => {
               <FieldTranslationGlobe
                 fieldKey="content"
                 gridSpan="full"
-                globeAriaLabel={t('contentTranslations.globeContent')}
+                globeAriaLabel={translateApp(lang, 'contentTranslations.globeContent')}
                 fallbackText=""
                 secondaryTextareaRows={10}
               >
@@ -319,7 +319,7 @@ export default component$(() => {
                     for="content"
                     class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-200"
                   >
-                    {t('blog.content')}
+                    {translateApp(lang, 'blog.content')}
                   </label>
                   <textarea
                     id="content"
@@ -341,7 +341,7 @@ export default component$(() => {
                 for="published_at"
                 class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-200"
               >
-                {t('blog.publishedAt')}
+                {translateApp(lang, 'blog.publishedAt')}
               </label>
               <input
                 id="published_at"
@@ -364,14 +364,14 @@ export default component$(() => {
               href={ROUTES.ADMIN.BLOG}
               class="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm transition hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 dark:hover:bg-gray-700"
             >
-              {t('common.cancel')}
+              {translateApp(lang, 'common.cancel')}
             </Link>
             <button
               type="submit"
               disabled={createAction.isRunning}
               class="rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-primary-700 disabled:opacity-60"
             >
-              {createAction.isRunning ? t('common.loading') : t('common.save')}
+              {createAction.isRunning ? translateApp(lang, 'common.loading') : translateApp(lang, 'common.save')}
             </button>
           </div>
         </Form>

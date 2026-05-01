@@ -2,7 +2,7 @@ import { component$, useSignal, $ } from '@builder.io/qwik';
 import type { DocumentHead } from '@builder.io/qwik-city';
 import { routeLoader$ } from '@builder.io/qwik-city';
 import { PageHeader } from '../../../components/common/PageHeader';
-import { useTranslate } from '../../../lib/i18n/useTranslate';
+import { useTranslate, translateApp } from '../../../lib/i18n/useTranslate';
 import { mockNotifications, type Notification } from '../../../lib/api/mock-data';
 import { formatRelativeTime } from '../../../lib/utils/formatters';
 import { showSuccess } from '../../../lib/utils/toast';
@@ -31,7 +31,7 @@ export const useNotifications = routeLoader$(async () => {
 export default component$(() => {
   const notificationsLoader = useNotifications();
   const notifications = useSignal(notificationsLoader.value);
-  const { t } = useTranslate();
+  const { lang } = useTranslate();
 
   const handleMarkRead = $((id: string) => {
     const notification = notifications.value.find((n) => n.id === id);
@@ -72,8 +72,8 @@ export default component$(() => {
       {/* Component: NotificationsPage */}
       <div>
       <PageHeader
-        title={t('notifications.title')}
-        description={t('notifications.subtitle')}
+        title={translateApp(lang, 'notifications.title')}
+        description={translateApp(lang, 'notifications.subtitle')}
       />
 
       <div class="space-y-4">

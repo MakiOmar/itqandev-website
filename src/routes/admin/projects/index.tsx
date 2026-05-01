@@ -3,7 +3,7 @@ import type { DocumentHead } from '@builder.io/qwik-city';
 import { routeLoader$, routeAction$, useNavigate, Link, zod$, z } from '@builder.io/qwik-city';
 import { PageHeader } from '../../../components/common/PageHeader';
 import { LoadingSpinner } from '../../../components/common/LoadingSpinner';
-import { useTranslate } from '../../../lib/i18n/useTranslate';
+import { useTranslate, translateApp } from '../../../lib/i18n/useTranslate';
 import { useSwal } from '../../../lib/hooks/useSwal';
 import { getApiClient, extractCookieHeader } from '../../../lib/api/client';
 import { API_ENDPOINTS } from '../../../lib/api/endpoints';
@@ -83,7 +83,7 @@ export const useBulkDeleteProjects = routeAction$(async (data, { fail }) => {
  * Projects list page - Matching Vue Dashboard
  */
 export default component$(() => {
-  const { t } = useTranslate();
+  const { lang } = useTranslate();
   const { confirm, success, error: showError } = useSwal();
   const navigate = useNavigate();
   const projectsLoader = useProjects();
@@ -115,10 +115,10 @@ export default component$(() => {
 
   // Pre-compute translation strings to avoid serialization issues
   const translations = {
-    deleteConfirm: t('projects.deleteConfirm'),
-    deleteTitle: t('common.delete'),
-    successTitle: t('common.success'),
-    deletedText: t('common.deleted'),
+    deleteConfirm: translateApp(lang, 'projects.deleteConfirm'),
+    deleteTitle: translateApp(lang, 'common.delete'),
+    successTitle: translateApp(lang, 'common.success'),
+    deletedText: translateApp(lang, 'common.deleted'),
     failedToDelete: 'Failed to delete project',
     failedToDeleteMultiple: 'Failed to delete projects',
   };
@@ -184,7 +184,7 @@ export default component$(() => {
         )
       : [];
     if (locales.length === 0) {
-      return t('contentTranslations.noSecondaryLanguages') || '—';
+      return translateApp(lang, 'contentTranslations.noSecondaryLanguages') || '—';
     }
     const labels = locales.map((code) => `${languageLabelByCode.get(code) || code} (${code})`);
     return `${locales.length}: ${labels.join(', ')}`;
@@ -220,21 +220,21 @@ export default component$(() => {
       {/* Component: ProjectsPage */}
       <div>
         <PageHeader
-          title={t('projects.title')}
-          description={t('projects.subtitle')}
+          title={translateApp(lang, 'projects.title')}
+          description={translateApp(lang, 'projects.subtitle')}
         >
           <div class="flex gap-2">
             <Link
               href={ROUTES.ADMIN.PROJECTS_NEW}
               class="rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-primary-700"
             >
-              {t('projects.addNew')}
+              {translateApp(lang, 'projects.addNew')}
             </Link>
             <button
               onClick$={selectAll}
               class="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm transition hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 dark:hover:bg-gray-700"
             >
-              {t('common.selectAll') || 'Select all'}
+              {translateApp(lang, 'common.selectAll') || 'Select all'}
             </button>
           </div>
         </PageHeader>
@@ -243,27 +243,27 @@ export default component$(() => {
         <div class="rounded-lg border border-gray-200 bg-white shadow-sm dark:border-gray-800 dark:bg-gray-800">
           <div class="border-b border-gray-200 p-4 dark:border-gray-700">
             <div class="flex items-center justify-between">
-              <h2 class="text-lg font-semibold">{t('projects.list')}</h2>
+              <h2 class="text-lg font-semibold">{translateApp(lang, 'projects.list')}</h2>
               {selectedItems.value.size > 0 && (
                 <div class="flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 px-3 py-1 text-xs text-red-700 dark:border-red-800 dark:bg-red-900/20 dark:text-red-100">
-                  <span>{selectedItems.value.size} {t('common.selected') || 'selected'}</span>
+                  <span>{selectedItems.value.size} {translateApp(lang, 'common.selected') || 'selected'}</span>
                   <button
                     onClick$={bulkDelete}
                     class="rounded bg-red-600 px-2 py-1 text-white hover:bg-red-700"
                   >
-                    {t('common.delete')}
+                    {translateApp(lang, 'common.delete')}
                   </button>
                   <button
                     onClick$={selectAll}
                     class="rounded border border-gray-300 px-2 py-1 text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-800"
                   >
-                    {t('common.selectAll') || 'Select all'}
+                    {translateApp(lang, 'common.selectAll') || 'Select all'}
                   </button>
                   <button
                     onClick$={deselectAll}
                     class="rounded border border-gray-300 px-2 py-1 text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-800"
                   >
-                    {t('common.cancel')}
+                    {translateApp(lang, 'common.cancel')}
                   </button>
                 </div>
               )}
@@ -274,7 +274,7 @@ export default component$(() => {
               <LoadingSpinner />
             </div>
           ) : projects.value.length === 0 ? (
-            <div class="py-8 text-center text-gray-500 dark:text-gray-400">{t('projects.noProjects')}</div>
+            <div class="py-8 text-center text-gray-500 dark:text-gray-400">{translateApp(lang, 'projects.noProjects')}</div>
           ) : (
             <div class="divide-y divide-gray-200 dark:divide-gray-700">
               {projects.value.map((proj) => (
@@ -294,17 +294,17 @@ export default component$(() => {
                         <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">{proj.title}</h3>
                         <div class="mt-1 flex flex-wrap items-center gap-2 text-xs text-gray-600 dark:text-gray-300">
                           <span class="rounded bg-gray-100 px-2 py-0.5 dark:bg-gray-900/40">
-                            <span class="font-semibold">{t('contentTranslations.contentPrimaryLanguage') || 'Main'}:</span>{' '}
+                            <span class="font-semibold">{translateApp(lang, 'contentTranslations.contentPrimaryLanguage') || 'Main'}:</span>{' '}
                             {mainLocaleLabel(proj)}
                           </span>
                           <span class="rounded bg-gray-100 px-2 py-0.5 dark:bg-gray-900/40">
-                            <span class="font-semibold">{t('contentTranslations.sectionTitle') || 'Translations'}:</span>{' '}
+                            <span class="font-semibold">{translateApp(lang, 'contentTranslations.sectionTitle') || 'Translations'}:</span>{' '}
                             {translationsLabel(proj)}
                           </span>
                         </div>
                         {proj.categories && Array.isArray(proj.categories) && proj.categories.length > 0 && (
                           <div class="text-sm text-gray-600 dark:text-gray-300">
-                            <span class="font-medium">{t('projects.categories')}:</span>
+                            <span class="font-medium">{translateApp(lang, 'projects.categories')}:</span>
                             {proj.categories.map((c: any) => c.name).join(', ')}
                           </div>
                         )}
@@ -315,13 +315,13 @@ export default component$(() => {
                         onClick$={() => goToEdit(proj.id)}
                         class="rounded-lg bg-primary-600 px-3 py-1.5 text-xs font-medium text-white transition hover:bg-primary-700"
                       >
-                        {t('common.edit')}
+                        {translateApp(lang, 'common.edit')}
                       </button>
                       <button
                         onClick$={() => deleteProject(proj.id)}
                         class="rounded-lg border border-red-300 px-3 py-1.5 text-xs font-medium text-red-600 transition hover:bg-red-50 dark:border-red-700 dark:text-red-400 dark:hover:bg-red-900/20"
                       >
-                        {t('common.delete')}
+                        {translateApp(lang, 'common.delete')}
                       </button>
                     </div>
                   </div>

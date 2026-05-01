@@ -1,7 +1,7 @@
 import { component$, useSignal, useStore, useVisibleTask$, $ } from '@builder.io/qwik';
 import type { DocumentHead } from '@builder.io/qwik-city';
 import { Form } from '@builder.io/qwik-city';
-import { useTranslate } from '../../../../lib/i18n/useTranslate';
+import { useTranslate, translateApp } from '../../../../lib/i18n/useTranslate';
 import { useSwal } from '../../../../lib/hooks/useSwal';
 import {
   SettingsSaveButton,
@@ -18,24 +18,24 @@ function cloneLanguages(src: SiteLanguageRow[]): SiteLanguageRow[] {
 }
 
 export default component$(() => {
-  const { t } = useTranslate();
+  const { lang } = useTranslate();
   const settings = useSettings();
   const updateAction = useUpdateSettings();
 
-  const successTitle = String(t('common.success'));
-  const savedText = String(t('settings.saveSuccess'));
-  const errorTitle = String(t('common.error'));
-  const errorText = String(t('settings.saveFailed'));
+  const successTitle = String(translateApp(lang, 'common.success'));
+  const savedText = String(translateApp(lang, 'settings.saveSuccess'));
+  const errorTitle = String(translateApp(lang, 'common.error'));
+  const errorText = String(translateApp(lang, 'settings.saveFailed'));
 
   const { success: showSuccess, error: showError } = useSwal({
-    confirmTitle: String(t('common.confirm')),
-    yes: String(t('common.yes')),
-    no: String(t('common.no')),
-    alertTitle: String(t('common.alert')),
-    ok: String(t('common.ok')),
+    confirmTitle: String(translateApp(lang, 'common.confirm')),
+    yes: String(translateApp(lang, 'common.yes')),
+    no: String(translateApp(lang, 'common.no')),
+    alertTitle: String(translateApp(lang, 'common.alert')),
+    ok: String(translateApp(lang, 'common.ok')),
     successTitle,
     errorTitle,
-    warningTitle: String(t('common.warning')),
+    warningTitle: String(translateApp(lang, 'common.warning')),
   });
 
   const initialItems = cloneLanguages(settings.value.site_languages);
@@ -47,17 +47,17 @@ export default component$(() => {
     langsJson.value = JSON.stringify(items);
   });
 
-  const languageRowPrefix = String(t('settings.languageRow'));
+  const languageRowPrefix = String(translateApp(lang, 'settings.languageRow'));
 
   const rowStrings: LanguageSettingsRowStrings = {
-    fieldLabel: String(t('settings.languageCode')),
-    searchPlaceholder: String(t('settings.searchLanguage')),
-    emptyHint: String(t('settings.languageCodeEmpty')),
-    noResultsText: String(t('settings.languageNoResults')),
-    rtl: String(t('settings.rtl')),
-    languageLabel: String(t('settings.languageLabel')),
-    languageNative: String(t('settings.languageNative')),
-    removeLanguage: String(t('settings.removeLanguage')),
+    fieldLabel: String(translateApp(lang, 'settings.languageCode')),
+    searchPlaceholder: String(translateApp(lang, 'settings.searchLanguage')),
+    emptyHint: String(translateApp(lang, 'settings.languageCodeEmpty')),
+    noResultsText: String(translateApp(lang, 'settings.languageNoResults')),
+    rtl: String(translateApp(lang, 'settings.rtl')),
+    languageLabel: String(translateApp(lang, 'settings.languageLabel')),
+    languageNative: String(translateApp(lang, 'settings.languageNative')),
+    removeLanguage: String(translateApp(lang, 'settings.removeLanguage')),
   };
 
   const removeRowAt = $((index: number) => {
@@ -117,15 +117,15 @@ export default component$(() => {
 
   return (
     <div class="rounded-lg border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-800 dark:bg-gray-800">
-      <h2 class="mb-1 text-lg font-semibold text-gray-900 dark:text-gray-100">{t('settings.languagesTitle')}</h2>
-      <p class="mb-6 text-sm text-gray-600 dark:text-gray-400">{t('settings.languagesSubtitle')}</p>
+      <h2 class="mb-1 text-lg font-semibold text-gray-900 dark:text-gray-100">{translateApp(lang, 'settings.languagesTitle')}</h2>
+      <p class="mb-6 text-sm text-gray-600 dark:text-gray-400">{translateApp(lang, 'settings.languagesSubtitle')}</p>
 
       <Form action={updateAction} class="space-y-6">
         <input type="hidden" name="site_languages_json" value={langsJson.value} />
 
         <div>
           <label class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-200">
-            {t('settings.defaultLocale')}
+            {translateApp(lang, 'settings.defaultLocale')}
           </label>
           <select
             name="default_locale"
@@ -144,14 +144,14 @@ export default component$(() => {
         <div class="space-y-4">
           <div class="flex flex-wrap items-center justify-between gap-2">
             <h3 class="text-base font-medium text-gray-900 dark:text-gray-100">
-              {t('settings.languagesListHeading')}
+              {translateApp(lang, 'settings.languagesListHeading')}
             </h3>
             <button
               type="button"
               onClick$={addLanguageRow}
               class="rounded-lg bg-primary-600 px-3 py-1.5 text-sm font-medium text-white shadow-sm hover:bg-primary-700"
             >
-              {t('settings.addLanguage')}
+              {translateApp(lang, 'settings.addLanguage')}
             </button>
           </div>
 

@@ -2,7 +2,7 @@ import { component$, useSignal, $, useTask$ } from '@builder.io/qwik';
 import type { DocumentHead } from '@builder.io/qwik-city';
 import { routeLoader$, Link } from '@builder.io/qwik-city';
 import { PageHeader } from '../../../../components/common/PageHeader';
-import { useTranslate } from '../../../../lib/i18n/useTranslate';
+import { useTranslate, translateApp } from '../../../../lib/i18n/useTranslate';
 import { useSwal } from '../../../../lib/hooks/useSwal';
 import { getApiClient, extractCookieHeader } from '../../../../lib/api/client';
 import { API_ENDPOINTS } from '../../../../lib/api/endpoints';
@@ -68,7 +68,7 @@ export const useService = routeLoader$(async ({ params, cookie, request, fail })
 });
 
 export default component$(() => {
-  const { t } = useTranslate();
+  const { lang } = useTranslate();
   const { success, error: showError } = useSwal();
   const langConfig = useSiteLanguageConfig();
   const serviceLoader = useService();
@@ -76,8 +76,8 @@ export default component$(() => {
   const liveService = useSignal<AdminService | null>(null);
 
   const saveTranslations = {
-    successTitle: String(t('common.success')),
-    updatedText: String(t('common.updated')),
+    successTitle: String(translateApp(lang, 'common.success')),
+    updatedText: String(translateApp(lang, 'common.updated')),
   };
 
   const contentLocaleDraft = useSignal('');
@@ -304,9 +304,9 @@ export default component$(() => {
   if (!svc?.id) {
     return (
       <div class="p-6 text-center text-gray-600 dark:text-gray-300">
-        <p>{t('common.notFound') || 'Not found'}</p>
+        <p>{translateApp(lang, 'common.notFound') || 'Not found'}</p>
         <Link href={ROUTES.ADMIN.SERVICES} class="mt-2 inline-block text-primary-600">
-          {t('common.back')}
+          {translateApp(lang, 'common.back')}
         </Link>
       </div>
     );
@@ -314,12 +314,12 @@ export default component$(() => {
 
   return (
     <>
-      <PageHeader title={t('services.edit')} description={t('services.subtitle')}>
+      <PageHeader title={translateApp(lang, 'services.edit')} description={translateApp(lang, 'services.subtitle')}>
         <Link
           href={ROUTES.ADMIN.SERVICES}
           class="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm transition hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 dark:hover:bg-gray-700"
         >
-          {t('common.back')}
+          {translateApp(lang, 'common.back')}
         </Link>
       </PageHeader>
 
@@ -333,10 +333,10 @@ export default component$(() => {
               langConfig.value.default_locale,
               contentLocaleDraft.value.trim() !== '' ? contentLocaleDraft.value.trim() : null,
             )}
-            label={t('contentTranslations.sectionTitle')}
-            hintPrimary={t('contentTranslations.defaultHint')}
-            hintSecondary={t('contentTranslations.fallbackPlaceholderHint')}
-            secondarySavePrefix={t('contentTranslations.addTranslations')}
+            label={translateApp(lang, 'contentTranslations.sectionTitle')}
+            hintPrimary={translateApp(lang, 'contentTranslations.defaultHint')}
+            hintSecondary={translateApp(lang, 'contentTranslations.fallbackPlaceholderHint')}
+            secondarySavePrefix={translateApp(lang, 'contentTranslations.addTranslations')}
             onChange$={$((code: string) => {
               editingLocaleDraft.value = code;
             })}
@@ -348,7 +348,7 @@ export default component$(() => {
           >
           <div>
             <label for="esvc-name" class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-200">
-              {t('services.name')} *
+              {translateApp(lang, 'services.name')} *
             </label>
             <input
               id="esvc-name"
@@ -363,7 +363,7 @@ export default component$(() => {
 
           <div>
             <label for="esvc-slug" class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-200">
-              {t('services.slug')}
+              {translateApp(lang, 'services.slug')}
             </label>
             <input
               id="esvc-slug"
@@ -377,7 +377,7 @@ export default component$(() => {
 
           <div>
             <label for="esvc-short" class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-200">
-              {t('services.shortDescription')}
+              {translateApp(lang, 'services.shortDescription')}
             </label>
             <input
               id="esvc-short"
@@ -393,7 +393,7 @@ export default component$(() => {
 
           <div>
             <label for="esvc-desc" class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-200">
-              {t('services.description')}
+              {translateApp(lang, 'services.description')}
             </label>
             <textarea
               id="esvc-desc"
@@ -409,7 +409,7 @@ export default component$(() => {
 
           <div>
             <label for="esvc-process" class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-200">
-              {t('services.processLines')}
+              {translateApp(lang, 'services.processLines')}
             </label>
             <textarea
               id="esvc-process"
@@ -425,7 +425,7 @@ export default component$(() => {
 
           <div>
             <label for="esvc-deliverables" class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-200">
-              {t('services.deliverablesLines')}
+              {translateApp(lang, 'services.deliverablesLines')}
             </label>
             <textarea
               id="esvc-deliverables"
@@ -441,7 +441,7 @@ export default component$(() => {
 
           <div>
             <label for="esvc-icon" class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-200">
-              {t('services.icon')}
+              {translateApp(lang, 'services.icon')}
             </label>
             <input
               id="esvc-icon"
@@ -455,7 +455,7 @@ export default component$(() => {
 
           <div>
             <label for="esvc-sort" class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-200">
-              {t('services.sortOrder')}
+              {translateApp(lang, 'services.sortOrder')}
             </label>
             <input
               id="esvc-sort"
@@ -482,7 +482,7 @@ export default component$(() => {
               class="h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
             />
             <label for="esvc-published" class="text-sm font-medium text-gray-700 dark:text-gray-200">
-              {t('services.published')}
+              {translateApp(lang, 'services.published')}
             </label>
           </div>
 
@@ -493,13 +493,13 @@ export default component$(() => {
               onClick$={handleSave}
               class="flex-1 rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-primary-700"
             >
-              {t('common.update')}
+              {translateApp(lang, 'common.update')}
             </button>
             <Link
               href={ROUTES.ADMIN.SERVICES}
               class="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm transition hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 dark:hover:bg-gray-700"
             >
-              {t('common.cancel')}
+              {translateApp(lang, 'common.cancel')}
             </Link>
           </div>
           </EditingLocaleFieldsShell>

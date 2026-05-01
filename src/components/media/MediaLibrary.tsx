@@ -1,5 +1,5 @@
 import { component$, useSignal, $, useVisibleTask$, useTask$, type QRL } from '@builder.io/qwik';
-import { useTranslate } from '../../lib/i18n/useTranslate';
+import { useTranslate, translateApp } from '../../lib/i18n/useTranslate';
 import { useSwal } from '../../lib/hooks/useSwal';
 import { getApiClient } from '../../lib/api/client';
 import { API_ENDPOINTS } from '../../lib/api/endpoints';
@@ -19,7 +19,7 @@ interface MediaLibraryProps {
  * Can be embedded in modals without admin layout
  */
 export const MediaLibrary = component$<MediaLibraryProps>((props) => {
-  const { t } = useTranslate();
+  const { lang } = useTranslate();
   const { error: showError } = useSwal();
   const media = useSignal<Media[]>([]);
   const loading = useSignal(false);
@@ -35,7 +35,7 @@ export const MediaLibrary = component$<MediaLibraryProps>((props) => {
   const maxFileSize = useSignal<number | null>(null);
   const maxFileSizeSource = useSignal<'server' | 'application' | null>(null);
 
-  const fileTooLargeTemplate = t('media.fileTooLarge');
+  const fileTooLargeTemplate = translateApp(lang, 'media.fileTooLarge');
 
   const loadMedia = $(async (page = 1) => {
     loading.value = true;
@@ -258,7 +258,7 @@ export const MediaLibrary = component$<MediaLibraryProps>((props) => {
                 />
               </svg>
               <p class="mt-4 text-lg font-semibold text-gray-900 dark:text-gray-100">
-                {t('media.dropFiles') || 'Drop files here to upload'}
+                {translateApp(lang, 'media.dropFiles') || 'Drop files here to upload'}
               </p>
             </div>
           </div>
@@ -270,7 +270,7 @@ export const MediaLibrary = component$<MediaLibraryProps>((props) => {
         <div class="flex-1">
           <input
             type="text"
-            placeholder={t('media.search') || 'Search media...'}
+            placeholder={translateApp(lang, 'media.search') || 'Search media...'}
             value={searchQuery.value}
             onInput$={(e) => {
               searchQuery.value = (e.target as HTMLInputElement).value;
@@ -292,7 +292,7 @@ export const MediaLibrary = component$<MediaLibraryProps>((props) => {
             disabled={uploadLoading.value}
             class="rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {uploadLoading.value ? (t('media.uploading') || 'Uploading...') : (t('media.uploadFile') || 'Upload')}
+            {uploadLoading.value ? (translateApp(lang, 'media.uploading') || 'Uploading...') : (translateApp(lang, 'media.uploadFile') || 'Upload')}
           </button>
         </div>
       </div>
@@ -301,11 +301,11 @@ export const MediaLibrary = component$<MediaLibraryProps>((props) => {
       {maxFileSize.value && (
         <div class="mb-4 rounded-lg bg-blue-50 px-4 py-2 text-sm text-blue-800 dark:bg-blue-900/20 dark:text-blue-300">
           <span class="font-medium">
-            {t('media.maxFileSizeNote').replace('{{max}}', formatFileSize(maxFileSize.value))}
+            {translateApp(lang, 'media.maxFileSizeNote').replace('{{max}}', formatFileSize(maxFileSize.value))}
             {maxFileSizeSource.value === 'server'
-              ? ` (${t('media.maxFileSizeSourceServer') || 'Server limit'})`
+              ? ` (${translateApp(lang, 'media.maxFileSizeSourceServer') || 'Server limit'})`
               : maxFileSizeSource.value === 'application'
-                ? ` (${t('media.maxFileSizeSourceApplication') || 'Application limit'})`
+                ? ` (${translateApp(lang, 'media.maxFileSizeSourceApplication') || 'Application limit'})`
                 : ''}
           </span>
         </div>
@@ -316,7 +316,7 @@ export const MediaLibrary = component$<MediaLibraryProps>((props) => {
         <div class="mb-4 rounded-lg border border-primary-200 bg-primary-50 p-3 dark:border-primary-800 dark:bg-primary-900/20">
           <div class="flex items-center justify-between">
             <span class="text-sm font-medium text-primary-900 dark:text-primary-100">
-              {selectedItems.value.size} {selectedItems.value.size === 1 ? (t('media.item') || 'item') : (t('media.items') || 'items')} {t('common.selected') || 'selected'}
+              {selectedItems.value.size} {selectedItems.value.size === 1 ? (translateApp(lang, 'media.item') || 'item') : (translateApp(lang, 'media.items') || 'items')} {translateApp(lang, 'common.selected') || 'selected'}
             </span>
             <div class="flex items-center gap-2">
               <button
@@ -326,13 +326,13 @@ export const MediaLibrary = component$<MediaLibraryProps>((props) => {
                 }}
                 class="rounded-lg px-3 py-1 text-sm text-primary-700 hover:bg-primary-100 dark:text-primary-300 dark:hover:bg-primary-800"
               >
-                {t('media.deselectAll') || 'Deselect All'}
+                {translateApp(lang, 'media.deselectAll') || 'Deselect All'}
               </button>
               <button
                 onClick$={handleApply}
                 class="rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-primary-700"
               >
-                {t('common.select') || 'Select'}
+                {translateApp(lang, 'common.select') || 'Select'}
               </button>
             </div>
           </div>
@@ -359,7 +359,7 @@ export const MediaLibrary = component$<MediaLibraryProps>((props) => {
               d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
             />
           </svg>
-          <p>{t('media.noMedia') || 'No media found'}</p>
+          <p>{translateApp(lang, 'media.noMedia') || 'No media found'}</p>
         </div>
       ) : (
         <>
@@ -486,17 +486,17 @@ export const MediaLibrary = component$<MediaLibraryProps>((props) => {
                 disabled={currentPage.value === 1}
                 class="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm transition hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 dark:hover:bg-gray-700"
               >
-                {t('common.previous') || 'Previous'}
+                {translateApp(lang, 'common.previous') || 'Previous'}
               </button>
               <span class="text-sm text-gray-600 dark:text-gray-400">
-                {t('common.page') || 'Page'} {currentPage.value} {t('common.of') || 'of'} {totalPages.value}
+                {translateApp(lang, 'common.page') || 'Page'} {currentPage.value} {translateApp(lang, 'common.of') || 'of'} {totalPages.value}
               </span>
               <button
                 onClick$={() => loadMedia(currentPage.value + 1)}
                 disabled={currentPage.value >= totalPages.value}
                 class="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm transition hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 dark:hover:bg-gray-700"
               >
-                {t('common.next') || 'Next'}
+                {translateApp(lang, 'common.next') || 'Next'}
               </button>
             </div>
           )}

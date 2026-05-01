@@ -1,5 +1,5 @@
 import { component$, useSignal, useComputed$, $, type QRL } from '@builder.io/qwik';
-import { useTranslate } from '../../lib/i18n/useTranslate';
+import { useTranslate, translateApp } from '../../lib/i18n/useTranslate';
 
 export interface TagItem {
   id: string | number;
@@ -21,7 +21,7 @@ interface TagInputProps {
  * Similar to Vue TagInput component
  */
 export const TagInput = component$<TagInputProps>((props) => {
-  const { t } = useTranslate();
+  const { lang } = useTranslate();
   const searchQuery = useSignal('');
   const showSuggestions = useSignal(false);
   const blurTimeout = useSignal<ReturnType<typeof setTimeout> | null>(null);
@@ -206,7 +206,7 @@ export const TagInput = component$<TagInputProps>((props) => {
 
       {/* Loading indicator */}
       {props.loading && (
-        <div class="text-xs text-gray-500 dark:text-gray-400">{t('common.loading')}</div>
+        <div class="text-xs text-gray-500 dark:text-gray-400">{translateApp(lang, 'common.loading')}</div>
       )}
     </div>
   );

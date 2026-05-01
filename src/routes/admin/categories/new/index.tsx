@@ -2,7 +2,7 @@ import { component$, useSignal, $, useTask$ } from '@builder.io/qwik';
 import type { DocumentHead } from '@builder.io/qwik-city';
 import { useNavigate, Link } from '@builder.io/qwik-city';
 import { PageHeader } from '../../../../components/common/PageHeader';
-import { useTranslate } from '../../../../lib/i18n/useTranslate';
+import { useTranslate, translateApp } from '../../../../lib/i18n/useTranslate';
 import { useSwal } from '../../../../lib/hooks/useSwal';
 import { useSiteLanguageConfig } from '../../layout';
 import {
@@ -24,15 +24,15 @@ import type { Category } from '../../../../types';
  * Create category — primary language only on insert
  */
 export default component$(() => {
-  const { t } = useTranslate();
+  const { lang } = useTranslate();
   const { success, error: showError } = useSwal();
   const navigate = useNavigate();
   const langConfig = useSiteLanguageConfig();
   const createAction = useCreateCategory();
 
   const saveTranslations = {
-    successTitle: String(t('common.success')),
-    createdText: String(t('common.created')),
+    successTitle: String(translateApp(lang, 'common.success')),
+    createdText: String(translateApp(lang, 'common.created')),
   };
 
   const contentLocaleDraft = useSignal('');
@@ -141,12 +141,12 @@ export default component$(() => {
 
   return (
     <>
-      <PageHeader title={t('categories.addNew')} description={t('categories.subtitle')}>
+      <PageHeader title={translateApp(lang, 'categories.addNew')} description={translateApp(lang, 'categories.subtitle')}>
         <Link
           href={ROUTES.ADMIN.CATEGORIES}
           class="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm transition hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 dark:hover:bg-gray-700"
         >
-          {t('common.back') || 'Back'}
+          {translateApp(lang, 'common.back') || 'Back'}
         </Link>
       </PageHeader>
 
@@ -156,9 +156,9 @@ export default component$(() => {
             siteLanguages={langConfig.value.site_languages}
             defaultLocale={langConfig.value.default_locale}
             value={contentLocaleDraft.value}
-            label={t('contentTranslations.contentPrimaryLanguage')}
-            hint={t('contentTranslations.contentPrimaryHint')}
-            useSiteDefaultLabel={t('contentTranslations.useSiteDefault')}
+            label={translateApp(lang, 'contentTranslations.contentPrimaryLanguage')}
+            hint={translateApp(lang, 'contentTranslations.contentPrimaryHint')}
+            useSiteDefaultLabel={translateApp(lang, 'contentTranslations.useSiteDefault')}
             onChange$={$((code: string) => {
               contentLocaleDraft.value = code;
               const secondaries = secondaryLocalesForContent(
@@ -180,10 +180,10 @@ export default component$(() => {
               langConfig.value.default_locale,
               contentLocaleDraft.value.trim() !== '' ? contentLocaleDraft.value.trim() : null,
             )}
-            label={t('contentTranslations.sectionTitle')}
-            hintPrimary={t('contentTranslations.defaultHint')}
-            hintSecondary={t('contentTranslations.fallbackPlaceholderHint')}
-            secondarySavePrefix={t('contentTranslations.addTranslations')}
+            label={translateApp(lang, 'contentTranslations.sectionTitle')}
+            hintPrimary={translateApp(lang, 'contentTranslations.defaultHint')}
+            hintSecondary={translateApp(lang, 'contentTranslations.fallbackPlaceholderHint')}
+            secondarySavePrefix={translateApp(lang, 'contentTranslations.addTranslations')}
             onChange$={$((code: string) => {
               editingLocaleDraft.value = code;
             })}
@@ -195,7 +195,7 @@ export default component$(() => {
           >
           <div>
             <label for="name" class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-200">
-              {t('categories.name')} *
+              {translateApp(lang, 'categories.name')} *
             </label>
             <input
               id="name"
@@ -210,7 +210,7 @@ export default component$(() => {
 
           <div>
             <label for="slug" class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-200">
-              {t('categories.slug')}
+              {translateApp(lang, 'categories.slug')}
             </label>
             <input
               id="slug"
@@ -224,7 +224,7 @@ export default component$(() => {
 
           <div>
             <label for="description" class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-200">
-              {t('categories.description')}
+              {translateApp(lang, 'categories.description')}
             </label>
             <textarea
               id="description"
@@ -251,7 +251,7 @@ export default component$(() => {
               class="h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
             />
             <label for="is_featured" class="text-sm font-medium text-gray-700 dark:text-gray-200">
-              {t('categories.featured')}
+              {translateApp(lang, 'categories.featured')}
             </label>
           </div>
 
@@ -262,13 +262,13 @@ export default component$(() => {
               onClick$={handleSave}
               class="flex-1 rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-primary-700"
             >
-              {t('common.add')}
+              {translateApp(lang, 'common.add')}
             </button>
             <Link
               href={ROUTES.ADMIN.CATEGORIES}
               class="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm transition hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 dark:hover:bg-gray-700"
             >
-              {t('common.cancel')}
+              {translateApp(lang, 'common.cancel')}
             </Link>
           </div>
           </EditingLocaleFieldsShell>
