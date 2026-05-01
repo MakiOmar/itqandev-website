@@ -10,6 +10,7 @@ import { ROUTES } from '../../../../lib/constants/routes';
 import { useSiteLanguageConfig } from '../../layout';
 import {
   ContentEditingLanguageSelect,
+  ContentPrimaryLanguageSelect,
   EditingLocaleFieldsShell,
 } from '../../../../components/admin/PerFieldContentTranslations';
 import { secondaryLocalesForContent } from '../../../../lib/content-translations';
@@ -325,6 +326,40 @@ export default component$(() => {
 
       <div class="mx-auto max-w-2xl rounded-lg border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-800 dark:bg-gray-800">
         <div class="space-y-4">
+          {/* Primary language for this record (matches create form). */}
+          <ContentPrimaryLanguageSelect
+            siteLanguages={langConfig.value.site_languages}
+            defaultLocale={langConfig.value.default_locale}
+            value={contentLocaleDraft.value}
+            label={translateApp(lang, 'contentTranslations.contentPrimaryLanguage')}
+            hint={translateApp(lang, 'contentTranslations.contentPrimaryHint')}
+            useSiteDefaultLabel={translateApp(lang, 'contentTranslations.useSiteDefault')}
+            onChange$={$((code: string) => {
+              contentLocaleDraft.value = code;
+              const s = (liveService.value ?? serviceLoader.value) as AdminService | undefined;
+              const secondaries = secondaryLocalesForContent(
+                langConfig.value.site_languages,
+                langConfig.value.default_locale,
+                contentLocaleDraft.value.trim() !== '' ? contentLocaleDraft.value.trim() : null,
+              );
+              translationsJson.value = JSON.stringify(
+                secondaries.map((l) => {
+                  const row = s?.translations?.find(
+                    (x) => String(x?.locale).toLowerCase() === l.code.toLowerCase(),
+                  );
+                  return {
+                    locale: l.code,
+                    name: row?.name ?? '',
+                    short_description: row?.short_description ?? '',
+                    description: row?.description ?? '',
+                    process: Array.isArray(row?.process) ? row?.process : [],
+                    deliverables: Array.isArray(row?.deliverables) ? row?.deliverables : [],
+                  };
+                }),
+              );
+            })}
+          />
+
           <ContentEditingLanguageSelect
             siteLanguages={langConfig.value.site_languages}
             value={editingLocaleDraft.value}
