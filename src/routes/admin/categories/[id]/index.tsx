@@ -95,8 +95,46 @@ export default component$(() => {
         fd.append(k, String(v));
       }
     }
-    await action.submit(fd);
-    return (action as any).value;
+    const submitted = await action.submit(fd);
+    await Promise.resolve();
+    await Promise.resolve();
+    await Promise.resolve();
+    let storeVal = (action as any).value as unknown;
+    if (storeVal === undefined || storeVal === null) {
+      await new Promise<void>((r) => requestAnimationFrame(() => r()));
+      storeVal = (action as any).value as unknown;
+    }
+
+    const fromEnvelope =
+      submitted != null && typeof submitted === 'object' && 'value' in submitted
+        ? (submitted as { value: unknown }).value
+        : undefined;
+
+    const looksLikePayload = (x: unknown) =>
+      x != null &&
+      typeof x === 'object' &&
+      ('success' in (x as object) || 'category' in (x as object) || 'failed' in (x as object));
+
+    let out: unknown =
+      fromEnvelope !== undefined && fromEnvelope !== null
+        ? fromEnvelope
+        : storeVal !== undefined && storeVal !== null
+          ? storeVal
+          : looksLikePayload(submitted)
+            ? submitted
+            : undefined;
+
+    if (
+      out != null &&
+      typeof out === 'object' &&
+      'status' in out &&
+      'value' in out &&
+      (out as { value: unknown }).value === undefined
+    ) {
+      out = storeVal !== undefined && storeVal !== null ? storeVal : undefined;
+    }
+
+    return out;
   });
 
   useTask$(({ track }) => {
