@@ -22,7 +22,11 @@ export function primaryLocaleForContent(
   return raw && codes.has(raw) ? raw : def;
 }
 
-/** Normalized locale for form-level editing mode, constrained to enabled site languages. */
+/**
+ * Locale for content-editing mode (matches dropdown value).
+ * If `siteLanguages` is stale/incomplete vs the dropdown (loader race), snapping `ar` → primary `en`
+ * makes `shouldWritePrimaryColumns` true so Arabic overwrites primary columns instead of translation rows.
+ */
 export function normalizeEditingLocale(
   requestedLocale: string | null | undefined,
   siteLanguages: SiteLanguageRow[] | undefined | null,
@@ -36,6 +40,9 @@ export function normalizeEditingLocale(
   const codes = new Set(list.map((l) => String(l.code).toLowerCase()));
   const req = requestedLocale != null ? String(requestedLocale).trim().toLowerCase() : '';
   if (req && codes.has(req)) {
+    return req;
+  }
+  if (req !== '') {
     return req;
   }
   return primaryLocaleForContent(siteLanguages, siteDefaultLocale, contentLocale);

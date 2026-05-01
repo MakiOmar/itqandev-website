@@ -92,7 +92,7 @@ export const serviceSchema = z.object({
   canonical_process_lines: z.string().optional(),
   canonical_deliverables_lines: z.string().optional(),
   translations_json: z.string().optional(),
-});
+}).passthrough();
 
 const toBool = (v: unknown) => v === true || v === '1' || v === 'on' || v === 'true';
 

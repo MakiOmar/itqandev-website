@@ -46,7 +46,7 @@ export const categorySchema = z.object({
   canonical_name: z.string().optional(),
   canonical_description: z.string().optional(),
   translations_json: z.string().optional(),
-});
+}).passthrough();
 
 const toBool = (v: unknown) => v === true || v === '1' || v === 'on' || v === 'true';
 
