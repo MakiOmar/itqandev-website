@@ -13,6 +13,7 @@ import { useLocaleAwareList } from '../../../lib/hooks/useLocaleAwareList';
 import {
   ContentEditingLanguageSelect,
   ContentPrimaryLanguageSelect,
+  EditingLocaleFieldsShell,
 } from '../../../components/admin/PerFieldContentTranslations';
 import { parseTranslationsJson, secondaryLocalesForContent } from '../../../lib/content-translations';
 import {
@@ -529,6 +530,10 @@ export default component$(() => {
                   editingLocaleDraft.value = code;
                 })}
               />
+              <EditingLocaleFieldsShell
+                siteLanguages={langConfig.value.site_languages}
+                editingLocale={editingLocaleDraft}
+              >
               <div>
                 <label
                   for="name"
@@ -613,6 +618,7 @@ export default component$(() => {
                   {t('common.cancel')}
                 </button>
               </div>
+              </EditingLocaleFieldsShell>
             </div>
           </div>
         )}

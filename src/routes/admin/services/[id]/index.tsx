@@ -8,7 +8,10 @@ import { getApiClient, extractCookieHeader } from '../../../../lib/api/client';
 import { API_ENDPOINTS } from '../../../../lib/api/endpoints';
 import { ROUTES } from '../../../../lib/constants/routes';
 import { useSiteLanguageConfig } from '../../layout';
-import { ContentEditingLanguageSelect } from '../../../../components/admin/PerFieldContentTranslations';
+import {
+  ContentEditingLanguageSelect,
+  EditingLocaleFieldsShell,
+} from '../../../../components/admin/PerFieldContentTranslations';
 import { secondaryLocalesForContent } from '../../../../lib/content-translations';
 import {
   mergeServiceFieldsForUiLocale,
@@ -339,6 +342,10 @@ export default component$(() => {
             })}
           />
 
+          <EditingLocaleFieldsShell
+            siteLanguages={langConfig.value.site_languages}
+            editingLocale={editingLocaleDraft}
+          >
           <div>
             <label for="esvc-name" class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-200">
               {t('services.name')} *
@@ -495,6 +502,7 @@ export default component$(() => {
               {t('common.cancel')}
             </Link>
           </div>
+          </EditingLocaleFieldsShell>
         </div>
       </div>
     </>

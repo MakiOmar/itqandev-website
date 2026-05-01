@@ -13,6 +13,7 @@ import { API_ENDPOINTS } from '../../../../lib/api/endpoints';
 import { ROUTES } from '../../../../lib/constants/routes';
 import {
   ContentEditingLanguageSelect,
+  EditingLocaleFieldsShell,
   FieldTranslationGlobe,
   TranslationsFormRoot,
 } from '../../../../components/admin/PerFieldContentTranslations';
@@ -558,6 +559,11 @@ export default component$(() => {
                     })}
                   />
 
+                  <EditingLocaleFieldsShell
+                    variant="gridContents"
+                    siteLanguages={langConfig.value.site_languages}
+                    editingLocale={editingLocaleDraft}
+                  >
                   {!translationSecondaries.length ? (
                     <p class="md:col-span-2 text-sm text-gray-600 dark:text-gray-400">{translations.ctNoLangs}</p>
                   ) : null}
@@ -661,8 +667,14 @@ export default component$(() => {
                       />
                     </div>
                   </FieldTranslationGlobe>
+                  </EditingLocaleFieldsShell>
                 </TranslationsFormRoot>
 
+                <EditingLocaleFieldsShell
+                  variant="gridContents"
+                  siteLanguages={langConfig.value.site_languages}
+                  editingLocale={editingLocaleDraft}
+                >
                 <div>
                   <label
                     for="link_url"
@@ -726,6 +738,7 @@ export default component$(() => {
                     class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-primary-500 focus:outline-none focus:ring focus:ring-primary-200 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:focus:ring-primary-700/40"
                   />
                 </div>
+                </EditingLocaleFieldsShell>
               </div>
             </div>
 

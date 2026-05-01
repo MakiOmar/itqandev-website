@@ -15,6 +15,7 @@ import {
   serializeTranslationsJson,
   translationRowsFromJsonString,
 } from '../../lib/content-translations';
+import { directionForSiteLocale, langAttributeForLocale } from '../../lib/i18n/editing-locale-direction';
 
 type TranslationKind = 'project' | 'blog';
 
@@ -194,7 +195,12 @@ export const FieldTranslationGlobe = component$<{
       {expanded.value ? (
         <div class="mt-1 space-y-4 rounded-lg border border-sky-100 bg-sky-50/40 p-3 dark:border-sky-900/50 dark:bg-sky-950/20 md:col-span-2">
           {ctx.locales.map((loc) => (
-            <div key={loc.code} class="rounded-md border border-gray-100 bg-white/90 p-3 dark:border-gray-800 dark:bg-gray-900/80">
+            <div
+              key={loc.code}
+              dir={loc.rtl ? 'rtl' : 'ltr'}
+              lang={loc.code}
+              class="rounded-md border border-gray-100 bg-white/90 p-3 dark:border-gray-800 dark:bg-gray-900/80"
+            >
               <div class="mb-2 flex flex-wrap items-center gap-2">
                 <span class="text-sm font-semibold text-gray-900 dark:text-gray-100">
                   {loc.native_label || loc.label} ({loc.code})
@@ -218,6 +224,8 @@ export const FieldTranslationGlobe = component$<{
                     ctx.store[loc.code][props.fieldKey] = el.value;
                     ctx.hiddenJson.value = serializeTranslationsJson(ctx.kind, ctx.locales, ctx.store);
                   }}
+                  dir={loc.rtl ? 'rtl' : 'ltr'}
+                  lang={loc.code}
                   class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-primary-500 focus:outline-none focus:ring focus:ring-primary-200 dark:border-gray-600 dark:bg-gray-950 dark:text-gray-100"
                 />
               ) : (
@@ -233,6 +241,8 @@ export const FieldTranslationGlobe = component$<{
                     ctx.store[loc.code][props.fieldKey] = el.value;
                     ctx.hiddenJson.value = serializeTranslationsJson(ctx.kind, ctx.locales, ctx.store);
                   }}
+                  dir={loc.rtl ? 'rtl' : 'ltr'}
+                  lang={loc.code}
                   class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-primary-500 focus:outline-none focus:ring focus:ring-primary-200 dark:border-gray-600 dark:bg-gray-950 dark:text-gray-100"
                 />
               )}
@@ -285,6 +295,26 @@ export const ContentPrimaryLanguageSelect = component$<{
  * Editing language for the current form session.
  * When it matches effective primary locale, main columns are edited; otherwise translation rows are edited.
  */
+/**
+ * Wrap translatable fields; sets dir/lang from editing locale (RTL Arabic etc.).
+ * Use variant `gridContents` inside md:grid-cols-* forms so children stay grid items.
+ */
+export const EditingLocaleFieldsShell = component$<{
+  siteLanguages: SiteLanguageRow[];
+  editingLocale: Signal<string>;
+  /** stack: vertical spacing; gridContents: display contents for nested CSS grids */
+  variant?: 'stack' | 'gridContents';
+}>((props) => {
+  const dir = directionForSiteLocale(props.siteLanguages, props.editingLocale.value);
+  const lang = langAttributeForLocale(props.editingLocale.value);
+  const cls = props.variant === 'gridContents' ? 'contents' : 'space-y-4';
+  return (
+    <div dir={dir} lang={lang} class={cls}>
+      <Slot />
+    </div>
+  );
+});
+
 export const ContentEditingLanguageSelect = component$<{
   siteLanguages: SiteLanguageRow[];
   value: string;

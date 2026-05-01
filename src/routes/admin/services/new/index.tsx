@@ -8,6 +8,7 @@ import { useSiteLanguageConfig } from '../../layout';
 import {
   ContentEditingLanguageSelect,
   ContentPrimaryLanguageSelect,
+  EditingLocaleFieldsShell,
 } from '../../../../components/admin/PerFieldContentTranslations';
 import { secondaryLocalesForContent } from '../../../../lib/content-translations';
 import {
@@ -224,6 +225,10 @@ export default component$(() => {
             })}
           />
 
+          <EditingLocaleFieldsShell
+            siteLanguages={langConfig.value.site_languages}
+            editingLocale={editingLocaleDraft}
+          >
           <div>
             <label for="svc-name" class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-200">
               {t('services.name')} *
@@ -381,6 +386,7 @@ export default component$(() => {
               {t('common.cancel')}
             </Link>
           </div>
+          </EditingLocaleFieldsShell>
         </div>
       </div>
     </>
