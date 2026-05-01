@@ -119,7 +119,6 @@ export const useUpdateCategory = routeAction$(
       const rawContentLocale = (data as { content_locale?: string }).content_locale?.trim();
       const contentLocale = rawContentLocale && rawContentLocale.length > 0 ? rawContentLocale : null;
 
-      const parsedTranslations = parseTranslationsJson((data as { translations_json?: string }).translations_json);
       const siteDef = String((data as { form_site_default_locale?: string }).form_site_default_locale || 'en');
       const effectivePrimary = String((data as { effective_primary_locale?: string }).effective_primary_locale || siteDef);
       const editingLocale = String((data as { editing_locale?: string }).editing_locale || effectivePrimary);
@@ -131,9 +130,8 @@ export const useUpdateCategory = routeAction$(
       let translationsOut: unknown[] | undefined;
 
       if (shouldWritePrimaryColumns(editingLocale, effectivePrimary)) {
-        if (parsedTranslations) {
-          translationsOut = parsedTranslations;
-        }
+        // Same as services update: do not PATCH translation rows from placeholder-only translations_json.
+        translationsOut = undefined;
       } else {
         name = canonicalName;
         description = canonicalDescription;
