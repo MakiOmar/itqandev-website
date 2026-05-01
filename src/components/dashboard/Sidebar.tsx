@@ -197,39 +197,6 @@ export const Sidebar = component$<SidebarProps>((props) => {
     return true;
   });
 
-  // eslint-disable-next-line qwik/no-use-visible-task
-  useVisibleTask$(({ track }) => {
-    track(() => auth.value?.user?.permissions);
-    track(() => auth.value?.user?.role);
-    const u = auth.value?.user;
-    const perms = u?.permissions ?? [];
-    const pset = new Set(perms);
-    const count = navItems.filter((item) => {
-      if (item.permission && !pset.has(item.permission)) return false;
-      if (item.roles && !item.roles.includes(u?.role || 'user')) return false;
-      return true;
-    }).length;
-    // #region agent log
-    fetch('http://127.0.0.1:7469/ingest/ed85bb2c-c192-44f6-8c60-9fe04360649a', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'X-Debug-Session-Id': '71ed8d' },
-      body: JSON.stringify({
-        sessionId: '71ed8d',
-        hypothesisId: 'C',
-        location: 'Sidebar.tsx:visible',
-        message: 'sidebar auth snapshot',
-        data: {
-          permissionsLen: Array.isArray(perms) ? perms.length : -1,
-          role: u?.role ?? null,
-          hasManageBlog: pset.has('manage blog'),
-          filteredNavCount: count,
-        },
-        timestamp: Date.now(),
-      }),
-    }).catch(() => {});
-    // #endregion
-  });
-
   const isActive = (href: string) => {
     const current = location.url.pathname.replace(/\/+$/, '') || '/';
     const target = href.replace(/\/+$/, '') || '/';
