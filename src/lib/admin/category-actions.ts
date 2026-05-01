@@ -33,11 +33,19 @@ function categoryPayloadForApi(data: {
  * Category schema (used by Qwik City action validation)
  * Note: action data comes as strings from forms, so is_featured can be "1"/"on"/"true".
  */
+/** Same pattern as skills/services: Zod strips undeclared keys (translations_json etc.). */
 export const categorySchema = z.object({
   name: z.string().min(1, 'Name is required'),
   slug: z.string().optional(),
   description: z.string().optional(),
   is_featured: z.union([z.boolean(), z.string()]).optional(),
+  content_locale: z.string().optional(),
+  editing_locale: z.string().optional(),
+  form_site_default_locale: z.string().optional(),
+  effective_primary_locale: z.string().optional(),
+  canonical_name: z.string().optional(),
+  canonical_description: z.string().optional(),
+  translations_json: z.string().optional(),
 });
 
 const toBool = (v: unknown) => v === true || v === '1' || v === 'on' || v === 'true';

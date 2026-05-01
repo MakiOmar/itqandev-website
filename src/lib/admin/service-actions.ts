@@ -68,6 +68,9 @@ function servicePayloadForApi(data: {
   return body;
 }
 
+/**
+ * Zod strips unknown keys by default — translation helpers must be declared or mergeSecondary* never sees them (skills schema lists these explicitly).
+ */
 export const serviceSchema = z.object({
   name: z.string().min(1, 'Name is required'),
   slug: z.string().min(1, 'Slug is required'),
@@ -78,6 +81,16 @@ export const serviceSchema = z.object({
   icon: z.string().optional(),
   sort_order: z.union([z.string(), z.number()]).optional(),
   is_published: z.union([z.boolean(), z.string()]).optional(),
+  content_locale: z.string().optional(),
+  editing_locale: z.string().optional(),
+  form_site_default_locale: z.string().optional(),
+  effective_primary_locale: z.string().optional(),
+  canonical_name: z.string().optional(),
+  canonical_short_description: z.string().optional(),
+  canonical_description: z.string().optional(),
+  canonical_process_lines: z.string().optional(),
+  canonical_deliverables_lines: z.string().optional(),
+  translations_json: z.string().optional(),
 });
 
 const toBool = (v: unknown) => v === true || v === '1' || v === 'on' || v === 'true';
