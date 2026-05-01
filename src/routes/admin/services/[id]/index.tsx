@@ -124,11 +124,15 @@ export default component$(() => {
     // Must track lang config too; otherwise translations_json stays stale if site languages resolve after the service loader (Arabic rows missing from payload).
     track(() => langConfig.value.site_languages);
     track(() => langConfig.value.default_locale);
-    const s = track(() => serviceLoader.value) as AdminService | undefined;
-    if (!s?.id) {
+    const loaderSvc = track(() => serviceLoader.value) as AdminService | undefined;
+    if (!loaderSvc?.id) {
       return;
     }
-    liveService.value = s;
+    const existing = liveService.value;
+    if (existing == null || existing.id !== loaderSvc.id) {
+      liveService.value = loaderSvc;
+    }
+    const s = (liveService.value ?? loaderSvc) as AdminService;
     contentLocaleDraft.value =
       s.content_locale != null && String(s.content_locale).trim() !== '' ? String(s.content_locale).trim() : '';
     canonicalName.value = s.name ?? '';

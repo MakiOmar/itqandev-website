@@ -102,9 +102,13 @@ export default component$(() => {
   useTask$(({ track }) => {
     track(() => langConfig.value.site_languages);
     track(() => langConfig.value.default_locale);
-    const c = track(() => categoryLoader.value) as Category | undefined;
-    if (!c?.id) return;
-    liveCategory.value = c;
+    const loaderCat = track(() => categoryLoader.value) as Category | undefined;
+    if (!loaderCat?.id) return;
+    const existingCat = liveCategory.value;
+    if (existingCat == null || existingCat.id !== loaderCat.id) {
+      liveCategory.value = loaderCat;
+    }
+    const c = (liveCategory.value ?? loaderCat) as Category;
     contentLocaleDraft.value =
       (c as any).content_locale != null && String((c as any).content_locale).trim() !== ''
         ? String((c as any).content_locale).trim()
