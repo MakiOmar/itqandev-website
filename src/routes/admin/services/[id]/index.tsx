@@ -164,6 +164,28 @@ export default component$(() => {
       hasStoreValue: storeVal !== undefined && storeVal !== null,
       outKeys: out != null && typeof out === 'object' ? Object.keys(out as object) : typeof out,
     });
+    // #region agent log
+    fetch('http://127.0.0.1:7469/ingest/ed85bb2c-c192-44f6-8c60-9fe04360649a', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-Debug-Session-Id': '08cfc0' },
+      body: JSON.stringify({
+        sessionId: '08cfc0',
+        hypothesisId: 'H1',
+        runId: 'post-fix',
+        location: 'admin/services/[id]/index.tsx:submitWithFormData',
+        message: 'after submit flush: envelope vs store vs out',
+        data: {
+          hasFromEnvelope: fromEnvelope !== undefined && fromEnvelope !== null,
+          hasStore: storeVal !== undefined && storeVal !== null,
+          outUndefined: out === undefined,
+          outFailed: out != null && typeof out === 'object' && 'failed' in (out as object),
+          outSuccess: out != null && typeof out === 'object' && 'success' in (out as object),
+          outKeys: out != null && typeof out === 'object' ? Object.keys(out as object).slice(0, 12) : typeof out,
+        },
+        timestamp: Date.now(),
+      }),
+    }).catch(() => {});
+    // #endregion
     return out;
   });
 
