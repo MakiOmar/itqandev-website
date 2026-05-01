@@ -245,6 +245,37 @@ export const useUpdateService = routeAction$(
         translations: translationsOut,
       });
 
+      // #region agent log
+      const tr = apiBody.translations;
+      fetch('http://127.0.0.1:7469/ingest/ed85bb2c-c192-44f6-8c60-9fe04360649a', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Debug-Session-Id': '08cfc0',
+        },
+        body: JSON.stringify({
+          sessionId: '08cfc0',
+          runId: 'svc-ar-debug',
+          hypothesisId: 'H3',
+          location: 'service-actions.ts:useUpdateService',
+          message: 'service PUT merge summary',
+          data: {
+            editingLocale,
+            effectivePrimary,
+            contentLocale,
+            writePrimary: shouldWritePrimaryColumns(editingLocale, effectivePrimary),
+            translationsCount: Array.isArray(tr) ? tr.length : null,
+            translationLocales: Array.isArray(tr)
+              ? tr.map((x: unknown) =>
+                  x && typeof x === 'object' ? String((x as Record<string, unknown>).locale ?? '') : '',
+                )
+              : [],
+          },
+          timestamp: Date.now(),
+        }),
+      }).catch(() => {});
+      // #endregion
+
       const response = await apiClient.put<AdminService>(
         API_ENDPOINTS.SERVICES.UPDATE(String((data as any).id)),
         apiBody,
