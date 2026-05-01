@@ -217,25 +217,7 @@ export default component$(() => {
     }
 
     await success(saveTranslations.successTitle, { text: saveTranslations.updatedText });
-    const updated = val?.category as Category | undefined;
-    if (updated) {
-      liveCategory.value = mapCategoryFromApi(updated as any);
-      canonicalName.value = liveCategory.value.name ?? '';
-      canonicalDescription.value = liveCategory.value.description ?? '';
-      const secondaries = secondaryLocalesForContent(
-        langConfig.value.site_languages,
-        langConfig.value.default_locale,
-        contentLocaleDraft.value.trim() !== '' ? contentLocaleDraft.value.trim() : null,
-      );
-      translationsJson.value = JSON.stringify(
-        secondaries.map((l) => {
-          const row = (liveCategory.value as any)?.translations?.find(
-            (x: any) => String(x?.locale).toLowerCase() === l.code.toLowerCase(),
-          );
-          return { locale: l.code, name: row?.name ?? '', description: row?.description ?? '' };
-        }),
-      );
-    }
+    window.location.reload();
   });
 
   const cat = (liveCategory.value ?? categoryLoader.value) as Category | undefined;

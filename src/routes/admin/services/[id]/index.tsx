@@ -277,35 +277,8 @@ export default component$(() => {
     }
 
     await success(saveTranslations.successTitle, { text: saveTranslations.updatedText });
-    const updated = val?.service as AdminService | undefined;
-    if (updated) {
-      liveService.value = mapServiceFromApi(updated as unknown as Record<string, unknown>);
-      canonicalName.value = liveService.value.name ?? '';
-      canonicalShortDescription.value = liveService.value.short_description ?? '';
-      canonicalDescription.value = liveService.value.description ?? '';
-      canonicalProcessLines.value = joinLines(liveService.value.process);
-      canonicalDeliverablesLines.value = joinLines(liveService.value.deliverables);
-      const secondaries = secondaryLocalesForContent(
-        langConfig.value.site_languages,
-        langConfig.value.default_locale,
-        contentLocaleDraft.value.trim() !== '' ? contentLocaleDraft.value.trim() : null,
-      );
-      translationsJson.value = JSON.stringify(
-        secondaries.map((l) => {
-          const row = liveService.value?.translations?.find(
-            (x) => String(x?.locale).toLowerCase() === l.code.toLowerCase(),
-          );
-          return {
-            locale: l.code,
-            name: row?.name ?? '',
-            short_description: row?.short_description ?? '',
-            description: row?.description ?? '',
-            process: Array.isArray(row?.process) ? row?.process : [],
-            deliverables: Array.isArray(row?.deliverables) ? row?.deliverables : [],
-          };
-        }),
-      );
-    }
+    // Refetch routeLoader$ + signals from DB — avoids stale merged state after PUT (matches admin/blog featured-image pattern).
+    window.location.reload();
   });
 
   const svc = (liveService.value ?? serviceLoader.value) as AdminService | undefined;
