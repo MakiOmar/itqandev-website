@@ -117,7 +117,32 @@ export default component$(() => {
       }
     }
     const submitted = await action.submit(fd);
-    return submitted.value;
+    const storeVal = (action as any).value as unknown;
+    const fromEnvelope =
+      submitted != null && typeof submitted === 'object' && 'value' in submitted
+        ? (submitted as { value: unknown }).value
+        : undefined;
+    const looksLikePayload =
+      submitted != null &&
+      typeof submitted === 'object' &&
+      ('success' in (submitted as object) ||
+        'service' in (submitted as object) ||
+        'failed' in (submitted as object) ||
+        'serviceUpdateDebugJson' in (submitted as object));
+    const out = looksLikePayload
+      ? submitted
+      : fromEnvelope !== undefined && fromEnvelope !== null
+        ? fromEnvelope
+        : storeVal !== undefined && storeVal !== null
+          ? storeVal
+          : submitted;
+    console.log('[service-save] submit envelope', {
+      looksLikePayload,
+      hasEnvelopeValue: fromEnvelope !== undefined,
+      hasStoreValue: storeVal !== undefined,
+      outKeys: out != null && typeof out === 'object' ? Object.keys(out as object) : typeof out,
+    });
+    return out;
   });
 
   useTask$(({ track }) => {
@@ -287,7 +312,18 @@ export default component$(() => {
       return;
     }
 
-    console.log('[service-save] action result', (val as { serviceUpdateDebug?: unknown })?.serviceUpdateDebug ?? val);
+    {
+      const v = val as Record<string, unknown> | undefined;
+      let parsed: unknown;
+      try {
+        const j = v?.serviceUpdateDebugJson;
+        parsed = typeof j === 'string' ? JSON.parse(j) : undefined;
+      } catch {
+        parsed = undefined;
+      }
+      const dbg = v?.serviceUpdateDebug ?? parsed ?? (v?.service as Record<string, unknown> | undefined)?.serviceUpdateDebug;
+      console.log('[service-save] action result', dbg ?? v);
+    }
 
     await success(saveTranslations.successTitle, { text: saveTranslations.updatedText });
     // Refetch routeLoader$ + signals from DB — avoids stale merged state after PUT (matches admin/blog featured-image pattern).

@@ -326,11 +326,23 @@ export const useUpdateService = routeAction$(
         returnedTranslationLocales,
       };
 
-      const base = { success: true as const, service: updated as AdminService };
       const dbg =
         typeof import.meta !== 'undefined' &&
         Boolean((import.meta as ImportMeta).env?.DEV || (import.meta as ImportMeta).env?.MODE === 'development');
-      return dbg ? { ...base, serviceUpdateDebug: devDebug } : base;
+      if (! dbg) {
+        return { success: true as const, service: updated as AdminService };
+      }
+      const json = JSON.stringify(devDebug);
+      const serviceWithDbg = {
+        ...(typeof updated === 'object' && updated !== null ? (updated as Record<string, unknown>) : {}),
+        serviceUpdateDebug: devDebug,
+      } as unknown as AdminService;
+      return {
+        success: true as const,
+        service: serviceWithDbg,
+        serviceUpdateDebug: devDebug,
+        serviceUpdateDebugJson: json,
+      };
     } catch (err: any) {
       console.error('[service-update] PUT failed', {
         status: err?.status ?? err?.response?.status ?? null,
