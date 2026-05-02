@@ -337,20 +337,6 @@ export default component$(() => {
             hintSecondary={translateApp(lang, 'contentTranslations.fallbackPlaceholderHint')}
             secondarySavePrefix={translateApp(lang, 'contentTranslations.addTranslations')}
             onChange$={$((code: string) => {
-              // #region agent log
-              fetch('http://127.0.0.1:7469/ingest/ed85bb2c-c192-44f6-8c60-9fe04360649a', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'X-Debug-Session-Id': '08cfc0' },
-                body: JSON.stringify({
-                  sessionId: '08cfc0',
-                  hypothesisId: 'H-parent',
-                  location: 'admin/services/[id]/index.tsx:ContentEditingLanguageSelect onChange',
-                  message: 'editingLocaleDraft parent update',
-                  data: { code },
-                  timestamp: Date.now(),
-                }),
-              }).catch(() => {});
-              // #endregion
               editingLocaleDraft.value = code;
             })}
           />
