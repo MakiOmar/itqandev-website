@@ -10,6 +10,7 @@ import { Container } from '~/components/marketing/Container';
 import { UserDropdown } from '~/components/common/UserDropdown';
 import { SiteLanguageSwitcher } from '~/components/common/SiteLanguageSwitcher';
 import type { AuthSession } from '~/lib/auth/types';
+import type { PublicNavItem } from '~/lib/marketing/public-menu';
 import type { SiteLanguageRow } from '~/types/site-language';
 
 interface HeaderBranding {
@@ -24,6 +25,8 @@ interface HeaderBranding {
 interface HeaderProps {
   session?: AuthSession | null;
   branding?: HeaderBranding | null;
+  /** When non-empty, replaces the default marketing nav (from GET /api/public/menus/primary). */
+  navItems?: PublicNavItem[] | null;
 }
 
 export const Header = component$<HeaderProps>((props) => {
@@ -44,15 +47,23 @@ export const Header = component$<HeaderProps>((props) => {
     ? (darkLogo || lightLogo || defaultLogo)
     : (lightLogo || darkLogo || defaultLogo);
 
-  const navLinks = [
-    { label: 'Home', href: MR.home },
-    { label: 'Services', href: MR.services },
-    { label: 'Work', href: MR.work },
-    { label: 'About', href: MR.about },
-    { label: 'Pricing', href: MR.pricing },
-    { label: 'Blog', href: MR.blog },
-    { label: 'Contact', href: MR.contact },
+  const defaultNav: PublicNavItem[] = [
+    { label: 'Home', href: MR.home, open_in_new_tab: false },
+    { label: 'Services', href: MR.services, open_in_new_tab: false },
+    { label: 'Work', href: MR.work, open_in_new_tab: false },
+    { label: 'About', href: MR.about, open_in_new_tab: false },
+    { label: 'Pricing', href: MR.pricing, open_in_new_tab: false },
+    { label: 'Blog', href: MR.blog, open_in_new_tab: false },
+    { label: 'Contact', href: MR.contact, open_in_new_tab: false },
   ];
+
+  const navLinks =
+    props.navItems && props.navItems.length > 0 ? props.navItems : defaultNav;
+
+  const linkClass =
+    'rounded-lg px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white';
+
+  const isExternal = (href: string) => /^https?:\/\//i.test(href);
 
   // eslint-disable-next-line qwik/no-use-visible-task
   useVisibleTask$(({ cleanup }) => {
@@ -107,15 +118,24 @@ export const Header = component$<HeaderProps>((props) => {
 
         {/* Main menu — centered in the middle column on desktop only */}
         <div class="hidden min-w-0 flex-1 md:flex md:justify-center">
-          <nav class="flex items-center gap-1" aria-label="Main">
-            {navLinks.map((item) => (
-              <Link
-                key={item.href}
-                href={item.href}
-                class="rounded-lg px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white"
-              >
-                {item.label}
-              </Link>
+          <nav class="flex flex-wrap items-center justify-center gap-1" aria-label="Main">
+            {navLinks.map((item, i) => (
+              <span key={`${item.href}-${i}`}>
+                {isExternal(item.href) ? (
+                  <a
+                    href={item.href}
+                    class={linkClass}
+                    target={item.open_in_new_tab ? '_blank' : undefined}
+                    rel={item.open_in_new_tab ? 'noopener noreferrer' : undefined}
+                  >
+                    {item.label}
+                  </a>
+                ) : (
+                  <Link href={item.href} class={linkClass}>
+                    {item.label}
+                  </Link>
+                )}
+              </span>
             ))}
           </nav>
         </div>
@@ -164,15 +184,55 @@ export const Header = component$<HeaderProps>((props) => {
           aria-label="Mobile menu"
         >
           <nav class="flex flex-col px-4 py-4" aria-label="Main mobile">
-            {navLinks.map((item) => (
-              <Link
-                key={item.href}
-                href={item.href}
-                class="rounded-lg px-3 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
-                onClick$={closeMenu}
-              >
-                {item.label}
-              </Link>
+            {navLinks.map((item, i) => (
+              <div key={`m-${item.href}-${i}`} class="flex flex-col">
+                {isExternal(item.href) ? (
+                  <a
+                    href={item.href}
+                    class="rounded-lg px-3 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
+                    target={item.open_in_new_tab ? '_blank' : undefined}
+                    rel={item.open_in_new_tab ? 'noopener noreferrer' : undefined}
+                    onClick$={closeMenu}
+                  >
+                    {item.label}
+                  </a>
+                ) : (
+                  <Link
+                    href={item.href}
+                    class="rounded-lg px-3 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
+                    onClick$={closeMenu}
+                  >
+                    {item.label}
+                  </Link>
+                )}
+                {item.children && item.children.length > 0 ? (
+                  <ul class="ml-3 border-l border-slate-200 py-1 pl-3 dark:border-slate-700">
+                    {item.children.map((child, j) => (
+                      <li key={`mc-${child.href}-${j}`}>
+                        {isExternal(child.href) ? (
+                          <a
+                            href={child.href}
+                            class="block rounded-lg px-3 py-2 text-sm text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800"
+                            target={child.open_in_new_tab ? '_blank' : undefined}
+                            rel={child.open_in_new_tab ? 'noopener noreferrer' : undefined}
+                            onClick$={closeMenu}
+                          >
+                            {child.label}
+                          </a>
+                        ) : (
+                          <Link
+                            href={child.href}
+                            class="block rounded-lg px-3 py-2 text-sm text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800"
+                            onClick$={closeMenu}
+                          >
+                            {child.label}
+                          </Link>
+                        )}
+                      </li>
+                    ))}
+                  </ul>
+                ) : null}
+              </div>
             ))}
             <div class="mt-4 flex flex-col gap-2 border-t border-slate-200 pt-4 dark:border-slate-700">
               <Button href={MR.contact} variant="primary" class="w-full justify-center">

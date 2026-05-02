@@ -427,6 +427,56 @@ return response()->json([
 
 ---
 
+## Public marketing (no auth)
+
+### GET `/api/public/site-meta`
+
+Returns branding and `site_languages` for the marketing shell (see `SettingsController::publicMeta`).
+
+### GET `/api/public/menus/{slug}`
+
+**Query:** `locale` — UI locale code (e.g. `en`, `ar`); must be an enabled site language or the default is used.
+
+**Success (200):**
+
+```json
+{
+  "success": true,
+  "data": {
+    "slug": "primary",
+    "locale": "en",
+    "items": [
+      {
+        "label": "Services",
+        "href": "/en/services/",
+        "open_in_new_tab": false,
+        "children": []
+      }
+    ]
+  }
+}
+```
+
+When the menu is missing or has no resolvable items, `items` is an empty array (the Qwik header falls back to built-in links).
+
+## Authenticated menus (Vue admin / Sanctum token)
+
+Requires `Authorization: Bearer` and the **`manage menus`** permission (or a role that includes it).
+
+| Method | Path | Purpose |
+|--------|------|---------|
+| GET | `/api/v1/menus` | List menus |
+| POST | `/api/v1/menus` | Create menu (`name`, `slug`) |
+| GET | `/api/v1/menus/{id}` | Menu with nested `items` tree |
+| PUT | `/api/v1/menus/{id}` | Update `name` / `slug` |
+| DELETE | `/api/v1/menus/{id}` | Delete menu (cascades items) |
+| POST | `/api/v1/menus/{id}/items` | Create item (`item_type`, optional `label`, type-specific fields) |
+| PUT | `/api/v1/menus/{id}/items/reorder` | Body `{ "items": [{ "id", "parent_id", "sort_order" }] }` |
+| PUT | `/api/v1/menu-items/{id}` | Update item |
+| DELETE | `/api/v1/menu-items/{id}` | Delete item |
+
+**`item_type` values:** `custom_link` (requires `url`), `static_route` (requires `static_route_key`: `home`, `services`, `work`, `about`, `pricing`, `blog`, `contact`), `project`, `blog_post`, `service` (each requires `reference_id`).
+
 ## Testing API Integration
 
 ### Using Laravel Tinker

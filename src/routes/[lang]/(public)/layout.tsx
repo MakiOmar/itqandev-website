@@ -8,6 +8,7 @@ import { ParticlesBackground } from '~/components/marketing/ParticlesBackground'
 import { auth } from '~/lib/auth';
 import { getApiClient, extractCookieHeader } from '~/lib/api/client';
 import { MARKETING_ENDPOINTS } from '~/lib/marketing/endpoints';
+import type { PublicNavItem } from '~/lib/marketing/public-menu';
 import { getConfig } from '~/lib/config';
 import type { SiteLanguageRow } from '~/types/site-language';
 
@@ -36,6 +37,26 @@ export const usePublicAuth = routeLoader$(async ({ cookie }) => {
  * Load public branding from unauthenticated GET /api/public/site-meta (logos + site_languages).
  * Authenticated GET /settings is not available to guests, so the header used to hide the language switcher until login.
  */
+/**
+ * Primary header menu from Laravel (`menus` table, slug `primary`). Empty → Header uses built-in links.
+ */
+export const usePublicPrimaryMenu = routeLoader$(async ({ cookie, request }) => {
+  const cookieHeader = extractCookieHeader(cookie, request);
+  const apiClient = getApiClient(cookieHeader);
+  const cookieStr = request.headers.get('cookie') || '';
+  const uiLocale = readPreferredLocaleFromCookieHeader(cookieStr) ?? 'en';
+
+  try {
+    const path = `${MARKETING_ENDPOINTS.menuBySlug('primary')}?locale=${encodeURIComponent(uiLocale)}`;
+    const response = await apiClient.get<{ items?: PublicNavItem[] }>(path);
+    const payload = response?.data as { items?: PublicNavItem[] } | undefined;
+    const items = payload?.items;
+    return Array.isArray(items) ? items : [];
+  } catch {
+    return [] as PublicNavItem[];
+  }
+});
+
 export const usePublicBranding = routeLoader$(async ({ cookie, request }) => {
   const fallbackName = getConfig().branding.name;
 
@@ -81,6 +102,7 @@ export default component$(() => {
   const siteContent = useSiteContent();
   const authSession = usePublicAuth();
   const branding = usePublicBranding();
+  const primaryMenu = usePublicPrimaryMenu();
   const contact = siteContent.value?.contact;
 
   return (
@@ -91,7 +113,7 @@ export default component$(() => {
       {/* Full-viewport particles behind page chrome + content */}
       <ParticlesBackground />
       <div class="relative z-10 flex min-h-screen flex-1 flex-col">
-        <Header session={authSession.value} branding={branding.value} />
+        <Header session={authSession.value} branding={branding.value} navItems={primaryMenu.value} />
         <main class="flex-1 overflow-y-auto">
           <Slot />
         </main>
