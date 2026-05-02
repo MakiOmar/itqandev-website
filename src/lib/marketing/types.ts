@@ -12,7 +12,8 @@ export interface CaseStudy {
   image?: string;
   imageAlt?: string;
   tags?: string[];
-  categories?: { id: number; name: string }[];
+  categories?: { id: number; name: string; slug?: string }[];
+  skills?: { id: number; name: string; slug?: string }[];
   linkUrl?: string;
   demoUrl?: string;
   repoUrl?: string;

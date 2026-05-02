@@ -135,6 +135,8 @@ async function fetchPublishedProjectsFromApi(options: {
   featured?: boolean;
   per_page: number;
   locale?: string;
+  categorySlug?: string;
+  skillSlug?: string;
 }): Promise<CaseStudy[]> {
   if (!getMarketingApiBaseUrl().trim()) {
     return [];
@@ -145,6 +147,12 @@ async function fetchPublishedProjectsFromApi(options: {
       q.set('featured', '1');
     }
     q.set('per_page', String(options.per_page));
+    if (options.categorySlug?.trim()) {
+      q.set('category_slug', options.categorySlug.trim());
+    }
+    if (options.skillSlug?.trim()) {
+      q.set('skill_slug', options.skillSlug.trim());
+    }
     const path = `${MARKETING_ENDPOINTS.caseStudies}?${q.toString()}`;
     const payload = await marketingGet<unknown>(path, options.locale);
     return unwrapMarketingListRecords(payload)
@@ -156,19 +164,34 @@ async function fetchPublishedProjectsFromApi(options: {
   }
 }
 
-/** Get all case studies (portfolio). */
-export async function getCaseStudies(locale?: string): Promise<CaseStudy[]> {
-  const live = await fetchPublishedProjectsFromApi({ per_page: 48, locale });
+export type CaseStudyListFilters = {
+  categorySlug?: string;
+  skillSlug?: string;
+};
+
+/** Get all case studies (portfolio). Optional filters apply to API-backed lists only. */
+export async function getCaseStudies(locale?: string, filters?: CaseStudyListFilters): Promise<CaseStudy[]> {
+  const live = await fetchPublishedProjectsFromApi({
+    per_page: 48,
+    locale,
+    categorySlug: filters?.categorySlug,
+    skillSlug: filters?.skillSlug,
+  });
   if (live.length > 0) {
     return live;
   }
 
   if (contentSource === 'api') {
     try {
-      const data = await marketingGet<unknown>(
-        `${MARKETING_ENDPOINTS.caseStudies}?per_page=48`,
-        locale,
-      );
+      const q = new URLSearchParams();
+      q.set('per_page', '48');
+      if (filters?.categorySlug?.trim()) {
+        q.set('category_slug', filters.categorySlug.trim());
+      }
+      if (filters?.skillSlug?.trim()) {
+        q.set('skill_slug', filters.skillSlug.trim());
+      }
+      const data = await marketingGet<unknown>(`${MARKETING_ENDPOINTS.caseStudies}?${q.toString()}`, locale);
       const list = unwrapMarketingListRecords(data);
       if (list.length > 0) {
         return list.map(mapPublicProjectToCaseStudy);
@@ -177,7 +200,22 @@ export async function getCaseStudies(locale?: string): Promise<CaseStudy[]> {
       /* fall through */
     }
   }
-  return Promise.resolve(caseStudies);
+  const local = caseStudies as CaseStudy[];
+  if (!filters?.categorySlug?.trim() && !filters?.skillSlug?.trim()) {
+    return Promise.resolve(local);
+  }
+  const cat = filters.categorySlug?.trim().toLowerCase();
+  const sk = filters.skillSlug?.trim().toLowerCase();
+  return Promise.resolve(
+    local.filter((c) => {
+      const cats = (c.categories ?? []).map((x) => String(x.slug ?? x.name ?? '').toLowerCase());
+      const okCat = !cat || cats.includes(cat);
+      const skills = c.skills ?? [];
+      const skillSlugs = skills.map((x) => String(x.slug ?? x.name ?? '').toLowerCase());
+      const okSkill = !sk || skillSlugs.includes(sk);
+      return okCat && okSkill;
+    }),
+  );
 }
 
 /** Get a single case study by slug. */

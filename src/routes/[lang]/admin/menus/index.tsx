@@ -52,6 +52,39 @@ interface PickerService {
   name: string;
 }
 
+interface PickerTax {
+  id: number;
+  name: string;
+  slug: string;
+}
+
+type MenuItemType =
+  | 'custom_link'
+  | 'static_route'
+  | 'project'
+  | 'blog_post'
+  | 'service'
+  | 'category'
+  | 'skill';
+
+function collectMenuItemRefs(roots: MenuItemNode[]): Array<{ item_type: string; reference_id: number | null }> {
+  const out: Array<{ item_type: string; reference_id: number | null }> = [];
+  const walk = (nodes: MenuItemNode[]) => {
+    for (const n of nodes) {
+      out.push({ item_type: n.item_type, reference_id: n.reference_id });
+      if (n.children?.length) {
+        walk(n.children);
+      }
+    }
+  };
+  walk(roots);
+  return out;
+}
+
+function menuHasItemRef(roots: MenuItemNode[], itemType: string, refId: number): boolean {
+  return collectMenuItemRefs(roots).some((r) => r.item_type === itemType && r.reference_id === refId);
+}
+
 const MENU_SLUG_MAX = 64;
 
 /** Lowercase `[a-z0-9_-]+` for Laravel `menus.slug` (non‑ASCII names → `menu`, then uniquified). */
@@ -188,12 +221,18 @@ export default component$(() => {
   const projects = useSignal<PickerProject[]>([]);
   const blogPosts = useSignal<PickerPost[]>([]);
   const services = useSignal<PickerService[]>([]);
+  const categories = useSignal<PickerTax[]>([]);
+  const skills = useSignal<PickerTax[]>([]);
+
+  const bulkRowPick = useStore({ m: {} as Record<number, boolean> });
+  const taxCatPick = useStore({ m: {} as Record<number, boolean> });
+  const taxSkillPick = useStore({ m: {} as Record<number, boolean> });
 
   const form = useStore({
     id: null as number | null,
     parent_id: null as number | null,
     sort_order: 0,
-    item_type: 'static_route' as 'custom_link' | 'static_route' | 'project' | 'blog_post' | 'service',
+    item_type: 'static_route' as MenuItemType,
     url: '',
     static_route_key: 'home',
     reference_id: '',
@@ -205,7 +244,7 @@ export default component$(() => {
     form.id = null;
     form.parent_id = null;
     form.sort_order = 0;
-    form.item_type = 'static_route';
+    form.item_type = 'static_route' as MenuItemType;
     form.url = '';
     form.static_route_key = 'home';
     form.reference_id = '';
@@ -233,6 +272,9 @@ export default component$(() => {
       return;
     }
     selectedMenuId.value = id;
+    bulkRowPick.m = {};
+    taxCatPick.m = {};
+    taxSkillPick.m = {};
     await fetchDetail$(id);
     await resetForm$();
   });
@@ -401,7 +443,7 @@ export default component$(() => {
       if (form.item_type === 'static_route') {
         payload.static_route_key = form.static_route_key;
       }
-      if (['project', 'blog_post', 'service'].includes(form.item_type)) {
+      if (['project', 'blog_post', 'service', 'category', 'skill'].includes(form.item_type)) {
         payload.reference_id = parseInt(String(form.reference_id), 10);
       }
       if (form.id) {
@@ -425,11 +467,159 @@ export default component$(() => {
     form.parent_id = item.parent_id;
     form.sort_order = item.sort_order;
     form.label = item.label || '';
-    form.item_type = item.item_type as typeof form.item_type;
+    form.item_type = item.item_type as MenuItemType;
     form.url = item.url || '';
     form.static_route_key = item.static_route_key || 'home';
     form.reference_id = item.reference_id != null ? String(item.reference_id) : '';
     form.open_in_new_tab = !!item.open_in_new_tab;
+  });
+
+  const toggleRowBulk$ = $((id: number) => {
+    bulkRowPick.m[id] = !bulkRowPick.m[id];
+  });
+
+  const toggleTaxCat$ = $((id: number) => {
+    taxCatPick.m[id] = !taxCatPick.m[id];
+  });
+
+  const toggleTaxSkill$ = $((id: number) => {
+    taxSkillPick.m[id] = !taxSkillPick.m[id];
+  });
+
+  const selectAllRootItems$ = $(() => {
+    const roots = menuDetail.value?.items ?? [];
+    for (const i of roots) {
+      bulkRowPick.m[i.id] = true;
+    }
+  });
+
+  const clearRowBulk$ = $(() => {
+    bulkRowPick.m = {};
+  });
+
+  const bulkDeleteItems$ = $(async () => {
+    const ids = Object.entries(bulkRowPick.m)
+      .filter(([, v]) => v)
+      .map(([k]) => Number(k));
+    if (!ids.length) {
+      await showError(String(translateApp(lang, 'menusPage.nothingSelectedItems')));
+      return;
+    }
+    const r = await confirm(String(translateApp(lang, 'menusPage.bulkDeleteConfirm', { count: ids.length })), {
+      icon: 'warning',
+      title: String(translateApp(lang, 'menusPage.deleteTitle')),
+    });
+    if (!r.isConfirmed) {
+      return;
+    }
+    saving.value = true;
+    try {
+      const api = getApiClient();
+      for (const id of ids) {
+        await api.delete(API_ENDPOINTS.MENUS.DELETE_ITEM(id));
+      }
+      if (form.id && ids.includes(form.id)) {
+        await resetForm$();
+      }
+      bulkRowPick.m = {};
+      const mid = selectedMenuId.value;
+      if (mid) {
+        await fetchDetail$(mid);
+      }
+      await success(String(translateApp(lang, 'menusPage.bulkDeleted')));
+    } catch {
+      await showError(String(translateApp(lang, 'menusPage.saveFailed')));
+    } finally {
+      saving.value = false;
+    }
+  });
+
+  const addSelectedCategories$ = $(async () => {
+    const mid = selectedMenuId.value;
+    if (!mid) {
+      return;
+    }
+    const roots = menuDetail.value?.items ?? [];
+    const rawIds = Object.entries(taxCatPick.m)
+      .filter(([, v]) => v)
+      .map(([k]) => Number(k));
+    const idSet = [...new Set(rawIds)];
+    if (!idSet.length) {
+      await showError(String(translateApp(lang, 'menusPage.nothingSelectedTaxonomy')));
+      return;
+    }
+    saving.value = true;
+    try {
+      const api = getApiClient();
+      let added = 0;
+      for (const refId of idSet) {
+        if (menuHasItemRef(roots, 'category', refId)) {
+          continue;
+        }
+        await api.post(API_ENDPOINTS.MENUS.CREATE_ITEM(mid), {
+          item_type: 'category',
+          reference_id: refId,
+          open_in_new_tab: false,
+          label: null,
+        });
+        added += 1;
+      }
+      taxCatPick.m = {};
+      if (added > 0) {
+        await success(String(translateApp(lang, 'menusPage.taxonomyAdded', { count: added })));
+      } else {
+        await showError(String(translateApp(lang, 'menusPage.taxonomyAllSkipped')));
+      }
+      await fetchDetail$(mid);
+    } catch {
+      await showError(String(translateApp(lang, 'menusPage.saveFailed')));
+    } finally {
+      saving.value = false;
+    }
+  });
+
+  const addSelectedSkills$ = $(async () => {
+    const mid = selectedMenuId.value;
+    if (!mid) {
+      return;
+    }
+    const roots = menuDetail.value?.items ?? [];
+    const rawIds = Object.entries(taxSkillPick.m)
+      .filter(([, v]) => v)
+      .map(([k]) => Number(k));
+    const idSet = [...new Set(rawIds)];
+    if (!idSet.length) {
+      await showError(String(translateApp(lang, 'menusPage.nothingSelectedTaxonomy')));
+      return;
+    }
+    saving.value = true;
+    try {
+      const api = getApiClient();
+      let added = 0;
+      for (const refId of idSet) {
+        if (menuHasItemRef(roots, 'skill', refId)) {
+          continue;
+        }
+        await api.post(API_ENDPOINTS.MENUS.CREATE_ITEM(mid), {
+          item_type: 'skill',
+          reference_id: refId,
+          open_in_new_tab: false,
+          label: null,
+        });
+        added += 1;
+      }
+      taxSkillPick.m = {};
+      if (added > 0) {
+        await success(String(translateApp(lang, 'menusPage.taxonomyAdded', { count: added })));
+      } else {
+        await showError(String(translateApp(lang, 'menusPage.taxonomyAllSkipped')));
+      }
+      await fetchDetail$(mid);
+    } catch {
+      await showError(String(translateApp(lang, 'menusPage.saveFailed')));
+    } finally {
+      saving.value = false;
+    }
   });
 
   const deleteItem$ = $(async (item: MenuItemNode) => {
@@ -463,10 +653,12 @@ export default component$(() => {
   useVisibleTask$(async () => {
     const api = getApiClient();
     try {
-      const [pr, br, sr] = await Promise.all([
+      const [pr, br, sr, cr, skr] = await Promise.all([
         api.get(API_ENDPOINTS.PROJECTS.LIST).catch(() => ({ data: [] })),
         api.get(API_ENDPOINTS.BLOG.LIST).catch(() => ({ data: [] })),
         api.get(API_ENDPOINTS.SERVICES.LIST).catch(() => ({ data: [] })),
+        api.get(API_ENDPOINTS.CATEGORIES.LIST).catch(() => ({ data: [] })),
+        api.get(API_ENDPOINTS.SKILLS.LIST).catch(() => ({ data: [] })),
       ]);
       const pRows = extractRows(pr) as Record<string, unknown>[];
       projects.value = pRows.map((r) => ({
@@ -483,10 +675,24 @@ export default component$(() => {
         id: Number(r.id),
         name: String(r.name ?? ''),
       }));
+      const cRows = extractRows(cr) as Record<string, unknown>[];
+      categories.value = cRows.map((r) => ({
+        id: Number(r.id),
+        name: String(r.name ?? ''),
+        slug: String(r.slug ?? ''),
+      }));
+      const skRows = extractRows(skr) as Record<string, unknown>[];
+      skills.value = skRows.map((r) => ({
+        id: Number(r.id),
+        name: String(r.name ?? ''),
+        slug: String(r.slug ?? ''),
+      }));
     } catch {
       projects.value = [];
       blogPosts.value = [];
       services.value = [];
+      categories.value = [];
+      skills.value = [];
     }
   });
 
@@ -600,21 +806,66 @@ export default component$(() => {
         )}
 
         {menusList.value.length > 0 && (
-          <div class="grid gap-6 lg:grid-cols-2">
-            <div class="rounded-lg border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-800 dark:bg-gray-800">
-              <h2 class="mb-3 text-lg font-semibold text-gray-900 dark:text-gray-100">
-                {String(translateApp(lang, 'menusPage.itemsHeading'))}
-              </h2>
-              {loadingDetail.value ? (
-                <LoadingSpinner />
-              ) : (menuDetail.value?.items ?? []).length === 0 ? (
-                <p class="text-sm text-gray-500 dark:text-gray-400">{String(translateApp(lang, 'menusPage.emptyItems'))}</p>
-              ) : (
-                <ul class="divide-y divide-gray-200 dark:divide-gray-700">
-                  {(menuDetail.value?.items ?? []).map((item, idx) => (
-                    <li key={item.id} class="flex flex-wrap items-center gap-2 py-3">
-                      <div class="min-w-0 flex-1">
-                        <RowLabel text={rowLabelSync(item, projects.value, blogPosts.value, services.value, lang)} />
+          <>
+            <div class="grid gap-6 lg:grid-cols-2">
+              <div class="rounded-lg border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-800 dark:bg-gray-800">
+                <h2 class="mb-3 text-lg font-semibold text-gray-900 dark:text-gray-100">
+                  {String(translateApp(lang, 'menusPage.itemsHeading'))}
+                </h2>
+                {loadingDetail.value ? (
+                  <LoadingSpinner />
+                ) : (menuDetail.value?.items ?? []).length === 0 ? (
+                  <p class="text-sm text-gray-500 dark:text-gray-400">{String(translateApp(lang, 'menusPage.emptyItems'))}</p>
+                ) : (
+                  <>
+                    <div class="mb-3 flex flex-wrap gap-2">
+                      <button
+                        type="button"
+                        class="rounded border border-gray-300 px-3 py-1.5 text-xs font-medium dark:border-gray-600"
+                        disabled={saving.value}
+                        onClick$={selectAllRootItems$}
+                      >
+                        {String(translateApp(lang, 'menusPage.selectAllItems'))}
+                      </button>
+                      <button
+                        type="button"
+                        class="rounded border border-gray-300 px-3 py-1.5 text-xs font-medium dark:border-gray-600"
+                        disabled={saving.value}
+                        onClick$={clearRowBulk$}
+                      >
+                        {String(translateApp(lang, 'menusPage.clearSelection'))}
+                      </button>
+                      <button
+                        type="button"
+                        class="rounded border border-red-200 px-3 py-1.5 text-xs font-medium text-red-700 dark:border-red-900 dark:text-red-300"
+                        disabled={saving.value}
+                        onClick$={bulkDeleteItems$}
+                      >
+                        {String(translateApp(lang, 'menusPage.deleteSelected'))}
+                      </button>
+                    </div>
+                    <ul class="divide-y divide-gray-200 dark:divide-gray-700">
+                      {(menuDetail.value?.items ?? []).map((item, idx) => (
+                        <li key={item.id} class="flex flex-wrap items-center gap-2 py-3">
+                          <input
+                            type="checkbox"
+                            class="h-4 w-4 shrink-0 rounded border-gray-300 text-blue-600"
+                            checked={!!bulkRowPick.m[item.id]}
+                            onChange$={() => toggleRowBulk$(item.id)}
+                            aria-label={String(translateApp(lang, 'menusPage.selectItem'))}
+                          />
+                          <div class="min-w-0 flex-1">
+                            <RowLabel
+                              text={rowLabelSync(
+                                item,
+                                projects.value,
+                                blogPosts.value,
+                                services.value,
+                                categories.value,
+                                skills.value,
+                                lang,
+                              )}
+                            />
                         <div class="text-xs text-gray-500 dark:text-gray-400">
                           {item.item_type}
                           {item.open_in_new_tab ? ` · ${String(translateApp(lang, 'menusPage.openNewTab'))}` : ''}
@@ -652,13 +903,14 @@ export default component$(() => {
                           {String(translateApp(lang, 'menusPage.delete'))}
                         </button>
                       </div>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </div>
+                        </li>
+                      ))}
+                    </ul>
+                  </>
+                )}
+              </div>
 
-            <div class="rounded-lg border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-800 dark:bg-gray-800">
+              <div class="rounded-lg border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-800 dark:bg-gray-800">
               <h2 class="mb-3 text-lg font-semibold text-gray-900 dark:text-gray-100">
                 {form.id
                   ? String(translateApp(lang, 'menusPage.editHeading'))
@@ -672,7 +924,7 @@ export default component$(() => {
                     class={inputClass}
                     value={form.item_type}
                     onInput$={(e) => {
-                      form.item_type = (e.target as HTMLSelectElement).value as typeof form.item_type;
+                      form.item_type = (e.target as HTMLSelectElement).value as MenuItemType;
                     }}
                   >
                     <option value="custom_link">{String(translateApp(lang, 'menusPage.typeCustom'))}</option>
@@ -680,6 +932,8 @@ export default component$(() => {
                     <option value="project">{String(translateApp(lang, 'menusPage.typeProject'))}</option>
                     <option value="blog_post">{String(translateApp(lang, 'menusPage.typeBlog'))}</option>
                     <option value="service">{String(translateApp(lang, 'menusPage.typeService'))}</option>
+                    <option value="category">{String(translateApp(lang, 'menusPage.typeCategory'))}</option>
+                    <option value="skill">{String(translateApp(lang, 'menusPage.typeSkill'))}</option>
                   </select>
                 </div>
 
@@ -777,6 +1031,46 @@ export default component$(() => {
                   </div>
                 )}
 
+                {form.item_type === 'category' && (
+                  <div class="md:col-span-2">
+                    <label class={labelClass}>{String(translateApp(lang, 'menusPage.pickCategory'))}</label>
+                    <select
+                      class={inputClass}
+                      value={form.reference_id}
+                      onInput$={(e) => {
+                        form.reference_id = (e.target as HTMLSelectElement).value;
+                      }}
+                    >
+                      <option value="">{String(translateApp(lang, 'menusPage.pickPlaceholder'))}</option>
+                      {categories.value.map((c) => (
+                        <option key={c.id} value={c.id}>
+                          {`${c.name} (${c.slug})`}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                )}
+
+                {form.item_type === 'skill' && (
+                  <div class="md:col-span-2">
+                    <label class={labelClass}>{String(translateApp(lang, 'menusPage.pickSkill'))}</label>
+                    <select
+                      class={inputClass}
+                      value={form.reference_id}
+                      onInput$={(e) => {
+                        form.reference_id = (e.target as HTMLSelectElement).value;
+                      }}
+                    >
+                      <option value="">{String(translateApp(lang, 'menusPage.pickPlaceholder'))}</option>
+                      {skills.value.map((s) => (
+                        <option key={s.id} value={s.id}>
+                          {`${s.name} (${s.slug})`}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                )}
+
                 <div class="md:col-span-2">
                   <label class={labelClass}>{String(translateApp(lang, 'menusPage.optionalLabel'))}</label>
                   <input
@@ -825,8 +1119,80 @@ export default component$(() => {
                   </button>
                 ) : null}
               </div>
+              </div>
             </div>
-          </div>
+
+            <div class="mt-8 rounded-lg border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-800 dark:bg-gray-800">
+              <h2 class="mb-1 text-lg font-semibold text-gray-900 dark:text-gray-100">
+                {String(translateApp(lang, 'menusPage.taxonomyHeading'))}
+              </h2>
+              <p class="mb-4 text-sm text-gray-600 dark:text-gray-400">
+                {String(translateApp(lang, 'menusPage.taxonomyIntro'))}
+              </p>
+              <div class="grid gap-6 md:grid-cols-2">
+                <div>
+                  <h3 class="mb-2 text-sm font-semibold text-gray-800 dark:text-gray-200">
+                    {String(translateApp(lang, 'menusPage.categoriesTaxonomy'))}
+                  </h3>
+                  <div class="max-h-56 space-y-2 overflow-y-auto rounded border border-gray-100 p-2 dark:border-gray-700">
+                    {categories.value.length === 0 ? (
+                      <p class="text-xs text-gray-500">{String(translateApp(lang, 'menusPage.taxonomyEmpty'))}</p>
+                    ) : (
+                      categories.value.map((c) => (
+                        <label key={c.id} class="flex cursor-pointer items-center gap-2 text-sm">
+                          <input
+                            type="checkbox"
+                            class="h-4 w-4 rounded border-gray-300"
+                            checked={!!taxCatPick.m[c.id]}
+                            onChange$={() => toggleTaxCat$(c.id)}
+                          />
+                          <span class="text-gray-800 dark:text-gray-200">{`${c.name} (${c.slug})`}</span>
+                        </label>
+                      ))
+                    )}
+                  </div>
+                  <button
+                    type="button"
+                    class="mt-3 rounded-lg bg-blue-600 px-3 py-2 text-xs font-medium text-white hover:bg-blue-700 disabled:opacity-50"
+                    disabled={saving.value || !selectedMenuId.value}
+                    onClick$={addSelectedCategories$}
+                  >
+                    {String(translateApp(lang, 'menusPage.addSelectedCategories'))}
+                  </button>
+                </div>
+                <div>
+                  <h3 class="mb-2 text-sm font-semibold text-gray-800 dark:text-gray-200">
+                    {String(translateApp(lang, 'menusPage.skillsTaxonomy'))}
+                  </h3>
+                  <div class="max-h-56 space-y-2 overflow-y-auto rounded border border-gray-100 p-2 dark:border-gray-700">
+                    {skills.value.length === 0 ? (
+                      <p class="text-xs text-gray-500">{String(translateApp(lang, 'menusPage.taxonomyEmpty'))}</p>
+                    ) : (
+                      skills.value.map((s) => (
+                        <label key={s.id} class="flex cursor-pointer items-center gap-2 text-sm">
+                          <input
+                            type="checkbox"
+                            class="h-4 w-4 rounded border-gray-300"
+                            checked={!!taxSkillPick.m[s.id]}
+                            onChange$={() => toggleTaxSkill$(s.id)}
+                          />
+                          <span class="text-gray-800 dark:text-gray-200">{`${s.name} (${s.slug})`}</span>
+                        </label>
+                      ))
+                    )}
+                  </div>
+                  <button
+                    type="button"
+                    class="mt-3 rounded-lg bg-blue-600 px-3 py-2 text-xs font-medium text-white hover:bg-blue-700 disabled:opacity-50"
+                    disabled={saving.value || !selectedMenuId.value}
+                    onClick$={addSelectedSkills$}
+                  >
+                    {String(translateApp(lang, 'menusPage.addSelectedSkills'))}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </>
         )}
       </div>
     </>
@@ -838,6 +1204,8 @@ function rowLabelSync(
   projects: PickerProject[],
   posts: PickerPost[],
   svcs: PickerService[],
+  cats: PickerTax[],
+  sks: PickerTax[],
   lang: string,
 ): string {
   if (item.label?.trim()) {
@@ -861,6 +1229,14 @@ function rowLabelSync(
   if (item.item_type === 'service') {
     const p = svcs.find((x) => x.id === item.reference_id);
     return p?.name ?? `#${item.reference_id ?? ''}`;
+  }
+  if (item.item_type === 'category') {
+    const c = cats.find((x) => x.id === item.reference_id);
+    return c?.name ?? `#${item.reference_id ?? ''}`;
+  }
+  if (item.item_type === 'skill') {
+    const s = sks.find((x) => x.id === item.reference_id);
+    return s?.name ?? `#${item.reference_id ?? ''}`;
   }
   return item.item_type;
 }

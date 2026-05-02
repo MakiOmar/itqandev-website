@@ -10,10 +10,12 @@ import { AnimatedReveal } from '~/components/marketing/AnimatedReveal';
 import { CaseStudyCard } from '~/components/marketing/CaseStudyCard';
 import type { CaseStudy } from '~/lib/marketing/types';
 
-export const useWorkData = routeLoader$(async ({ request }) => {
+export const useWorkData = routeLoader$(async ({ request, url }) => {
   const cookie = request.headers.get('cookie') || '';
   const uiLocale = readPreferredLocaleFromCookieHeader(cookie) ?? undefined;
-  return getCaseStudies(uiLocale);
+  const categorySlug = url.searchParams.get('category_slug') ?? undefined;
+  const skillSlug = url.searchParams.get('skill_slug') ?? undefined;
+  return getCaseStudies(uiLocale, { categorySlug: categorySlug ?? undefined, skillSlug: skillSlug ?? undefined });
 });
 
 export default component$(() => {
