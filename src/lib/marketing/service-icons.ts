@@ -67,6 +67,12 @@ const SLUG_TO_ICON: Record<string, string> = {
   api: '/icons/ap.svg',
 };
 
+/** Absolute URL (with base) for a preset icon under `/public/icons`. */
+export function presetIconPreviewUrl(key: (typeof SERVICE_ICON_SELECT_VALUES)[number]): string {
+  const path = SLUG_TO_ICON[key] ?? `/icons/${key}.svg`;
+  return publicMarketingAssetUrl(path);
+}
+
 function hasAssetExtension(s: string): boolean {
   return /\.(svg|png|jpg|jpeg|webp|gif)(\?|#|$)/i.test(s);
 }
