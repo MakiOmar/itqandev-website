@@ -5,7 +5,8 @@ import { RouterHead } from "./components/router-head/router-head";
 import { DarkModeToggle } from "./components/common/DarkModeToggle";
 import { speakConfig } from "./lib/i18n/config";
 import { translationFn } from "./lib/i18n/translation-fn";
-import { stripUiLocaleFromPathname } from "./lib/i18n/ui-locale-path";
+import { stripUiLocaleFromPathname, uiLangPrefixFromPathname } from "./lib/i18n/ui-locale-path";
+import { persistPreferredLocale } from "./lib/i18n/preferred-locale-persist";
 
 import "./global.css";
 
@@ -115,56 +116,67 @@ export default component$(() => {
 
   // Get current locale for body lang and dir attributes
   const locale = useSpeakLocale();
-  // Initialize with current locale from qwik-speak (set by onRequest handler)
-  // This ensures SSR renders with correct direction from the start, matching the blocking script
-  const bodyLang = useSignal(locale.lang || speakConfig.defaultLocale.lang);
-  const bodyDir = useSignal(locale.lang === 'ar' ? 'rtl' : 'ltr');
+  const location = useLocation();
+  const pathUiLang = uiLangPrefixFromPathname(location.url.pathname);
+  const initialLang = pathUiLang ?? (locale.lang || speakConfig.defaultLocale.lang);
+  const bodyLang = useSignal(initialLang);
+  const bodyDir = useSignal(initialLang === "ar" ? "rtl" : "ltr");
 
   const speakCodes = new Set(speakConfig.supportedLocales.map((l) => l.lang.toLowerCase()));
 
-  // Initialize locale from localStorage on client-side and sync with qwik-speak
+  /**
+   * URL `/en` / `/ar` is the source of truth for first paint and client nav.
+   * Otherwise fall back to localStorage so non-prefixed legacy URLs still work.
+   */
   // eslint-disable-next-line qwik/no-use-visible-task
-  useVisibleTask$(() => {
-    if (typeof localStorage !== 'undefined') {
-      const savedLocale = localStorage.getItem('preferred-locale');
-      const normalized = savedLocale?.trim().toLowerCase() ?? '';
-      const rtlStored = localStorage.getItem('preferred-locale-rtl');
-      const isRtl =
-        rtlStored === '1' || (rtlStored !== '0' && normalized === 'ar');
+  useVisibleTask$(({ track }) => {
+    track(() => location.url.pathname);
+    track(() => locale.lang);
+
+    const urlLang = uiLangPrefixFromPathname(location.url.pathname);
+    if (urlLang != null && speakCodes.has(urlLang)) {
+      const isRtl = urlLang === "ar";
+      locale.lang = urlLang;
+      bodyLang.value = urlLang;
+      bodyDir.value = isRtl ? "rtl" : "ltr";
+      persistPreferredLocale(urlLang, isRtl);
+      ensureLocaleFont(normalizeLocale(urlLang));
+      if (typeof document !== "undefined") {
+        if (document.body) {
+          document.body.setAttribute("lang", urlLang);
+          document.body.setAttribute("dir", bodyDir.value);
+        }
+        document.documentElement.setAttribute("lang", urlLang);
+        document.documentElement.setAttribute("dir", bodyDir.value);
+      }
+      return;
+    }
+
+    if (typeof localStorage !== "undefined") {
+      const savedLocale = localStorage.getItem("preferred-locale");
+      const normalized = savedLocale?.trim().toLowerCase() ?? "";
+      const rtlStored = localStorage.getItem("preferred-locale-rtl");
+      const isRtl = rtlStored === "1" || (rtlStored !== "0" && normalized === "ar");
       if (normalized && speakCodes.has(normalized)) {
         locale.lang = normalized;
         bodyLang.value = normalized;
-        bodyDir.value = isRtl ? 'rtl' : 'ltr';
+        bodyDir.value = isRtl ? "rtl" : "ltr";
       }
-
       ensureLocaleFont(normalizeLocale(savedLocale ?? locale.lang));
     }
-  });
 
-  // Update body lang and dir when locale changes
-  // eslint-disable-next-line qwik/no-use-visible-task
-  useVisibleTask$(({ track }) => {
-    const trackedLang = track(() => locale.lang);
-    const currentLocale = normalizeLocale(trackedLang);
-    const currentLang = currentLocale;
-
+    const currentLang = normalizeLocale(locale.lang);
     bodyLang.value = currentLang;
-    const rtlStored =
-      typeof localStorage !== 'undefined' ? localStorage.getItem('preferred-locale-rtl') : null;
-    const isRtl = rtlStored === '1' || (rtlStored !== '0' && currentLang === 'ar');
-    bodyDir.value = isRtl ? 'rtl' : 'ltr';
-    
-    // Update document body and html attributes
-    if (typeof document !== 'undefined') {
+    bodyDir.value = currentLang === "ar" ? "rtl" : "ltr";
+    if (typeof document !== "undefined") {
       if (document.body) {
-        document.body.setAttribute('lang', currentLang);
-        document.body.setAttribute('dir', bodyDir.value);
+        document.body.setAttribute("lang", currentLang);
+        document.body.setAttribute("dir", bodyDir.value);
       }
-      document.documentElement.setAttribute('lang', currentLang);
-      document.documentElement.setAttribute('dir', bodyDir.value);
+      document.documentElement.setAttribute("lang", currentLang);
+      document.documentElement.setAttribute("dir", bodyDir.value);
     }
-
-    ensureLocaleFont(currentLocale);
+    ensureLocaleFont(currentLang);
   });
 
   return (

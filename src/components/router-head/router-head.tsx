@@ -91,14 +91,18 @@ export const RouterHead = component$(() => {
               preferredRtl = localStorage.getItem('preferred-locale-rtl');
             }
 
-            var rawLocale = decodeCookieVal(preferredLocale) || 'en';
+            // URL segment wins over cookie/storage so /ar/... paints RTL even if storage still says en.
+            var urlUiLang = locMatch ? String(locMatch[1]).toLowerCase() : '';
+            var fromUrl = (urlUiLang === 'ar' || urlUiLang === 'en') ? urlUiLang : null;
+
+            var rawLocale = fromUrl || decodeCookieVal(preferredLocale) || 'en';
             var locale = rawLocale.toLowerCase();
             if (!/^[a-z]{2}(-[a-z0-9]+)*$/i.test(locale)) {
               locale = 'en';
             }
 
             var rtlFlag = preferredRtl != null ? String(preferredRtl).trim() : '';
-            var isRtl = (rtlFlag === '1') || (rtlFlag !== '0' && locale === 'ar');
+            var isRtl = fromUrl === 'ar' ? true : fromUrl === 'en' ? false : ((rtlFlag === '1') || (rtlFlag !== '0' && locale === 'ar'));
             var dir = isRtl ? 'rtl' : 'ltr';
             var lang = locale;
 

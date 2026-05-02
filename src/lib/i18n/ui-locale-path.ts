@@ -59,8 +59,16 @@ export function uiLangFromPreferredCookie(cookie: { get(name: string): unknown }
   return pref === 'ar' || pref === 'en' ? pref : speakConfig.defaultLocale.lang;
 }
 
-/** UI locale from URL (`/en/...`, `/ar/...`); for components without route params API. */
+/** Leading `/en` or `/ar` segment only; `null` if the path has no UI locale prefix. */
+export function uiLangPrefixFromPathname(pathname: string): 'en' | 'ar' | null {
+  const m = (pathname || '/').match(UI_PREFIX_RE);
+  if (!m) {
+    return null;
+  }
+  return m[1].toLowerCase() === 'ar' ? 'ar' : 'en';
+}
+
+/** UI locale from URL (`/en/...`, `/ar/...`); falls back to English when there is no prefix. */
 export function uiLangFromUrlPathname(pathname: string): 'en' | 'ar' {
-  const m = (pathname || '/').match(/^\/(en|ar)(?=\/|$)/i);
-  return m && m[1].toLowerCase() === 'ar' ? 'ar' : 'en';
+  return uiLangPrefixFromPathname(pathname) ?? 'en';
 }
