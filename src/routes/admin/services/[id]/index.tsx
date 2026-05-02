@@ -22,6 +22,7 @@ import {
 } from '../../../../lib/content-display-locale';
 import { runServiceUpdateFromBrowser } from '../../../../lib/admin/service-actions';
 import type { AdminService } from '../../../../types/service';
+import { ServiceIconSelect } from '../../../../components/admin/ServiceIconSelect';
 
 function joinLines(arr: string[] | null | undefined): string {
   if (!Array.isArray(arr) || arr.length === 0) {
@@ -442,13 +443,13 @@ export default component$(() => {
             <label for="esvc-icon" class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-200">
               {translateApp(lang, 'services.icon')}
             </label>
-            <input
+            <ServiceIconSelect
               id="esvc-icon"
-              name="icon"
-              type="text"
               value={formData.value.icon}
-              onInput$={(e) => (formData.value = { ...formData.value, icon: (e.target as HTMLInputElement).value })}
-              class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-primary-500 focus:outline-none focus:ring focus:ring-primary-200 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:focus:ring-primary-700/40"
+              lang={lang}
+              onChange$={$((v: string) => {
+                formData.value = { ...formData.value, icon: v };
+              })}
             />
           </div>
 

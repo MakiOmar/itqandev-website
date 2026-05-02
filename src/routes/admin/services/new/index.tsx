@@ -20,6 +20,7 @@ import { useCreateService } from '../../../../lib/admin/service-actions';
 import { submitRouteActionFormData } from '../../../../lib/admin/route-action-form-submit';
 import { ROUTES } from '../../../../lib/constants/routes';
 import type { AdminService } from '../../../../types/service';
+import { ServiceIconSelect } from '../../../../components/admin/ServiceIconSelect';
 
 export default component$(() => {
   const { lang } = useTranslate();
@@ -319,13 +320,13 @@ export default component$(() => {
             <label for="svc-icon" class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-200">
               {translateApp(lang, 'services.icon')}
             </label>
-            <input
+            <ServiceIconSelect
               id="svc-icon"
-              name="icon"
-              type="text"
               value={formData.value.icon}
-              onInput$={(e) => (formData.value = { ...formData.value, icon: (e.target as HTMLInputElement).value })}
-              class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-primary-500 focus:outline-none focus:ring focus:ring-primary-200 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:focus:ring-primary-700/40"
+              lang={lang}
+              onChange$={$((v: string) => {
+                formData.value = { ...formData.value, icon: v };
+              })}
             />
           </div>
 
