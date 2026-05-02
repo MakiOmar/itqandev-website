@@ -1,0 +1,129 @@
+import { component$ } from '@builder.io/qwik';
+import type { DocumentHead } from '@builder.io/qwik-city';
+import { routeLoader$ } from '@builder.io/qwik-city';
+import { Link, useLocation } from '@builder.io/qwik-city';
+import { getConfig } from '~/lib/config';
+import { getServiceBySlug } from '~/lib/marketing/content-layer';
+import { readPreferredLocaleFromCookieHeader } from '~/lib/i18n/dashboard-locale';
+import { marketingRoutes } from '~/lib/marketing/constants';
+import { uiLangFromUrlPathname } from '~/lib/i18n/ui-locale-path';
+import { resolveServiceIconUrl } from '~/lib/marketing/service-icons';
+import { Container } from '~/components/marketing/Container';
+import { Section } from '~/components/marketing/Section';
+import { AnimatedReveal } from '~/components/marketing/AnimatedReveal';
+
+export const useServiceDetail = routeLoader$(async ({ params, request }) => {
+  const slug = params.slug;
+  const cookie = request.headers.get('cookie') || '';
+  const uiLocale = readPreferredLocaleFromCookieHeader(cookie) ?? undefined;
+  const service = await getServiceBySlug(slug, uiLocale);
+  if (!service) throw new Error('Service not found');
+  return service;
+});
+
+export default component$(() => {
+  const loc = useLocation();
+  const MR = marketingRoutes(uiLangFromUrlPathname(loc.url.pathname));
+  const s = useServiceDetail().value;
+  const baseUrl = (import.meta.env?.VITE_SITE_URL as string) || '';
+
+  return (
+    <>
+      <Section>
+        <Container size="narrow">
+          <AnimatedReveal>
+            <Link
+              href={MR.services}
+              class="inline-flex items-center text-sm font-medium text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"
+            >
+              <svg class="mr-1 h-4 w-4 rtl:ml-1 rtl:mr-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+              </svg>
+              Back to services
+            </Link>
+          </AnimatedReveal>
+
+          <article class="mt-8">
+            <AnimatedReveal delay={60}>
+              <header class="flex flex-col gap-6 sm:flex-row sm:items-start sm:gap-8">
+                <div
+                  class="relative flex h-[4.5rem] w-[4.5rem] shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-primary-50 to-sky-50 shadow-inner ring-1 ring-primary-200/40 dark:from-primary-950/60 dark:to-slate-900 dark:ring-primary-500/25"
+                  aria-hidden="true"
+                >
+                  <div class="absolute inset-1 rounded-xl bg-white/60 dark:bg-slate-900/40" />
+                  <img
+                    src={resolveServiceIconUrl(s)}
+                    alt=""
+                    width={56}
+                    height={56}
+                    decoding="async"
+                    class="relative z-[1] h-14 w-14 object-contain drop-shadow-sm"
+                  />
+                </div>
+                <div class="min-w-0 flex-1">
+                  <h1 class="text-3xl font-bold tracking-tight text-slate-900 dark:text-white sm:text-4xl">{s.name}</h1>
+                  <p class="mt-2 text-lg text-primary-600 dark:text-primary-400">{s.shortDescription}</p>
+                </div>
+              </header>
+              <p class="mt-6 text-slate-600 dark:text-slate-400">{s.description}</p>
+              {s.process && s.process.length > 0 && (
+                <div class="mt-8">
+                  <h2 class="text-sm font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Our process</h2>
+                  <ol class="mt-4 list-decimal space-y-2 pl-5 text-slate-700 dark:text-slate-300" role="list">
+                    {s.process.map((step: string, j: number) => (
+                      <li key={j}>{step}</li>
+                    ))}
+                  </ol>
+                </div>
+              )}
+              {s.deliverables && s.deliverables.length > 0 && (
+                <div class="mt-8">
+                  <h2 class="text-sm font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Deliverables</h2>
+                  <ul class="mt-4 flex flex-wrap gap-2" role="list">
+                    {s.deliverables.map((d: string, j: number) => (
+                      <li key={j}>
+                        <span class="inline-flex rounded-full bg-slate-100 px-3 py-1 text-sm text-slate-700 dark:bg-slate-700 dark:text-slate-300">
+                          {d}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </AnimatedReveal>
+          </article>
+        </Container>
+      </Section>
+
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={JSON.stringify({
+          '@context': 'https://schema.org',
+          '@type': 'BreadcrumbList',
+          itemListElement: [
+            { '@type': 'ListItem', position: 1, name: 'Home', item: baseUrl },
+            { '@type': 'ListItem', position: 2, name: 'Services', item: baseUrl + '/services' },
+            { '@type': 'ListItem', position: 3, name: s.name },
+          ],
+        })}
+      />
+    </>
+  );
+});
+
+export const head: DocumentHead = ({ resolveValue }) => {
+  const config = getConfig();
+  const baseUrl = (import.meta.env?.VITE_SITE_URL as string) || 'https://example.com';
+  const s = resolveValue(useServiceDetail);
+  const description = s.shortDescription || s.description;
+  return {
+    title: `${s.name} | Services | ${config.branding.name}`,
+    meta: [
+      { name: 'description', content: description },
+      { property: 'og:title', content: s.name },
+      { property: 'og:description', content: description },
+      { property: 'og:url', content: `${baseUrl}/services/${s.slug}` },
+    ],
+    links: [{ rel: 'canonical', href: `${baseUrl}/services/${s.slug}` }],
+  };
+};

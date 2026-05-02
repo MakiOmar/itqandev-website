@@ -7,6 +7,7 @@ import { withUiLocale } from '../i18n/ui-locale-path';
 export const MARKETING_ROUTES = {
   home: '/',
   services: '/services',
+  serviceSlug: (slug: string) => `/services/${slug}`,
   work: '/work',
   workSlug: (slug: string) => `/work/${slug}`,
   about: '/about',
@@ -21,6 +22,7 @@ export function marketingRoutes(lang: 'en' | 'ar') {
   return {
     home: withUiLocale(lang, MARKETING_ROUTES.home),
     services: withUiLocale(lang, MARKETING_ROUTES.services),
+    serviceSlug: (slug: string) => withUiLocale(lang, MARKETING_ROUTES.serviceSlug(slug)),
     work: withUiLocale(lang, MARKETING_ROUTES.work),
     workSlug: (slug: string) => withUiLocale(lang, MARKETING_ROUTES.workSlug(slug)),
     about: withUiLocale(lang, MARKETING_ROUTES.about),

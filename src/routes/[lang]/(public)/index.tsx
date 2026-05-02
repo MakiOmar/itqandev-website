@@ -124,7 +124,7 @@ export default component$(() => {
                 <li key={s.id}>
                   <AnimatedReveal delay={i * 70}>
                     <Link
-                      href={`${MR.services}#${s.slug}`}
+                      href={MR.serviceSlug(s.slug)}
                       class="group relative flex h-full flex-col overflow-hidden rounded-2xl border border-slate-200/90 bg-white/80 p-6 shadow-sm backdrop-blur-md transition-all duration-300 hover:-translate-y-1 hover:border-primary-300/70 hover:shadow-xl hover:shadow-primary-500/10 dark:border-slate-600/50 dark:bg-slate-800/55 dark:backdrop-blur-none dark:hover:border-primary-500/40 dark:hover:shadow-primary-950/40 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-slate-900 sm:p-7"
                     >
                       {/* Sheen on hover */}

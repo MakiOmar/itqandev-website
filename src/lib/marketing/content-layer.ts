@@ -301,6 +301,13 @@ export async function getSiteContent(locale?: string | null): Promise<SiteConten
   return Promise.resolve(merged);
 }
 
+/** Single published service by slug (uses merged site content + public services when configured). */
+export async function getServiceBySlug(slug: string, locale?: string | null): Promise<Service | null> {
+  const content = await getSiteContent(locale);
+  const found = content.services.find((s) => s.slug === slug) ?? null;
+  return found;
+}
+
 /** Get all blog posts (sorted by date desc). */
 export async function getBlogPosts(): Promise<BlogPost[]> {
   if (contentSource === 'api') {
