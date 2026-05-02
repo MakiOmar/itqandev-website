@@ -414,6 +414,53 @@ export const ContentEditingLanguageSelect = component$<{
     dbg('after-onChange', { done: true });
   });
 
+  // eslint-disable-next-line qwik/no-use-visible-task
+  useVisibleTask$(({ track }) => {
+    track(() => props.value);
+    track(() => selectModel.value);
+    track(() => props.siteLanguages.map((l) => l.code).join('|'));
+    const wantRaw = String(props.value ?? '').trim();
+    const matchRow = props.siteLanguages.find((l) => String(l.code).toLowerCase() === wantRaw.toLowerCase());
+    const want = matchRow ? String(matchRow.code) : wantRaw;
+    const el = typeof document !== 'undefined' ? (document.getElementById('editing_locale') as HTMLSelectElement | null) : null;
+    const dupIds = typeof document !== 'undefined' ? document.querySelectorAll('#editing_locale').length : 0;
+    const domVal = el?.value ?? null;
+    // #region agent log
+    fetch('http://127.0.0.1:7469/ingest/ed85bb2c-c192-44f6-8c60-9fe04360649a', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-Debug-Session-Id': '08cfc0' },
+      body: JSON.stringify({
+        sessionId: '08cfc0',
+        hypothesisId: 'H-dom',
+        location: 'PerFieldContentTranslations.tsx:ContentEditingLanguageSelect domProbe',
+        message: 'native select vs props',
+        data: { domVal, want, selectModel: selectModel.value, dupIds },
+        timestamp: Date.now(),
+      }),
+    }).catch(() => {});
+    // #endregion
+    if (!el || dupIds !== 1 || !want) {
+      return;
+    }
+    if (el.value !== want) {
+      el.value = want;
+      if (selectModel.value !== want) {
+        selectModel.value = want;
+      }
+      // #region agent log
+      fetch('http://127.0.0.1:7469/ingest/ed85bb2c-c192-44f6-8c60-9fe04360649a', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-Debug-Session-Id': '08cfc0' },
+        hypothesisId: 'H-dom-fix',
+        location: 'PerFieldContentTranslations.tsx:ContentEditingLanguageSelect domProbe',
+        message: 'imperative select.value sync applied',
+        data: { after: el.value, want },
+        timestamp: Date.now(),
+      }).catch(() => {});
+      // #endregion
+    }
+  });
+
   const isPrimary = props.value.toLowerCase() === props.effectivePrimaryLocale.toLowerCase();
   return (
     <div class="md:col-span-2 rounded-lg border border-sky-100 bg-sky-50/60 p-4 dark:border-sky-900/40 dark:bg-sky-950/20">
