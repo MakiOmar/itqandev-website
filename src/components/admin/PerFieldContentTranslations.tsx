@@ -6,6 +6,7 @@ import {
   useSignal,
   useStore,
   useTask$,
+  useVisibleTask$,
   Slot,
   type QRL,
   type Signal,
@@ -16,6 +17,7 @@ import {
   translationRowsFromJsonString,
 } from '../../lib/content-translations';
 import { directionForSiteLocale, langAttributeForLocale } from '../../lib/i18n/editing-locale-direction';
+import { readPreferredLocaleFromBrowser } from '../../lib/i18n/preferred-locale-persist';
 
 type TranslationKind = 'project' | 'blog';
 
@@ -325,6 +327,27 @@ export const ContentEditingLanguageSelect = component$<{
   effectivePrimaryLocale: string;
   onChange$?: QRL<(code: string) => void>;
 }>((props) => {
+  // Navbar writes `preferred-locale` to localStorage before reload; SSR `routeLoader$` can still
+  // seed `content_editing_locale` as default — align the dropdown once on the client.
+  // eslint-disable-next-line qwik/no-use-visible-task
+  useVisibleTask$(() => {
+    if (!props.onChange$) {
+      return;
+    }
+    const pref = readPreferredLocaleFromBrowser();
+    if (!pref) {
+      return;
+    }
+    const codes = new Set(props.siteLanguages.map((l) => String(l.code).toLowerCase()));
+    if (!codes.has(pref)) {
+      return;
+    }
+    if (pref === String(props.value || '').trim().toLowerCase()) {
+      return;
+    }
+    props.onChange$(pref);
+  });
+
   const isPrimary = props.value.toLowerCase() === props.effectivePrimaryLocale.toLowerCase();
   return (
     <div class="md:col-span-2 rounded-lg border border-sky-100 bg-sky-50/60 p-4 dark:border-sky-900/40 dark:bg-sky-950/20">

@@ -1,3 +1,5 @@
+import { readPreferredLocaleFromCookieHeader } from './dashboard-locale';
+
 /**
  * Persists UI locale for SSR (cookie), client (localStorage), and document direction (RTL cookie).
  * Used by dashboard and public language switchers.
@@ -30,4 +32,18 @@ export function persistPreferredLocale(lang: string, isRtl: boolean): void {
     document.body.setAttribute('dir', dir);
     document.body.setAttribute('lang', code);
   }
+}
+
+/** Client-only: `localStorage` (navbar switcher) then `document.cookie` — for syncing when SSR loader missed `preferred-locale`. */
+export function readPreferredLocaleFromBrowser(): string | undefined {
+  if (typeof localStorage !== 'undefined') {
+    const ls = localStorage.getItem('preferred-locale');
+    if (ls != null && String(ls).trim() !== '') {
+      return String(ls).trim().toLowerCase();
+    }
+  }
+  if (typeof document !== 'undefined' && typeof document.cookie === 'string') {
+    return readPreferredLocaleFromCookieHeader(document.cookie);
+  }
+  return undefined;
 }
