@@ -2,6 +2,8 @@
  * Marketing site route and segment constants.
  */
 
+import { withUiLocale } from '../i18n/ui-locale-path';
+
 export const MARKETING_ROUTES = {
   home: '/',
   services: '/services',
@@ -13,6 +15,21 @@ export const MARKETING_ROUTES = {
   blog: '/blog',
   blogSlug: (slug: string) => `/blog/${slug}`,
 } as const;
+
+/** Locale-prefixed marketing paths (`/en/services`, `/ar/blog/...`). */
+export function marketingRoutes(lang: 'en' | 'ar') {
+  return {
+    home: withUiLocale(lang, MARKETING_ROUTES.home),
+    services: withUiLocale(lang, MARKETING_ROUTES.services),
+    work: withUiLocale(lang, MARKETING_ROUTES.work),
+    workSlug: (slug: string) => withUiLocale(lang, MARKETING_ROUTES.workSlug(slug)),
+    about: withUiLocale(lang, MARKETING_ROUTES.about),
+    pricing: withUiLocale(lang, MARKETING_ROUTES.pricing),
+    contact: withUiLocale(lang, MARKETING_ROUTES.contact),
+    blog: withUiLocale(lang, MARKETING_ROUTES.blog),
+    blogSlug: (slug: string) => withUiLocale(lang, MARKETING_ROUTES.blogSlug(slug)),
+  } as const;
+}
 
 export const SERVICE_SLUGS = [
   'web',

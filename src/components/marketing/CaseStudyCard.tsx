@@ -1,7 +1,8 @@
 import { component$ } from '@builder.io/qwik';
 import { Link } from '@builder.io/qwik-city';
+import { useSpeakLocale } from 'qwik-speak';
 import type { CaseStudy } from '../../lib/marketing/types';
-import { MARKETING_ROUTES } from '../../lib/marketing/constants';
+import { marketingRoutes } from '../../lib/marketing/constants';
 import { Card } from './Card';
 import { ContentImage } from './ContentImage';
 
@@ -12,7 +13,9 @@ export interface CaseStudyCardProps {
 }
 
 export const CaseStudyCard = component$<CaseStudyCardProps>(({ caseStudy, featured }) => {
-  const href = MARKETING_ROUTES.workSlug(caseStudy.slug);
+  const locale = useSpeakLocale();
+  const MR = marketingRoutes(locale.lang === 'ar' ? 'ar' : 'en');
+  const href = MR.workSlug(caseStudy.slug);
 
   return (
     <Link href={href} class="block h-full focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 rounded-xl">

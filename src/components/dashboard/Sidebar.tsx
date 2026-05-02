@@ -1,8 +1,8 @@
 import { component$, type QRL, type Component, useContext, useSignal, useVisibleTask$ } from '@builder.io/qwik';
 import { Link, useLocation } from '@builder.io/qwik-city';
 import { useSpeakLocale } from 'qwik-speak';
-import { ROUTES } from '../../lib/constants/routes';
-import { useAdminAuth } from '../../routes/admin/layout';
+import { useAppRoutes } from '../../lib/constants/routes';
+import { useAdminAuth } from '../../routes/[lang]/admin/layout';
 import { ProjectSettingsContext } from '../../stores/project-settings-store';
 import { isFeatureModuleEnabled, type FeatureModuleKey } from '../../lib/api/project-settings';
 import { useTranslate, translateApp } from '../../lib/i18n/useTranslate';
@@ -58,6 +58,7 @@ export const Sidebar = component$<SidebarProps>((props) => {
   const projectSettings = useContext(ProjectSettingsContext);
   const { lang } = useTranslate();
   const locale = useSpeakLocale();
+  const R = useAppRoutes();
   const userRole = auth.value?.user.role || 'user';
   const permissionSet = new Set(auth.value?.user.permissions ?? []);
   const settingsMenuOpen = useSignal(false);
@@ -102,12 +103,12 @@ export const Sidebar = component$<SidebarProps>((props) => {
   const navItems: NavItem[] = [
     {
       label: translateApp(lang, 'sidebar.dashboard'),
-      href: ROUTES.ADMIN.HOME,
+      href: R.value.ADMIN.HOME,
       icon: DashboardIcon,
     },
     {
       label: translateApp(lang, 'sidebar.projects'),
-      href: ROUTES.ADMIN.PROJECTS,
+      href: R.value.ADMIN.PROJECTS,
       icon: ProjectsIcon,
       activeOnChildPaths: true,
       permission: 'manage projects',
@@ -115,7 +116,7 @@ export const Sidebar = component$<SidebarProps>((props) => {
     },
     {
       label: translateApp(lang, 'sidebar.categories'),
-      href: ROUTES.ADMIN.CATEGORIES,
+      href: R.value.ADMIN.CATEGORIES,
       icon: CategoriesIcon,
       activeOnChildPaths: true,
       permission: 'manage categories',
@@ -123,14 +124,14 @@ export const Sidebar = component$<SidebarProps>((props) => {
     },
     {
       label: translateApp(lang, 'sidebar.skills'),
-      href: ROUTES.ADMIN.SKILLS,
+      href: R.value.ADMIN.SKILLS,
       icon: SkillsIcon,
       permission: 'manage skills',
       featureModule: 'skills',
     },
     {
       label: translateApp(lang, 'sidebar.services'),
-      href: ROUTES.ADMIN.SERVICES,
+      href: R.value.ADMIN.SERVICES,
       icon: ServicesIcon,
       activeOnChildPaths: true,
       permission: 'manage services',
@@ -138,7 +139,7 @@ export const Sidebar = component$<SidebarProps>((props) => {
     },
     {
       label: translateApp(lang, 'sidebar.testimonials'),
-      href: ROUTES.ADMIN.TESTIMONIALS,
+      href: R.value.ADMIN.TESTIMONIALS,
       icon: TestimonialsIcon,
       activeOnChildPaths: true,
       permission: 'manage testimonials',
@@ -146,7 +147,7 @@ export const Sidebar = component$<SidebarProps>((props) => {
     },
     {
       label: translateApp(lang, 'sidebar.blog'),
-      href: ROUTES.ADMIN.BLOG,
+      href: R.value.ADMIN.BLOG,
       icon: BlogIcon,
       activeOnChildPaths: true,
       permission: 'manage blog',
@@ -154,19 +155,19 @@ export const Sidebar = component$<SidebarProps>((props) => {
     },
     {
       label: translateApp(lang, 'sidebar.media'),
-      href: ROUTES.ADMIN.MEDIA,
+      href: R.value.ADMIN.MEDIA,
       icon: MediaIcon,
       permission: 'manage media',
       featureModule: 'media',
     },
     {
       label: translateApp(lang, 'sidebar.profile'),
-      href: ROUTES.ADMIN.PROFILE,
+      href: R.value.ADMIN.PROFILE,
       icon: ProfileIcon,
     },
     {
       label: translateApp(lang, 'sidebar.users'),
-      href: ROUTES.ADMIN.USERS,
+      href: R.value.ADMIN.USERS,
       icon: UsersIcon,
       permission: 'manage users',
       featureModule: 'users',
@@ -175,27 +176,27 @@ export const Sidebar = component$<SidebarProps>((props) => {
       label: translateApp(lang, 'sidebar.settings'),
       icon: SettingsIcon,
       children: [
-        { label: translateApp(lang, 'settings.general'), href: ROUTES.ADMIN.SETTINGS_GENERAL },
-        { label: translateApp(lang, 'settings.socialMedia'), href: ROUTES.ADMIN.SETTINGS_SOCIAL },
-        { label: translateApp(lang, 'media.title'), href: ROUTES.ADMIN.SETTINGS_MEDIA, featureModule: 'media' },
-        { label: translateApp(lang, 'settings.branding'), href: ROUTES.ADMIN.SETTINGS_BRANDING },
+        { label: translateApp(lang, 'settings.general'), href: R.value.ADMIN.SETTINGS_GENERAL },
+        { label: translateApp(lang, 'settings.socialMedia'), href: R.value.ADMIN.SETTINGS_SOCIAL },
+        { label: translateApp(lang, 'media.title'), href: R.value.ADMIN.SETTINGS_MEDIA, featureModule: 'media' },
+        { label: translateApp(lang, 'settings.branding'), href: R.value.ADMIN.SETTINGS_BRANDING },
       ],
       roles: ['admin', 'super_admin'],
     },
     {
       label: translateApp(lang, 'sidebar.activityLogs'),
-      href: ROUTES.ADMIN.ACTIVITY,
+      href: R.value.ADMIN.ACTIVITY,
       icon: ActivityIcon,
       roles: ['super_admin'],
     },
     {
       label: translateApp(lang, 'sidebar.notifications'),
-      href: ROUTES.ADMIN.NOTIFICATIONS,
+      href: R.value.ADMIN.NOTIFICATIONS,
       icon: NotificationsIcon,
     },
     {
       label: translateApp(lang, 'sidebar.systemHealth'),
-      href: ROUTES.ADMIN.SYSTEM,
+      href: R.value.ADMIN.SYSTEM,
       icon: SystemHealthIcon,
       permission: 'manage system',
     },
@@ -253,7 +254,7 @@ export const Sidebar = component$<SidebarProps>((props) => {
             <div class="flex min-w-0 flex-1 items-center">
               {/* Brand text only: logo lives in header; link matches header homepage */}
               <Link
-                href={ROUTES.PUBLIC.HOME}
+                href={R.value.PUBLIC.HOME}
                 class="min-w-0 rounded-lg outline-none ring-offset-2 ring-offset-white focus-visible:ring-2 focus-visible:ring-blue-500 dark:ring-offset-slate-800"
                 aria-label={`${projectName} — go to homepage`}
                 onClick$={() => {
@@ -289,7 +290,7 @@ export const Sidebar = component$<SidebarProps>((props) => {
                     ? isActive(item.href)
                     : false;
                 const sectionOpen = hasChildren
-                  ? settingsMenuOpen.value || isInSection(ROUTES.ADMIN.SETTINGS)
+                  ? settingsMenuOpen.value || isInSection(R.value.ADMIN.SETTINGS)
                   : false;
 
                 if (hasChildren) {

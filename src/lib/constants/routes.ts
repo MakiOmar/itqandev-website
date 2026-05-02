@@ -1,63 +1,74 @@
+import { useComputed$ } from '@builder.io/qwik';
 import { getConfig } from '../config';
+import { uiLangFromPreferredCookie, withUiLocale } from '../i18n/ui-locale-path';
+import { useTranslate } from '../i18n/useTranslate';
 
 /**
- * Application route constants
- * Routes are now loaded from configuration to support admin/public separation
+ * All dashboard / auth hrefs include the UI locale prefix (`/en/admin/...`, `/ar/admin/...`).
  */
-export function getRoutes() {
+export function getLocalizedRoutes(lang: string) {
   const config = getConfig();
+  const L = (path: string) => withUiLocale(lang, path);
+  const p = config.routes.admin.prefix;
   return {
-    // Admin routes
     ADMIN: {
-      HOME: config.routes.admin.home,
-      LOGIN: config.routes.admin.login,
-      PROFILE: `${config.routes.admin.prefix}/profile`,
-      USERS: `${config.routes.admin.prefix}/users`,
-      SETTINGS: `${config.routes.admin.prefix}/settings`,
-      SETTINGS_GENERAL: `${config.routes.admin.prefix}/settings/general`,
-      SETTINGS_SOCIAL: `${config.routes.admin.prefix}/settings/social`,
-      SETTINGS_MEDIA: `${config.routes.admin.prefix}/settings/media`,
-      SETTINGS_BRANDING: `${config.routes.admin.prefix}/settings/branding`,
-      SETTINGS_LANGUAGES: `${config.routes.admin.prefix}/settings/languages`,
-      ACTIVITY: `${config.routes.admin.prefix}/activity`,
-      NOTIFICATIONS: `${config.routes.admin.prefix}/notifications`,
-      SYSTEM: `${config.routes.admin.prefix}/system`,
-      PROJECTS: `${config.routes.admin.prefix}/projects`,
-      PROJECTS_NEW: `${config.routes.admin.prefix}/projects/new`,
-      PROJECTS_EDIT: (id: string | number) => `${config.routes.admin.prefix}/projects/${id}`,
-      CATEGORIES: `${config.routes.admin.prefix}/categories`,
-      CATEGORIES_NEW: `${config.routes.admin.prefix}/categories/new`,
-      CATEGORIES_EDIT: (id: string | number) => `${config.routes.admin.prefix}/categories/${id}`,
-      SKILLS: `${config.routes.admin.prefix}/skills`,
-      SERVICES: `${config.routes.admin.prefix}/services`,
-      SERVICES_NEW: `${config.routes.admin.prefix}/services/new`,
-      SERVICES_EDIT: (id: string | number) => `${config.routes.admin.prefix}/services/${id}`,
-      TESTIMONIALS: `${config.routes.admin.prefix}/testimonials`,
-      TESTIMONIALS_NEW: `${config.routes.admin.prefix}/testimonials/new`,
-      TESTIMONIALS_EDIT: (id: string | number) => `${config.routes.admin.prefix}/testimonials/${id}`,
-      BLOG: `${config.routes.admin.prefix}/blog`,
-      BLOG_NEW: `${config.routes.admin.prefix}/blog/new`,
-      BLOG_EDIT: (id: string | number) => `${config.routes.admin.prefix}/blog/${id}`,
-      MEDIA: `${config.routes.admin.prefix}/media`,
+      HOME: L(config.routes.admin.home),
+      LOGIN: L(config.routes.admin.login),
+      PROFILE: L(`${p}/profile`),
+      USERS: L(`${p}/users`),
+      SETTINGS: L(`${p}/settings`),
+      SETTINGS_GENERAL: L(`${p}/settings/general`),
+      SETTINGS_SOCIAL: L(`${p}/settings/social`),
+      SETTINGS_MEDIA: L(`${p}/settings/media`),
+      SETTINGS_BRANDING: L(`${p}/settings/branding`),
+      SETTINGS_LANGUAGES: L(`${p}/settings/languages`),
+      ACTIVITY: L(`${p}/activity`),
+      NOTIFICATIONS: L(`${p}/notifications`),
+      SYSTEM: L(`${p}/system`),
+      PROJECTS: L(`${p}/projects`),
+      PROJECTS_NEW: L(`${p}/projects/new`),
+      PROJECTS_EDIT: (id: string | number) => L(`${p}/projects/${id}`),
+      CATEGORIES: L(`${p}/categories`),
+      CATEGORIES_NEW: L(`${p}/categories/new`),
+      CATEGORIES_EDIT: (id: string | number) => L(`${p}/categories/${id}`),
+      SKILLS: L(`${p}/skills`),
+      SERVICES: L(`${p}/services`),
+      SERVICES_NEW: L(`${p}/services/new`),
+      SERVICES_EDIT: (id: string | number) => L(`${p}/services/${id}`),
+      TESTIMONIALS: L(`${p}/testimonials`),
+      TESTIMONIALS_NEW: L(`${p}/testimonials/new`),
+      TESTIMONIALS_EDIT: (id: string | number) => L(`${p}/testimonials/${id}`),
+      BLOG: L(`${p}/blog`),
+      BLOG_NEW: L(`${p}/blog/new`),
+      BLOG_EDIT: (id: string | number) => L(`${p}/blog/${id}`),
+      MEDIA: L(`${p}/media`),
+      LOGOUT: L(`${p}/logout`),
     },
-    // Public routes
     PUBLIC: {
-      HOME: config.routes.public.home,
-      LOGIN: config.routes.public.login,
+      HOME: L(config.routes.public.home),
+      LOGIN: L(config.routes.public.login),
     },
-    // Legacy routes (for backward compatibility)
-    HOME: config.routes.admin.home,
-    LOGIN: config.routes.admin.login,
-    PROFILE: `${config.routes.admin.prefix}/profile`,
-    USERS: `${config.routes.admin.prefix}/users`,
-    SETTINGS: `${config.routes.admin.prefix}/settings`,
-    ACTIVITY: `${config.routes.admin.prefix}/activity`,
-    NOTIFICATIONS: `${config.routes.admin.prefix}/notifications`,
-    SYSTEM: `${config.routes.admin.prefix}/system`,
-  } as const;
+    HOME: L(config.routes.admin.home),
+    LOGIN: L(config.routes.admin.login),
+    PROFILE: L(`${p}/profile`),
+    USERS: L(`${p}/users`),
+    SETTINGS: L(`${p}/settings`),
+    ACTIVITY: L(`${p}/activity`),
+    NOTIFICATIONS: L(`${p}/notifications`),
+    SYSTEM: L(`${p}/system`),
+  };
 }
 
-/**
- * Get routes object (cached)
- */
-export const ROUTES = getRoutes();
+/** Localized routes for the current `preferred-locale` cookie (server loaders/actions). */
+export function routesFromPreferredCookie(cookie: { get(name: string): unknown }) {
+  return getLocalizedRoutes(uiLangFromPreferredCookie(cookie));
+}
+
+/** Reactive localized routes for the current qwik-speak UI language. */
+export function useAppRoutes() {
+  const { lang } = useTranslate();
+  return useComputed$(() => getLocalizedRoutes(lang));
+}
+
+/** English-only fallback for non-component code (prefer `getLocalizedRoutes` / `useAppRoutes`). */
+export const ROUTES = getLocalizedRoutes('en');

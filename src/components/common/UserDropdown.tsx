@@ -1,7 +1,7 @@
 import { component$, useSignal, $ } from '@builder.io/qwik';
 import { Link, useNavigate } from '@builder.io/qwik-city';
 import type { User } from '../../lib/auth/types';
-import { ROUTES } from '../../lib/constants/routes';
+import { useAppRoutes } from '../../lib/constants/routes';
 import { useTranslate, translateApp } from '../../lib/i18n/useTranslate';
 import { getConfig } from '../../lib/config';
 import { getApiClient } from '../../lib/api/client';
@@ -18,6 +18,7 @@ export const UserDropdown = component$<UserDropdownProps>((props) => {
   const isOpen = useSignal(false);
   const { lang } = useTranslate();
   const navigate = useNavigate();
+  const R = useAppRoutes();
   
   // Handle logout
   // According to QWIK_AUTH_LOGIN_LOGOUT.md:
@@ -52,10 +53,10 @@ export const UserDropdown = component$<UserDropdownProps>((props) => {
     if (typeof window !== 'undefined') {
       // Use window.location to trigger a full page navigation
       // This ensures the logout route loader runs and clears cookies
-      window.location.href = '/admin/logout';
+      window.location.href = R.value.ADMIN.LOGOUT;
     } else {
       // Server-side fallback
-      await navigate('/admin/logout');
+      await navigate(R.value.ADMIN.LOGOUT);
     }
   });
 
@@ -89,7 +90,7 @@ export const UserDropdown = component$<UserDropdownProps>((props) => {
             </div>
             <div class="p-2">
               <Link
-                href={ROUTES.PROFILE}
+                href={R.value.PROFILE}
                 class="block rounded-lg px-4 py-3 text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors mb-1"
               >
                 {translateApp(lang, 'header.profile')}

@@ -1,7 +1,9 @@
 import { component$, useSignal, useVisibleTask$, $ } from '@builder.io/qwik';
-import { Link } from '@builder.io/qwik-city';
+import { Link, useLocation } from '@builder.io/qwik-city';
 import { getConfig } from '~/lib/config';
-import { MARKETING_ROUTES } from '~/lib/marketing/constants';
+import { getLocalizedRoutes } from '~/lib/constants/routes';
+import { marketingRoutes } from '~/lib/marketing/constants';
+import { uiLangFromUrlPathname } from '~/lib/i18n/ui-locale-path';
 import { ThemeToggle } from '~/components/marketing/ThemeToggle';
 import { Button } from '~/components/marketing/Button';
 import { Container } from '~/components/marketing/Container';
@@ -9,16 +11,6 @@ import { UserDropdown } from '~/components/common/UserDropdown';
 import { SiteLanguageSwitcher } from '~/components/common/SiteLanguageSwitcher';
 import type { AuthSession } from '~/lib/auth/types';
 import type { SiteLanguageRow } from '~/types/site-language';
-
-const navLinks = [
-  { label: 'Home', href: MARKETING_ROUTES.home },
-  { label: 'Services', href: MARKETING_ROUTES.services },
-  { label: 'Work', href: MARKETING_ROUTES.work },
-  { label: 'About', href: MARKETING_ROUTES.about },
-  { label: 'Pricing', href: MARKETING_ROUTES.pricing },
-  { label: 'Blog', href: MARKETING_ROUTES.blog },
-  { label: 'Contact', href: MARKETING_ROUTES.contact },
-];
 
 interface HeaderBranding {
   name: string;
@@ -38,7 +30,11 @@ export const Header = component$<HeaderProps>((props) => {
   const menuOpen = useSignal(false);
   const isDarkMode = useSignal(false);
   const config = getConfig();
-  const loginHref = config.routes.admin.login;
+  const loc = useLocation();
+  const uiLang = uiLangFromUrlPathname(loc.url.pathname);
+  const MR = marketingRoutes(uiLang);
+  const appRoutes = getLocalizedRoutes(uiLang);
+  const loginHref = appRoutes.ADMIN.LOGIN;
   const user = props.session?.user;
   const brandName = props.branding?.name || config.branding.name;
   const defaultLogo = props.branding?.logo || '';
@@ -47,6 +43,16 @@ export const Header = component$<HeaderProps>((props) => {
   const activeLogo = isDarkMode.value
     ? (darkLogo || lightLogo || defaultLogo)
     : (lightLogo || darkLogo || defaultLogo);
+
+  const navLinks = [
+    { label: 'Home', href: MR.home },
+    { label: 'Services', href: MR.services },
+    { label: 'Work', href: MR.work },
+    { label: 'About', href: MR.about },
+    { label: 'Pricing', href: MR.pricing },
+    { label: 'Blog', href: MR.blog },
+    { label: 'Contact', href: MR.contact },
+  ];
 
   // eslint-disable-next-line qwik/no-use-visible-task
   useVisibleTask$(({ cleanup }) => {
@@ -80,7 +86,7 @@ export const Header = component$<HeaderProps>((props) => {
       <Container class="flex h-16 w-full items-center justify-between gap-3 md:justify-start sm:h-18">
         {/* Logo — keep away from main nav cluster */}
         <Link
-          href={MARKETING_ROUTES.home}
+          href={MR.home}
           class="inline-flex shrink-0 items-center gap-2 text-xl font-bold text-slate-900 dark:text-white"
           aria-label="Home"
         >
@@ -118,7 +124,7 @@ export const Header = component$<HeaderProps>((props) => {
         <div class="flex shrink-0 items-center gap-2 md:ml-auto">
           <ThemeToggle />
           <div class="hidden sm:flex sm:items-center sm:gap-2">
-            <Button href={MARKETING_ROUTES.contact} variant="primary">
+            <Button href={MR.contact} variant="primary">
               Get in touch
             </Button>
             {user ? (
@@ -169,7 +175,7 @@ export const Header = component$<HeaderProps>((props) => {
               </Link>
             ))}
             <div class="mt-4 flex flex-col gap-2 border-t border-slate-200 pt-4 dark:border-slate-700">
-              <Button href={MARKETING_ROUTES.contact} variant="primary" class="w-full justify-center">
+              <Button href={MR.contact} variant="primary" class="w-full justify-center">
                 Get in touch
               </Button>
               {user ? (

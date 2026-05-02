@@ -1,7 +1,6 @@
 import type { DashboardConfig, ConfigOverride } from './types';
 import { loadEnvConfig } from './env';
 import { laravelDefaults } from './laravel';
-import { ROUTES } from '../constants/routes';
 import { ROLES } from '../constants/roles';
 
 /**

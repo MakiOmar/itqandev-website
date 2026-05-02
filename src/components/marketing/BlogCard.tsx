@@ -1,7 +1,8 @@
 import { component$ } from '@builder.io/qwik';
 import { Link } from '@builder.io/qwik-city';
+import { useSpeakLocale } from 'qwik-speak';
 import type { BlogPost } from '../../lib/marketing/types';
-import { MARKETING_ROUTES } from '../../lib/marketing/constants';
+import { marketingRoutes } from '../../lib/marketing/constants';
 import { Card } from './Card';
 import { ContentImage } from './ContentImage';
 
@@ -10,7 +11,9 @@ export interface BlogCardProps {
 }
 
 export const BlogCard = component$<BlogCardProps>(({ post }) => {
-  const href = MARKETING_ROUTES.blogSlug(post.slug);
+  const locale = useSpeakLocale();
+  const MR = marketingRoutes(locale.lang === 'ar' ? 'ar' : 'en');
+  const href = MR.blogSlug(post.slug);
   const dateStr = post.date ? new Date(post.date).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) : '';
 
   return (

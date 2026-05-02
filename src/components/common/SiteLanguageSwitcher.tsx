@@ -1,8 +1,10 @@
 import { component$, useSignal, $ } from '@builder.io/qwik';
+import { useLocation, useNavigate } from '@builder.io/qwik-city';
 import { useSpeakLocale } from 'qwik-speak';
 import { speakConfig } from '~/lib/i18n/config';
 import { persistPreferredLocale } from '~/lib/i18n/preferred-locale-persist';
 import { getLanguageFlagEmoji } from '~/lib/i18n/language-flags';
+import { swapUiLocaleInPathname } from '~/lib/i18n/ui-locale-path';
 import type { SiteLanguageRow } from '~/types/site-language';
 
 const supportedSpeakCodes = new Set(speakConfig.supportedLocales.map((l) => l.lang.toLowerCase()));
@@ -14,6 +16,8 @@ const supportedSpeakCodes = new Set(speakConfig.supportedLocales.map((l) => l.la
  */
 export const SiteLanguageSwitcher = component$<{ languages: SiteLanguageRow[] | null | undefined }>((props) => {
   const locale = useSpeakLocale();
+  const loc = useLocation();
+  const nav = useNavigate();
   const isOpen = useSignal(false);
 
   const options = (props.languages || []).filter(
@@ -35,13 +39,12 @@ export const SiteLanguageSwitcher = component$<{ languages: SiteLanguageRow[] | 
     isOpen.value = false;
   });
 
-  const changeLanguage = $((lang: string, rtl: boolean) => {
-    persistPreferredLocale(lang, rtl);
-    locale.lang = lang;
+  const changeLanguage = $((nextLang: string, rtl: boolean) => {
+    persistPreferredLocale(nextLang, rtl);
+    locale.lang = nextLang;
     isOpen.value = false;
-    if (typeof window !== 'undefined') {
-      window.location.reload();
-    }
+    const path = swapUiLocaleInPathname(loc.url.pathname, nextLang);
+    nav(`${path}${loc.url.search}${loc.url.hash}`);
   });
 
   const current = options.find((o) => o.code.toLowerCase() === locale.lang.toLowerCase()) ?? options[0];

@@ -5,6 +5,7 @@ import { RouterHead } from "./components/router-head/router-head";
 import { DarkModeToggle } from "./components/common/DarkModeToggle";
 import { speakConfig } from "./lib/i18n/config";
 import { translationFn } from "./lib/i18n/translation-fn";
+import { stripUiLocaleFromPathname } from "./lib/i18n/ui-locale-path";
 
 import "./global.css";
 
@@ -13,8 +14,9 @@ const PUBLIC_PATH_PREFIXES = ["/", "/services", "/work", "/about", "/pricing", "
 
 function isPublicRoute(pathname: string): boolean {
   const normalized = pathname.replace(/\/+$/, "") || "/";
-  if (normalized === "/" || normalized === "") return true;
-  return PUBLIC_PATH_PREFIXES.some((p) => p !== "/" && normalized.startsWith(p));
+  const logical = stripUiLocaleFromPathname(normalized).replace(/\/+$/, "") || "/";
+  if (logical === "/" || logical === "") return true;
+  return PUBLIC_PATH_PREFIXES.some((p) => p !== "/" && logical.startsWith(p));
 }
 
 /**

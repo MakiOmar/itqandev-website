@@ -1,7 +1,8 @@
 import { component$, useSignal, useVisibleTask$ } from '@builder.io/qwik';
-import { Link } from '@builder.io/qwik-city';
+import { Link, useLocation } from '@builder.io/qwik-city';
 import { getConfig } from '~/lib/config';
-import { MARKETING_ROUTES } from '~/lib/marketing/constants';
+import { marketingRoutes } from '~/lib/marketing/constants';
+import { uiLangFromUrlPathname } from '~/lib/i18n/ui-locale-path';
 import { Container } from '~/components/marketing/Container';
 
 export interface FooterProps {
@@ -17,18 +18,19 @@ export interface FooterProps {
   } | null;
 }
 
-const footerLinks = [
-  { label: 'Services', href: MARKETING_ROUTES.services },
-  { label: 'Work', href: MARKETING_ROUTES.work },
-  { label: 'About', href: MARKETING_ROUTES.about },
-  { label: 'Pricing', href: MARKETING_ROUTES.pricing },
-  { label: 'Blog', href: MARKETING_ROUTES.blog },
-  { label: 'Contact', href: MARKETING_ROUTES.contact },
-];
-
 export const Footer = component$<FooterProps>(({ contact, branding }) => {
   const isDarkMode = useSignal(false);
   const config = getConfig();
+  const loc = useLocation();
+  const MR = marketingRoutes(uiLangFromUrlPathname(loc.url.pathname));
+  const footerLinks = [
+    { label: 'Services', href: MR.services },
+    { label: 'Work', href: MR.work },
+    { label: 'About', href: MR.about },
+    { label: 'Pricing', href: MR.pricing },
+    { label: 'Blog', href: MR.blog },
+    { label: 'Contact', href: MR.contact },
+  ];
   const year = new Date().getFullYear();
   const brandName = branding?.name || config.branding.name;
   const defaultLogo = branding?.logo || '';
@@ -64,7 +66,7 @@ export const Footer = component$<FooterProps>(({ contact, branding }) => {
         <div class="grid gap-8 md:grid-cols-2 lg:grid-cols-4">
           {/* Brand */}
           <div>
-            <Link href={MARKETING_ROUTES.home} class="inline-flex items-center gap-2 text-lg font-bold text-slate-900 dark:text-white">
+            <Link href={MR.home} class="inline-flex items-center gap-2 text-lg font-bold text-slate-900 dark:text-white">
               {activeLogo && (
                 <img
                   src={activeLogo}
@@ -134,7 +136,7 @@ export const Footer = component$<FooterProps>(({ contact, branding }) => {
           {/* CTA */}
           <div>
             <Link
-              href={MARKETING_ROUTES.contact}
+              href={MR.contact}
               class="inline-flex items-center rounded-lg bg-primary-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-primary-700 dark:bg-primary-500 dark:hover:bg-primary-600"
             >
               Get in touch

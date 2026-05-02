@@ -2,8 +2,8 @@ import { component$, type QRL, useContext, useSignal, useVisibleTask$ } from '@b
 import { Link } from '@builder.io/qwik-city';
 import { UserDropdown } from '../common/UserDropdown';
 import { LanguageSwitcher } from '../common/LanguageSwitcher';
-import { ROUTES } from '../../lib/constants/routes';
-import { useAdminAuth } from '../../routes/admin/layout';
+import { useAppRoutes } from '../../lib/constants/routes';
+import { useAdminAuth } from '../../routes/[lang]/admin/layout';
 import { MenuIcon } from './icons';
 import { ProjectSettingsContext } from '../../stores/project-settings-store';
 
@@ -17,6 +17,7 @@ interface HeaderProps {
  */
 export const Header = component$<HeaderProps>((props) => {
   const auth = useAdminAuth();
+  const R = useAppRoutes();
   const projectSettings = useContext(ProjectSettingsContext);
   const isDarkMode = useSignal(false);
   
@@ -66,7 +67,7 @@ export const Header = component$<HeaderProps>((props) => {
           )}
           {/* Single brand logo + name: links to public homepage */}
           <Link
-            href={ROUTES.PUBLIC.HOME}
+            href={R.value.PUBLIC.HOME}
             class="flex min-w-0 items-center gap-3 md:gap-4 rounded-lg outline-none ring-offset-2 ring-offset-white focus-visible:ring-2 focus-visible:ring-blue-500 dark:ring-offset-slate-800"
             aria-label={`${projectName} — go to homepage`}
           >

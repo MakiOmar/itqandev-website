@@ -61,7 +61,10 @@ export const RouterHead = component$(() => {
             }
 
             var path = (document.location.pathname || '/').replace(/\\/$/, '') || '/';
-            var isPublicRoute = path === '/' || path === '' || path.indexOf('/services') === 0 || path.indexOf('/work') === 0 || path.indexOf('/about') === 0 || path.indexOf('/pricing') === 0 || path.indexOf('/contact') === 0 || path.indexOf('/blog') === 0;
+            var locMatch = path.match(/^\\/(en|ar)(?=\\/|$)/i);
+            var logical = locMatch ? (path.slice(locMatch[0].length) || '/') : path;
+            if (logical.charAt(0) !== '/') logical = '/' + logical;
+            var isPublicRoute = logical === '/' || logical === '' || logical.indexOf('/services') === 0 || logical.indexOf('/work') === 0 || logical.indexOf('/about') === 0 || logical.indexOf('/pricing') === 0 || logical.indexOf('/contact') === 0 || logical.indexOf('/blog') === 0;
 
             function decodeCookieVal(s) {
               if (!s) return '';

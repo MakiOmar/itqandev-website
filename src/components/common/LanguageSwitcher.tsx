@@ -1,7 +1,9 @@
 import { component$, useSignal, $ } from '@builder.io/qwik';
+import { useLocation, useNavigate } from '@builder.io/qwik-city';
 import { useSpeakLocale, useSpeakConfig } from 'qwik-speak';
 import { persistPreferredLocale } from '../../lib/i18n/preferred-locale-persist';
 import { getLanguageFlagEmoji } from '../../lib/i18n/language-flags';
+import { swapUiLocaleInPathname } from '../../lib/i18n/ui-locale-path';
 
 /**
  * Language switcher component
@@ -10,6 +12,8 @@ import { getLanguageFlagEmoji } from '../../lib/i18n/language-flags';
 export const LanguageSwitcher = component$(() => {
   const locale = useSpeakLocale();
   const config = useSpeakConfig();
+  const loc = useLocation();
+  const nav = useNavigate();
   const isOpen = useSignal(false);
   
   // Check if current locale is RTL (Arabic)
@@ -26,28 +30,16 @@ export const LanguageSwitcher = component$(() => {
   });
 
   // Change language
-  const changeLanguage = $((lang: string) => {
-    const isRtl = lang === 'ar';
-    persistPreferredLocale(lang, isRtl);
+  const changeLanguage = $((nextLang: string) => {
+    const isRtl = nextLang === 'ar';
+    persistPreferredLocale(nextLang, isRtl);
 
-    // Update locale using qwik-speak's changeLocale
-    // This updates the locale context
-    locale.lang = lang;
-    
-    // Close dropdown
+    locale.lang = nextLang;
     isOpen.value = false;
-    
-    // Reload page to apply new language
-    // The blocking script in RouterHead will read the cookie/localStorage
-    // and set direction immediately before any rendering, ensuring both change simultaneously
-    if (typeof window !== 'undefined') {
-      // Hide dashboard immediately to prevent flash of old-locale content during reload.
-      // global.css hides body when data-render-complete is absent.
-      if (typeof document !== 'undefined' && document.body) {
-        document.body.removeAttribute('data-render-complete');
-      }
-      window.location.reload();
-    }
+
+    const path = swapUiLocaleInPathname(loc.url.pathname, nextLang);
+    const target = `${path}${loc.url.search}${loc.url.hash}`;
+    nav(target);
   });
 
   // Get language display name
