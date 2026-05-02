@@ -4,32 +4,34 @@ export function looksLikeRouteActionResult(x: unknown): boolean {
 }
 
 /**
- * Build FormData from flat fields and call `action.submit(fd)`.
+ * Submit a route action with a **plain JSON-serializable object** (not `FormData`).
  *
- * Must NOT be wrapped in `$()` nor take `action` through a nested QRL parameter:
- * Qwik can deserialize a different object there, so `.value` on that copy stays undefined
- * even when the server action succeeds (see admin service save debugging).
+ * Qwik City resolves `await action.submit(...)` from `q-data.json` as
+ * `result = clientData.loaders[action.id]`. With `FormData`, that loader slot can be
+ * missing in practice so `result` stays `undefined` while HTTP still succeeds — see
+ * `@builder.io/qwik-city` `loadClientData` + `routeActionQrl` in `index.qwik.mjs`.
+ *
+ * Must NOT wrap the submit call in a nested `$(async (action) => …)`; pass the
+ * `useXAction()` store from the component closure into this plain helper instead.
  */
 export async function submitRouteActionFormData(
-  action: { submit: (fd: FormData) => Promise<unknown>; readonly value?: unknown },
+  action: { submit: (input: unknown) => Promise<unknown>; readonly value?: unknown },
   fields: Record<string, unknown>,
   looksLikePayload: (x: unknown) => boolean,
 ): Promise<unknown> {
-  const fd = new FormData();
+  const payload: Record<string, unknown> = {};
   for (const [k, v] of Object.entries(fields)) {
     if (v === undefined || v === null) {
       continue;
     }
     if (Array.isArray(v)) {
-      for (const item of v) {
-        fd.append(`${k}[]`, String(item));
-      }
+      payload[k] = v.map((item) => (typeof item === 'string' ? item : String(item)));
     } else {
-      fd.append(k, String(v));
+      payload[k] = v;
     }
   }
 
-  const submitted = await action.submit(fd);
+  const submitted = await action.submit(payload);
   await Promise.resolve();
   await Promise.resolve();
   await Promise.resolve();
