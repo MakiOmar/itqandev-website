@@ -17,6 +17,7 @@ import {
   shouldWritePrimaryColumns,
 } from '../../../../lib/content-display-locale';
 import { useCreateCategory } from '../../../../lib/admin/category-actions';
+import { submitRouteActionFormData } from '../../../../lib/admin/route-action-form-submit';
 import { ROUTES } from '../../../../lib/constants/routes';
 import type { Category } from '../../../../types';
 
@@ -87,43 +88,36 @@ export default component$(() => {
     }
   });
 
-  const submitWithFormData = $(async (action: any, fields: Record<string, any>) => {
-    const fd = new FormData();
-    for (const [k, v] of Object.entries(fields)) {
-      if (v === undefined || v === null) continue;
-      if (Array.isArray(v)) {
-        for (const item of v) fd.append(`${k}[]`, String(item));
-      } else {
-        fd.append(k, String(v));
-      }
-    }
-    await action.submit(fd);
-    return (action as any).value;
-  });
-
   const handleSave = $(async () => {
-    const val = await submitWithFormData(createAction, {
-      editing_locale: normalizeEditingLocale(
-        editingLocaleDraft.value,
-        langConfig.value.site_languages,
-        langConfig.value.default_locale,
-        contentLocaleDraft.value.trim() !== '' ? contentLocaleDraft.value.trim() : null,
-      ),
-      form_site_default_locale: langConfig.value.default_locale,
-      effective_primary_locale: primaryLocaleForContent(
-        langConfig.value.site_languages,
-        langConfig.value.default_locale,
-        contentLocaleDraft.value.trim() !== '' ? contentLocaleDraft.value.trim() : null,
-      ),
-      canonical_name: canonicalName.value,
-      canonical_description: canonicalDescription.value,
-      translations_json: translationsJson.value,
-      content_locale: contentLocaleDraft.value,
-      name: formData.value.name,
-      slug: formData.value.slug,
-      description: formData.value.description,
-      is_featured: formData.value.is_featured ? '1' : undefined,
-    });
+    const val = await submitRouteActionFormData(
+      createAction,
+      {
+        editing_locale: normalizeEditingLocale(
+          editingLocaleDraft.value,
+          langConfig.value.site_languages,
+          langConfig.value.default_locale,
+          contentLocaleDraft.value.trim() !== '' ? contentLocaleDraft.value.trim() : null,
+        ),
+        form_site_default_locale: langConfig.value.default_locale,
+        effective_primary_locale: primaryLocaleForContent(
+          langConfig.value.site_languages,
+          langConfig.value.default_locale,
+          contentLocaleDraft.value.trim() !== '' ? contentLocaleDraft.value.trim() : null,
+        ),
+        canonical_name: canonicalName.value,
+        canonical_description: canonicalDescription.value,
+        translations_json: translationsJson.value,
+        content_locale: contentLocaleDraft.value,
+        name: formData.value.name,
+        slug: formData.value.slug,
+        description: formData.value.description,
+        is_featured: formData.value.is_featured ? '1' : undefined,
+      },
+      (x) =>
+        x != null &&
+        typeof x === 'object' &&
+        ('success' in (x as object) || 'category' in (x as object) || 'failed' in (x as object)),
+    );
 
     if (val?.failed) {
       await showError(val.message || val.error || 'Failed to create category');

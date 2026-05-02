@@ -14,6 +14,7 @@ import { useSiteLanguageConfig } from '../layout';
 import { useLocaleAwareList } from '../../../lib/hooks/useLocaleAwareList';
 import { primaryLocaleForContent } from '../../../lib/content-display-locale';
 import { useDeleteService, useBulkDeleteServices } from '../../../lib/admin/service-actions';
+import { looksLikeRouteActionResult, submitRouteActionFormData } from '../../../lib/admin/route-action-form-submit';
 
 type ServicesListPayload = {
   data: AdminService[];
@@ -145,30 +146,12 @@ export default component$(() => {
     searchQuery.value = value;
   });
 
-  const submitWithFormData = $(async (action: any, fields: Record<string, any>) => {
-    const fd = new FormData();
-    for (const [k, v] of Object.entries(fields)) {
-      if (v === undefined || v === null) {
-        continue;
-      }
-      if (Array.isArray(v)) {
-        for (const item of v) {
-          fd.append(`${k}[]`, String(item));
-        }
-      } else {
-        fd.append(k, String(v));
-      }
-    }
-    await action.submit(fd);
-    return (action as any).value;
-  });
-
   const handleDelete = $(async (svc: AdminService) => {
     const result = await confirm(translations.deleteConfirm, { icon: 'warning', title: translations.delete });
     if (!result.isConfirmed) {
       return;
     }
-    const val = await submitWithFormData(deleteAction, { id: String(svc.id) });
+    const val = await submitRouteActionFormData(deleteAction, { id: String(svc.id) }, looksLikeRouteActionResult);
     if (val?.failed) {
       await showError(val.message || 'Failed to delete service');
       return;
@@ -186,7 +169,11 @@ export default component$(() => {
     if (!result.isConfirmed) {
       return;
     }
-    const val = await submitWithFormData(bulkDeleteAction, { ids: selectedItems.value });
+    const val = await submitRouteActionFormData(
+      bulkDeleteAction,
+      { ids: selectedItems.value },
+      looksLikeRouteActionResult,
+    );
     if (val?.failed) {
       await showError(val.message || 'Failed to delete services');
       return;

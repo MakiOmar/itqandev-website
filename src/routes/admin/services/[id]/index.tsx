@@ -21,6 +21,7 @@ import {
   shouldWritePrimaryColumns,
 } from '../../../../lib/content-display-locale';
 import { useUpdateService } from '../../../../lib/admin/service-actions';
+import { submitRouteActionFormData } from '../../../../lib/admin/route-action-form-submit';
 import type { AdminService } from '../../../../types/service';
 
 function joinLines(arr: string[] | null | undefined): string {
@@ -100,93 +101,6 @@ export default component$(() => {
     icon: '',
     sort_order: '',
     is_published: true,
-  });
-
-  const submitWithFormData = $(async (action: any, fields: Record<string, any>) => {
-    const fd = new FormData();
-    for (const [k, v] of Object.entries(fields)) {
-      if (v === undefined || v === null) {
-        continue;
-      }
-      if (Array.isArray(v)) {
-        for (const item of v) {
-          fd.append(`${k}[]`, String(item));
-        }
-      } else {
-        fd.append(k, String(v));
-      }
-    }
-    const submitted = await action.submit(fd);
-    // Runtime evidence: submit() can resolve with { status: 200, value: undefined } before ActionStore.value updates.
-    await Promise.resolve();
-    await Promise.resolve();
-    await Promise.resolve();
-    let storeVal = (action as any).value as unknown;
-    if (storeVal === undefined || storeVal === null) {
-      await new Promise<void>((r) => requestAnimationFrame(() => r()));
-      storeVal = (action as any).value as unknown;
-    }
-
-    const fromEnvelope =
-      submitted != null && typeof submitted === 'object' && 'value' in submitted
-        ? (submitted as { value: unknown }).value
-        : undefined;
-
-    const looksLikePayload = (x: unknown) =>
-      x != null &&
-      typeof x === 'object' &&
-      ('success' in (x as object) ||
-        'service' in (x as object) ||
-        'failed' in (x as object) ||
-        'serviceUpdateDebugJson' in (x as object));
-
-    let out: unknown =
-      fromEnvelope !== undefined && fromEnvelope !== null
-        ? fromEnvelope
-        : storeVal !== undefined && storeVal !== null
-          ? storeVal
-          : looksLikePayload(submitted)
-            ? submitted
-            : undefined;
-
-    if (
-      out != null &&
-      typeof out === 'object' &&
-      'status' in out &&
-      'value' in out &&
-      (out as { value: unknown }).value === undefined
-    ) {
-      out = storeVal !== undefined && storeVal !== null ? storeVal : undefined;
-    }
-
-    console.log('[service-save] submit envelope', {
-      hasEnvelopeValue: fromEnvelope !== undefined && fromEnvelope !== null,
-      hasStoreValue: storeVal !== undefined && storeVal !== null,
-      outKeys: out != null && typeof out === 'object' ? Object.keys(out as object) : typeof out,
-    });
-    // #region agent log
-    fetch('http://127.0.0.1:7469/ingest/ed85bb2c-c192-44f6-8c60-9fe04360649a', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'X-Debug-Session-Id': '08cfc0' },
-      body: JSON.stringify({
-        sessionId: '08cfc0',
-        hypothesisId: 'H1',
-        runId: 'post-fix',
-        location: 'admin/services/[id]/index.tsx:submitWithFormData',
-        message: 'after submit flush: envelope vs store vs out',
-        data: {
-          hasFromEnvelope: fromEnvelope !== undefined && fromEnvelope !== null,
-          hasStore: storeVal !== undefined && storeVal !== null,
-          outUndefined: out === undefined,
-          outFailed: out != null && typeof out === 'object' && 'failed' in (out as object),
-          outSuccess: out != null && typeof out === 'object' && 'success' in (out as object),
-          outKeys: out != null && typeof out === 'object' ? Object.keys(out as object).slice(0, 12) : typeof out,
-        },
-        timestamp: Date.now(),
-      }),
-    }).catch(() => {});
-    // #endregion
-    return out;
   });
 
   useTask$(({ track }) => {
@@ -328,28 +242,62 @@ export default component$(() => {
       translationsJsonLen: translationsJson.value.length,
     });
 
-    const val = await submitWithFormData(updateAction, {
-      id: String(s.id),
-      editing_locale: normalizedEditLocale,
-      form_site_default_locale: langConfig.value.default_locale,
-      effective_primary_locale: effectivePrimarySubmit,
-      canonical_name: canonicalName.value,
-      canonical_short_description: canonicalShortDescription.value,
-      canonical_description: canonicalDescription.value,
-      canonical_process_lines: canonicalProcessLines.value,
-      canonical_deliverables_lines: canonicalDeliverablesLines.value,
-      translations_json: translationsJson.value,
-      content_locale: contentLocaleDraft.value,
-      name: formData.value.name,
-      slug: formData.value.slug,
-      short_description: formData.value.short_description,
-      description: formData.value.description,
-      process_lines: formData.value.process_lines,
-      deliverables_lines: formData.value.deliverables_lines,
-      icon: formData.value.icon,
-      sort_order: formData.value.sort_order,
-      is_published: formData.value.is_published ? '1' : '0',
+    const val = await submitRouteActionFormData(
+      updateAction,
+      {
+        id: String(s.id),
+        editing_locale: normalizedEditLocale,
+        form_site_default_locale: langConfig.value.default_locale,
+        effective_primary_locale: effectivePrimarySubmit,
+        canonical_name: canonicalName.value,
+        canonical_short_description: canonicalShortDescription.value,
+        canonical_description: canonicalDescription.value,
+        canonical_process_lines: canonicalProcessLines.value,
+        canonical_deliverables_lines: canonicalDeliverablesLines.value,
+        translations_json: translationsJson.value,
+        content_locale: contentLocaleDraft.value,
+        name: formData.value.name,
+        slug: formData.value.slug,
+        short_description: formData.value.short_description,
+        description: formData.value.description,
+        process_lines: formData.value.process_lines,
+        deliverables_lines: formData.value.deliverables_lines,
+        icon: formData.value.icon,
+        sort_order: formData.value.sort_order,
+        is_published: formData.value.is_published ? '1' : '0',
+      },
+      (x) =>
+        x != null &&
+        typeof x === 'object' &&
+        ('success' in (x as object) ||
+          'service' in (x as object) ||
+          'failed' in (x as object) ||
+          'serviceUpdateDebugJson' in (x as object)),
+    );
+
+    console.log('[service-save] submit result', {
+      valKeys: val != null && typeof val === 'object' ? Object.keys(val as object) : typeof val,
     });
+    // #region agent log
+    fetch('http://127.0.0.1:7469/ingest/ed85bb2c-c192-44f6-8c60-9fe04360649a', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-Debug-Session-Id': '08cfc0' },
+      body: JSON.stringify({
+        sessionId: '08cfc0',
+        hypothesisId: 'H6',
+        runId: 'post-fix',
+        location: 'admin/services/[id]/index.tsx:handleSave',
+        message: 'after submitRouteActionFormData (non-QRL helper)',
+        data: {
+          valUndefined: val === undefined,
+          valFailed: val != null && typeof val === 'object' && 'failed' in (val as object),
+          valSuccess: val != null && typeof val === 'object' && 'success' in (val as object),
+          valKeys: val != null && typeof val === 'object' ? Object.keys(val as object).slice(0, 14) : typeof val,
+        },
+        timestamp: Date.now(),
+      }),
+    }).catch(() => {});
+    // #endregion
 
     if (val?.failed) {
       await showError(val.message || 'Failed to update service');

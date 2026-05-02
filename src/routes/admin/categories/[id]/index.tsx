@@ -21,6 +21,7 @@ import {
   shouldWritePrimaryColumns,
 } from '../../../../lib/content-display-locale';
 import { useUpdateCategory } from '../../../../lib/admin/category-actions';
+import { submitRouteActionFormData } from '../../../../lib/admin/route-action-form-submit';
 import type { Category } from '../../../../types';
 
 function mapCategoryFromApi(raw: any): Category {
@@ -83,58 +84,6 @@ export default component$(() => {
     slug: '',
     description: '',
     is_featured: false,
-  });
-
-  const submitWithFormData = $(async (action: any, fields: Record<string, any>) => {
-    const fd = new FormData();
-    for (const [k, v] of Object.entries(fields)) {
-      if (v === undefined || v === null) continue;
-      if (Array.isArray(v)) {
-        for (const item of v) fd.append(`${k}[]`, String(item));
-      } else {
-        fd.append(k, String(v));
-      }
-    }
-    const submitted = await action.submit(fd);
-    await Promise.resolve();
-    await Promise.resolve();
-    await Promise.resolve();
-    let storeVal = (action as any).value as unknown;
-    if (storeVal === undefined || storeVal === null) {
-      await new Promise<void>((r) => requestAnimationFrame(() => r()));
-      storeVal = (action as any).value as unknown;
-    }
-
-    const fromEnvelope =
-      submitted != null && typeof submitted === 'object' && 'value' in submitted
-        ? (submitted as { value: unknown }).value
-        : undefined;
-
-    const looksLikePayload = (x: unknown) =>
-      x != null &&
-      typeof x === 'object' &&
-      ('success' in (x as object) || 'category' in (x as object) || 'failed' in (x as object));
-
-    let out: unknown =
-      fromEnvelope !== undefined && fromEnvelope !== null
-        ? fromEnvelope
-        : storeVal !== undefined && storeVal !== null
-          ? storeVal
-          : looksLikePayload(submitted)
-            ? submitted
-            : undefined;
-
-    if (
-      out != null &&
-      typeof out === 'object' &&
-      'status' in out &&
-      'value' in out &&
-      (out as { value: unknown }).value === undefined
-    ) {
-      out = storeVal !== undefined && storeVal !== null ? storeVal : undefined;
-    }
-
-    return out;
   });
 
   useTask$(({ track }) => {
@@ -225,29 +174,36 @@ export default component$(() => {
     const c = (liveCategory.value ?? categoryLoader.value) as Category | undefined;
     if (!c?.id) return;
 
-    const val = await submitWithFormData(updateAction, {
-      id: String(c.id),
-      editing_locale: normalizeEditingLocale(
-        editingLocaleDraft.value,
-        langConfig.value.site_languages,
-        langConfig.value.default_locale,
-        contentLocaleDraft.value.trim() !== '' ? contentLocaleDraft.value.trim() : null,
-      ),
-      form_site_default_locale: langConfig.value.default_locale,
-      effective_primary_locale: primaryLocaleForContent(
-        langConfig.value.site_languages,
-        langConfig.value.default_locale,
-        contentLocaleDraft.value.trim() !== '' ? contentLocaleDraft.value.trim() : null,
-      ),
-      canonical_name: canonicalName.value,
-      canonical_description: canonicalDescription.value,
-      translations_json: translationsJson.value,
-      content_locale: contentLocaleDraft.value,
-      name: formData.value.name,
-      slug: formData.value.slug,
-      description: formData.value.description,
-      is_featured: formData.value.is_featured ? '1' : undefined,
-    });
+    const val = await submitRouteActionFormData(
+      updateAction,
+      {
+        id: String(c.id),
+        editing_locale: normalizeEditingLocale(
+          editingLocaleDraft.value,
+          langConfig.value.site_languages,
+          langConfig.value.default_locale,
+          contentLocaleDraft.value.trim() !== '' ? contentLocaleDraft.value.trim() : null,
+        ),
+        form_site_default_locale: langConfig.value.default_locale,
+        effective_primary_locale: primaryLocaleForContent(
+          langConfig.value.site_languages,
+          langConfig.value.default_locale,
+          contentLocaleDraft.value.trim() !== '' ? contentLocaleDraft.value.trim() : null,
+        ),
+        canonical_name: canonicalName.value,
+        canonical_description: canonicalDescription.value,
+        translations_json: translationsJson.value,
+        content_locale: contentLocaleDraft.value,
+        name: formData.value.name,
+        slug: formData.value.slug,
+        description: formData.value.description,
+        is_featured: formData.value.is_featured ? '1' : undefined,
+      },
+      (x) =>
+        x != null &&
+        typeof x === 'object' &&
+        ('success' in (x as object) || 'category' in (x as object) || 'failed' in (x as object)),
+    );
 
     if (val?.failed) {
       await showError(val.message || 'Failed to update category');

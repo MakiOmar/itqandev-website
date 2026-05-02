@@ -17,6 +17,7 @@ import {
   shouldWritePrimaryColumns,
 } from '../../../../lib/content-display-locale';
 import { useCreateService } from '../../../../lib/admin/service-actions';
+import { submitRouteActionFormData } from '../../../../lib/admin/route-action-form-submit';
 import { ROUTES } from '../../../../lib/constants/routes';
 import type { AdminService } from '../../../../types/service';
 
@@ -104,55 +105,46 @@ export default component$(() => {
     }
   });
 
-  const submitWithFormData = $(async (action: any, fields: Record<string, any>) => {
-    const fd = new FormData();
-    for (const [k, v] of Object.entries(fields)) {
-      if (v === undefined || v === null) {
-        continue;
-      }
-      if (Array.isArray(v)) {
-        for (const item of v) {
-          fd.append(`${k}[]`, String(item));
-        }
-      } else {
-        fd.append(k, String(v));
-      }
-    }
-    await action.submit(fd);
-    return (action as any).value;
-  });
-
   const handleSave = $(async () => {
-    const val = await submitWithFormData(createAction, {
-      editing_locale: normalizeEditingLocale(
-        editingLocaleDraft.value,
-        langConfig.value.site_languages,
-        langConfig.value.default_locale,
-        contentLocaleDraft.value.trim() !== '' ? contentLocaleDraft.value.trim() : null,
-      ),
-      form_site_default_locale: langConfig.value.default_locale,
-      effective_primary_locale: primaryLocaleForContent(
-        langConfig.value.site_languages,
-        langConfig.value.default_locale,
-        contentLocaleDraft.value.trim() !== '' ? contentLocaleDraft.value.trim() : null,
-      ),
-      canonical_name: canonicalName.value,
-      canonical_short_description: canonicalShortDescription.value,
-      canonical_description: canonicalDescription.value,
-      canonical_process_lines: canonicalProcessLines.value,
-      canonical_deliverables_lines: canonicalDeliverablesLines.value,
-      translations_json: translationsJson.value,
-      content_locale: contentLocaleDraft.value,
-      name: formData.value.name,
-      slug: formData.value.slug,
-      short_description: formData.value.short_description,
-      description: formData.value.description,
-      process_lines: formData.value.process_lines,
-      deliverables_lines: formData.value.deliverables_lines,
-      icon: formData.value.icon,
-      sort_order: formData.value.sort_order,
-      is_published: formData.value.is_published ? '1' : '0',
-    });
+    const val = await submitRouteActionFormData(
+      createAction,
+      {
+        editing_locale: normalizeEditingLocale(
+          editingLocaleDraft.value,
+          langConfig.value.site_languages,
+          langConfig.value.default_locale,
+          contentLocaleDraft.value.trim() !== '' ? contentLocaleDraft.value.trim() : null,
+        ),
+        form_site_default_locale: langConfig.value.default_locale,
+        effective_primary_locale: primaryLocaleForContent(
+          langConfig.value.site_languages,
+          langConfig.value.default_locale,
+          contentLocaleDraft.value.trim() !== '' ? contentLocaleDraft.value.trim() : null,
+        ),
+        canonical_name: canonicalName.value,
+        canonical_short_description: canonicalShortDescription.value,
+        canonical_description: canonicalDescription.value,
+        canonical_process_lines: canonicalProcessLines.value,
+        canonical_deliverables_lines: canonicalDeliverablesLines.value,
+        translations_json: translationsJson.value,
+        content_locale: contentLocaleDraft.value,
+        name: formData.value.name,
+        slug: formData.value.slug,
+        short_description: formData.value.short_description,
+        description: formData.value.description,
+        process_lines: formData.value.process_lines,
+        deliverables_lines: formData.value.deliverables_lines,
+        icon: formData.value.icon,
+        sort_order: formData.value.sort_order,
+        is_published: formData.value.is_published ? '1' : '0',
+      },
+      (x) =>
+        x != null &&
+        typeof x === 'object' &&
+        ('success' in (x as object) ||
+          'service' in (x as object) ||
+          'failed' in (x as object)),
+    );
 
     if (val?.failed) {
       await showError(val.message || val.error || 'Failed to create service');
