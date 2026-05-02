@@ -204,155 +204,187 @@ export const useCreateService = routeAction$(
   zod$(serviceSchema),
 );
 
-export const useUpdateService = routeAction$(
-  async (data, { cookie, request, fail }) => {
-    try {
-      const cookieHeader = extractCookieHeader(cookie, request as any);
-      const apiClient = getApiClient(cookieHeader);
+const updateServiceSchema = serviceSchema.extend({ id: z.string() });
 
-      const rawContentLocale = (data as { content_locale?: string }).content_locale?.trim();
-      const contentLocale = rawContentLocale && rawContentLocale.length > 0 ? rawContentLocale : null;
-
-      const siteDef = String((data as { form_site_default_locale?: string }).form_site_default_locale || 'en');
-      const effectivePrimary = String((data as { effective_primary_locale?: string }).effective_primary_locale || siteDef);
-      const editingLocale = String((data as { editing_locale?: string }).editing_locale || effectivePrimary);
-      const canonicalName = String((data as { canonical_name?: string }).canonical_name ?? '');
-      const canonicalShort = String((data as { canonical_short_description?: string }).canonical_short_description ?? '');
-      const canonicalDescription = String((data as { canonical_description?: string }).canonical_description ?? '');
-      const canonicalProcess = linesToList((data as { canonical_process_lines?: string }).canonical_process_lines);
-      const canonicalDeliverables = linesToList(
-        (data as { canonical_deliverables_lines?: string }).canonical_deliverables_lines,
-      );
-
-      const process = linesToList((data as { process_lines?: string }).process_lines);
-      const deliverables = linesToList((data as { deliverables_lines?: string }).deliverables_lines);
-
-      let name = String(data.name || '');
-      let short_description =
-        data.short_description !== undefined && data.short_description !== null ? String(data.short_description) : '';
-      let description = data.description !== undefined && data.description !== null ? String(data.description) : undefined;
-      let processOut = process;
-      let deliverablesOut = deliverables;
-      let translationsOut: unknown[] | undefined;
-
-      if (shouldWritePrimaryColumns(editingLocale, effectivePrimary)) {
-        // Omit `translations`: hidden JSON often lists empty secondary placeholders while editing EN primary;
-        // Laravel treats empty locale rows as deletes and wipes Arabic (see user's multipart payload).
-        translationsOut = undefined;
-      } else {
-        name = canonicalName;
-        short_description = canonicalShort;
-        description = canonicalDescription;
-        processOut = canonicalProcess;
-        deliverablesOut = canonicalDeliverables;
-        translationsOut = mergeSecondaryServiceTranslations(
-          (data as { translations_json?: string }).translations_json,
-          editingLocale,
-          {
-            name: String(data.name || ''),
-            short_description: String(data.short_description ?? ''),
-            description: String(data.description ?? ''),
-            process,
-            deliverables,
-          },
-        );
-      }
-
-      const sortRaw = (data as { sort_order?: string | number }).sort_order;
-      const sortParsed = sortRaw !== undefined && sortRaw !== '' ? Number(sortRaw) : undefined;
-
-      const rawPubU = (data as any).is_published;
-      const isPublishedU =
-        rawPubU === undefined || rawPubU === null || String(rawPubU) === '' ? true : toBool(rawPubU);
-
-      const apiBody = servicePayloadForApi({
-        name,
-        slug: data.slug || undefined,
-        short_description,
-        description,
-        process: processOut,
-        deliverables: deliverablesOut,
-        icon: (data as { icon?: string }).icon || null,
-        sort_order: Number.isFinite(sortParsed) ? sortParsed : undefined,
-        is_published: isPublishedU,
-        content_locale: contentLocale,
-        translations: translationsOut,
-      });
-
-      const writePrimaryDbg = shouldWritePrimaryColumns(editingLocale, effectivePrimary);
-      const translationLocalesDbg = Array.isArray(translationsOut)
-        ? translationsOut.map((t) => String((t as Record<string, unknown>)?.locale ?? ''))
-        : [];
-      console.log('[service-update] PUT payload', {
-        serviceId: String((data as any).id),
-        editingLocale,
-        effectivePrimary,
-        writePrimary: writePrimaryDbg,
-        contentLocale,
-        translationsRowCount: Array.isArray(translationsOut) ? translationsOut.length : -1,
-        translationLocales: translationLocalesDbg,
-        jsonBodyHasTranslationsKey: Object.prototype.hasOwnProperty.call(apiBody, 'translations'),
-        namePreview: String(name).slice(0, 80),
-      });
-
-      const response = await apiClient.put<AdminService>(
-        API_ENDPOINTS.SERVICES.UPDATE(String((data as any).id)),
-        apiBody,
-      );
-      const updated = (response as any)?.data ?? response;
-      const rt = (updated as any)?.translations;
-      const returnedTranslationLocales = Array.isArray(rt)
-        ? rt.map((t: { locale?: string }) => String(t?.locale ?? '').toLowerCase())
-        : [];
-      console.log('[service-update] PUT ok', {
-        serviceId: String((data as any).id),
-        returnedNamePreview: String((updated as any)?.name ?? '').slice(0, 80),
-        returnedTranslationLocales,
-      });
-
-      const devDebug = {
-        editingLocale,
-        effectivePrimary,
-        writePrimary: writePrimaryDbg,
-        contentLocale,
-        jsonBodyHasTranslationsKey: Object.prototype.hasOwnProperty.call(apiBody, 'translations'),
-        translationsRowCount: Array.isArray(translationsOut) ? translationsOut.length : -1,
-        translationLocales: translationLocalesDbg,
-        firstTranslationNameLen:
-          Array.isArray(translationsOut) && translationsOut[0] && typeof translationsOut[0] === 'object'
-            ? String((translationsOut[0] as Record<string, unknown>).name ?? '').length
-            : 0,
-        returnedNamePreview: String((updated as any)?.name ?? '').slice(0, 80),
-        returnedTranslationLocales,
+export type RunServiceUpdateResult =
+  | {
+      ok: true;
+      value: {
+        success: true;
+        service: AdminService;
+        serviceUpdateDebug?: Record<string, unknown>;
+        serviceUpdateDebugJson?: string;
       };
+    }
+  | { ok: false; status: number; message: string };
 
-      const dbg =
-        typeof import.meta !== 'undefined' &&
-        Boolean((import.meta as ImportMeta).env?.DEV || (import.meta as ImportMeta).env?.MODE === 'development');
-      if (! dbg) {
-        return { success: true as const, service: updated as AdminService };
-      }
-      const json = JSON.stringify(devDebug);
-      const serviceWithDbg = {
-        ...(typeof updated === 'object' && updated !== null ? (updated as Record<string, unknown>) : {}),
-        serviceUpdateDebug: devDebug,
-      } as unknown as AdminService;
-      return {
+type PutClient = { put: <T>(endpoint: string, body?: unknown) => Promise<unknown> };
+
+async function runServiceUpdateWithApiClient(
+  data: Record<string, unknown>,
+  apiClient: PutClient,
+): Promise<RunServiceUpdateResult> {
+  try {
+    const rawContentLocale = (data as { content_locale?: string }).content_locale?.trim();
+    const contentLocale = rawContentLocale && rawContentLocale.length > 0 ? rawContentLocale : null;
+
+    const siteDef = String((data as { form_site_default_locale?: string }).form_site_default_locale || 'en');
+    const effectivePrimary = String((data as { effective_primary_locale?: string }).effective_primary_locale || siteDef);
+    const editingLocale = String((data as { editing_locale?: string }).editing_locale || effectivePrimary);
+    const canonicalName = String((data as { canonical_name?: string }).canonical_name ?? '');
+    const canonicalShort = String((data as { canonical_short_description?: string }).canonical_short_description ?? '');
+    const canonicalDescription = String((data as { canonical_description?: string }).canonical_description ?? '');
+    const canonicalProcess = linesToList((data as { canonical_process_lines?: string }).canonical_process_lines);
+    const canonicalDeliverables = linesToList(
+      (data as { canonical_deliverables_lines?: string }).canonical_deliverables_lines,
+    );
+
+    const process = linesToList((data as { process_lines?: string }).process_lines);
+    const deliverables = linesToList((data as { deliverables_lines?: string }).deliverables_lines);
+
+    let name = String(data.name || '');
+    let short_description =
+      data.short_description !== undefined && data.short_description !== null ? String(data.short_description) : '';
+    let description = data.description !== undefined && data.description !== null ? String(data.description) : undefined;
+    let processOut = process;
+    let deliverablesOut = deliverables;
+    let translationsOut: unknown[] | undefined;
+
+    if (shouldWritePrimaryColumns(editingLocale, effectivePrimary)) {
+      translationsOut = undefined;
+    } else {
+      name = canonicalName;
+      short_description = canonicalShort;
+      description = canonicalDescription;
+      processOut = canonicalProcess;
+      deliverablesOut = canonicalDeliverables;
+      translationsOut = mergeSecondaryServiceTranslations(
+        (data as { translations_json?: string }).translations_json,
+        editingLocale,
+        {
+          name: String(data.name || ''),
+          short_description: String(data.short_description ?? ''),
+          description: String(data.description ?? ''),
+          process,
+          deliverables,
+        },
+      );
+    }
+
+    const sortRaw = (data as { sort_order?: string | number }).sort_order;
+    const sortParsed = sortRaw !== undefined && sortRaw !== '' ? Number(sortRaw) : undefined;
+
+    const rawPubU = (data as { is_published?: unknown }).is_published;
+    const isPublishedU =
+      rawPubU === undefined || rawPubU === null || String(rawPubU) === '' ? true : toBool(rawPubU);
+
+    const apiBody = servicePayloadForApi({
+      name,
+      slug: (data.slug as string | undefined) || undefined,
+      short_description,
+      description,
+      process: processOut,
+      deliverables: deliverablesOut,
+      icon: (data as { icon?: string }).icon || null,
+      sort_order: Number.isFinite(sortParsed) ? sortParsed : undefined,
+      is_published: isPublishedU,
+      content_locale: contentLocale,
+      translations: translationsOut,
+    });
+
+    const writePrimaryDbg = shouldWritePrimaryColumns(editingLocale, effectivePrimary);
+    const translationLocalesDbg = Array.isArray(translationsOut)
+      ? translationsOut.map((t) => String((t as Record<string, unknown>)?.locale ?? ''))
+      : [];
+    console.log('[service-update] PUT payload', {
+      serviceId: String(data.id),
+      editingLocale,
+      effectivePrimary,
+      writePrimary: writePrimaryDbg,
+      contentLocale,
+      translationsRowCount: Array.isArray(translationsOut) ? translationsOut.length : -1,
+      translationLocales: translationLocalesDbg,
+      jsonBodyHasTranslationsKey: Object.prototype.hasOwnProperty.call(apiBody, 'translations'),
+      namePreview: String(name).slice(0, 80),
+    });
+
+    const response = await apiClient.put<AdminService>(API_ENDPOINTS.SERVICES.UPDATE(String(data.id)), apiBody);
+    const updated = (response as { data?: AdminService })?.data ?? response;
+    const rt = (updated as { translations?: unknown[] })?.translations;
+    const returnedTranslationLocales = Array.isArray(rt)
+      ? rt.map((t) => String((t as { locale?: string })?.locale ?? '').toLowerCase())
+      : [];
+    console.log('[service-update] PUT ok', {
+      serviceId: String(data.id),
+      returnedNamePreview: String((updated as { name?: string })?.name ?? '').slice(0, 80),
+      returnedTranslationLocales,
+    });
+
+    const devDebug = {
+      editingLocale,
+      effectivePrimary,
+      writePrimary: writePrimaryDbg,
+      contentLocale,
+      jsonBodyHasTranslationsKey: Object.prototype.hasOwnProperty.call(apiBody, 'translations'),
+      translationsRowCount: Array.isArray(translationsOut) ? translationsOut.length : -1,
+      translationLocales: translationLocalesDbg,
+      firstTranslationNameLen:
+        Array.isArray(translationsOut) && translationsOut[0] && typeof translationsOut[0] === 'object'
+          ? String((translationsOut[0] as Record<string, unknown>).name ?? '').length
+          : 0,
+      returnedNamePreview: String((updated as { name?: string })?.name ?? '').slice(0, 80),
+      returnedTranslationLocales,
+    };
+
+    const dbg =
+      typeof import.meta !== 'undefined' &&
+      Boolean((import.meta as ImportMeta).env?.DEV || (import.meta as ImportMeta).env?.MODE === 'development');
+    if (!dbg) {
+      return { ok: true, value: { success: true as const, service: updated as AdminService } };
+    }
+    const json = JSON.stringify(devDebug);
+    const serviceWithDbg = {
+      ...(typeof updated === 'object' && updated !== null ? (updated as Record<string, unknown>) : {}),
+      serviceUpdateDebug: devDebug,
+    } as unknown as AdminService;
+    return {
+      ok: true,
+      value: {
         success: true as const,
         service: serviceWithDbg,
         serviceUpdateDebug: devDebug,
         serviceUpdateDebugJson: json,
-      };
-    } catch (err: any) {
-      console.error('[service-update] PUT failed', {
-        status: err?.status ?? err?.response?.status ?? null,
-        message: String(err?.message ?? '').slice(0, 300),
-      });
-      return fail(err?.status === 422 ? 422 : 500, { message: formatServiceApiError(err) || 'Failed to update service' });
-    }
-  },
-  zod$(serviceSchema.extend({ id: z.string() })),
-);
+      },
+    };
+  } catch (err: unknown) {
+    const e = err as { status?: number; response?: { status?: number }; message?: string };
+    console.error('[service-update] PUT failed', {
+      status: e?.status ?? e?.response?.status ?? null,
+      message: String(e?.message ?? '').slice(0, 300),
+    });
+    const st = e?.status === 422 || e?.response?.status === 422 ? 422 : 500;
+    return { ok: false, status: st, message: formatServiceApiError(err) || 'Failed to update service' };
+  }
+}
+
+/** Browser save: `routeAction$.submit` + q-data `loaders[action.id]` can leave `result` undefined; this path matches the route action’s Laravel PUT. */
+export async function runServiceUpdateFromBrowser(fields: Record<string, unknown>): Promise<RunServiceUpdateResult> {
+  const parsed = updateServiceSchema.safeParse(fields);
+  if (!parsed.success) {
+    const msg = parsed.error.issues.map((i) => i.message).join('; ').slice(0, 500);
+    return { ok: false, status: 422, message: msg || 'Invalid form' };
+  }
+  return runServiceUpdateWithApiClient(parsed.data as unknown as Record<string, unknown>, getApiClient(null) as PutClient);
+}
+
+export const useUpdateService = routeAction$(async (data, { cookie, request, fail }) => {
+  const apiClient = getApiClient(extractCookieHeader(cookie, request as any));
+  const r = await runServiceUpdateWithApiClient(data as unknown as Record<string, unknown>, apiClient as PutClient);
+  if (!r.ok) {
+    return fail(r.status, { message: r.message });
+  }
+  return r.value;
+}, zod$(updateServiceSchema));
 
 export const useDeleteService = routeAction$(async (data, { cookie, request, fail }) => {
   try {

@@ -15,10 +15,11 @@ export function looksLikeRouteActionResult(x: unknown): boolean {
  * `useXAction()` store from the component closure into this plain helper instead.
  */
 export async function submitRouteActionFormData(
-  action: { submit: (input: unknown) => Promise<unknown>; readonly value?: unknown },
+  /** `ActionStore` from `useXAction()` */
+  action: any,
   fields: Record<string, unknown>,
   looksLikePayload: (x: unknown) => boolean,
-): Promise<unknown> {
+): Promise<any> {
   const payload: Record<string, unknown> = {};
   for (const [k, v] of Object.entries(fields)) {
     if (v === undefined || v === null) {

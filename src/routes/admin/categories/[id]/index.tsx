@@ -20,8 +20,7 @@ import {
   primaryLocaleForContent,
   shouldWritePrimaryColumns,
 } from '../../../../lib/content-display-locale';
-import { useUpdateCategory } from '../../../../lib/admin/category-actions';
-import { submitRouteActionFormData } from '../../../../lib/admin/route-action-form-submit';
+import { runCategoryUpdateFromBrowser } from '../../../../lib/admin/category-actions';
 import type { Category } from '../../../../types';
 
 function mapCategoryFromApi(raw: any): Category {
@@ -64,7 +63,6 @@ export default component$(() => {
   const { success, error: showError } = useSwal();
   const langConfig = useSiteLanguageConfig();
   const categoryLoader = useCategory();
-  const updateAction = useUpdateCategory();
   /** Latest category (loader or after save) so merge logic stays correct */
   const liveCategory = useSignal<Category | null>(null);
 
@@ -174,38 +172,31 @@ export default component$(() => {
     const c = (liveCategory.value ?? categoryLoader.value) as Category | undefined;
     if (!c?.id) return;
 
-    const val = await submitRouteActionFormData(
-      updateAction,
-      {
-        id: String(c.id),
-        editing_locale: normalizeEditingLocale(
-          editingLocaleDraft.value,
-          langConfig.value.site_languages,
-          langConfig.value.default_locale,
-          contentLocaleDraft.value.trim() !== '' ? contentLocaleDraft.value.trim() : null,
-        ),
-        form_site_default_locale: langConfig.value.default_locale,
-        effective_primary_locale: primaryLocaleForContent(
-          langConfig.value.site_languages,
-          langConfig.value.default_locale,
-          contentLocaleDraft.value.trim() !== '' ? contentLocaleDraft.value.trim() : null,
-        ),
-        canonical_name: canonicalName.value,
-        canonical_description: canonicalDescription.value,
-        translations_json: translationsJson.value,
-        content_locale: contentLocaleDraft.value,
-        name: formData.value.name,
-        slug: formData.value.slug,
-        description: formData.value.description,
-        is_featured: formData.value.is_featured ? '1' : undefined,
-      },
-      (x) =>
-        x != null &&
-        typeof x === 'object' &&
-        ('success' in (x as object) || 'category' in (x as object) || 'failed' in (x as object)),
-    );
+    const val = await runCategoryUpdateFromBrowser({
+      id: String(c.id),
+      editing_locale: normalizeEditingLocale(
+        editingLocaleDraft.value,
+        langConfig.value.site_languages,
+        langConfig.value.default_locale,
+        contentLocaleDraft.value.trim() !== '' ? contentLocaleDraft.value.trim() : null,
+      ),
+      form_site_default_locale: langConfig.value.default_locale,
+      effective_primary_locale: primaryLocaleForContent(
+        langConfig.value.site_languages,
+        langConfig.value.default_locale,
+        contentLocaleDraft.value.trim() !== '' ? contentLocaleDraft.value.trim() : null,
+      ),
+      canonical_name: canonicalName.value,
+      canonical_description: canonicalDescription.value,
+      translations_json: translationsJson.value,
+      content_locale: contentLocaleDraft.value,
+      name: formData.value.name,
+      slug: formData.value.slug,
+      description: formData.value.description,
+      is_featured: formData.value.is_featured ? '1' : undefined,
+    });
 
-    if (val?.failed) {
+    if (!val.ok) {
       await showError(val.message || 'Failed to update category');
       return;
     }

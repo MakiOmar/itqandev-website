@@ -20,8 +20,7 @@ import {
   primaryLocaleForContent,
   shouldWritePrimaryColumns,
 } from '../../../../lib/content-display-locale';
-import { useUpdateService } from '../../../../lib/admin/service-actions';
-import { submitRouteActionFormData } from '../../../../lib/admin/route-action-form-submit';
+import { runServiceUpdateFromBrowser } from '../../../../lib/admin/service-actions';
 import type { AdminService } from '../../../../types/service';
 
 function joinLines(arr: string[] | null | undefined): string {
@@ -74,7 +73,6 @@ export default component$(() => {
   const { success, error: showError } = useSwal();
   const langConfig = useSiteLanguageConfig();
   const serviceLoader = useService();
-  const updateAction = useUpdateService();
   const liveService = useSignal<AdminService | null>(null);
 
   const saveTranslations = {
@@ -242,41 +240,32 @@ export default component$(() => {
       translationsJsonLen: translationsJson.value.length,
     });
 
-    const val = await submitRouteActionFormData(
-      updateAction,
-      {
-        id: String(s.id),
-        editing_locale: normalizedEditLocale,
-        form_site_default_locale: langConfig.value.default_locale,
-        effective_primary_locale: effectivePrimarySubmit,
-        canonical_name: canonicalName.value,
-        canonical_short_description: canonicalShortDescription.value,
-        canonical_description: canonicalDescription.value,
-        canonical_process_lines: canonicalProcessLines.value,
-        canonical_deliverables_lines: canonicalDeliverablesLines.value,
-        translations_json: translationsJson.value,
-        content_locale: contentLocaleDraft.value,
-        name: formData.value.name,
-        slug: formData.value.slug,
-        short_description: formData.value.short_description,
-        description: formData.value.description,
-        process_lines: formData.value.process_lines,
-        deliverables_lines: formData.value.deliverables_lines,
-        icon: formData.value.icon,
-        sort_order: formData.value.sort_order,
-        is_published: formData.value.is_published ? '1' : '0',
-      },
-      (x) =>
-        x != null &&
-        typeof x === 'object' &&
-        ('success' in (x as object) ||
-          'service' in (x as object) ||
-          'failed' in (x as object) ||
-          'serviceUpdateDebugJson' in (x as object)),
-    );
+    const val = await runServiceUpdateFromBrowser({
+      id: String(s.id),
+      editing_locale: normalizedEditLocale,
+      form_site_default_locale: langConfig.value.default_locale,
+      effective_primary_locale: effectivePrimarySubmit,
+      canonical_name: canonicalName.value,
+      canonical_short_description: canonicalShortDescription.value,
+      canonical_description: canonicalDescription.value,
+      canonical_process_lines: canonicalProcessLines.value,
+      canonical_deliverables_lines: canonicalDeliverablesLines.value,
+      translations_json: translationsJson.value,
+      content_locale: contentLocaleDraft.value,
+      name: formData.value.name,
+      slug: formData.value.slug,
+      short_description: formData.value.short_description,
+      description: formData.value.description,
+      process_lines: formData.value.process_lines,
+      deliverables_lines: formData.value.deliverables_lines,
+      icon: formData.value.icon,
+      sort_order: formData.value.sort_order,
+      is_published: formData.value.is_published ? '1' : '0',
+    });
 
     console.log('[service-save] submit result', {
-      valKeys: val != null && typeof val === 'object' ? Object.keys(val as object) : typeof val,
+      ok: val.ok,
+      valKeys: val.ok ? Object.keys(val.value) : typeof val.message,
     });
     // #region agent log
     fetch('http://127.0.0.1:7469/ingest/ed85bb2c-c192-44f6-8c60-9fe04360649a', {
@@ -284,28 +273,27 @@ export default component$(() => {
       headers: { 'Content-Type': 'application/json', 'X-Debug-Session-Id': '08cfc0' },
       body: JSON.stringify({
         sessionId: '08cfc0',
-        hypothesisId: 'H8',
+        hypothesisId: 'H9',
         runId: 'post-fix',
         location: 'admin/services/[id]/index.tsx:handleSave',
-        message: 'after submitRouteActionFormData (JSON body, not FormData)',
+        message: 'after runServiceUpdateFromBrowser (direct Laravel client)',
         data: {
-          valUndefined: val === undefined,
-          valFailed: val != null && typeof val === 'object' && 'failed' in (val as object),
-          valSuccess: val != null && typeof val === 'object' && 'success' in (val as object),
-          valKeys: val != null && typeof val === 'object' ? Object.keys(val as object).slice(0, 14) : typeof val,
+          valOk: val.ok,
+          valStatus: val.ok ? 200 : val.status,
+          messageLen: val.ok ? 0 : String(val.message ?? '').length,
         },
         timestamp: Date.now(),
       }),
     }).catch(() => {});
     // #endregion
 
-    if (val?.failed) {
+    if (!val.ok) {
       await showError(val.message || 'Failed to update service');
       return;
     }
 
     {
-      const v = val as Record<string, unknown> | undefined;
+      const v = val.value as Record<string, unknown> | undefined;
       let parsed: unknown;
       try {
         const j = v?.serviceUpdateDebugJson;

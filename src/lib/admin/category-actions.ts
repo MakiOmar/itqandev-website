@@ -107,63 +107,87 @@ export const useCreateCategory = routeAction$(
   zod$(categorySchema),
 );
 
+const updateCategorySchema = categorySchema.extend({ id: z.string() });
+
+export type RunCategoryUpdateResult =
+  | { ok: true; value: { success: true; category: Category } }
+  | { ok: false; status: number; message: string };
+
+type CategoryPutClient = { put: <T>(endpoint: string, body?: unknown) => Promise<unknown> };
+
+async function runCategoryUpdateWithApiClient(
+  data: Record<string, unknown>,
+  apiClient: CategoryPutClient,
+): Promise<RunCategoryUpdateResult> {
+  try {
+    const rawContentLocale = (data as { content_locale?: string }).content_locale?.trim();
+    const contentLocale = rawContentLocale && rawContentLocale.length > 0 ? rawContentLocale : null;
+
+    const siteDef = String((data as { form_site_default_locale?: string }).form_site_default_locale || 'en');
+    const effectivePrimary = String((data as { effective_primary_locale?: string }).effective_primary_locale || siteDef);
+    const editingLocale = String((data as { editing_locale?: string }).editing_locale || effectivePrimary);
+    const canonicalName = String((data as { canonical_name?: string }).canonical_name ?? '');
+    const canonicalDescription = String((data as { canonical_description?: string }).canonical_description ?? '');
+
+    let name = String(data.name || '');
+    let description = data.description !== undefined && data.description !== null ? String(data.description) : undefined;
+    let translationsOut: unknown[] | undefined;
+
+    if (shouldWritePrimaryColumns(editingLocale, effectivePrimary)) {
+      translationsOut = undefined;
+    } else {
+      name = canonicalName;
+      description = canonicalDescription;
+      translationsOut = mergeSecondaryCategoryTranslations(
+        (data as { translations_json?: string }).translations_json,
+        editingLocale,
+        { name: String(data.name || ''), description: String(data.description ?? '') },
+      );
+    }
+
+    const apiBody = categoryPayloadForApi({
+      name,
+      slug: (data.slug as string | undefined) || undefined,
+      description,
+      isFeatured: toBool((data as { is_featured?: unknown }).is_featured),
+      content_locale: contentLocale,
+      translations: translationsOut,
+    });
+
+    const response = await apiClient.put<Category>(API_ENDPOINTS.CATEGORIES.UPDATE(String(data.id)), apiBody);
+    const updated = (response as { data?: Category })?.data ?? response;
+    return { ok: true, value: { success: true as const, category: updated as Category } };
+  } catch (err: unknown) {
+    const e = err as { status?: number; response?: { status?: number }; message?: string };
+    const st = e?.status === 401 || e?.response?.status === 401 ? 401 : 500;
+    return { ok: false, status: st, message: String(e?.message ?? 'Failed to update category') };
+  }
+}
+
+/** Browser save — same rationale as `runServiceUpdateFromBrowser`. */
+export async function runCategoryUpdateFromBrowser(fields: Record<string, unknown>): Promise<RunCategoryUpdateResult> {
+  const parsed = updateCategorySchema.safeParse(fields);
+  if (!parsed.success) {
+    const msg = parsed.error.issues.map((i) => i.message).join('; ').slice(0, 500);
+    return { ok: false, status: 422, message: msg || 'Invalid form' };
+  }
+  return runCategoryUpdateWithApiClient(
+    parsed.data as unknown as Record<string, unknown>,
+    getApiClient(null) as CategoryPutClient,
+  );
+}
+
 /**
  * Update category action (server-side, authenticated via forwarded cookies)
  */
-export const useUpdateCategory = routeAction$(
-  async (data, { cookie, request, fail }) => {
-    try {
-      const cookieHeader = extractCookieHeader(cookie, request as any);
-      const apiClient = getApiClient(cookieHeader);
-
-      const rawContentLocale = (data as { content_locale?: string }).content_locale?.trim();
-      const contentLocale = rawContentLocale && rawContentLocale.length > 0 ? rawContentLocale : null;
-
-      const siteDef = String((data as { form_site_default_locale?: string }).form_site_default_locale || 'en');
-      const effectivePrimary = String((data as { effective_primary_locale?: string }).effective_primary_locale || siteDef);
-      const editingLocale = String((data as { editing_locale?: string }).editing_locale || effectivePrimary);
-      const canonicalName = String((data as { canonical_name?: string }).canonical_name ?? '');
-      const canonicalDescription = String((data as { canonical_description?: string }).canonical_description ?? '');
-
-      let name = String(data.name || '');
-      let description = data.description !== undefined && data.description !== null ? String(data.description) : undefined;
-      let translationsOut: unknown[] | undefined;
-
-      if (shouldWritePrimaryColumns(editingLocale, effectivePrimary)) {
-        // Same as services update: do not PATCH translation rows from placeholder-only translations_json.
-        translationsOut = undefined;
-      } else {
-        name = canonicalName;
-        description = canonicalDescription;
-        translationsOut = mergeSecondaryCategoryTranslations(
-          (data as { translations_json?: string }).translations_json,
-          editingLocale,
-          { name: String(data.name || ''), description: String(data.description ?? '') },
-        );
-      }
-
-      const apiBody = categoryPayloadForApi({
-        name,
-        slug: data.slug || undefined,
-        description,
-        isFeatured: toBool((data as any).is_featured),
-        content_locale: contentLocale,
-        translations: translationsOut,
-      });
-
-      const response = await apiClient.put<Category>(
-        API_ENDPOINTS.CATEGORIES.UPDATE(String((data as any).id)),
-        apiBody,
-      );
-
-      const updated = (response as any)?.data ?? response;
-      return { success: true, category: updated as Category };
-    } catch (err: any) {
-      return fail(401, { message: err?.message || 'Unauthorized' });
-    }
-  },
-  zod$(categorySchema.extend({ id: z.string() })),
-);
+export const useUpdateCategory = routeAction$(async (data, { cookie, request, fail }) => {
+  const apiClient = getApiClient(extractCookieHeader(cookie, request as any));
+  const r = await runCategoryUpdateWithApiClient(data as unknown as Record<string, unknown>, apiClient as CategoryPutClient);
+  if (!r.ok) {
+    return fail(r.status, { message: r.message });
+  }
+  return r.value;
+}, zod$(updateCategorySchema));
 
 /**
  * Delete category action (server-side, authenticated via forwarded cookies)
