@@ -81,7 +81,7 @@ export default component$(() => {
   };
 
   const contentLocaleDraft = useSignal('');
-  const editingLocaleDraft = useSignal(langConfig.value.default_locale);
+  const editingLocaleDraft = useSignal(langConfig.value.content_editing_locale);
   const canonicalName = useSignal('');
   const canonicalShortDescription = useSignal('');
   const canonicalDescription = useSignal('');

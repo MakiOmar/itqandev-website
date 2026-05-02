@@ -222,7 +222,7 @@ export default component$(() => {
     icon_hint: '',
   });
   const contentLocaleDraft = useSignal('');
-  const editingLocaleDraft = useSignal(langConfig.value.default_locale);
+  const editingLocaleDraft = useSignal(langConfig.value.content_editing_locale);
   const canonicalName = useSignal('');
   const canonicalDescription = useSignal('');
   const translationsJson = useSignal('[]');

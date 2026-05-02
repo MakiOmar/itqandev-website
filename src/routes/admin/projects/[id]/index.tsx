@@ -424,13 +424,7 @@ export default component$(() => {
       ? String(project.value.content_locale).trim()
       : '',
   );
-  const editingLocaleDraft = useSignal(
-    primaryLocaleForContent(
-      langConfig.value.site_languages,
-      langConfig.value.default_locale,
-      contentLocaleDraft.value.trim() !== '' ? contentLocaleDraft.value.trim() : null,
-    ),
-  );
+  const editingLocaleDraft = useSignal(langConfig.value.content_editing_locale);
   const titleField = useSignal('');
   const summaryField = useSignal('');
   const descriptionField = useSignal('');

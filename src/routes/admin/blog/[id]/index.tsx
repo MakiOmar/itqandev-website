@@ -164,13 +164,7 @@ export default component$(() => {
   const featuredImageFile = useSignal<File | null>(null);
   const showFeaturedImageSelector = useSignal(false);
   const contentLocaleDraft = useSignal('');
-  const editingLocaleDraft = useSignal(
-    primaryLocaleForContent(
-      langConfig.value.site_languages,
-      langConfig.value.default_locale,
-      post.value.content_locale ?? null,
-    ),
-  );
+  const editingLocaleDraft = useSignal(langConfig.value.content_editing_locale);
   const titleField = useSignal('');
   const excerptField = useSignal('');
   const contentField = useSignal('');

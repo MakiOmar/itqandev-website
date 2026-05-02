@@ -234,7 +234,7 @@ export default component$(() => {
   const createdProjectId = useSignal<number | null>(null);
   const actionResult = useSignal<{ success?: boolean; projectId?: number; error?: string } | null>(null);
   const contentLocaleDraft = useSignal('');
-  const editingLocaleDraft = useSignal(langConfig.value.default_locale);
+  const editingLocaleDraft = useSignal(langConfig.value.content_editing_locale);
   
   // Extract submit method reference to avoid serialization issues
   const submitMethod = createAction.submit.bind(createAction);
