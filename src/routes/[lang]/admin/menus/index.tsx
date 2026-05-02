@@ -141,6 +141,13 @@ export default component$(() => {
   const loadingDetail = useSignal(false);
   const saving = useSignal(false);
 
+  const menusList = useSignal<MenuRow[]>([...pageData.value.menus]);
+  const showCreateMenuForm = useSignal(pageData.value.menus.length === 0);
+  const newMenuShell = useStore({
+    name: '',
+    slug: '',
+  });
+
   const projects = useSignal<PickerProject[]>([]);
   const blogPosts = useSignal<PickerPost[]>([]);
   const services = useSignal<PickerService[]>([]);
@@ -191,6 +198,93 @@ export default component$(() => {
     selectedMenuId.value = id;
     await fetchDetail$(id);
     await resetForm$();
+  });
+
+  const reloadMenusList$ = $(async (selectSlug?: string | null) => {
+    const api = getApiClient();
+    const listRes = await api.get(API_ENDPOINTS.MENUS.LIST);
+    const raw = extractRows(listRes) as Record<string, unknown>[];
+    const next: MenuRow[] = raw.map((m) => ({
+      id: Number(m.id),
+      name: String(m.name ?? ''),
+      slug: String(m.slug ?? ''),
+    }));
+    menusList.value = next;
+    let pickId: number | null = null;
+    if (selectSlug) {
+      const hit = next.find((m) => m.slug === selectSlug);
+      if (hit) {
+        pickId = hit.id;
+      }
+    }
+    const current = selectedMenuId.value;
+    if (pickId == null && current != null && next.some((m) => m.id === current)) {
+      pickId = current;
+    }
+    if (pickId == null && next.length) {
+      const primary = next.find((m) => m.slug === 'primary');
+      pickId = primary?.id ?? next[0]!.id;
+    }
+    selectedMenuId.value = pickId;
+    if (pickId != null) {
+      await fetchDetail$(pickId);
+    } else {
+      menuDetail.value = null;
+    }
+  });
+
+  const createMenu$ = $(async () => {
+    const name = newMenuShell.name.trim();
+    const slug = newMenuShell.slug.trim().toLowerCase().replace(/\s+/g, '-');
+    if (!name || !slug) {
+      await showError(String(translateApp(lang, 'menusPage.nameSlugRequired')));
+      return;
+    }
+    saving.value = true;
+    try {
+      const api = getApiClient();
+      await api.post(API_ENDPOINTS.MENUS.CREATE, { name, slug });
+      newMenuShell.name = '';
+      newMenuShell.slug = '';
+      showCreateMenuForm.value = false;
+      await success(String(translateApp(lang, 'menusPage.menuCreated')));
+      await reloadMenusList$(slug);
+    } catch {
+      await showError(String(translateApp(lang, 'menusPage.saveFailed')));
+    } finally {
+      saving.value = false;
+    }
+  });
+
+  const deleteMenu$ = $(async () => {
+    const mid = selectedMenuId.value;
+    if (mid == null) {
+      return;
+    }
+    const row = menusList.value.find((m) => m.id === mid);
+    const nameLabel = row?.name ?? String(mid);
+    const r = await confirm(String(translateApp(lang, 'menusPage.deleteMenuConfirm', { name: nameLabel })), {
+      icon: 'warning',
+      title: String(translateApp(lang, 'menusPage.deleteTitle')),
+    });
+    if (!r.isConfirmed) {
+      return;
+    }
+    saving.value = true;
+    try {
+      const api = getApiClient();
+      await api.delete(API_ENDPOINTS.MENUS.DELETE(mid));
+      await success(String(translateApp(lang, 'menusPage.menuDeleted')));
+      await resetForm$();
+      await reloadMenusList$(null);
+      if (menusList.value.length === 0) {
+        showCreateMenuForm.value = true;
+      }
+    } catch {
+      await showError(String(translateApp(lang, 'menusPage.saveFailed')));
+    } finally {
+      saving.value = false;
+    }
   });
 
   const persistReorder$ = $(async (orderedRoots: MenuItemNode[]) => {
@@ -359,8 +453,6 @@ export default component$(() => {
     }
   });
 
-  const menus = pageData.value.menus;
-
   const inputClass =
     'w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100';
   const labelClass = 'mb-1 block text-sm font-medium text-gray-700 dark:text-gray-200';
@@ -373,30 +465,120 @@ export default component$(() => {
           description={String(translateApp(lang, 'menusPage.subtitle'))}
         />
 
-        {menus.length === 0 ? (
-          <p class="text-sm text-gray-600 dark:text-gray-400">{String(translateApp(lang, 'menusPage.emptyMenus'))}</p>
+        {menusList.value.length === 0 ? (
+          <p class="mb-4 text-sm text-gray-600 dark:text-gray-400">{String(translateApp(lang, 'menusPage.emptyMenus'))}</p>
         ) : (
-          <div class="mb-6 max-w-md">
-            <label class={labelClass} for="admin-menu-select">
-              {String(translateApp(lang, 'menusPage.selectMenu'))}
-            </label>
-            <select
-              id="admin-menu-select"
-              class={inputClass}
-              value={selectedMenuId.value ?? ''}
-              onChange$={onMenuSelect$}
-              disabled={saving.value}
-            >
-              {menus.map((m) => (
-                <option key={m.id} value={m.id}>
-                  {`${m.name} (${m.slug})`}
-                </option>
-              ))}
-            </select>
+          <div class="mb-6 flex max-w-2xl flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-end">
+            <div class="min-w-0 flex-1">
+              <label class={labelClass} for="admin-menu-select">
+                {String(translateApp(lang, 'menusPage.selectMenu'))}
+              </label>
+              <select
+                id="admin-menu-select"
+                class={inputClass}
+                value={selectedMenuId.value ?? ''}
+                onChange$={onMenuSelect$}
+                disabled={saving.value}
+              >
+                {menusList.value.map((m) => (
+                  <option key={m.id} value={m.id}>
+                    {`${m.name} (${m.slug})`}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div class="flex flex-wrap gap-2">
+              <button
+                type="button"
+                class="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-800 hover:bg-gray-50 disabled:opacity-50 dark:border-gray-600 dark:text-gray-100 dark:hover:bg-gray-700"
+                disabled={saving.value}
+                onClick$={() => {
+                  showCreateMenuForm.value = true;
+                }}
+              >
+                {String(translateApp(lang, 'menusPage.addAnotherMenu'))}
+              </button>
+              <button
+                type="button"
+                class="rounded-lg border border-red-200 px-4 py-2 text-sm font-medium text-red-700 hover:bg-red-50 disabled:opacity-50 dark:border-red-900 dark:text-red-300 dark:hover:bg-red-950/30"
+                disabled={saving.value || selectedMenuId.value == null}
+                onClick$={deleteMenu$}
+              >
+                {String(translateApp(lang, 'menusPage.deleteThisMenu'))}
+              </button>
+            </div>
           </div>
         )}
 
-        {menus.length > 0 && (
+        {(menusList.value.length === 0 || showCreateMenuForm.value) && (
+          <div class="mb-8 max-w-xl rounded-lg border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-800 dark:bg-gray-800">
+            <h2 class="mb-1 text-lg font-semibold text-gray-900 dark:text-gray-100">
+              {String(translateApp(lang, 'menusPage.createMenuHeading'))}
+            </h2>
+            <p class="mb-4 text-sm text-gray-600 dark:text-gray-400">
+              {String(translateApp(lang, 'menusPage.createMenuIntro'))}
+            </p>
+            <div class="grid gap-3">
+              <div>
+                <label class={labelClass} for="new-menu-name">
+                  {String(translateApp(lang, 'menusPage.menuName'))}
+                </label>
+                <input
+                  id="new-menu-name"
+                  class={inputClass}
+                  type="text"
+                  value={newMenuShell.name}
+                  placeholder="Primary"
+                  onInput$={(e) => {
+                    newMenuShell.name = (e.target as HTMLInputElement).value;
+                  }}
+                />
+              </div>
+              <div>
+                <label class={labelClass} for="new-menu-slug">
+                  {String(translateApp(lang, 'menusPage.menuSlug'))}
+                </label>
+                <input
+                  id="new-menu-slug"
+                  class={inputClass}
+                  type="text"
+                  value={newMenuShell.slug}
+                  placeholder="primary"
+                  onInput$={(e) => {
+                    newMenuShell.slug = (e.target as HTMLInputElement).value;
+                  }}
+                />
+                <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">{String(translateApp(lang, 'menusPage.menuSlugHint'))}</p>
+              </div>
+              <div class="flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  class="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-blue-700 disabled:opacity-50"
+                  disabled={saving.value}
+                  onClick$={createMenu$}
+                >
+                  {String(translateApp(lang, 'menusPage.createMenuButton'))}
+                </button>
+                {menusList.value.length > 0 ? (
+                  <button
+                    type="button"
+                    class="rounded-lg border border-gray-300 px-4 py-2 text-sm dark:border-gray-600"
+                    disabled={saving.value}
+                    onClick$={() => {
+                      showCreateMenuForm.value = false;
+                      newMenuShell.name = '';
+                      newMenuShell.slug = '';
+                    }}
+                  >
+                    {String(translateApp(lang, 'common.cancel'))}
+                  </button>
+                ) : null}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {menusList.value.length > 0 && (
           <div class="grid gap-6 lg:grid-cols-2">
             <div class="rounded-lg border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-800 dark:bg-gray-800">
               <h2 class="mb-3 text-lg font-semibold text-gray-900 dark:text-gray-100">
