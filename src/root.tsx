@@ -1,4 +1,4 @@
-import { component$, isDev, useSignal, useVisibleTask$ } from "@builder.io/qwik";
+import { component$, createContextId, isDev, useContext, useContextProvider, useSignal, useVisibleTask$ } from "@builder.io/qwik";
 import { QwikCityProvider, RouterOutlet, useLocation } from "@builder.io/qwik-city";
 import { useQwikSpeak, useSpeakLocale } from "qwik-speak";
 import { RouterHead } from "./components/router-head/router-head";
@@ -9,6 +9,12 @@ import { stripUiLocaleFromPathname, uiLangPrefixFromPathname } from "./lib/i18n/
 import { persistPreferredLocale } from "./lib/i18n/preferred-locale-persist";
 
 import "./global.css";
+
+/** Body lang/dir signals updated from inside QwikCityProvider (useLocation is invalid on the root component). */
+const rootBodyLocaleContext = createContextId<{
+  bodyLang: ReturnType<typeof useSignal<string>>;
+  bodyDir: ReturnType<typeof useSignal<"rtl" | "ltr">>;
+}>("root-body-locale");
 
 /** Paths that are public marketing pages (body should stay visible, do not strip data-render-complete). */
 const PUBLIC_PATH_PREFIXES = ["/", "/services", "/work", "/about", "/pricing", "/contact", "/blog"];
@@ -89,7 +95,6 @@ const LocaleFontSync = component$(() => {
   const locale = useSpeakLocale();
   const location = useLocation();
 
-  // Keep locale font applied across SPA navigations where head diffing can drop dynamic links.
   // eslint-disable-next-line qwik/no-use-visible-task
   useVisibleTask$(({ track }) => {
     track(() => locale.lang);
@@ -100,34 +105,33 @@ const LocaleFontSync = component$(() => {
   return null;
 });
 
-export default component$(() => {
-  /**
-   * The root of a QwikCity site always start with the <QwikCityProvider> component,
-   * immediately followed by the document's <head> and <body>.
-   *
-   * Don't remove the `<head>` and `<body>` elements.
-   */
-
-  // Initialize qwik-speak
-  useQwikSpeak({
-    config: speakConfig,
-    translationFn: translationFn,
-  });
-
-  // Get current locale for body lang and dir attributes
-  const locale = useSpeakLocale();
+/**
+ * Syncs URL `/en`/`/ar` prefix to qwik-speak locale, storage, DOM, and root body signals.
+ * Must run under QwikCityProvider (useLocation).
+ */
+const UrlLocaleBodySync = component$(() => {
   const location = useLocation();
-  const pathUiLang = uiLangPrefixFromPathname(location.url.pathname);
-  const initialLang = pathUiLang ?? (locale.lang || speakConfig.defaultLocale.lang);
-  const bodyLang = useSignal(initialLang);
-  const bodyDir = useSignal(initialLang === "ar" ? "rtl" : "ltr");
-
+  const locale = useSpeakLocale();
+  const { bodyLang, bodyDir } = useContext(rootBodyLocaleContext);
   const speakCodes = new Set(speakConfig.supportedLocales.map((l) => l.lang.toLowerCase()));
 
-  /**
-   * URL `/en` / `/ar` is the source of truth for first paint and client nav.
-   * Otherwise fall back to localStorage so non-prefixed legacy URLs still work.
-   */
+  // #region agent log
+  useVisibleTask$(() => {
+    fetch("http://127.0.0.1:7469/ingest/ed85bb2c-c192-44f6-8c60-9fe04360649a", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "X-Debug-Session-Id": "08cfc0" },
+      body: JSON.stringify({
+        sessionId: "08cfc0",
+        hypothesisId: "H1",
+        location: "root.tsx:UrlLocaleBodySync",
+        message: "UrlLocaleBodySync mounted under QwikCityProvider",
+        data: { pathname: location.url.pathname },
+        timestamp: Date.now(),
+      }),
+    }).catch(() => {});
+  });
+  // #endregion
+
   // eslint-disable-next-line qwik/no-use-visible-task
   useVisibleTask$(({ track }) => {
     track(() => location.url.pathname);
@@ -149,6 +153,20 @@ export default component$(() => {
         document.documentElement.setAttribute("lang", urlLang);
         document.documentElement.setAttribute("dir", bodyDir.value);
       }
+      // #region agent log
+      fetch("http://127.0.0.1:7469/ingest/ed85bb2c-c192-44f6-8c60-9fe04360649a", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "X-Debug-Session-Id": "08cfc0" },
+        body: JSON.stringify({
+          sessionId: "08cfc0",
+          hypothesisId: "H1",
+          location: "root.tsx:UrlLocaleBodySync:visible",
+          message: "Applied URL-prefixed locale",
+          data: { urlLang, isRtl },
+          timestamp: Date.now(),
+        }),
+      }).catch(() => {});
+      // #endregion
       return;
     }
 
@@ -179,6 +197,30 @@ export default component$(() => {
     ensureLocaleFont(currentLang);
   });
 
+  return null;
+});
+
+export default component$(() => {
+  /**
+   * The root of a QwikCity site always start with the <QwikCityProvider> component,
+   * immediately followed by the document's <head> and <body>.
+   *
+   * Don't remove the `<head>` and `<body>` elements.
+   * Do not call useLocation() here — Qwik City context exists only inside QwikCityProvider.
+   */
+
+  // Initialize qwik-speak
+  useQwikSpeak({
+    config: speakConfig,
+    translationFn: translationFn,
+  });
+
+  const locale = useSpeakLocale();
+  const bodyLang = useSignal(locale.lang || speakConfig.defaultLocale.lang);
+  const bodyDir = useSignal((locale.lang || speakConfig.defaultLocale.lang) === "ar" ? "rtl" : "ltr");
+
+  useContextProvider(rootBodyLocaleContext, { bodyLang, bodyDir });
+
   return (
     <>
       {/* Component: Root */}
@@ -194,6 +236,7 @@ export default component$(() => {
           <RouterHead />
         </head>
         <body lang={bodyLang.value} dir={bodyDir.value} data-render-complete={typeof window === "undefined" ? "false" : undefined}>
+          <UrlLocaleBodySync />
           <BodyRenderCompleteGuard />
           <LocaleFontSync />
           <RouterOutlet />
