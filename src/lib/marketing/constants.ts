@@ -4,17 +4,18 @@
 
 import { withUiLocale } from '../i18n/ui-locale-path';
 
+/** Paths use trailing slashes so they match Qwik City default `trailingSlash: true` (avoids broken client navigations). */
 export const MARKETING_ROUTES = {
   home: '/',
-  services: '/services',
-  serviceSlug: (slug: string) => `/services/${slug}`,
-  work: '/work',
-  workSlug: (slug: string) => `/work/${slug}`,
-  about: '/about',
-  pricing: '/pricing',
-  contact: '/contact',
-  blog: '/blog',
-  blogSlug: (slug: string) => `/blog/${slug}`,
+  services: '/services/',
+  serviceSlug: (slug: string) => `/services/${slug}/`,
+  work: '/work/',
+  workSlug: (slug: string) => `/work/${slug}/`,
+  about: '/about/',
+  pricing: '/pricing/',
+  contact: '/contact/',
+  blog: '/blog/',
+  blogSlug: (slug: string) => `/blog/${slug}/`,
 } as const;
 
 /** Locale-prefixed marketing paths (`/en/services`, `/ar/blog/...`). */

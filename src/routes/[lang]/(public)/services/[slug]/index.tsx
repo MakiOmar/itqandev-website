@@ -13,9 +13,12 @@ import { Section } from '~/components/marketing/Section';
 import { AnimatedReveal } from '~/components/marketing/AnimatedReveal';
 
 export const useServiceDetail = routeLoader$(async ({ params, request }) => {
-  const slug = params.slug;
+  const slug = decodeURIComponent(String(params.slug ?? '').trim());
+  const langSeg = String(params.lang ?? '').trim().toLowerCase();
   const cookie = request.headers.get('cookie') || '';
-  const uiLocale = readPreferredLocaleFromCookieHeader(cookie) ?? undefined;
+  const fromUrl = langSeg === 'ar' || langSeg === 'en' ? langSeg : undefined;
+  const fromCookie = readPreferredLocaleFromCookieHeader(cookie);
+  const uiLocale = fromUrl ?? fromCookie ?? undefined;
   const service = await getServiceBySlug(slug, uiLocale);
   if (!service) throw new Error('Service not found');
   return service;
