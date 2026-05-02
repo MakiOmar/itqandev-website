@@ -327,25 +327,31 @@ export const ContentEditingLanguageSelect = component$<{
   effectivePrimaryLocale: string;
   onChange$?: QRL<(code: string) => void>;
 }>((props) => {
-  // Navbar writes `preferred-locale` to localStorage before reload; SSR `routeLoader$` can still
-  // seed `content_editing_locale` as default — align the dropdown once on the client.
+  // Navbar persists `preferred-locale` before reload; SSR/loader can seed `en` and `site_languages`
+  // may resolve a tick later — track languages and sync once `ar` (etc.) exists in the list.
+  const editingLocaleAutoSyncDone = useSignal(false);
+
   // eslint-disable-next-line qwik/no-use-visible-task
-  useVisibleTask$(() => {
-    if (!props.onChange$) {
+  useVisibleTask$(({ track }) => {
+    track(() => props.siteLanguages);
+    if (!props.onChange$ || editingLocaleAutoSyncDone.value) {
       return;
     }
     const pref = readPreferredLocaleFromBrowser();
     if (!pref) {
       return;
     }
-    const codes = new Set(props.siteLanguages.map((l) => String(l.code).toLowerCase()));
-    if (!codes.has(pref)) {
+    const list = props.siteLanguages;
+    if (!list.some((l) => String(l.code).toLowerCase() === pref)) {
       return;
     }
-    if (pref === String(props.value || '').trim().toLowerCase()) {
+    const cur = String(props.value ?? '').trim().toLowerCase();
+    if (cur === pref) {
+      editingLocaleAutoSyncDone.value = true;
       return;
     }
     props.onChange$(pref);
+    editingLocaleAutoSyncDone.value = true;
   });
 
   const isPrimary = props.value.toLowerCase() === props.effectivePrimaryLocale.toLowerCase();
