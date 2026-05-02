@@ -115,23 +115,6 @@ const UrlLocaleBodySync = component$(() => {
   const { bodyLang, bodyDir } = useContext(rootBodyLocaleContext);
   const speakCodes = new Set(speakConfig.supportedLocales.map((l) => l.lang.toLowerCase()));
 
-  // #region agent log
-  useVisibleTask$(() => {
-    fetch("http://127.0.0.1:7469/ingest/ed85bb2c-c192-44f6-8c60-9fe04360649a", {
-      method: "POST",
-      headers: { "Content-Type": "application/json", "X-Debug-Session-Id": "08cfc0" },
-      body: JSON.stringify({
-        sessionId: "08cfc0",
-        hypothesisId: "H1",
-        location: "root.tsx:UrlLocaleBodySync",
-        message: "UrlLocaleBodySync mounted under QwikCityProvider",
-        data: { pathname: location.url.pathname },
-        timestamp: Date.now(),
-      }),
-    }).catch(() => {});
-  });
-  // #endregion
-
   // eslint-disable-next-line qwik/no-use-visible-task
   useVisibleTask$(({ track }) => {
     track(() => location.url.pathname);
@@ -153,20 +136,6 @@ const UrlLocaleBodySync = component$(() => {
         document.documentElement.setAttribute("lang", urlLang);
         document.documentElement.setAttribute("dir", bodyDir.value);
       }
-      // #region agent log
-      fetch("http://127.0.0.1:7469/ingest/ed85bb2c-c192-44f6-8c60-9fe04360649a", {
-        method: "POST",
-        headers: { "Content-Type": "application/json", "X-Debug-Session-Id": "08cfc0" },
-        body: JSON.stringify({
-          sessionId: "08cfc0",
-          hypothesisId: "H1",
-          location: "root.tsx:UrlLocaleBodySync:visible",
-          message: "Applied URL-prefixed locale",
-          data: { urlLang, isRtl },
-          timestamp: Date.now(),
-        }),
-      }).catch(() => {});
-      // #endregion
       return;
     }
 
