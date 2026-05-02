@@ -211,7 +211,7 @@ export default component$(() => {
     return (
       <div class="p-6 text-center text-gray-600 dark:text-gray-300">
         <p>{translateApp(lang, 'common.notFound') || 'Not found'}</p>
-        <Link href={R.value.ADMIN.CATEGORIES} class="mt-2 inline-block text-primary-600">
+        <Link href={R.ADMIN.CATEGORIES} class="mt-2 inline-block text-primary-600">
           {translateApp(lang, 'common.back')}
         </Link>
       </div>
@@ -222,7 +222,7 @@ export default component$(() => {
     <>
       <PageHeader title={translateApp(lang, 'categories.edit')} description={translateApp(lang, 'categories.subtitle')}>
         <Link
-          href={R.value.ADMIN.CATEGORIES}
+          href={R.ADMIN.CATEGORIES}
           class="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm transition hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 dark:hover:bg-gray-700"
         >
           {translateApp(lang, 'common.back')}
@@ -350,7 +350,7 @@ export default component$(() => {
               {translateApp(lang, 'common.update')}
             </button>
             <Link
-              href={R.value.ADMIN.CATEGORIES}
+              href={R.ADMIN.CATEGORIES}
               class="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm transition hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 dark:hover:bg-gray-700"
             >
               {translateApp(lang, 'common.cancel')}

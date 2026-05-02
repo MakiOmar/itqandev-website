@@ -6,7 +6,7 @@ import { useTranslate, translateApp } from '../../../../../lib/i18n/useTranslate
 import { useSwal } from '../../../../../lib/hooks/useSwal';
 import { getApiClient, extractCookieHeader } from '../../../../../lib/api/client';
 import { API_ENDPOINTS } from '../../../../../lib/api/endpoints';
-import { routesFromPreferredCookie, useAppRoutes } from '../../../../../lib/constants/routes';
+import { getLocalizedRoutes, routesFromPreferredCookie, useAppRoutes } from '../../../../../lib/constants/routes';
 import type { Testimonial } from '../../../../../types';
 import { mapTestimonialFromApi, useUpdateTestimonial } from '../../../../../lib/admin/testimonial-actions';
 import { loadTestimonialProjectsContext } from '../../../../../lib/admin/testimonial-form-context';
@@ -118,7 +118,7 @@ export default component$(() => {
       await showError(errorMsg);
     } else {
       await success(successTitle, { text: updatedText });
-      await navigate(R.value.ADMIN.TESTIMONIALS);
+      await navigate(getLocalizedRoutes(lang).ADMIN.TESTIMONIALS);
     }
   });
 
@@ -129,7 +129,7 @@ export default component$(() => {
     <>
       <PageHeader title={translateApp(lang, 'testimonials.edit')} description={translateApp(lang, 'testimonials.subtitle')}>
         <Link
-          href={R.value.ADMIN.TESTIMONIALS}
+          href={R.ADMIN.TESTIMONIALS}
           class="inline-flex items-center justify-center rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm transition hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 dark:hover:bg-gray-700"
         >
           {translateApp(lang, 'testimonials.backToList')}
@@ -279,7 +279,7 @@ export default component$(() => {
                 {translateApp(lang, 'common.update')}
               </button>
               <Link
-                href={R.value.ADMIN.TESTIMONIALS}
+                href={R.ADMIN.TESTIMONIALS}
                 class="inline-flex items-center justify-center rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm transition hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 dark:hover:bg-gray-700"
               >
                 {translateApp(lang, 'common.cancel')}

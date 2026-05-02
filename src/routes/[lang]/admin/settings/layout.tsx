@@ -366,11 +366,11 @@ export default component$(() => {
   const location = useLocation();
 
   const tabs = [
-    { label: translateApp(lang, 'settings.general'), href: R.value.ADMIN.SETTINGS_GENERAL },
-    { label: translateApp(lang, 'settings.socialMedia'), href: R.value.ADMIN.SETTINGS_SOCIAL },
-    { label: translateApp(lang, 'media.title'), href: R.value.ADMIN.SETTINGS_MEDIA },
-    { label: translateApp(lang, 'settings.branding'), href: R.value.ADMIN.SETTINGS_BRANDING },
-    { label: translateApp(lang, 'settings.languagesNav'), href: R.value.ADMIN.SETTINGS_LANGUAGES },
+    { label: translateApp(lang, 'settings.general'), href: R.ADMIN.SETTINGS_GENERAL },
+    { label: translateApp(lang, 'settings.socialMedia'), href: R.ADMIN.SETTINGS_SOCIAL },
+    { label: translateApp(lang, 'media.title'), href: R.ADMIN.SETTINGS_MEDIA },
+    { label: translateApp(lang, 'settings.branding'), href: R.ADMIN.SETTINGS_BRANDING },
+    { label: translateApp(lang, 'settings.languagesNav'), href: R.ADMIN.SETTINGS_LANGUAGES },
   ];
 
   return (

@@ -67,7 +67,7 @@ export const Header = component$<HeaderProps>((props) => {
           )}
           {/* Single brand logo + name: links to public homepage */}
           <Link
-            href={R.value.PUBLIC.HOME}
+            href={R.PUBLIC.HOME}
             class="flex min-w-0 items-center gap-3 md:gap-4 rounded-lg outline-none ring-offset-2 ring-offset-white focus-visible:ring-2 focus-visible:ring-blue-500 dark:ring-offset-slate-800"
             aria-label={`${projectName} — go to homepage`}
           >

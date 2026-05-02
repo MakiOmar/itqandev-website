@@ -169,7 +169,7 @@ export default component$(() => {
             </>
           )}
           <Link
-            href={R.value.ADMIN.TESTIMONIALS_NEW}
+            href={R.ADMIN.TESTIMONIALS_NEW}
             class="inline-flex items-center justify-center rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-primary-700"
           >
             {translateApp(lang, 'testimonials.addNew')}
@@ -243,7 +243,7 @@ export default component$(() => {
                   </div>
                   <div class="flex shrink-0 gap-2">
                     <Link
-                      href={R.value.ADMIN.TESTIMONIALS_EDIT(testimonial.id)}
+                      href={R.ADMIN.TESTIMONIALS_EDIT(testimonial.id)}
                       class="rounded-lg bg-primary-600 px-3 py-1.5 text-xs font-medium text-white transition hover:bg-primary-700"
                     >
                       {translateApp(lang, 'common.edit')}

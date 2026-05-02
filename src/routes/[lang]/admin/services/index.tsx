@@ -223,7 +223,7 @@ export default component$(() => {
             </>
           )}
           <Link
-            href={R.value.ADMIN.SERVICES_NEW}
+            href={R.ADMIN.SERVICES_NEW}
             class="rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-primary-700"
           >
             {translateApp(lang, 'services.addNew')}
@@ -288,7 +288,7 @@ export default component$(() => {
                 <div class="flex items-center gap-2">
                   <span class="text-xs text-gray-500 dark:text-gray-400">#{svc.sort_order ?? 0}</span>
                   <Link
-                    href={R.value.ADMIN.SERVICES_EDIT(svc.id)}
+                    href={R.ADMIN.SERVICES_EDIT(svc.id)}
                     class="rounded-lg px-3 py-1 text-xs text-primary-600 hover:bg-primary-50 dark:text-primary-400 dark:hover:bg-primary-900/20"
                   >
                     {translateApp(lang, 'common.edit')}

@@ -276,7 +276,7 @@ export default component$(() => {
       >
         <div class="flex gap-2">
           <Link
-            href={R.value.ADMIN.BLOG}
+            href={R.ADMIN.BLOG}
             class="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm transition hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 dark:hover:bg-gray-700"
           >
             {translateApp(lang, 'common.back')}
@@ -622,7 +622,7 @@ export default component$(() => {
 
           <div class="flex justify-end gap-2">
             <Link
-              href={R.value.ADMIN.BLOG}
+              href={R.ADMIN.BLOG}
               class="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm transition hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 dark:hover:bg-gray-700"
             >
               {translateApp(lang, 'common.cancel')}
@@ -653,7 +653,7 @@ export default component$(() => {
                 </button>
               </div>
               <iframe
-                src={`${R.value.ADMIN.MEDIA}?select=true&accept=image/*&callback=featured_image`}
+                src={`${R.ADMIN.MEDIA}?select=true&accept=image/*&callback=featured_image`}
                 class="w-full h-[calc(100vh-200px)] border border-gray-200 rounded-lg dark:border-gray-700"
               />
             </div>

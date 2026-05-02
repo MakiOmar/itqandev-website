@@ -7,7 +7,7 @@ import { useTranslate, translateApp } from '../../../../lib/i18n/useTranslate';
 import { useSwal } from '../../../../lib/hooks/useSwal';
 import { getApiClient, extractCookieHeader } from '../../../../lib/api/client';
 import { API_ENDPOINTS } from '../../../../lib/api/endpoints';
-import { useAppRoutes } from '../../../../lib/constants/routes';
+import { getLocalizedRoutes, useAppRoutes } from '../../../../lib/constants/routes';
 import type { Project } from '../../../../types/project';
 import { useSiteLanguageConfig } from '../layout';
 import { primaryLocaleForContent } from '../../../../lib/content-display-locale';
@@ -213,7 +213,7 @@ export default component$(() => {
   });
 
   const goToEdit = $((id: string | number) => {
-    navigate(R.value.ADMIN.PROJECTS_EDIT(id));
+    navigate(getLocalizedRoutes(lang).ADMIN.PROJECTS_EDIT(id));
   });
 
   return (
@@ -226,7 +226,7 @@ export default component$(() => {
         >
           <div class="flex gap-2">
             <Link
-              href={R.value.ADMIN.PROJECTS_NEW}
+              href={R.ADMIN.PROJECTS_NEW}
               class="rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-primary-700"
             >
               {translateApp(lang, 'projects.addNew')}

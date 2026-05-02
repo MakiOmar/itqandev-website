@@ -103,12 +103,12 @@ export const Sidebar = component$<SidebarProps>((props) => {
   const navItems: NavItem[] = [
     {
       label: translateApp(lang, 'sidebar.dashboard'),
-      href: R.value.ADMIN.HOME,
+      href: R.ADMIN.HOME,
       icon: DashboardIcon,
     },
     {
       label: translateApp(lang, 'sidebar.projects'),
-      href: R.value.ADMIN.PROJECTS,
+      href: R.ADMIN.PROJECTS,
       icon: ProjectsIcon,
       activeOnChildPaths: true,
       permission: 'manage projects',
@@ -116,7 +116,7 @@ export const Sidebar = component$<SidebarProps>((props) => {
     },
     {
       label: translateApp(lang, 'sidebar.categories'),
-      href: R.value.ADMIN.CATEGORIES,
+      href: R.ADMIN.CATEGORIES,
       icon: CategoriesIcon,
       activeOnChildPaths: true,
       permission: 'manage categories',
@@ -124,14 +124,14 @@ export const Sidebar = component$<SidebarProps>((props) => {
     },
     {
       label: translateApp(lang, 'sidebar.skills'),
-      href: R.value.ADMIN.SKILLS,
+      href: R.ADMIN.SKILLS,
       icon: SkillsIcon,
       permission: 'manage skills',
       featureModule: 'skills',
     },
     {
       label: translateApp(lang, 'sidebar.services'),
-      href: R.value.ADMIN.SERVICES,
+      href: R.ADMIN.SERVICES,
       icon: ServicesIcon,
       activeOnChildPaths: true,
       permission: 'manage services',
@@ -139,7 +139,7 @@ export const Sidebar = component$<SidebarProps>((props) => {
     },
     {
       label: translateApp(lang, 'sidebar.testimonials'),
-      href: R.value.ADMIN.TESTIMONIALS,
+      href: R.ADMIN.TESTIMONIALS,
       icon: TestimonialsIcon,
       activeOnChildPaths: true,
       permission: 'manage testimonials',
@@ -147,7 +147,7 @@ export const Sidebar = component$<SidebarProps>((props) => {
     },
     {
       label: translateApp(lang, 'sidebar.blog'),
-      href: R.value.ADMIN.BLOG,
+      href: R.ADMIN.BLOG,
       icon: BlogIcon,
       activeOnChildPaths: true,
       permission: 'manage blog',
@@ -155,19 +155,19 @@ export const Sidebar = component$<SidebarProps>((props) => {
     },
     {
       label: translateApp(lang, 'sidebar.media'),
-      href: R.value.ADMIN.MEDIA,
+      href: R.ADMIN.MEDIA,
       icon: MediaIcon,
       permission: 'manage media',
       featureModule: 'media',
     },
     {
       label: translateApp(lang, 'sidebar.profile'),
-      href: R.value.ADMIN.PROFILE,
+      href: R.ADMIN.PROFILE,
       icon: ProfileIcon,
     },
     {
       label: translateApp(lang, 'sidebar.users'),
-      href: R.value.ADMIN.USERS,
+      href: R.ADMIN.USERS,
       icon: UsersIcon,
       permission: 'manage users',
       featureModule: 'users',
@@ -176,27 +176,27 @@ export const Sidebar = component$<SidebarProps>((props) => {
       label: translateApp(lang, 'sidebar.settings'),
       icon: SettingsIcon,
       children: [
-        { label: translateApp(lang, 'settings.general'), href: R.value.ADMIN.SETTINGS_GENERAL },
-        { label: translateApp(lang, 'settings.socialMedia'), href: R.value.ADMIN.SETTINGS_SOCIAL },
-        { label: translateApp(lang, 'media.title'), href: R.value.ADMIN.SETTINGS_MEDIA, featureModule: 'media' },
-        { label: translateApp(lang, 'settings.branding'), href: R.value.ADMIN.SETTINGS_BRANDING },
+        { label: translateApp(lang, 'settings.general'), href: R.ADMIN.SETTINGS_GENERAL },
+        { label: translateApp(lang, 'settings.socialMedia'), href: R.ADMIN.SETTINGS_SOCIAL },
+        { label: translateApp(lang, 'media.title'), href: R.ADMIN.SETTINGS_MEDIA, featureModule: 'media' },
+        { label: translateApp(lang, 'settings.branding'), href: R.ADMIN.SETTINGS_BRANDING },
       ],
       roles: ['admin', 'super_admin'],
     },
     {
       label: translateApp(lang, 'sidebar.activityLogs'),
-      href: R.value.ADMIN.ACTIVITY,
+      href: R.ADMIN.ACTIVITY,
       icon: ActivityIcon,
       roles: ['super_admin'],
     },
     {
       label: translateApp(lang, 'sidebar.notifications'),
-      href: R.value.ADMIN.NOTIFICATIONS,
+      href: R.ADMIN.NOTIFICATIONS,
       icon: NotificationsIcon,
     },
     {
       label: translateApp(lang, 'sidebar.systemHealth'),
-      href: R.value.ADMIN.SYSTEM,
+      href: R.ADMIN.SYSTEM,
       icon: SystemHealthIcon,
       permission: 'manage system',
     },
@@ -254,7 +254,7 @@ export const Sidebar = component$<SidebarProps>((props) => {
             <div class="flex min-w-0 flex-1 items-center">
               {/* Brand text only: logo lives in header; link matches header homepage */}
               <Link
-                href={R.value.PUBLIC.HOME}
+                href={R.PUBLIC.HOME}
                 class="min-w-0 rounded-lg outline-none ring-offset-2 ring-offset-white focus-visible:ring-2 focus-visible:ring-blue-500 dark:ring-offset-slate-800"
                 aria-label={`${projectName} — go to homepage`}
                 onClick$={() => {
@@ -290,7 +290,7 @@ export const Sidebar = component$<SidebarProps>((props) => {
                     ? isActive(item.href)
                     : false;
                 const sectionOpen = hasChildren
-                  ? settingsMenuOpen.value || isInSection(R.value.ADMIN.SETTINGS)
+                  ? settingsMenuOpen.value || isInSection(R.ADMIN.SETTINGS)
                   : false;
 
                 if (hasChildren) {

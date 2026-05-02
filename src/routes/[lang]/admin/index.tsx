@@ -210,7 +210,7 @@ export default component$(() => {
           <h2 class="mb-4 text-lg font-semibold text-gray-900 dark:text-gray-100">{translateApp(lang, 'dashboard.quickActions')}</h2>
           <div class="grid gap-4 md:grid-cols-3">
             <Link
-              href={R.value.ADMIN.PROJECTS_NEW}
+              href={R.ADMIN.PROJECTS_NEW}
               class="flex items-center gap-3 rounded-lg border border-gray-200 p-4 transition-colors hover:bg-gray-50 dark:border-gray-700 dark:hover:bg-gray-700"
             >
               <span class="text-2xl">➕</span>
@@ -220,7 +220,7 @@ export default component$(() => {
               </div>
             </Link>
             <Link
-              href={R.value.ADMIN.CATEGORIES}
+              href={R.ADMIN.CATEGORIES}
               class="flex items-center gap-3 rounded-lg border border-gray-200 p-4 transition-colors hover:bg-gray-50 dark:border-gray-700 dark:hover:bg-gray-700"
             >
               <span class="text-2xl">📁</span>
@@ -230,7 +230,7 @@ export default component$(() => {
               </div>
             </Link>
             <Link
-              href={R.value.ADMIN.SKILLS}
+              href={R.ADMIN.SKILLS}
               class="flex items-center gap-3 rounded-lg border border-gray-200 p-4 transition-colors hover:bg-gray-50 dark:border-gray-700 dark:hover:bg-gray-700"
             >
               <span class="text-2xl">⚡</span>

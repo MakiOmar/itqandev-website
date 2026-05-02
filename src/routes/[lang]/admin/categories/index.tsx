@@ -229,7 +229,7 @@ export default component$(() => {
           )}
 
           <Link
-            href={R.value.ADMIN.CATEGORIES_NEW}
+            href={R.ADMIN.CATEGORIES_NEW}
             class="rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-primary-700"
           >
             {translateApp(lang, 'categories.addNew')}
@@ -302,7 +302,7 @@ export default component$(() => {
                   </span>
 
                   <Link
-                    href={R.value.ADMIN.CATEGORIES_EDIT(category.id)}
+                    href={R.ADMIN.CATEGORIES_EDIT(category.id)}
                     class="rounded-lg px-3 py-1 text-xs text-primary-600 hover:bg-primary-50 dark:text-primary-400 dark:hover:bg-primary-900/20"
                   >
                     {translateApp(lang, 'common.edit')}

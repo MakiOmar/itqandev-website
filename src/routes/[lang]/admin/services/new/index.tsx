@@ -18,7 +18,7 @@ import {
 } from '../../../../../lib/content-display-locale';
 import { useCreateService } from '../../../../../lib/admin/service-actions';
 import { submitRouteActionFormData } from '../../../../../lib/admin/route-action-form-submit';
-import { useAppRoutes } from '../../../../../lib/constants/routes';
+import { getLocalizedRoutes, useAppRoutes } from '../../../../../lib/constants/routes';
 import type { AdminService } from '../../../../../types/service';
 import { ServiceIconSelect } from '../../../../../components/admin/ServiceIconSelect';
 
@@ -156,9 +156,9 @@ export default component$(() => {
     await success(saveTranslations.successTitle, { text: saveTranslations.createdText });
     const created = val?.service as AdminService | undefined;
     if (created?.id != null) {
-      await navigate(R.value.ADMIN.SERVICES_EDIT(created.id));
+      await navigate(getLocalizedRoutes(lang).ADMIN.SERVICES_EDIT(created.id));
     } else {
-      await navigate(R.value.ADMIN.SERVICES);
+      await navigate(getLocalizedRoutes(lang).ADMIN.SERVICES);
     }
   });
 
@@ -166,7 +166,7 @@ export default component$(() => {
     <>
       <PageHeader title={translateApp(lang, 'services.addNew')} description={translateApp(lang, 'services.subtitle')}>
         <Link
-          href={R.value.ADMIN.SERVICES}
+          href={R.ADMIN.SERVICES}
           class="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm transition hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 dark:hover:bg-gray-700"
         >
           {translateApp(lang, 'common.back') || 'Back'}
@@ -374,7 +374,7 @@ export default component$(() => {
               {translateApp(lang, 'common.add')}
             </button>
             <Link
-              href={R.value.ADMIN.SERVICES}
+              href={R.ADMIN.SERVICES}
               class="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm transition hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 dark:hover:bg-gray-700"
             >
               {translateApp(lang, 'common.cancel')}

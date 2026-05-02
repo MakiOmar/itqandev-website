@@ -4,7 +4,7 @@ import { Link, routeLoader$, useNavigate } from '@builder.io/qwik-city';
 import { PageHeader } from '../../../../../components/common/PageHeader';
 import { useTranslate, translateApp } from '../../../../../lib/i18n/useTranslate';
 import { useSwal } from '../../../../../lib/hooks/useSwal';
-import { useAppRoutes } from '../../../../../lib/constants/routes';
+import { getLocalizedRoutes, useAppRoutes } from '../../../../../lib/constants/routes';
 import { useCreateTestimonial } from '../../../../../lib/admin/testimonial-actions';
 import { loadTestimonialProjectsContext } from '../../../../../lib/admin/testimonial-form-context';
 
@@ -54,7 +54,7 @@ export default component$(() => {
       await showError(errorMsg);
     } else {
       await success(successTitle, { text: createdText });
-      await navigate(R.value.ADMIN.TESTIMONIALS);
+      await navigate(getLocalizedRoutes(lang).ADMIN.TESTIMONIALS);
     }
   });
 
@@ -62,7 +62,7 @@ export default component$(() => {
     <>
       <PageHeader title={translateApp(lang, 'testimonials.addNew')} description={translateApp(lang, 'testimonials.subtitle')}>
         <Link
-          href={R.value.ADMIN.TESTIMONIALS}
+          href={R.ADMIN.TESTIMONIALS}
           class="inline-flex items-center justify-center rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm transition hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 dark:hover:bg-gray-700"
         >
           {translateApp(lang, 'testimonials.backToList')}
@@ -209,7 +209,7 @@ export default component$(() => {
               {translateApp(lang, 'common.add')}
             </button>
             <Link
-              href={R.value.ADMIN.TESTIMONIALS}
+              href={R.ADMIN.TESTIMONIALS}
               class="inline-flex items-center justify-center rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm transition hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 dark:hover:bg-gray-700"
             >
               {translateApp(lang, 'common.cancel')}

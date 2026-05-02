@@ -1,4 +1,3 @@
-import { useComputed$ } from '@builder.io/qwik';
 import { getConfig } from '../config';
 import { uiLangFromPreferredCookie, withUiLocale } from '../i18n/ui-locale-path';
 import { useTranslate } from '../i18n/useTranslate';
@@ -64,10 +63,13 @@ export function routesFromPreferredCookie(cookie: { get(name: string): unknown }
   return getLocalizedRoutes(uiLangFromPreferredCookie(cookie));
 }
 
-/** Reactive localized routes for the current qwik-speak UI language. */
+/**
+ * Localized routes for the current qwik-speak UI language.
+ * Returns a plain object (not a Signal) so SSR does not try to serialize `*_EDIT` URL builder functions.
+ */
 export function useAppRoutes() {
   const { lang } = useTranslate();
-  return useComputed$(() => getLocalizedRoutes(lang));
+  return getLocalizedRoutes(lang);
 }
 
 /** English-only fallback for non-component code (prefer `getLocalizedRoutes` / `useAppRoutes`). */

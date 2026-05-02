@@ -18,7 +18,7 @@ import {
 } from '../../../../../lib/content-display-locale';
 import { useCreateCategory } from '../../../../../lib/admin/category-actions';
 import { submitRouteActionFormData } from '../../../../../lib/admin/route-action-form-submit';
-import { useAppRoutes } from '../../../../../lib/constants/routes';
+import { getLocalizedRoutes, useAppRoutes } from '../../../../../lib/constants/routes';
 import type { Category } from '../../../../../types';
 
 /**
@@ -128,9 +128,9 @@ export default component$(() => {
     await success(saveTranslations.successTitle, { text: saveTranslations.createdText });
     const created = val?.category as Category | undefined;
     if (created?.id != null) {
-      await navigate(R.value.ADMIN.CATEGORIES_EDIT(created.id));
+      await navigate(getLocalizedRoutes(lang).ADMIN.CATEGORIES_EDIT(created.id));
     } else {
-      await navigate(R.value.ADMIN.CATEGORIES);
+      await navigate(getLocalizedRoutes(lang).ADMIN.CATEGORIES);
     }
   });
 
@@ -138,7 +138,7 @@ export default component$(() => {
     <>
       <PageHeader title={translateApp(lang, 'categories.addNew')} description={translateApp(lang, 'categories.subtitle')}>
         <Link
-          href={R.value.ADMIN.CATEGORIES}
+          href={R.ADMIN.CATEGORIES}
           class="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm transition hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 dark:hover:bg-gray-700"
         >
           {translateApp(lang, 'common.back') || 'Back'}
@@ -260,7 +260,7 @@ export default component$(() => {
               {translateApp(lang, 'common.add')}
             </button>
             <Link
-              href={R.value.ADMIN.CATEGORIES}
+              href={R.ADMIN.CATEGORIES}
               class="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm transition hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 dark:hover:bg-gray-700"
             >
               {translateApp(lang, 'common.cancel')}

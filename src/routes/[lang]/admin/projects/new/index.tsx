@@ -8,7 +8,7 @@ import { useTranslate, translateApp } from '../../../../../lib/i18n/useTranslate
 import { useSwal } from '../../../../../lib/hooks/useSwal';
 import { getApiClient, extractCookieHeader } from '../../../../../lib/api/client';
 import { API_ENDPOINTS } from '../../../../../lib/api/endpoints';
-import { useAppRoutes } from '../../../../../lib/constants/routes';
+import { getLocalizedRoutes, useAppRoutes } from '../../../../../lib/constants/routes';
 import {
   ContentEditingLanguageSelect,
   ContentPrimaryLanguageSelect,
@@ -337,7 +337,7 @@ export default component$(() => {
       >
         <div class="flex gap-2">
           <Link
-            href={R.value.ADMIN.PROJECTS}
+            href={R.ADMIN.PROJECTS}
             class="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm transition hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 dark:hover:bg-gray-700"
           >
             {translateApp(lang, 'common.back')}
@@ -848,7 +848,7 @@ export default component$(() => {
 
           <div class="flex justify-end gap-2">
             <Link
-              href={R.value.ADMIN.PROJECTS}
+              href={R.ADMIN.PROJECTS}
               class="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm transition hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 dark:hover:bg-gray-700"
             >
               {translateApp(lang, 'common.cancel')}
@@ -896,7 +896,7 @@ export default component$(() => {
                 </button>
               </div>
               <iframe
-                src={`${R.value.ADMIN.MEDIA}?select=true&accept=image/*&callback=hero`}
+                src={`${R.ADMIN.MEDIA}?select=true&accept=image/*&callback=hero`}
                 class="w-full h-[calc(100vh-200px)] border border-gray-200 rounded-lg dark:border-gray-700"
               />
             </div>
@@ -918,7 +918,7 @@ export default component$(() => {
                 </button>
               </div>
               <iframe
-                src={`${R.value.ADMIN.MEDIA}?select=true&accept=video/*&callback=video`}
+                src={`${R.ADMIN.MEDIA}?select=true&accept=video/*&callback=video`}
                 class="w-full h-[calc(100vh-200px)] border border-gray-200 rounded-lg dark:border-gray-700"
               />
             </div>
@@ -936,7 +936,7 @@ export default component$(() => {
               const storedProjectId = createdProjectId.value;
               const projectId = savedId || storedProjectId;
               if (projectId) {
-                navigate(R.value.ADMIN.PROJECTS_EDIT(projectId));
+                navigate(getLocalizedRoutes(lang).ADMIN.PROJECTS_EDIT(projectId));
               }
             }}
           >
@@ -957,7 +957,7 @@ export default component$(() => {
                       const storedProjectId = createdProjectId.value;
                       const projectId = savedId || storedProjectId;
                       if (projectId) {
-                        navigate(R.value.ADMIN.PROJECTS_EDIT(projectId));
+                        navigate(getLocalizedRoutes(lang).ADMIN.PROJECTS_EDIT(projectId));
                       }
                     }}
                     class="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm transition hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 dark:hover:bg-gray-700"
