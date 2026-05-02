@@ -36,6 +36,7 @@ export function getLocalizedRoutes(lang: string) {
       BLOG: L(`${p}/blog`),
       BLOG_NEW: L(`${p}/blog/new`),
       MEDIA: L(`${p}/media`),
+      MENUS: L(`${p}/menus`),
       LOGOUT: L(`${p}/logout`),
     },
     PUBLIC: {

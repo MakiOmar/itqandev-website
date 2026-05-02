@@ -1,0 +1,678 @@
+import { component$, useSignal, useStore, $, useVisibleTask$ } from '@builder.io/qwik';
+import type { DocumentHead } from '@builder.io/qwik-city';
+import { routeLoader$ } from '@builder.io/qwik-city';
+import { PageHeader } from '../../../../components/common/PageHeader';
+import { LoadingSpinner } from '../../../../components/common/LoadingSpinner';
+import { useTranslate, translateApp } from '../../../../lib/i18n/useTranslate';
+import { useSwal } from '../../../../lib/hooks/useSwal';
+import { getApiClient, extractCookieHeader } from '../../../../lib/api/client';
+import { API_ENDPOINTS } from '../../../../lib/api/endpoints';
+import { auth } from '../../../../lib/auth';
+import type { AuthSession } from '../../../../lib/auth/types';
+import { routesFromPreferredCookie } from '../../../../lib/constants/routes';
+
+interface MenuRow {
+  id: number;
+  name: string;
+  slug: string;
+}
+
+interface MenuItemNode {
+  id: number;
+  parent_id: number | null;
+  sort_order: number;
+  label: string | null;
+  item_type: string;
+  url: string | null;
+  static_route_key: string | null;
+  reference_id: number | null;
+  open_in_new_tab: boolean;
+  children: MenuItemNode[];
+}
+
+interface MenuDetail {
+  id: number;
+  name: string;
+  slug: string;
+  items: MenuItemNode[];
+}
+
+interface PickerProject {
+  id: number;
+  title: string;
+}
+
+interface PickerPost {
+  id: number;
+  title: string;
+}
+
+interface PickerService {
+  id: number;
+  name: string;
+}
+
+const STATIC_ROUTE_OPTIONS: Array<{ value: string; label: string }> = [
+  { value: 'home', label: 'Home' },
+  { value: 'services', label: 'Services' },
+  { value: 'work', label: 'Work' },
+  { value: 'about', label: 'About' },
+  { value: 'pricing', label: 'Pricing' },
+  { value: 'blog', label: 'Blog' },
+  { value: 'contact', label: 'Contact' },
+];
+
+function canManageMenus(session: AuthSession | null): boolean {
+  if (!session?.user) {
+    return false;
+  }
+  const roles = ['super_admin', 'admin', 'company', 'editor'];
+  if (roles.includes(session.user.role)) {
+    return true;
+  }
+  return (session.user.permissions ?? []).includes('manage menus');
+}
+
+function extractRows(res: unknown): unknown[] {
+  const body = (res as { data?: unknown })?.data ?? res;
+  if (Array.isArray(body)) {
+    return body;
+  }
+  if (body && typeof body === 'object' && 'data' in (body as object) && Array.isArray((body as { data: unknown }).data)) {
+    return (body as { data: unknown[] }).data;
+  }
+  return [];
+}
+
+function extractMenuDetail(res: unknown): MenuDetail | null {
+  const d = (res as { data?: unknown })?.data;
+  if (!d || typeof d !== 'object') {
+    return null;
+  }
+  const o = d as Record<string, unknown>;
+  const id = o.id;
+  if (typeof id !== 'number' && typeof id !== 'string') {
+    return null;
+  }
+  const items = Array.isArray(o.items) ? (o.items as MenuItemNode[]) : [];
+  return {
+    id: Number(id),
+    name: String(o.name ?? ''),
+    slug: String(o.slug ?? ''),
+    items,
+  };
+}
+
+export const useMenusAdminPage = routeLoader$(async ({ cookie, request, redirect: redirectFn }) => {
+  const R = routesFromPreferredCookie(cookie);
+  const session = await auth.getSession(cookie);
+  if (!canManageMenus(session)) {
+    throw redirectFn(302, R.ADMIN.HOME);
+  }
+
+  const api = getApiClient(extractCookieHeader(cookie, request) ?? undefined);
+  try {
+    const listRes = await api.get(API_ENDPOINTS.MENUS.LIST);
+    const raw = extractRows(listRes) as Record<string, unknown>[];
+    const menus: MenuRow[] = raw.map((m) => ({
+      id: Number(m.id),
+      name: String(m.name ?? ''),
+      slug: String(m.slug ?? ''),
+    }));
+    const primary = menus.find((m) => m.slug === 'primary') ?? menus[0] ?? null;
+    let menuDetail: MenuDetail | null = null;
+    if (primary) {
+      const detailRes = await api.get(API_ENDPOINTS.MENUS.GET(primary.id));
+      menuDetail = extractMenuDetail(detailRes);
+    }
+    return { menus, menuDetail, selectedMenuId: primary?.id ?? null };
+  } catch {
+    return { menus: [] as MenuRow[], menuDetail: null, selectedMenuId: null };
+  }
+});
+
+export default component$(() => {
+  const pageData = useMenusAdminPage();
+  const { lang } = useTranslate();
+  const { confirm, success, error: showError } = useSwal();
+
+  const menuDetail = useSignal<MenuDetail | null>(pageData.value.menuDetail);
+  const selectedMenuId = useSignal<number | null>(pageData.value.selectedMenuId);
+  const loadingDetail = useSignal(false);
+  const saving = useSignal(false);
+
+  const projects = useSignal<PickerProject[]>([]);
+  const blogPosts = useSignal<PickerPost[]>([]);
+  const services = useSignal<PickerService[]>([]);
+
+  const form = useStore({
+    id: null as number | null,
+    parent_id: null as number | null,
+    sort_order: 0,
+    item_type: 'static_route' as 'custom_link' | 'static_route' | 'project' | 'blog_post' | 'service',
+    url: '',
+    static_route_key: 'home',
+    reference_id: '',
+    label: '',
+    open_in_new_tab: false,
+  });
+
+  const resetForm$ = $(() => {
+    form.id = null;
+    form.parent_id = null;
+    form.sort_order = 0;
+    form.item_type = 'static_route';
+    form.url = '';
+    form.static_route_key = 'home';
+    form.reference_id = '';
+    form.label = '';
+    form.open_in_new_tab = false;
+  });
+
+  const fetchDetail$ = $(async (menuId: number) => {
+    loadingDetail.value = true;
+    try {
+      const api = getApiClient();
+      const res = await api.get(API_ENDPOINTS.MENUS.GET(menuId));
+      menuDetail.value = extractMenuDetail(res);
+    } catch {
+      menuDetail.value = null;
+      await showError(String(translateApp(lang, 'menusPage.loadFailed')));
+    } finally {
+      loadingDetail.value = false;
+    }
+  });
+
+  const onMenuSelect$ = $(async (e: Event) => {
+    const id = Number((e.target as HTMLSelectElement).value);
+    if (!id || Number.isNaN(id)) {
+      return;
+    }
+    selectedMenuId.value = id;
+    await fetchDetail$(id);
+    await resetForm$();
+  });
+
+  const persistReorder$ = $(async (orderedRoots: MenuItemNode[]) => {
+    const mid = selectedMenuId.value;
+    if (!mid) {
+      return;
+    }
+    const api = getApiClient();
+    await api.put(API_ENDPOINTS.MENUS.REORDER_ITEMS(mid), {
+      items: orderedRoots.map((item, index) => ({
+        id: item.id,
+        parent_id: null,
+        sort_order: index,
+      })),
+    });
+    await fetchDetail$(mid);
+  });
+
+  const moveUp$ = $(async (index: number) => {
+    const raw = menuDetail.value?.items ?? [];
+    const list = raw.length ? [...raw] : [];
+    if (index <= 0) {
+      return;
+    }
+    saving.value = true;
+    try {
+      const tmp = list[index - 1];
+      list[index - 1] = list[index];
+      list[index] = tmp;
+      await persistReorder$(list);
+      await success(String(translateApp(lang, 'menusPage.reordered')));
+    } catch {
+      await showError(String(translateApp(lang, 'menusPage.saveFailed')));
+    } finally {
+      saving.value = false;
+    }
+  });
+
+  const moveDown$ = $(async (index: number) => {
+    const raw = menuDetail.value?.items ?? [];
+    const list = raw.length ? [...raw] : [];
+    if (index >= list.length - 1) {
+      return;
+    }
+    saving.value = true;
+    try {
+      const tmp = list[index + 1];
+      list[index + 1] = list[index];
+      list[index] = tmp;
+      await persistReorder$(list);
+      await success(String(translateApp(lang, 'menusPage.reordered')));
+    } catch {
+      await showError(String(translateApp(lang, 'menusPage.saveFailed')));
+    } finally {
+      saving.value = false;
+    }
+  });
+
+  const saveItem$ = $(async () => {
+    const mid = selectedMenuId.value;
+    if (!mid) {
+      return;
+    }
+    saving.value = true;
+    try {
+      const api = getApiClient();
+      const payload: Record<string, unknown> = {
+        parent_id: form.parent_id,
+        sort_order: Number(form.sort_order) || 0,
+        label: form.label.trim() || null,
+        item_type: form.item_type,
+        open_in_new_tab: form.open_in_new_tab,
+      };
+      if (form.item_type === 'custom_link') {
+        payload.url = form.url.trim();
+      }
+      if (form.item_type === 'static_route') {
+        payload.static_route_key = form.static_route_key;
+      }
+      if (['project', 'blog_post', 'service'].includes(form.item_type)) {
+        payload.reference_id = parseInt(String(form.reference_id), 10);
+      }
+      if (form.id) {
+        await api.put(API_ENDPOINTS.MENUS.UPDATE_ITEM(form.id), payload);
+        await success(String(translateApp(lang, 'menusPage.saved')));
+      } else {
+        await api.post(API_ENDPOINTS.MENUS.CREATE_ITEM(mid), payload);
+        await success(String(translateApp(lang, 'menusPage.added')));
+        await resetForm$();
+      }
+      await fetchDetail$(mid);
+    } catch {
+      await showError(String(translateApp(lang, 'menusPage.saveFailed')));
+    } finally {
+      saving.value = false;
+    }
+  });
+
+  const editItem$ = $((item: MenuItemNode) => {
+    form.id = item.id;
+    form.parent_id = item.parent_id;
+    form.sort_order = item.sort_order;
+    form.label = item.label || '';
+    form.item_type = item.item_type as typeof form.item_type;
+    form.url = item.url || '';
+    form.static_route_key = item.static_route_key || 'home';
+    form.reference_id = item.reference_id != null ? String(item.reference_id) : '';
+    form.open_in_new_tab = !!item.open_in_new_tab;
+  });
+
+  const deleteItem$ = $(async (item: MenuItemNode) => {
+    const r = await confirm(String(translateApp(lang, 'menusPage.deleteConfirm')), {
+      icon: 'warning',
+      title: String(translateApp(lang, 'menusPage.deleteTitle')),
+    });
+    if (!r.isConfirmed) {
+      return;
+    }
+    saving.value = true;
+    try {
+      const api = getApiClient();
+      await api.delete(API_ENDPOINTS.MENUS.DELETE_ITEM(item.id));
+      if (form.id === item.id) {
+        await resetForm$();
+      }
+      const mid = selectedMenuId.value;
+      if (mid) {
+        await fetchDetail$(mid);
+      }
+      await success(String(translateApp(lang, 'menusPage.deleted')));
+    } catch {
+      await showError(String(translateApp(lang, 'menusPage.saveFailed')));
+    } finally {
+      saving.value = false;
+    }
+  });
+
+  // eslint-disable-next-line qwik/no-use-visible-task
+  useVisibleTask$(async () => {
+    const api = getApiClient();
+    try {
+      const [pr, br, sr] = await Promise.all([
+        api.get(API_ENDPOINTS.PROJECTS.LIST).catch(() => ({ data: [] })),
+        api.get(API_ENDPOINTS.BLOG.LIST).catch(() => ({ data: [] })),
+        api.get(API_ENDPOINTS.SERVICES.LIST).catch(() => ({ data: [] })),
+      ]);
+      const pRows = extractRows(pr) as Record<string, unknown>[];
+      projects.value = pRows.map((r) => ({
+        id: Number(r.id),
+        title: String(r.title ?? ''),
+      }));
+      const bRows = extractRows(br) as Record<string, unknown>[];
+      blogPosts.value = bRows.map((r) => ({
+        id: Number(r.id),
+        title: String(r.title ?? ''),
+      }));
+      const sRows = extractRows(sr) as Record<string, unknown>[];
+      services.value = sRows.map((r) => ({
+        id: Number(r.id),
+        name: String(r.name ?? ''),
+      }));
+    } catch {
+      projects.value = [];
+      blogPosts.value = [];
+      services.value = [];
+    }
+  });
+
+  const menus = pageData.value.menus;
+
+  const inputClass =
+    'w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100';
+  const labelClass = 'mb-1 block text-sm font-medium text-gray-700 dark:text-gray-200';
+
+  return (
+    <>
+      <div>
+        <PageHeader
+          title={String(translateApp(lang, 'menusPage.title'))}
+          description={String(translateApp(lang, 'menusPage.subtitle'))}
+        />
+
+        {menus.length === 0 ? (
+          <p class="text-sm text-gray-600 dark:text-gray-400">{String(translateApp(lang, 'menusPage.emptyMenus'))}</p>
+        ) : (
+          <div class="mb-6 max-w-md">
+            <label class={labelClass} for="admin-menu-select">
+              {String(translateApp(lang, 'menusPage.selectMenu'))}
+            </label>
+            <select
+              id="admin-menu-select"
+              class={inputClass}
+              value={selectedMenuId.value ?? ''}
+              onChange$={onMenuSelect$}
+              disabled={saving.value}
+            >
+              {menus.map((m) => (
+                <option key={m.id} value={m.id}>
+                  {`${m.name} (${m.slug})`}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
+
+        {menus.length > 0 && (
+          <div class="grid gap-6 lg:grid-cols-2">
+            <div class="rounded-lg border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-800 dark:bg-gray-800">
+              <h2 class="mb-3 text-lg font-semibold text-gray-900 dark:text-gray-100">
+                {String(translateApp(lang, 'menusPage.itemsHeading'))}
+              </h2>
+              {loadingDetail.value ? (
+                <LoadingSpinner />
+              ) : (menuDetail.value?.items ?? []).length === 0 ? (
+                <p class="text-sm text-gray-500 dark:text-gray-400">{String(translateApp(lang, 'menusPage.emptyItems'))}</p>
+              ) : (
+                <ul class="divide-y divide-gray-200 dark:divide-gray-700">
+                  {(menuDetail.value?.items ?? []).map((item, idx) => (
+                    <li key={item.id} class="flex flex-wrap items-center gap-2 py-3">
+                      <div class="min-w-0 flex-1">
+                        <RowLabel text={rowLabelSync(item, projects.value, blogPosts.value, services.value, lang)} />
+                        <div class="text-xs text-gray-500 dark:text-gray-400">
+                          {item.item_type}
+                          {item.open_in_new_tab ? ` · ${String(translateApp(lang, 'menusPage.openNewTab'))}` : ''}
+                        </div>
+                      </div>
+                      <div class="flex shrink-0 flex-wrap gap-1">
+                        <button
+                          type="button"
+                          class="rounded border border-gray-300 px-2 py-1 text-xs dark:border-gray-600 disabled:opacity-50"
+                          disabled={idx === 0 || saving.value}
+                          onClick$={() => moveUp$(idx)}
+                        >
+                          {String(translateApp(lang, 'menusPage.moveUp'))}
+                        </button>
+                        <button
+                          type="button"
+                          class="rounded border border-gray-300 px-2 py-1 text-xs dark:border-gray-600 disabled:opacity-50"
+                          disabled={idx >= (menuDetail.value?.items ?? []).length - 1 || saving.value}
+                          onClick$={() => moveDown$(idx)}
+                        >
+                          {String(translateApp(lang, 'menusPage.moveDown'))}
+                        </button>
+                        <button
+                          type="button"
+                          class="rounded border border-gray-300 px-2 py-1 text-xs dark:border-gray-600"
+                          onClick$={() => editItem$(item)}
+                        >
+                          {String(translateApp(lang, 'common.edit'))}
+                        </button>
+                        <button
+                          type="button"
+                          class="rounded border border-red-200 px-2 py-1 text-xs text-red-700 dark:border-red-900"
+                          onClick$={() => deleteItem$(item)}
+                        >
+                          {String(translateApp(lang, 'menusPage.delete'))}
+                        </button>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+
+            <div class="rounded-lg border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-800 dark:bg-gray-800">
+              <h2 class="mb-3 text-lg font-semibold text-gray-900 dark:text-gray-100">
+                {form.id
+                  ? String(translateApp(lang, 'menusPage.editHeading'))
+                  : String(translateApp(lang, 'menusPage.addHeading'))}
+              </h2>
+
+              <div class="grid gap-3 md:grid-cols-2">
+                <div class="md:col-span-2">
+                  <label class={labelClass}>{String(translateApp(lang, 'menusPage.linkType'))}</label>
+                  <select
+                    class={inputClass}
+                    value={form.item_type}
+                    onInput$={(e) => {
+                      form.item_type = (e.target as HTMLSelectElement).value as typeof form.item_type;
+                    }}
+                  >
+                    <option value="custom_link">{String(translateApp(lang, 'menusPage.typeCustom'))}</option>
+                    <option value="static_route">{String(translateApp(lang, 'menusPage.typeStatic'))}</option>
+                    <option value="project">{String(translateApp(lang, 'menusPage.typeProject'))}</option>
+                    <option value="blog_post">{String(translateApp(lang, 'menusPage.typeBlog'))}</option>
+                    <option value="service">{String(translateApp(lang, 'menusPage.typeService'))}</option>
+                  </select>
+                </div>
+
+                {form.item_type === 'custom_link' && (
+                  <div class="md:col-span-2">
+                    <label class={labelClass}>{String(translateApp(lang, 'menusPage.url'))}</label>
+                    <input
+                      class={inputClass}
+                      type="text"
+                      value={form.url}
+                      placeholder="https:// or /path"
+                      onInput$={(e) => {
+                        form.url = (e.target as HTMLInputElement).value;
+                      }}
+                    />
+                  </div>
+                )}
+
+                {form.item_type === 'static_route' && (
+                  <div class="md:col-span-2">
+                    <label class={labelClass}>{String(translateApp(lang, 'menusPage.staticPage'))}</label>
+                    <select
+                      class={inputClass}
+                      value={form.static_route_key}
+                      onInput$={(e) => {
+                        form.static_route_key = (e.target as HTMLSelectElement).value;
+                      }}
+                    >
+                      {STATIC_ROUTE_OPTIONS.map((o) => (
+                        <option key={o.value} value={o.value}>
+                          {o.label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                )}
+
+                {form.item_type === 'project' && (
+                  <div class="md:col-span-2">
+                    <label class={labelClass}>{String(translateApp(lang, 'menusPage.pickProject'))}</label>
+                    <select
+                      class={inputClass}
+                      value={form.reference_id}
+                      onInput$={(e) => {
+                        form.reference_id = (e.target as HTMLSelectElement).value;
+                      }}
+                    >
+                      <option value="">{String(translateApp(lang, 'menusPage.pickPlaceholder'))}</option>
+                      {projects.value.map((p) => (
+                        <option key={p.id} value={p.id}>
+                          {p.title}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                )}
+
+                {form.item_type === 'blog_post' && (
+                  <div class="md:col-span-2">
+                    <label class={labelClass}>{String(translateApp(lang, 'menusPage.pickPost'))}</label>
+                    <select
+                      class={inputClass}
+                      value={form.reference_id}
+                      onInput$={(e) => {
+                        form.reference_id = (e.target as HTMLSelectElement).value;
+                      }}
+                    >
+                      <option value="">{String(translateApp(lang, 'menusPage.pickPlaceholder'))}</option>
+                      {blogPosts.value.map((p) => (
+                        <option key={p.id} value={p.id}>
+                          {p.title}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                )}
+
+                {form.item_type === 'service' && (
+                  <div class="md:col-span-2">
+                    <label class={labelClass}>{String(translateApp(lang, 'menusPage.pickService'))}</label>
+                    <select
+                      class={inputClass}
+                      value={form.reference_id}
+                      onInput$={(e) => {
+                        form.reference_id = (e.target as HTMLSelectElement).value;
+                      }}
+                    >
+                      <option value="">{String(translateApp(lang, 'menusPage.pickPlaceholder'))}</option>
+                      {services.value.map((s) => (
+                        <option key={s.id} value={s.id}>
+                          {s.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                )}
+
+                <div class="md:col-span-2">
+                  <label class={labelClass}>{String(translateApp(lang, 'menusPage.optionalLabel'))}</label>
+                  <input
+                    class={inputClass}
+                    type="text"
+                    value={form.label}
+                    onInput$={(e) => {
+                      form.label = (e.target as HTMLInputElement).value;
+                    }}
+                  />
+                </div>
+
+                <div class="md:col-span-2 flex items-center gap-2">
+                  <input
+                    id="menu-open-tab"
+                    type="checkbox"
+                    checked={form.open_in_new_tab}
+                    onChange$={(e) => {
+                      form.open_in_new_tab = (e.target as HTMLInputElement).checked;
+                    }}
+                  />
+                  <label for="menu-open-tab" class="text-sm text-gray-700 dark:text-gray-200">
+                    {String(translateApp(lang, 'menusPage.openNewTab'))}
+                  </label>
+                </div>
+              </div>
+
+              <div class="mt-4 flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  class="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-blue-700 disabled:opacity-50"
+                  disabled={saving.value || !selectedMenuId.value}
+                  onClick$={saveItem$}
+                >
+                  {form.id
+                    ? String(translateApp(lang, 'menusPage.updateButton'))
+                    : String(translateApp(lang, 'menusPage.addButton'))}
+                </button>
+                {form.id ? (
+                  <button
+                    type="button"
+                    class="rounded-lg border border-gray-300 px-4 py-2 text-sm dark:border-gray-600"
+                    onClick$={resetForm$}
+                  >
+                    {String(translateApp(lang, 'common.cancel'))}
+                  </button>
+                ) : null}
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    </>
+  );
+});
+
+function rowLabelSync(
+  item: MenuItemNode,
+  projects: PickerProject[],
+  posts: PickerPost[],
+  svcs: PickerService[],
+  lang: string,
+): string {
+  if (item.label?.trim()) {
+    return item.label.trim();
+  }
+  if (item.item_type === 'static_route' && item.static_route_key) {
+    const m = STATIC_ROUTE_OPTIONS.find((x) => x.value === item.static_route_key);
+    return m?.label ?? item.static_route_key;
+  }
+  if (item.item_type === 'custom_link') {
+    return item.url || String(translateApp(lang, 'menusPage.typeCustom'));
+  }
+  if (item.item_type === 'project') {
+    const p = projects.find((x) => x.id === item.reference_id);
+    return p?.title ?? `#${item.reference_id ?? ''}`;
+  }
+  if (item.item_type === 'blog_post') {
+    const p = posts.find((x) => x.id === item.reference_id);
+    return p?.title ?? `#${item.reference_id ?? ''}`;
+  }
+  if (item.item_type === 'service') {
+    const p = svcs.find((x) => x.id === item.reference_id);
+    return p?.name ?? `#${item.reference_id ?? ''}`;
+  }
+  return item.item_type;
+}
+
+/** Renders primary line for each menu row (labels depend on picker data). */
+const RowLabel = component$<{ text: string }>((props) => {
+  return <div class="font-medium text-gray-900 dark:text-gray-100">{props.text}</div>;
+});
+
+export const head: DocumentHead = {
+  title: 'Menus - Dashboard',
+  meta: [
+    {
+      name: 'description',
+      content: 'Manage navigation menus',
+    },
+  ],
+};

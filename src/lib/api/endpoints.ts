@@ -97,6 +97,18 @@ export const API_ENDPOINTS = {
     DELETE: (id: string | number) => `/v1/blog-posts/${id}`,
     BULK_DELETE: '/v1/blog-posts/bulk-delete',
   },
+  // Menus (WordPress-style nav)
+  MENUS: {
+    LIST: '/v1/menus',
+    GET: (id: string | number) => `/v1/menus/${id}`,
+    CREATE: '/v1/menus',
+    UPDATE: (id: string | number) => `/v1/menus/${id}`,
+    DELETE: (id: string | number) => `/v1/menus/${id}`,
+    CREATE_ITEM: (menuId: string | number) => `/v1/menus/${menuId}/items`,
+    REORDER_ITEMS: (menuId: string | number) => `/v1/menus/${menuId}/items/reorder`,
+    UPDATE_ITEM: (itemId: string | number) => `/v1/menu-items/${itemId}`,
+    DELETE_ITEM: (itemId: string | number) => `/v1/menu-items/${itemId}`,
+  },
   // Media
   MEDIA: {
     LIST: '/v1/media',

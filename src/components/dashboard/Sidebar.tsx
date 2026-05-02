@@ -22,6 +22,7 @@ import {
   TestimonialsIcon,
   BlogIcon,
   MediaIcon,
+  MenusIcon,
 } from './icons';
 
 interface NavItem {
@@ -38,6 +39,10 @@ interface NavItem {
   }>;
   /** Spatie permission name from GET /api/me */
   permission?: string;
+  /** When true, visible if user has `permission` or one of `menuManagementRoles` (Laravel `MenuPolicy::viewAny`). */
+  menuManagementAccess?: boolean;
+  /** Roles that may manage menus without the Spatie permission when `menuManagementAccess` is set. */
+  menuManagementRoles?: string[];
   roles?: string[];
   /** Backend module toggle from GET /api/settings features */
   featureModule?: FeatureModuleKey;
@@ -161,6 +166,15 @@ export const Sidebar = component$<SidebarProps>((props) => {
       featureModule: 'media',
     },
     {
+      label: translateApp(lang, 'sidebar.menus'),
+      href: R.ADMIN.MENUS,
+      icon: MenusIcon,
+      activeOnChildPaths: true,
+      permission: 'manage menus',
+      menuManagementAccess: true,
+      menuManagementRoles: ['super_admin', 'admin', 'company', 'editor'],
+    },
+    {
       label: translateApp(lang, 'sidebar.profile'),
       href: R.ADMIN.PROFILE,
       icon: ProfileIcon,
@@ -217,7 +231,12 @@ export const Sidebar = component$<SidebarProps>((props) => {
       if (item.featureModule && !isFeatureModuleEnabled(featureFlags, item.featureModule)) {
         return false;
       }
-      if (item.permission && !permissionSet.has(item.permission)) {
+      if (item.menuManagementAccess && item.permission) {
+        const allowedByRole = (item.menuManagementRoles ?? []).includes(userRole);
+        if (!permissionSet.has(item.permission) && !allowedByRole) {
+          return false;
+        }
+      } else if (item.permission && !permissionSet.has(item.permission)) {
         return false;
       }
       if (item.roles && !item.roles.includes(userRole)) {
