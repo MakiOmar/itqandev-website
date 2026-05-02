@@ -296,17 +296,6 @@ async function runServiceUpdateWithApiClient(
     const translationLocalesDbg = Array.isArray(translationsOut)
       ? translationsOut.map((t) => String((t as Record<string, unknown>)?.locale ?? ''))
       : [];
-    console.log('[service-update] PUT payload', {
-      serviceId: String(data.id),
-      editingLocale,
-      effectivePrimary,
-      writePrimary: writePrimaryDbg,
-      contentLocale,
-      translationsRowCount: Array.isArray(translationsOut) ? translationsOut.length : -1,
-      translationLocales: translationLocalesDbg,
-      jsonBodyHasTranslationsKey: Object.prototype.hasOwnProperty.call(apiBody, 'translations'),
-      namePreview: String(name).slice(0, 80),
-    });
 
     const response = await apiClient.put<AdminService>(API_ENDPOINTS.SERVICES.UPDATE(String(data.id)), apiBody);
     const updated = (response as { data?: AdminService })?.data ?? response;
@@ -314,11 +303,6 @@ async function runServiceUpdateWithApiClient(
     const returnedTranslationLocales = Array.isArray(rt)
       ? rt.map((t) => String((t as { locale?: string })?.locale ?? '').toLowerCase())
       : [];
-    console.log('[service-update] PUT ok', {
-      serviceId: String(data.id),
-      returnedNamePreview: String((updated as { name?: string })?.name ?? '').slice(0, 80),
-      returnedTranslationLocales,
-    });
 
     const devDebug = {
       editingLocale,
@@ -358,10 +342,6 @@ async function runServiceUpdateWithApiClient(
     };
   } catch (err: unknown) {
     const e = err as { status?: number; response?: { status?: number }; message?: string };
-    console.error('[service-update] PUT failed', {
-      status: e?.status ?? e?.response?.status ?? null,
-      message: String(e?.message ?? '').slice(0, 300),
-    });
     const st = e?.status === 422 || e?.response?.status === 422 ? 422 : 500;
     return { ok: false, status: st, message: formatServiceApiError(err) || 'Failed to update service' };
   }

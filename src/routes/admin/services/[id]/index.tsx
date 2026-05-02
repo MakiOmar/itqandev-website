@@ -231,14 +231,6 @@ export default component$(() => {
       langConfig.value.default_locale,
       contentLocaleDraft.value.trim() !== '' ? contentLocaleDraft.value.trim() : null,
     );
-    console.log('[service-save] FormData snapshot', {
-      id: String(s.id),
-      editingLocaleDraft: editingLocaleDraft.value,
-      normalizedEditingLocale: normalizedEditLocale,
-      effectivePrimary: effectivePrimarySubmit,
-      contentLocaleDraft: contentLocaleDraft.value.trim(),
-      translationsJsonLen: translationsJson.value.length,
-    });
 
     const val = await runServiceUpdateFromBrowser({
       id: String(s.id),
@@ -263,46 +255,9 @@ export default component$(() => {
       is_published: formData.value.is_published ? '1' : '0',
     });
 
-    console.log('[service-save] submit result', {
-      ok: val.ok,
-      valKeys: val.ok ? Object.keys(val.value) : typeof val.message,
-    });
-    // #region agent log
-    fetch('http://127.0.0.1:7469/ingest/ed85bb2c-c192-44f6-8c60-9fe04360649a', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'X-Debug-Session-Id': '08cfc0' },
-      body: JSON.stringify({
-        sessionId: '08cfc0',
-        hypothesisId: 'H9',
-        runId: 'post-fix',
-        location: 'admin/services/[id]/index.tsx:handleSave',
-        message: 'after runServiceUpdateFromBrowser (direct Laravel client)',
-        data: {
-          valOk: val.ok,
-          valStatus: val.ok ? 200 : val.status,
-          messageLen: val.ok ? 0 : String(val.message ?? '').length,
-        },
-        timestamp: Date.now(),
-      }),
-    }).catch(() => {});
-    // #endregion
-
     if (!val.ok) {
       await showError(val.message || 'Failed to update service');
       return;
-    }
-
-    {
-      const v = val.value as Record<string, unknown> | undefined;
-      let parsed: unknown;
-      try {
-        const j = v?.serviceUpdateDebugJson;
-        parsed = typeof j === 'string' ? JSON.parse(j) : undefined;
-      } catch {
-        parsed = undefined;
-      }
-      const dbg = v?.serviceUpdateDebug ?? parsed ?? (v?.service as Record<string, unknown> | undefined)?.serviceUpdateDebug;
-      console.log('[service-save] action result', dbg ?? v);
     }
 
     await success(saveTranslations.successTitle, { text: saveTranslations.updatedText });
