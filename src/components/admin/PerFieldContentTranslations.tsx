@@ -334,24 +334,58 @@ export const ContentEditingLanguageSelect = component$<{
   // eslint-disable-next-line qwik/no-use-visible-task
   useVisibleTask$(({ track }) => {
     track(() => props.siteLanguages);
+    const listCodes = props.siteLanguages.map((l) => String(l.code));
+    const prefRaw = readPreferredLocaleFromBrowser();
+    const curRaw = String(props.value ?? '').trim();
+    // #region agent log
+    const dbg = (branch: string, extra?: Record<string, unknown>) =>
+      fetch('http://127.0.0.1:7469/ingest/ed85bb2c-c192-44f6-8c60-9fe04360649a', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-Debug-Session-Id': '08cfc0' },
+        body: JSON.stringify({
+          sessionId: '08cfc0',
+          hypothesisId: 'H-sync',
+          location: 'PerFieldContentTranslations.tsx:ContentEditingLanguageSelect',
+          message: 'editingLocale visibleTask',
+          data: {
+            branch,
+            hasOnChange: !!props.onChange$,
+            done: editingLocaleAutoSyncDone.value,
+            pref: prefRaw ?? null,
+            cur: curRaw,
+            listCodes,
+            lsPeek:
+              typeof localStorage !== 'undefined' ? localStorage.getItem('preferred-locale') : null,
+            ...extra,
+          },
+          timestamp: Date.now(),
+        }),
+      }).catch(() => {});
+    // #endregion
     if (!props.onChange$ || editingLocaleAutoSyncDone.value) {
+      dbg(!props.onChange$ ? 'H4-no-onChange' : 'H3-skip-done');
       return;
     }
-    const pref = readPreferredLocaleFromBrowser();
+    const pref = prefRaw;
     if (!pref) {
+      dbg('H1-no-pref-from-browser');
       return;
     }
     const list = props.siteLanguages;
     if (!list.some((l) => String(l.code).toLowerCase() === pref)) {
+      dbg('H2-pref-not-in-siteLanguages');
       return;
     }
-    const cur = String(props.value ?? '').trim().toLowerCase();
+    const cur = curRaw.toLowerCase();
     if (cur === pref) {
       editingLocaleAutoSyncDone.value = true;
+      dbg('H5-cur-equals-pref-set-done');
       return;
     }
+    dbg('apply-onChange', { willSet: pref });
     props.onChange$(pref);
     editingLocaleAutoSyncDone.value = true;
+    dbg('after-onChange', { done: true });
   });
 
   const isPrimary = props.value.toLowerCase() === props.effectivePrimaryLocale.toLowerCase();
