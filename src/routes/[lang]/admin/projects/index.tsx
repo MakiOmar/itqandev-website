@@ -7,7 +7,7 @@ import { useTranslate, translateApp } from '../../../../lib/i18n/useTranslate';
 import { useSwal } from '../../../../lib/hooks/useSwal';
 import { getApiClient, extractCookieHeader } from '../../../../lib/api/client';
 import { API_ENDPOINTS } from '../../../../lib/api/endpoints';
-import { getLocalizedRoutes, useAppRoutes } from '../../../../lib/constants/routes';
+import { adminProjectEditHref, useAppRoutes } from '../../../../lib/constants/routes';
 import type { Project } from '../../../../types/project';
 import { useSiteLanguageConfig } from '../layout';
 import { primaryLocaleForContent } from '../../../../lib/content-display-locale';
@@ -213,7 +213,7 @@ export default component$(() => {
   });
 
   const goToEdit = $((id: string | number) => {
-    navigate(getLocalizedRoutes(lang).ADMIN.PROJECTS_EDIT(id));
+    navigate(adminProjectEditHref(lang, id));
   });
 
   return (

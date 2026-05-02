@@ -18,7 +18,7 @@ import {
 } from '../../../../../lib/content-display-locale';
 import { useCreateCategory } from '../../../../../lib/admin/category-actions';
 import { submitRouteActionFormData } from '../../../../../lib/admin/route-action-form-submit';
-import { getLocalizedRoutes, useAppRoutes } from '../../../../../lib/constants/routes';
+import { adminCategoryEditHref, getLocalizedRoutes, useAppRoutes } from '../../../../../lib/constants/routes';
 import type { Category } from '../../../../../types';
 
 /**
@@ -128,7 +128,7 @@ export default component$(() => {
     await success(saveTranslations.successTitle, { text: saveTranslations.createdText });
     const created = val?.category as Category | undefined;
     if (created?.id != null) {
-      await navigate(getLocalizedRoutes(lang).ADMIN.CATEGORIES_EDIT(created.id));
+      await navigate(adminCategoryEditHref(lang, created.id));
     } else {
       await navigate(getLocalizedRoutes(lang).ADMIN.CATEGORIES);
     }

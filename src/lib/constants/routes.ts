@@ -26,20 +26,15 @@ export function getLocalizedRoutes(lang: string) {
       SYSTEM: L(`${p}/system`),
       PROJECTS: L(`${p}/projects`),
       PROJECTS_NEW: L(`${p}/projects/new`),
-      PROJECTS_EDIT: (id: string | number) => L(`${p}/projects/${id}`),
       CATEGORIES: L(`${p}/categories`),
       CATEGORIES_NEW: L(`${p}/categories/new`),
-      CATEGORIES_EDIT: (id: string | number) => L(`${p}/categories/${id}`),
       SKILLS: L(`${p}/skills`),
       SERVICES: L(`${p}/services`),
       SERVICES_NEW: L(`${p}/services/new`),
-      SERVICES_EDIT: (id: string | number) => L(`${p}/services/${id}`),
       TESTIMONIALS: L(`${p}/testimonials`),
       TESTIMONIALS_NEW: L(`${p}/testimonials/new`),
-      TESTIMONIALS_EDIT: (id: string | number) => L(`${p}/testimonials/${id}`),
       BLOG: L(`${p}/blog`),
       BLOG_NEW: L(`${p}/blog/new`),
-      BLOG_EDIT: (id: string | number) => L(`${p}/blog/${id}`),
       MEDIA: L(`${p}/media`),
       LOGOUT: L(`${p}/logout`),
     },
@@ -58,6 +53,37 @@ export function getLocalizedRoutes(lang: string) {
   };
 }
 
+/** Localized admin “edit” URLs — use these instead of non-serializable `*_EDIT` functions on `ADMIN`. */
+export function adminProjectEditHref(lang: string, id: string | number): string {
+  const config = getConfig();
+  const p = config.routes.admin.prefix;
+  return withUiLocale(lang, `${p}/projects/${id}`);
+}
+
+export function adminCategoryEditHref(lang: string, id: string | number): string {
+  const config = getConfig();
+  const p = config.routes.admin.prefix;
+  return withUiLocale(lang, `${p}/categories/${id}`);
+}
+
+export function adminServiceEditHref(lang: string, id: string | number): string {
+  const config = getConfig();
+  const p = config.routes.admin.prefix;
+  return withUiLocale(lang, `${p}/services/${id}`);
+}
+
+export function adminTestimonialEditHref(lang: string, id: string | number): string {
+  const config = getConfig();
+  const p = config.routes.admin.prefix;
+  return withUiLocale(lang, `${p}/testimonials/${id}`);
+}
+
+export function adminBlogEditHref(lang: string, id: string | number): string {
+  const config = getConfig();
+  const p = config.routes.admin.prefix;
+  return withUiLocale(lang, `${p}/blog/${id}`);
+}
+
 /** Localized routes for the current `preferred-locale` cookie (server loaders/actions). */
 export function routesFromPreferredCookie(cookie: { get(name: string): unknown }) {
   return getLocalizedRoutes(uiLangFromPreferredCookie(cookie));
@@ -65,7 +91,7 @@ export function routesFromPreferredCookie(cookie: { get(name: string): unknown }
 
 /**
  * Localized routes for the current qwik-speak UI language.
- * Returns a plain object (not a Signal) so SSR does not try to serialize `*_EDIT` URL builder functions.
+ * Return value is JSON-serializable (string hrefs only — use `admin*EditHref` for dynamic edit URLs).
  */
 export function useAppRoutes() {
   const { lang } = useTranslate();

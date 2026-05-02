@@ -8,7 +8,7 @@ import { useTranslate, translateApp } from '../../../../../lib/i18n/useTranslate
 import { useSwal } from '../../../../../lib/hooks/useSwal';
 import { getApiClient, extractCookieHeader } from '../../../../../lib/api/client';
 import { API_ENDPOINTS } from '../../../../../lib/api/endpoints';
-import { getLocalizedRoutes, useAppRoutes } from '../../../../../lib/constants/routes';
+import { adminProjectEditHref, useAppRoutes } from '../../../../../lib/constants/routes';
 import {
   ContentEditingLanguageSelect,
   ContentPrimaryLanguageSelect,
@@ -936,7 +936,7 @@ export default component$(() => {
               const storedProjectId = createdProjectId.value;
               const projectId = savedId || storedProjectId;
               if (projectId) {
-                navigate(getLocalizedRoutes(lang).ADMIN.PROJECTS_EDIT(projectId));
+                navigate(adminProjectEditHref(lang, projectId));
               }
             }}
           >
@@ -957,7 +957,7 @@ export default component$(() => {
                       const storedProjectId = createdProjectId.value;
                       const projectId = savedId || storedProjectId;
                       if (projectId) {
-                        navigate(getLocalizedRoutes(lang).ADMIN.PROJECTS_EDIT(projectId));
+                        navigate(adminProjectEditHref(lang, projectId));
                       }
                     }}
                     class="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm transition hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 dark:hover:bg-gray-700"

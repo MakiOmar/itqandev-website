@@ -18,7 +18,7 @@ import {
 } from '../../../../../lib/content-display-locale';
 import { useCreateService } from '../../../../../lib/admin/service-actions';
 import { submitRouteActionFormData } from '../../../../../lib/admin/route-action-form-submit';
-import { getLocalizedRoutes, useAppRoutes } from '../../../../../lib/constants/routes';
+import { adminServiceEditHref, getLocalizedRoutes, useAppRoutes } from '../../../../../lib/constants/routes';
 import type { AdminService } from '../../../../../types/service';
 import { ServiceIconSelect } from '../../../../../components/admin/ServiceIconSelect';
 
@@ -156,7 +156,7 @@ export default component$(() => {
     await success(saveTranslations.successTitle, { text: saveTranslations.createdText });
     const created = val?.service as AdminService | undefined;
     if (created?.id != null) {
-      await navigate(getLocalizedRoutes(lang).ADMIN.SERVICES_EDIT(created.id));
+      await navigate(adminServiceEditHref(lang, created.id));
     } else {
       await navigate(getLocalizedRoutes(lang).ADMIN.SERVICES);
     }

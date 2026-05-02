@@ -8,7 +8,7 @@ import { useTranslate, translateApp } from '../../../../lib/i18n/useTranslate';
 import { useSwal } from '../../../../lib/hooks/useSwal';
 import { getApiClient, extractCookieHeader } from '../../../../lib/api/client';
 import { API_ENDPOINTS } from '../../../../lib/api/endpoints';
-import { useAppRoutes } from '../../../../lib/constants/routes';
+import { adminCategoryEditHref, useAppRoutes } from '../../../../lib/constants/routes';
 import type { Category } from '../../../../types';
 import { useSiteLanguageConfig } from '../layout';
 import { useLocaleAwareList } from '../../../../lib/hooks/useLocaleAwareList';
@@ -302,7 +302,7 @@ export default component$(() => {
                   </span>
 
                   <Link
-                    href={R.ADMIN.CATEGORIES_EDIT(category.id)}
+                    href={adminCategoryEditHref(lang, category.id)}
                     class="rounded-lg px-3 py-1 text-xs text-primary-600 hover:bg-primary-50 dark:text-primary-400 dark:hover:bg-primary-900/20"
                   >
                     {translateApp(lang, 'common.edit')}

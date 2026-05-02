@@ -8,7 +8,7 @@ import { useTranslate, translateApp } from '../../../../lib/i18n/useTranslate';
 import { useSwal } from '../../../../lib/hooks/useSwal';
 import { getApiClient, extractCookieHeader } from '../../../../lib/api/client';
 import { API_ENDPOINTS } from '../../../../lib/api/endpoints';
-import { useAppRoutes } from '../../../../lib/constants/routes';
+import { adminTestimonialEditHref, useAppRoutes } from '../../../../lib/constants/routes';
 import type { Testimonial } from '../../../../types';
 import {
   mapTestimonialFromApi,
@@ -243,7 +243,7 @@ export default component$(() => {
                   </div>
                   <div class="flex shrink-0 gap-2">
                     <Link
-                      href={R.ADMIN.TESTIMONIALS_EDIT(testimonial.id)}
+                      href={adminTestimonialEditHref(lang, testimonial.id)}
                       class="rounded-lg bg-primary-600 px-3 py-1.5 text-xs font-medium text-white transition hover:bg-primary-700"
                     >
                       {translateApp(lang, 'common.edit')}

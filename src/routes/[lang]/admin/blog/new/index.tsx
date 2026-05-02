@@ -20,7 +20,8 @@ import { getApiClient, extractCookieHeader } from '../../../../../lib/api/client
 import { PageHeader } from '../../../../../components/common/PageHeader';
 import { useTranslate, translateApp } from '../../../../../lib/i18n/useTranslate';
 import { API_ENDPOINTS } from '../../../../../lib/api/endpoints';
-import { routesFromPreferredCookie, useAppRoutes } from '../../../../../lib/constants/routes';
+import { adminBlogEditHref, useAppRoutes } from '../../../../../lib/constants/routes';
+import { uiLangFromPreferredCookie } from '../../../../../lib/i18n/ui-locale-path';
 import type { BlogPost, BlogPostCreateInput } from '../../../../../types';
 
 /**
@@ -42,8 +43,8 @@ const blogPostSchema = z.object({
 export const useCreateBlogPost = routeAction$(
   async (data, { cookie, request, redirect: redirectFn }) => {
     try {
-      const R = routesFromPreferredCookie(cookie);
       const cookieHeader = extractCookieHeader(cookie, request);
+      const lang = uiLangFromPreferredCookie(cookie);
       const apiClient = getApiClient(cookieHeader);
       const payload: BlogPostCreateInput = {
         title: data.title,
@@ -83,7 +84,7 @@ export const useCreateBlogPost = routeAction$(
       const post = (response?.data ?? response) as any;
 
       // Redirect to edit page
-      throw redirectFn(302, R.ADMIN.BLOG_EDIT(post.id));
+      throw redirectFn(302, adminBlogEditHref(lang, post.id));
     } catch (error: any) {
       if (error.status === 302 || error.statusCode === 302) {
         throw error; // Re-throw redirects
