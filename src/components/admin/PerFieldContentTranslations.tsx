@@ -330,6 +330,32 @@ export const ContentEditingLanguageSelect = component$<{
   // Navbar persists `preferred-locale` before reload; SSR/loader can seed `en` and `site_languages`
   // may resolve a tick later — track languages and sync once `ar` (etc.) exists in the list.
   const editingLocaleAutoSyncDone = useSignal(false);
+  /** Mirrors props.value so the native select element stays in sync after hydration and prop updates. */
+  const selectModel = useSignal(String(props.value ?? '').trim());
+
+  useTask$(({ track }) => {
+    track(() => props.value);
+    const next = String(props.value ?? '').trim();
+    if (selectModel.value === next) {
+      return;
+    }
+    // #region agent log
+    fetch('http://127.0.0.1:7469/ingest/ed85bb2c-c192-44f6-8c60-9fe04360649a', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-Debug-Session-Id': '08cfc0' },
+      body: JSON.stringify({
+        sessionId: '08cfc0',
+        runId: 'post-fix',
+        hypothesisId: 'H-bind',
+        location: 'PerFieldContentTranslations.tsx:ContentEditingLanguageSelect useTask',
+        message: 'selectModel sync from props.value',
+        data: { from: selectModel.value, to: next },
+        timestamp: Date.now(),
+      }),
+    }).catch(() => {});
+    // #endregion
+    selectModel.value = next;
+  });
 
   // eslint-disable-next-line qwik/no-use-visible-task
   useVisibleTask$(({ track }) => {
@@ -395,12 +421,14 @@ export const ContentEditingLanguageSelect = component$<{
         {props.label}
       </label>
       <select
+        key={selectModel.value}
         id="editing_locale"
         name="editing_locale"
         class="w-full max-w-md rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-primary-500 focus:outline-none focus:ring focus:ring-primary-200 dark:border-gray-600 dark:bg-gray-950 dark:text-gray-100"
-        value={props.value}
+        value={selectModel.value}
         onChange$={(e) => {
           const v = (e.target as HTMLSelectElement).value;
+          selectModel.value = v;
           props.onChange$?.(v);
         }}
       >
