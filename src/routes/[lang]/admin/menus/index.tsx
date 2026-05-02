@@ -52,6 +52,44 @@ interface PickerService {
   name: string;
 }
 
+const MENU_SLUG_MAX = 64;
+
+/** Lowercase `[a-z0-9_-]+` for Laravel `menus.slug` (non‑ASCII names → `menu`, then uniquified). */
+function slugifyMenuSlugFromName(name: string): string {
+  let s = name
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+  if (!s) {
+    s = 'menu';
+  }
+  if (s.length > MENU_SLUG_MAX) {
+    s = s.slice(0, MENU_SLUG_MAX).replace(/-+$/g, '');
+  }
+  return s || 'menu';
+}
+
+/** Ensures slug is not already used by another menu (`base`, `base-2`, …). */
+function uniqueMenuSlug(base: string, existing: readonly MenuRow[]): string {
+  const slugs = new Set(existing.map((m) => m.slug));
+  if (!slugs.has(base)) {
+    return base;
+  }
+  let i = 2;
+  while (i < 1_000_000) {
+    const suffix = `-${i}`;
+    const room = Math.max(1, MENU_SLUG_MAX - suffix.length);
+    const truncated = base.slice(0, room).replace(/-+$/g, '') || 'm';
+    const candidate = `${truncated}${suffix}`;
+    if (!slugs.has(candidate)) {
+      return candidate;
+    }
+    i += 1;
+  }
+  return `${base.slice(0, 20)}-${Date.now()}`;
+}
+
 const STATIC_ROUTE_OPTIONS: Array<{ value: string; label: string }> = [
   { value: 'home', label: 'Home' },
   { value: 'services', label: 'Services' },
@@ -145,7 +183,6 @@ export default component$(() => {
   const showCreateMenuForm = useSignal(pageData.value.menus.length === 0);
   const newMenuShell = useStore({
     name: '',
-    slug: '',
   });
 
   const projects = useSignal<PickerProject[]>([]);
@@ -235,17 +272,17 @@ export default component$(() => {
 
   const createMenu$ = $(async () => {
     const name = newMenuShell.name.trim();
-    const slug = newMenuShell.slug.trim().toLowerCase().replace(/\s+/g, '-');
-    if (!name || !slug) {
-      await showError(String(translateApp(lang, 'menusPage.nameSlugRequired')));
+    if (!name) {
+      await showError(String(translateApp(lang, 'menusPage.nameRequired')));
       return;
     }
+    const base = slugifyMenuSlugFromName(name);
+    const slug = uniqueMenuSlug(base, menusList.value);
     saving.value = true;
     try {
       const api = getApiClient();
       await api.post(API_ENDPOINTS.MENUS.CREATE, { name, slug });
       newMenuShell.name = '';
-      newMenuShell.slug = '';
       showCreateMenuForm.value = false;
       await success(String(translateApp(lang, 'menusPage.menuCreated')));
       await reloadMenusList$(slug);
@@ -533,22 +570,7 @@ export default component$(() => {
                     newMenuShell.name = (e.target as HTMLInputElement).value;
                   }}
                 />
-              </div>
-              <div>
-                <label class={labelClass} for="new-menu-slug">
-                  {String(translateApp(lang, 'menusPage.menuSlug'))}
-                </label>
-                <input
-                  id="new-menu-slug"
-                  class={inputClass}
-                  type="text"
-                  value={newMenuShell.slug}
-                  placeholder="primary"
-                  onInput$={(e) => {
-                    newMenuShell.slug = (e.target as HTMLInputElement).value;
-                  }}
-                />
-                <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">{String(translateApp(lang, 'menusPage.menuSlugHint'))}</p>
+                <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">{String(translateApp(lang, 'menusPage.slugAutoHint'))}</p>
               </div>
               <div class="flex flex-wrap gap-2">
                 <button
@@ -567,7 +589,6 @@ export default component$(() => {
                     onClick$={() => {
                       showCreateMenuForm.value = false;
                       newMenuShell.name = '';
-                      newMenuShell.slug = '';
                     }}
                   >
                     {String(translateApp(lang, 'common.cancel'))}
