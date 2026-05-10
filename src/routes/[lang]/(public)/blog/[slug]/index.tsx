@@ -10,11 +10,14 @@ import { Container } from '~/components/marketing/Container';
 import { Section } from '~/components/marketing/Section';
 import { AnimatedReveal } from '~/components/marketing/AnimatedReveal';
 import { ContentImage } from '~/components/marketing/ContentImage';
+import { MarketingImageLightbox } from '~/components/marketing/MarketingImageLightbox';
 
-export const useBlogPost = routeLoader$(async ({ params }) => {
+export const useBlogPost = routeLoader$(async ({ params, fail }) => {
   const slug = params.slug;
   const post = await getBlogPostBySlug(slug);
-  if (!post) throw new Error('Blog post not found');
+  if (!post) {
+    return fail(404, { message: 'Blog post not found' });
+  }
   return post;
 });
 
@@ -56,22 +59,24 @@ export default component$(() => {
                   </p>
                 )}
               </header>
-              {post.coverImage !== undefined && (
-                <div class="mt-8 aspect-video w-full overflow-hidden rounded-xl bg-slate-100 dark:bg-slate-800">
-                  <ContentImage
-                    src={post.coverImage}
-                    alt={post.coverImageAlt || post.title}
-                    width={960}
-                    height={540}
-                    fetchPriority="high"
-                    class="h-full w-full object-cover"
-                  />
-                </div>
-              )}
-              <div
-                class="prose prose-slate mt-8 dark:prose-invert max-w-none"
-                dangerouslySetInnerHTML={post.body}
-              />
+              <MarketingImageLightbox>
+                {post.coverImage !== undefined && (
+                  <div class="mt-8 aspect-video w-full overflow-hidden rounded-xl bg-slate-100 shadow-lg ring-1 ring-slate-200/70 dark:bg-slate-800 dark:ring-slate-600/50">
+                    <ContentImage
+                      src={post.coverImage}
+                      alt={post.coverImageAlt || post.title}
+                      width={960}
+                      height={540}
+                      fetchPriority="high"
+                      class="h-full w-full object-cover"
+                    />
+                  </div>
+                )}
+                <div
+                  class="prose prose-slate mt-8 dark:prose-invert max-w-none [&_img]:rounded-xl [&_img]:shadow-sm"
+                  dangerouslySetInnerHTML={post.body}
+                />
+              </MarketingImageLightbox>
             </AnimatedReveal>
           </article>
         </Container>
@@ -110,18 +115,25 @@ export default component$(() => {
 export const head: DocumentHead = ({ resolveValue }) => {
   const config = getConfig();
   const baseUrl = (import.meta.env?.VITE_SITE_URL as string) || 'https://example.com';
-  const post = resolveValue(useBlogPost);
-  const title = post.seoMeta?.title || post.title;
-  const description = post.seoMeta?.description || post.excerpt;
-  return {
-    title: `${title} | Blog | ${config.branding.name}`,
-    meta: [
-      { name: 'description', content: description },
-      { property: 'og:title', content: title },
-      { property: 'og:description', content: description },
-      { property: 'og:type', content: 'article' },
-      { property: 'og:url', content: `${baseUrl}/blog/${post.slug}` },
-    ],
-    links: [{ rel: 'canonical', href: `${baseUrl}/blog/${post.slug}` }],
-  };
+  try {
+    const post = resolveValue(useBlogPost);
+    const title = post.seoMeta?.title || post.title;
+    const description = post.seoMeta?.description || post.excerpt;
+    return {
+      title: `${title} | Blog | ${config.branding.name}`,
+      meta: [
+        { name: 'description', content: description },
+        { property: 'og:title', content: title },
+        { property: 'og:description', content: description },
+        { property: 'og:type', content: 'article' },
+        { property: 'og:url', content: `${baseUrl}/blog/${post.slug}` },
+      ],
+      links: [{ rel: 'canonical', href: `${baseUrl}/blog/${post.slug}` }],
+    };
+  } catch {
+    return {
+      title: `404 | ${config.branding.name}`,
+      meta: [{ name: 'robots', content: 'noindex, nofollow' }],
+    };
+  }
 };
