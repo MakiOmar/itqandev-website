@@ -1,4 +1,4 @@
-import { component$, useSignal, $, useTask$ } from '@builder.io/qwik';
+import { component$, useSignal, $, useTask$, untrack } from '@builder.io/qwik';
 import type { DocumentHead } from '@builder.io/qwik-city';
 import { routeLoader$, Link } from '@builder.io/qwik-city';
 import { PageHeader } from '../../../../../components/common/PageHeader';
@@ -27,7 +27,13 @@ import { useContentSlugAutosuggestForm } from '../../../../../lib/slug/content-s
 import { AdminPublicPageLink } from '../../../../../components/admin/AdminPublicPageLink';
 import { ContentSeoFields } from '../../../../../components/admin/ContentSeoFields';
 import { putContentSeo } from '../../../../../lib/admin/content-seo-put';
-import { contentSeoDraftFromRow, emptyContentSeoDraft, type ContentSeoDraft, type ContentSeoMetaRow } from '../../../../../types/content-seo';
+import {
+  contentSeoDraftFromRow,
+  emptyContentSeoDraft,
+  mergeContentSeoDraftFromContent,
+  type ContentSeoDraft,
+  type ContentSeoMetaRow,
+} from '../../../../../types/content-seo';
 
 function joinLines(arr: string[] | null | undefined): string {
   if (!Array.isArray(arr) || arr.length === 0) {
@@ -278,6 +284,19 @@ export default component$(() => {
     ).toLowerCase();
     const row = seoMetasDraft.value.find((r) => String(r.locale).toLowerCase() === loc);
     seoDraft.value = contentSeoDraftFromRow(row);
+  });
+
+  useTask$(({ track }) => {
+    track(() => editingLocaleDraft.value);
+    track(() => contentLocaleDraft.value);
+    track(() => formData.value.name);
+    track(() => formData.value.short_description);
+    track(() => formData.value.description);
+    const prev = untrack(() => seoDraft.value);
+    seoDraft.value = mergeContentSeoDraftFromContent(prev, {
+      title: formData.value.name,
+      descriptionCandidates: [formData.value.short_description, formData.value.description],
+    });
   });
 
   const handleSave = $(async () => {

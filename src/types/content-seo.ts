@@ -41,6 +41,92 @@ export function emptyContentSeoDraft(): ContentSeoDraft {
   };
 }
 
+/**
+ * Strip HTML and collapse whitespace. If `maxLen` is a positive number, truncate with a soft word break.
+ */
+export function stripHtmlToPlainSnippet(raw: string, maxLen?: number): string {
+  if (!raw || typeof raw !== 'string') {
+    return '';
+  }
+  let t = raw
+    .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, ' ')
+    .replace(/<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi, ' ')
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+  const cap = maxLen != null && maxLen > 0 ? maxLen : 0;
+  if (cap > 0 && t.length > cap) {
+    t = t.slice(0, cap).trimEnd();
+    const lastSpace = t.lastIndexOf(' ');
+    if (lastSpace > cap * 0.55) {
+      t = t.slice(0, lastSpace);
+    }
+    t = `${t}…`;
+  }
+  return t;
+}
+
+export type ContentSeoAutofillSources = {
+  title?: string | null;
+  /** First non-empty candidate wins (e.g. excerpt then body). May be HTML. */
+  descriptionCandidates?: Array<string | null | undefined>;
+  imageUrl?: string | null;
+};
+
+const META_DESC_LEN = 160;
+const OG_DESC_LEN = 200;
+
+/**
+ * Fill only **empty** SEO fields from primary content (title, text snippets, optional image).
+ * Does not overwrite operator-entered SEO.
+ */
+export function mergeContentSeoDraftFromContent(
+  draft: ContentSeoDraft,
+  sources: ContentSeoAutofillSources,
+): ContentSeoDraft {
+  const title = (sources.title ?? '').trim();
+  const next = { ...draft };
+
+  let plainFromContent = '';
+  const cands = sources.descriptionCandidates ?? [];
+  for (const c of cands) {
+    const p = stripHtmlToPlainSnippet(String(c ?? ''), undefined);
+    if (p) {
+      plainFromContent = p;
+      break;
+    }
+  }
+
+  const metaDescFill =
+    plainFromContent.length > 0 ? stripHtmlToPlainSnippet(plainFromContent, META_DESC_LEN) : '';
+  const ogDescFill =
+    plainFromContent.length > 0 ? stripHtmlToPlainSnippet(plainFromContent, OG_DESC_LEN) : '';
+
+  if (!next.meta_title.trim() && title) {
+    next.meta_title = title;
+  }
+  if (!next.meta_description.trim() && metaDescFill) {
+    next.meta_description = metaDescFill;
+  }
+
+  const resolvedTitle = next.meta_title.trim() || title;
+  if (!next.og_title.trim() && resolvedTitle) {
+    next.og_title = resolvedTitle;
+  }
+
+  const resolvedDesc = next.meta_description.trim() || ogDescFill;
+  if (!next.og_description.trim() && resolvedDesc) {
+    next.og_description = resolvedDesc;
+  }
+
+  const img = (sources.imageUrl ?? '').trim();
+  if (!next.og_image.trim() && img) {
+    next.og_image = img;
+  }
+
+  return next;
+}
+
 /** Parse JSON from form `seo_draft_json` (route actions). */
 export function parseContentSeoDraftFromJson(raw: string): ContentSeoDraft | null {
   try {

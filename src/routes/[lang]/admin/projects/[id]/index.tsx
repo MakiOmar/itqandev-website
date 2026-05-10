@@ -1,4 +1,4 @@
-import { component$, useSignal, $, useTask$ } from '@builder.io/qwik';
+import { component$, useSignal, $, useTask$, untrack } from '@builder.io/qwik';
 import type { DocumentHead } from '@builder.io/qwik-city';
 import { routeLoader$, routeAction$, Form, zod$, z, useLocation } from '@builder.io/qwik-city';
 import { Link } from '@builder.io/qwik-city';
@@ -34,6 +34,7 @@ import { buildSeoMorphPutBody } from '../../../../../lib/admin/content-seo-put';
 import {
   contentSeoDraftFromRow,
   emptyContentSeoDraft,
+  mergeContentSeoDraftFromContent,
   seoDraftToMetaRow,
   parseContentSeoDraftFromJson,
   type ContentSeoDraft,
@@ -540,6 +541,26 @@ export default component$(() => {
     ).toLowerCase();
     const row = seoMetasDraft.value.find((r) => String(r.locale).toLowerCase() === loc);
     seoDraft.value = contentSeoDraftFromRow(row);
+  });
+
+  useTask$(({ track }) => {
+    track(() => editingLocaleDraft.value);
+    track(() => contentLocaleDraft.value);
+    track(() => titleField.value);
+    track(() => summaryField.value);
+    track(() => descriptionField.value);
+    track(() => heroMedia.value);
+    const hm = heroMedia.value as Record<string, unknown> | null;
+    const imageUrl =
+      hm && typeof hm === 'object'
+        ? String((hm.url as string) || (hm.thumbnailUrl as string) || (hm.preview as string) || '').trim()
+        : '';
+    const prev = untrack(() => seoDraft.value);
+    seoDraft.value = mergeContentSeoDraftFromContent(prev, {
+      title: titleField.value,
+      descriptionCandidates: [summaryField.value, descriptionField.value],
+      imageUrl: imageUrl || undefined,
+    });
   });
 
   const categoryItems = categoriesAndSkills.value.categories.map((c) => ({
