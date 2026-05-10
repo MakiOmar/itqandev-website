@@ -28,7 +28,6 @@ import { putContentSeo } from '../../../../../lib/admin/content-seo-put';
 import {
   contentSeoDraftFromRow,
   emptyContentSeoDraft,
-  seoDraftToMetaRow,
   type ContentSeoDraft,
   type ContentSeoMetaRow,
 } from '../../../../../types/content-seo';
@@ -94,7 +93,7 @@ export default component$(() => {
   const translationsJson = useSignal('[]');
   const seoDraft = useSignal<ContentSeoDraft>(emptyContentSeoDraft());
   const seoMetasDraft = useSignal<ContentSeoMetaRow[]>([]);
-  const seoSaveRunning = useSignal(false);
+  const saveRunning = useSignal(false);
 
   const formData = useSignal({
     name: '',
@@ -237,46 +236,11 @@ export default component$(() => {
     seoDraft.value = contentSeoDraftFromRow(row);
   });
 
-  const saveCategorySeo = $(async () => {
-    const c = (liveCategory.value ?? categoryLoader.value) as Category | undefined;
-    if (!c?.id) {
-      return;
-    }
-    const loc = normalizeEditingLocale(
-      editingLocaleDraft.value,
-      langConfig.value.site_languages,
-      langConfig.value.default_locale,
-      contentLocaleDraft.value.trim() !== '' ? contentLocaleDraft.value.trim() : null,
-    ).toLowerCase();
-    seoSaveRunning.value = true;
-    try {
-      const apiClient = getApiClient();
-      await putContentSeo(apiClient, 'category', Number(c.id), loc, seoDraft.value);
-      const merged = seoDraftToMetaRow(loc, seoDraft.value);
-      const next = [...seoMetasDraft.value];
-      const idx = next.findIndex((r) => String(r.locale).toLowerCase() === loc);
-      if (idx >= 0) {
-        next[idx] = { ...next[idx], ...merged };
-      } else {
-        next.push(merged);
-      }
-      seoMetasDraft.value = next;
-      const mergedBase = liveCategory.value ?? categoryLoader.value;
-      if (mergedBase && typeof (mergedBase as Category).id === 'number') {
-        liveCategory.value = { ...(mergedBase as Category), seoMetas: next };
-      }
-      await success(saveTranslations.successTitle, { text: saveTranslations.updatedText });
-    } catch (err: any) {
-      await showError(err?.message || 'Failed to save SEO');
-    } finally {
-      seoSaveRunning.value = false;
-    }
-  });
-
   const handleSave = $(async () => {
     const c = (liveCategory.value ?? categoryLoader.value) as Category | undefined;
     if (!c?.id) return;
 
+    saveRunning.value = true;
     const val = await runCategoryUpdateFromBrowser({
       id: String(c.id),
       editing_locale: normalizeEditingLocale(
@@ -302,11 +266,28 @@ export default component$(() => {
     });
 
     if (!val.ok) {
+      saveRunning.value = false;
       await showError(val.message || 'Failed to update category');
       return;
     }
 
+    const loc = normalizeEditingLocale(
+      editingLocaleDraft.value,
+      langConfig.value.site_languages,
+      langConfig.value.default_locale,
+      contentLocaleDraft.value.trim() !== '' ? contentLocaleDraft.value.trim() : null,
+    ).toLowerCase();
+    try {
+      const apiClient = getApiClient();
+      await putContentSeo(apiClient, 'category', Number(c.id), loc, seoDraft.value);
+    } catch (err: any) {
+      saveRunning.value = false;
+      await showError(err?.message || 'Failed to save SEO');
+      return;
+    }
+
     await success(saveTranslations.successTitle, { text: saveTranslations.updatedText });
+    saveRunning.value = false;
     window.location.reload();
   });
 
@@ -454,24 +435,17 @@ export default component$(() => {
             {/* <!-- SEO row per editing locale --> */}
             <p class="mb-3 text-xs text-gray-600 dark:text-gray-400">{translateApp(lang, 'seo.forEditingLocale')}</p>
             <ContentSeoFields lang={lang} idPrefix="category" draft={seoDraft} />
-            <button
-              type="button"
-              disabled={seoSaveRunning.value}
-              onClick$={saveCategorySeo}
-              class="mt-3 w-full rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-primary-700 disabled:opacity-60"
-            >
-              {seoSaveRunning.value ? translateApp(lang, 'common.loading') : translateApp(lang, 'seo.save')}
-            </button>
           </div>
 
           <div class="flex gap-2">
             <button
               type="button"
               preventdefault:click
+              disabled={saveRunning.value}
               onClick$={handleSave}
-              class="flex-1 rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-primary-700"
+              class="flex-1 rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-primary-700 disabled:opacity-60"
             >
-              {translateApp(lang, 'common.update')}
+              {saveRunning.value ? translateApp(lang, 'common.loading') : translateApp(lang, 'common.update')}
             </button>
             <Link
               href={R.ADMIN.CATEGORIES}

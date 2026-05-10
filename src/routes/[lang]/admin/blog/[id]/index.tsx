@@ -28,11 +28,11 @@ import type { BlogPost, BlogPostUpdateInput } from '../../../../../types';
 import { useContentSlugAutosuggestTitleSlugSignals } from '../../../../../lib/slug/content-slug-auto';
 import { AdminPublicPageLink } from '../../../../../components/admin/AdminPublicPageLink';
 import { ContentSeoFields } from '../../../../../components/admin/ContentSeoFields';
-import { putContentSeo } from '../../../../../lib/admin/content-seo-put';
+import { buildSeoMorphPutBody } from '../../../../../lib/admin/content-seo-put';
 import {
   contentSeoDraftFromRow,
   emptyContentSeoDraft,
-  seoDraftToMetaRow,
+  parseContentSeoDraftFromJson,
   type ContentSeoDraft,
   type ContentSeoMetaRow,
 } from '../../../../../types/content-seo';
@@ -113,6 +113,26 @@ export const useUpdateBlogPost = routeAction$(
 
       await apiClient.put(API_ENDPOINTS.BLOG.UPDATE(params.id), payload);
 
+      const seoLocale = String((data as { seo_locale?: string }).seo_locale || '').trim().toLowerCase();
+      const seoDraftRaw = String((data as { seo_draft_json?: string }).seo_draft_json ?? '');
+      if (seoLocale !== '' && seoDraftRaw !== '') {
+        const seoDraftParsed = parseContentSeoDraftFromJson(seoDraftRaw);
+        if (!seoDraftParsed) {
+          return {
+            success: false,
+            error: 'Invalid SEO draft data',
+          };
+        }
+        try {
+          await apiClient.put(`/v1/seo/blog-post/${params.id}`, buildSeoMorphPutBody(seoLocale, seoDraftParsed));
+        } catch (seoErr: any) {
+          return {
+            success: false,
+            error: seoErr?.message || 'Failed to save SEO',
+          };
+        }
+      }
+
       // Redirect to blog list
       throw redirectFn(302, R.ADMIN.BLOG);
     } catch (error: any) {
@@ -136,6 +156,8 @@ export const useUpdateBlogPost = routeAction$(
       canonical_title: z.string().optional(),
       canonical_excerpt: z.string().optional(),
       canonical_content: z.string().optional(),
+      seo_locale: z.string().optional(),
+      seo_draft_json: z.string().optional(),
     }),
   )
 );
@@ -184,8 +206,6 @@ export default component$(() => {
   const contentField = useSignal('');
   const seoDraft = useSignal<ContentSeoDraft>(emptyContentSeoDraft());
   const seoMetasDraft = useSignal<ContentSeoMetaRow[]>([]);
-  const seoSaveRunning = useSignal(false);
-
   const blogSlugAuto = useContentSlugAutosuggestTitleSlugSignals({
     entity: 'blog_posts',
     title: titleField,
@@ -298,34 +318,6 @@ export default component$(() => {
     seoDraft.value = contentSeoDraftFromRow(row);
   });
 
-  const saveBlogSeo = $(async () => {
-    const loc = normalizeEditingLocale(
-      editingLocaleDraft.value,
-      langConfig.value.site_languages,
-      langConfig.value.default_locale,
-      contentLocaleDraft.value.trim() !== '' ? contentLocaleDraft.value.trim() : null,
-    ).toLowerCase();
-    seoSaveRunning.value = true;
-    try {
-      const apiClient = getApiClient();
-      await putContentSeo(apiClient, 'blog-post', Number(location.params.id), loc, seoDraft.value);
-      const merged = seoDraftToMetaRow(loc, seoDraft.value);
-      const next = [...seoMetasDraft.value];
-      const idx = next.findIndex((r) => String(r.locale).toLowerCase() === loc);
-      if (idx >= 0) {
-        next[idx] = { ...next[idx], ...merged };
-      } else {
-        next.push(merged);
-      }
-      seoMetasDraft.value = next;
-      await success(successTitle, { text: translateApp(lang, 'common.updated') });
-    } catch (err: any) {
-      await showError(err?.message || 'Failed to save SEO');
-    } finally {
-      seoSaveRunning.value = false;
-    }
-  });
-
   const uploadFeaturedImage = $(async () => {
     if (!featuredImageFile.value) return;
 
@@ -406,6 +398,17 @@ export default component$(() => {
           <input type="hidden" name="canonical_title" value={(post.value as BlogPost).title ?? ''} />
           <input type="hidden" name="canonical_excerpt" value={(post.value as BlogPost).excerpt ?? ''} />
           <input type="hidden" name="canonical_content" value={(post.value as BlogPost).content ?? ''} />
+          <input
+            type="hidden"
+            name="seo_locale"
+            value={normalizeEditingLocale(
+              editingLocaleDraft.value,
+              langConfig.value.site_languages,
+              langConfig.value.default_locale,
+              contentLocaleDraft.value.trim() !== '' ? contentLocaleDraft.value.trim() : null,
+            )}
+          />
+          <input type="hidden" name="seo_draft_json" value={JSON.stringify(seoDraft.value)} />
           <div class="grid gap-4 md:grid-cols-2">
             <TranslationsFormRoot
               kind="blog"
@@ -722,14 +725,6 @@ export default component$(() => {
             {/* <!-- SEO morph row keyed by dashboard editing locale --> */}
             <p class="mb-3 text-xs text-gray-600 dark:text-gray-400">{translateApp(lang, 'seo.forEditingLocale')}</p>
             <ContentSeoFields lang={lang} idPrefix="blog-post" draft={seoDraft} />
-            <button
-              type="button"
-              disabled={seoSaveRunning.value}
-              onClick$={saveBlogSeo}
-              class="mt-4 w-full rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-primary-700 disabled:opacity-60 sm:w-auto"
-            >
-              {seoSaveRunning.value ? translateApp(lang, 'common.loading') : translateApp(lang, 'seo.save')}
-            </button>
           </div>
 
           {updateAction.value?.failed && (updateAction.value as any).error && (

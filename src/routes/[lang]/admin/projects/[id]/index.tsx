@@ -30,11 +30,12 @@ import type { Project, ProjectUpdateInput, Category, Skill, Media, ProjectSeoMet
 import { useContentSlugAutosuggestTitleSlugSignals } from '../../../../../lib/slug/content-slug-auto';
 import { AdminPublicPageLink } from '../../../../../components/admin/AdminPublicPageLink';
 import { ContentSeoFields } from '../../../../../components/admin/ContentSeoFields';
-import { putContentSeo } from '../../../../../lib/admin/content-seo-put';
+import { buildSeoMorphPutBody } from '../../../../../lib/admin/content-seo-put';
 import {
   contentSeoDraftFromRow,
   emptyContentSeoDraft,
   seoDraftToMetaRow,
+  parseContentSeoDraftFromJson,
   type ContentSeoDraft,
 } from '../../../../../types/content-seo';
 
@@ -293,6 +294,26 @@ export const useUpdateProject = routeAction$(
         }
       }
 
+      const seoLocale = String((data as { seo_locale?: string }).seo_locale || '').trim().toLowerCase();
+      const seoDraftRaw = String((data as { seo_draft_json?: string }).seo_draft_json ?? '');
+      if (seoLocale !== '' && seoDraftRaw !== '') {
+        const seoDraftParsed = parseContentSeoDraftFromJson(seoDraftRaw);
+        if (!seoDraftParsed) {
+          return {
+            success: false,
+            error: 'Invalid SEO draft data',
+          };
+        }
+        try {
+          await apiClient.put(`/v1/seo/project/${projectId}`, buildSeoMorphPutBody(seoLocale, seoDraftParsed));
+        } catch (seoErr: any) {
+          return {
+            success: false,
+            error: seoErr?.message || 'Failed to save SEO',
+          };
+        }
+      }
+
       // Return success response - stay on edit page
       // Return only serializable data (use existing projectId variable)
       return {
@@ -326,6 +347,8 @@ export const useUpdateProject = routeAction$(
       canonical_title: z.string().optional(),
       canonical_summary: z.string().optional(),
       canonical_description: z.string().optional(),
+      seo_locale: z.string().optional(),
+      seo_draft_json: z.string().optional(),
     }),
   )
 );
@@ -381,7 +404,6 @@ export default component$(() => {
     ctUseSiteDefault: translateApp(lang, 'contentTranslations.useSiteDefault'),
     ctFallbackHint: translateApp(lang, 'contentTranslations.fallbackPlaceholderHint'),
     seoTitle: translateApp(lang, 'seo.title'),
-    seoSave: translateApp(lang, 'seo.save'),
     seoForEditingLocale: translateApp(lang, 'seo.forEditingLocale'),
   };
   
@@ -404,7 +426,6 @@ export default component$(() => {
   const lastSuccessId = useSignal<number | null>(null);
   const seoDraft = useSignal<ContentSeoDraft>(emptyContentSeoDraft());
   const seoMetasDraft = useSignal<ProjectSeoMeta[]>([]);
-  const seoSaveRunning = useSignal(false);
 
   // Normalize media objects to ensure consistent structure
   const normalizeMedia = (media: any) => {
@@ -521,34 +542,6 @@ export default component$(() => {
     seoDraft.value = contentSeoDraftFromRow(row);
   });
 
-  const saveProjectSeo = $(async () => {
-    const loc = normalizeEditingLocale(
-      editingLocaleDraft.value,
-      langConfig.value.site_languages,
-      langConfig.value.default_locale,
-      contentLocaleDraft.value.trim() !== '' ? contentLocaleDraft.value.trim() : null,
-    ).toLowerCase();
-    seoSaveRunning.value = true;
-    try {
-      const apiClient = getApiClient();
-      await putContentSeo(apiClient, 'project', Number(location.params.id), loc, seoDraft.value);
-      const merged = seoDraftToMetaRow(loc, seoDraft.value);
-      const next = [...seoMetasDraft.value];
-      const idx = next.findIndex((r) => String(r.locale).toLowerCase() === loc);
-      if (idx >= 0) {
-        next[idx] = { ...next[idx], ...merged };
-      } else {
-        next.push(merged);
-      }
-      seoMetasDraft.value = next;
-      await success(translations.success, { text: translations.updated });
-    } catch (err: any) {
-      await showError(err?.message || 'Failed to save SEO');
-    } finally {
-      seoSaveRunning.value = false;
-    }
-  });
-
   const categoryItems = categoriesAndSkills.value.categories.map((c) => ({
     id: c.id,
     name: c.name,
@@ -623,6 +616,17 @@ export default component$(() => {
           <input type="hidden" name="canonical_title" value={(project.value as Project).title ?? ''} />
           <input type="hidden" name="canonical_summary" value={(project.value as Project).summary ?? ''} />
           <input type="hidden" name="canonical_description" value={(project.value as Project).description ?? ''} />
+          <input
+            type="hidden"
+            name="seo_locale"
+            value={normalizeEditingLocale(
+              editingLocaleDraft.value,
+              langConfig.value.site_languages,
+              langConfig.value.default_locale,
+              contentLocaleDraft.value.trim() !== '' ? contentLocaleDraft.value.trim() : null,
+            )}
+          />
+          <input type="hidden" name="seo_draft_json" value={JSON.stringify(seoDraft.value)} />
           <div class="grid gap-6 lg:grid-cols-[1fr_360px]">
             <div class="space-y-6">
               <div class="grid gap-4 md:grid-cols-2">
@@ -935,14 +939,6 @@ export default component$(() => {
                 {/* <!-- SEO applies to the locale selected above --> */}
                 <p class="mb-3 text-xs text-gray-600 dark:text-gray-400">{translations.seoForEditingLocale}</p>
                 <ContentSeoFields lang={lang} idPrefix="project" draft={seoDraft} />
-                <button
-                  type="button"
-                  disabled={seoSaveRunning.value}
-                  onClick$={saveProjectSeo}
-                  class="mt-4 w-full rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-primary-700 disabled:opacity-60"
-                >
-                  {seoSaveRunning.value ? translations.loading : translations.seoSave}
-                </button>
               </div>
 
               <div class="rounded-lg border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-900">
@@ -1198,6 +1194,21 @@ export default component$(() => {
                   await new Promise(resolve => setTimeout(resolve, 200));
                   const actionValue = (updateAction as any).value as { success?: boolean; projectId?: number } | null;
                   if (actionValue && actionValue.success === true && actionValue.projectId) {
+                    const loc = normalizeEditingLocale(
+                      editingLocaleDraft.value,
+                      langConfig.value.site_languages,
+                      langConfig.value.default_locale,
+                      contentLocaleDraft.value.trim() !== '' ? contentLocaleDraft.value.trim() : null,
+                    ).toLowerCase();
+                    const merged = seoDraftToMetaRow(loc, seoDraft.value);
+                    const next = [...seoMetasDraft.value];
+                    const idx = next.findIndex((r) => String(r.locale).toLowerCase() === loc);
+                    if (idx >= 0) {
+                      next[idx] = { ...next[idx], ...merged };
+                    } else {
+                      next.push(merged);
+                    }
+                    seoMetasDraft.value = next;
                     // Only show success if it's a new save
                     if (lastSuccessId.value !== actionValue.projectId) {
                       lastSuccessId.value = actionValue.projectId;

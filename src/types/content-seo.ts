@@ -41,6 +41,29 @@ export function emptyContentSeoDraft(): ContentSeoDraft {
   };
 }
 
+/** Parse JSON from form `seo_draft_json` (route actions). */
+export function parseContentSeoDraftFromJson(raw: string): ContentSeoDraft | null {
+  try {
+    const o = JSON.parse(raw) as Record<string, unknown>;
+    if (!o || typeof o !== 'object') {
+      return null;
+    }
+    const d = emptyContentSeoDraft();
+    return {
+      meta_title: typeof o.meta_title === 'string' ? o.meta_title : d.meta_title,
+      meta_description: typeof o.meta_description === 'string' ? o.meta_description : d.meta_description,
+      canonical_url: typeof o.canonical_url === 'string' ? o.canonical_url : d.canonical_url,
+      og_title: typeof o.og_title === 'string' ? o.og_title : d.og_title,
+      og_description: typeof o.og_description === 'string' ? o.og_description : d.og_description,
+      og_image: typeof o.og_image === 'string' ? o.og_image : d.og_image,
+      twitter_card: typeof o.twitter_card === 'string' ? o.twitter_card : d.twitter_card,
+      schema_json: typeof o.schema_json === 'string' ? o.schema_json : d.schema_json,
+    };
+  } catch {
+    return null;
+  }
+}
+
 function schemaToJsonString(schema: unknown): string {
   if (schema === null || schema === undefined) {
     return '';

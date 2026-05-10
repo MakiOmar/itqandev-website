@@ -8,19 +8,13 @@ type SeoPutClient = {
   put: (path: string, body: Record<string, unknown>) => Promise<unknown>;
 };
 
-export async function putContentSeo(
-  apiClient: SeoPutClient,
-  type: ContentSeoApiType,
-  id: number,
-  locale: string,
-  draft: ContentSeoDraft,
-): Promise<void> {
+/** Body for `PUT /v1/seo/{type}/{id}` (shared by client + server route actions). */
+export function buildSeoMorphPutBody(locale: string, draft: ContentSeoDraft): Record<string, unknown> {
   let schema: Record<string, unknown> | unknown[] | undefined;
   if (draft.schema_json.trim()) {
     schema = parseSchemaJsonField(draft.schema_json);
   }
-
-  await apiClient.put(`/v1/seo/${type}/${id}`, {
+  return {
     locale: locale.trim().toLowerCase(),
     meta_title: draft.meta_title || '',
     meta_description: draft.meta_description || '',
@@ -30,5 +24,15 @@ export async function putContentSeo(
     og_image: draft.og_image.trim() ? draft.og_image.trim() : null,
     twitter_card: draft.twitter_card.trim() || null,
     schema,
-  });
+  };
+}
+
+export async function putContentSeo(
+  apiClient: SeoPutClient,
+  type: ContentSeoApiType,
+  id: number,
+  locale: string,
+  draft: ContentSeoDraft,
+): Promise<void> {
+  await apiClient.put(`/v1/seo/${type}/${id}`, buildSeoMorphPutBody(locale, draft));
 }

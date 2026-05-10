@@ -245,7 +245,7 @@ export default component$(() => {
   const translationsJson = useSignal('[]');
   const seoDraft = useSignal<ContentSeoDraft>(emptyContentSeoDraft());
   const seoMetasDraft = useSignal<ContentSeoMetaRow[]>([]);
-  const seoSaveRunning = useSignal(false);
+  const saveRunning = useSignal(false);
 
   const handleSearch = $((value: string) => {
     searchQuery.value = value;
@@ -369,45 +369,12 @@ export default component$(() => {
     seoDraft.value = contentSeoDraftFromRow(row);
   });
 
-  const saveSkillSeo = $(async () => {
-    if (!editingId.value) {
-      return;
-    }
-    const loc = normalizeEditingLocale(
-      editingLocaleDraft.value,
-      langConfig.value.site_languages,
-      langConfig.value.default_locale,
-      contentLocaleDraft.value.trim() !== '' ? contentLocaleDraft.value.trim() : null,
-    ).toLowerCase();
-    seoSaveRunning.value = true;
-    try {
-      const apiClient = getApiClient();
-      await putContentSeo(apiClient, 'skill', editingId.value, loc, seoDraft.value);
-      const merged = seoDraftToMetaRow(loc, seoDraft.value);
-      const next = [...seoMetasDraft.value];
-      const idx = next.findIndex((r) => String(r.locale).toLowerCase() === loc);
-      if (idx >= 0) {
-        next[idx] = { ...next[idx], ...merged };
-      } else {
-        next.push(merged);
-      }
-      seoMetasDraft.value = next;
-      skillsState.value = skillsState.value.map((s) =>
-        s.id === editingId.value ? { ...s, seoMetas: next } : s,
-      );
-      await success(saveTranslations.successTitle, { text: saveTranslations.updatedText });
-    } catch (err: any) {
-      await showError(err?.message || 'Failed to save SEO');
-    } finally {
-      seoSaveRunning.value = false;
-    }
-  });
-
   const handleSave = $(async () => {
     const successTitle = saveTranslations.successTitle;
     const updatedText = saveTranslations.updatedText;
     const createdText = saveTranslations.createdText;
-    
+
+    saveRunning.value = true;
     if (editingId.value) {
       const response = await updateAction.submit({
         id: String(editingId.value),
@@ -430,14 +397,44 @@ export default component$(() => {
         ...formData.value,
       });
       if (response.value?.failed) {
+        saveRunning.value = false;
         await showError((response.value as any).message || 'Failed to update skill');
       } else {
+        const loc = normalizeEditingLocale(
+          editingLocaleDraft.value,
+          langConfig.value.site_languages,
+          langConfig.value.default_locale,
+          contentLocaleDraft.value.trim() !== '' ? contentLocaleDraft.value.trim() : null,
+        ).toLowerCase();
+        try {
+          const apiClient = getApiClient();
+          await putContentSeo(apiClient, 'skill', editingId.value!, loc, seoDraft.value);
+        } catch (err: any) {
+          saveRunning.value = false;
+          await showError(err?.message || 'Failed to save SEO');
+          return;
+        }
+        const merged = seoDraftToMetaRow(loc, seoDraft.value);
+        const nextRows = [...seoMetasDraft.value];
+        const idx = nextRows.findIndex((r) => String(r.locale).toLowerCase() === loc);
+        if (idx >= 0) {
+          nextRows[idx] = { ...nextRows[idx], ...merged };
+        } else {
+          nextRows.push(merged);
+        }
+        seoMetasDraft.value = nextRows;
+
         await success(successTitle, { text: updatedText });
         // keep edit form open after update (do not exit to list)
         const updated = (response.value as any)?.skill as Skill | undefined;
         if (updated) {
           skillsState.value = skillsState.value.map((s) =>
-            s.id === updated.id ? ({ ...updated, seoMetas: updated.seoMetas ?? s.seoMetas } as Skill) : s,
+            s.id === updated.id
+              ? ({
+                  ...updated,
+                  seoMetas: nextRows.length ? nextRows : (updated.seoMetas ?? s.seoMetas),
+                } as Skill)
+              : s,
           );
         } else {
           const id = editingId.value;
@@ -449,10 +446,12 @@ export default component$(() => {
                   slug: formData.value.slug || (s as any).slug,
                   description: formData.value.description || (s as any).description,
                   iconHint: formData.value.icon_hint || (s as any).iconHint,
+                  seoMetas: nextRows,
                 } as any)
               : s,
           );
         }
+        saveRunning.value = false;
       }
     } else {
       const response2 = await createAction.submit({
@@ -475,6 +474,7 @@ export default component$(() => {
         ...formData.value,
       });
       if (response2.value?.failed) {
+        saveRunning.value = false;
         const errorMsg = (response2.value as any).message || (response2.value as any).error || 'Failed to create skill';
         await showError(errorMsg);
       } else {
@@ -485,6 +485,7 @@ export default component$(() => {
         if (created) {
           skillsState.value = [created, ...skillsState.value];
         }
+        saveRunning.value = false;
       }
     }
   });
@@ -722,22 +723,19 @@ export default component$(() => {
                   {/* <!-- SEO row per editing locale (edit mode only) --> */}
                   <p class="mb-3 text-xs text-gray-600 dark:text-gray-400">{translateApp(lang, 'seo.forEditingLocale')}</p>
                   <ContentSeoFields lang={lang} idPrefix={`skill-${editingId.value}`} draft={seoDraft} />
-                  <button
-                    type="button"
-                    disabled={seoSaveRunning.value}
-                    onClick$={saveSkillSeo}
-                    class="mt-3 w-full rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-primary-700 disabled:opacity-60"
-                  >
-                    {seoSaveRunning.value ? translateApp(lang, 'common.loading') : translateApp(lang, 'seo.save')}
-                  </button>
                 </div>
               ) : null}
               <div class="flex gap-2">
                 <button
+                  disabled={saveRunning.value || updateAction.isRunning || createAction.isRunning}
                   onClick$={handleSave}
-                  class="flex-1 rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-primary-700"
+                  class="flex-1 rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-primary-700 disabled:opacity-60"
                 >
-                  {editingId.value ? translateApp(lang, 'common.update') : translateApp(lang, 'common.add')}
+                  {saveRunning.value || updateAction.isRunning || createAction.isRunning
+                    ? translateApp(lang, 'common.loading')
+                    : editingId.value
+                      ? translateApp(lang, 'common.update')
+                      : translateApp(lang, 'common.add')}
                 </button>
                 <button
                   onClick$={resetForm}
