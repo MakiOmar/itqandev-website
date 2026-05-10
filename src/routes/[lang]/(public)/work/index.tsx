@@ -12,7 +12,7 @@ import type { CaseStudy } from '~/lib/marketing/types';
 
 export const useWorkData = routeLoader$(async ({ request, url, params }) => {
   const cookie = request.headers.get('cookie') || '';
-  const uiLocale = uiLocaleFromPublicRoute(cookie, params.lang);
+  const uiLocale = uiLocaleFromPublicRoute(cookie, params.lang, request.url);
   const categorySlug = url.searchParams.get('category_slug') ?? undefined;
   const skillSlug = url.searchParams.get('skill_slug') ?? undefined;
   return getCaseStudies(uiLocale, { categorySlug: categorySlug ?? undefined, skillSlug: skillSlug ?? undefined });

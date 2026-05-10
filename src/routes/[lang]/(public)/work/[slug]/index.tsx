@@ -37,7 +37,7 @@ function isDeferredCrossOriginPayload(v: unknown): v is DeferredCrossOriginPaylo
 export const useCaseStudy = routeLoader$(async ({ params, request, fail }) => {
   const slug = params.slug;
   const cookie = request.headers.get('cookie') || '';
-  const uiLocale = uiLocaleFromPublicRoute(cookie, params.lang);
+  const uiLocale = uiLocaleFromPublicRoute(cookie, params.lang, request.url);
   const forwardAuthorization = request.headers.get('authorization') || '';
 
   const caseStudy = await getCaseStudyBySlug(slug, uiLocale, {

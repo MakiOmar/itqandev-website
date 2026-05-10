@@ -11,7 +11,7 @@ import type { Service } from '~/lib/marketing/types';
 
 export const useServicesData = routeLoader$(async ({ request, params }) => {
   const cookie = request.headers.get('cookie') || '';
-  const uiLocale = uiLocaleFromPublicRoute(cookie, params.lang);
+  const uiLocale = uiLocaleFromPublicRoute(cookie, params.lang, request.url);
   return getSiteContent(uiLocale);
 });
 

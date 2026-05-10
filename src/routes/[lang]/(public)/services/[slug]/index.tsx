@@ -16,7 +16,7 @@ import { AnimatedReveal } from '~/components/marketing/AnimatedReveal';
 export const useServiceDetail = routeLoader$(async ({ params, request, fail }) => {
   const slug = decodeURIComponent(String(params.slug ?? '').trim());
   const cookie = request.headers.get('cookie') || '';
-  const uiLocale = uiLocaleFromPublicRoute(cookie, params.lang);
+  const uiLocale = uiLocaleFromPublicRoute(cookie, params.lang, request.url);
   const service = await getServiceBySlug(slug, uiLocale);
   if (!service) {
     return fail(404, { message: 'Service not found' });

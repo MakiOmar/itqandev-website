@@ -17,7 +17,7 @@ import type { SiteLanguageRow } from '~/types/site-language';
  */
 export const useSiteContent = routeLoader$(async ({ request, params }) => {
   const cookie = request.headers.get('cookie') || '';
-  const uiLocale = uiLocaleFromPublicRoute(cookie, params.lang);
+  const uiLocale = uiLocaleFromPublicRoute(cookie, params.lang, request.url);
   return getSiteContent(uiLocale);
 });
 
@@ -44,7 +44,7 @@ export const usePublicPrimaryMenu = routeLoader$(async ({ cookie, request, param
   const cookieHeader = extractCookieHeader(cookie, request);
   const apiClient = getApiClient(cookieHeader);
   const cookieStr = request.headers.get('cookie') || '';
-  const uiLocale = uiLocaleFromPublicRoute(cookieStr, params.lang) ?? 'en';
+  const uiLocale = uiLocaleFromPublicRoute(cookieStr, params.lang, request.url) ?? 'en';
 
   try {
     const path = `${MARKETING_ENDPOINTS.menuBySlug('primary')}?locale=${encodeURIComponent(uiLocale)}`;

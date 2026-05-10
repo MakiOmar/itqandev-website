@@ -53,17 +53,52 @@ export function swapUiLocaleInPathname(pathname: string, newLang: string): strin
   return withUiLocale(code, stripUiLocaleFromPathname(p));
 }
 
+/** Strip Vite/Qwik base path so `/app/en/about` resolves UI locale segment. */
+function pathnameAfterBaseUrl(publicPathname: string): string {
+  let p = (publicPathname || '/').trim();
+  p = p.startsWith('/') ? p : `/${p}`;
+  let b = String(import.meta.env.BASE_URL ?? '/').trim();
+  if (b.startsWith('./')) {
+    b = b.slice(1);
+  }
+  if (b && b !== '/' && !b.startsWith('/')) {
+    b = `/${b}`;
+  }
+  b = b.endsWith('/') && b.length > 1 ? b.slice(0, -1) : b;
+  if (b === '/' || b === '') {
+    return p;
+  }
+  if (p === b || p.startsWith(`${b}/`)) {
+    const rest = p === b ? '/' : p.slice(b.length) || '/';
+    return rest.startsWith('/') ? rest : `/${rest}`;
+  }
+  return p;
+}
+
 /**
- * Public marketing loaders: **`params.lang` wins** over cookies. `onRequest` sets `preferred-locale`
- * during the same request, so cookie-only reads can miss the URL locale on SSR.
+ * Marketing SSR locale: **`params.lang`** → **`request.url`** path segment → **`preferred-locale` cookie**.
+ * Some route loaders omit parent `[lang]` in `params`, and `onRequest` may set the cookie **after**
+ * inbound loaders read headers — **`request.url` is always truthful on SSR**.
  */
 export function uiLocaleFromPublicRoute(
   cookieHeader: string | null | undefined,
   paramsLang: string | undefined,
+  requestUrl?: string | null,
 ): string | undefined {
   const langSeg = String(paramsLang ?? '').trim().toLowerCase();
   if (UI_LOCALE_SEGMENTS.has(langSeg)) {
     return langSeg;
+  }
+  if (requestUrl) {
+    try {
+      const path = pathnameAfterBaseUrl(new URL(requestUrl).pathname);
+      const fromPath = uiLangPrefixFromPathname(path);
+      if (fromPath) {
+        return fromPath;
+      }
+    } catch {
+      /* malformed request.url during tests */
+    }
   }
   return readPreferredLocaleFromCookieHeader(cookieHeader ?? '') ?? undefined;
 }
