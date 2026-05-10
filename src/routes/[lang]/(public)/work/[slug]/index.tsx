@@ -1,11 +1,11 @@
-import { component$, useSignal, useVisibleTask$ } from '@builder.io/qwik';
+import { component$, useComputed$, useSignal, useVisibleTask$ } from '@builder.io/qwik';
 import type { DocumentHead } from '@builder.io/qwik-city';
 import { routeLoader$ } from '@builder.io/qwik-city';
 import { getConfig } from '~/lib/config';
 import { marketingApiPageOriginMismatch } from '~/lib/marketing/api-client';
 import { getCaseStudyBySlug } from '~/lib/marketing/content-layer';
 import type { CaseStudy as MarketingCaseStudy } from '~/lib/marketing/types';
-import { readPreferredLocaleFromCookieHeader } from '~/lib/i18n/dashboard-locale';
+import { uiLocaleFromPublicRoute } from '~/lib/i18n/ui-locale-path';
 import { marketingRoutes } from '~/lib/marketing/constants';
 import { uiLangFromUrlPathname } from '~/lib/i18n/ui-locale-path';
 import { Container } from '~/components/marketing/Container';
@@ -37,10 +37,7 @@ function isDeferredCrossOriginPayload(v: unknown): v is DeferredCrossOriginPaylo
 export const useCaseStudy = routeLoader$(async ({ params, request, fail }) => {
   const slug = params.slug;
   const cookie = request.headers.get('cookie') || '';
-  const langSeg = String(params.lang ?? '').trim().toLowerCase();
-  const fromUrl = langSeg === 'ar' || langSeg === 'en' ? langSeg : undefined;
-  const fromCookie = readPreferredLocaleFromCookieHeader(cookie);
-  const uiLocale = fromUrl ?? fromCookie ?? undefined;
+  const uiLocale = uiLocaleFromPublicRoute(cookie, params.lang);
   const forwardAuthorization = request.headers.get('authorization') || '';
 
   const caseStudy = await getCaseStudyBySlug(slug, uiLocale, {
@@ -92,50 +89,72 @@ export default component$(() => {
     clientRetryPhase.value = 'missing';
   });
 
-  const rawLoader = loader.value as unknown;
+  const view = useComputed$(() => {
+    const raw = loader.value as unknown;
 
-  if (rawLoader != null && typeof rawLoader === 'object' && (rawLoader as { failed?: boolean }).failed === true) {
-    return null;
-  }
+    if (raw != null && typeof raw === 'object' && (raw as { failed?: boolean }).failed === true) {
+      return { kind: 'failed' as const };
+    }
 
-  let caseStudy: MarketingCaseStudy | null = null;
-  if (isMarketingCaseStudyValue(rawLoader)) {
-    caseStudy = rawLoader;
-  } else if (isDeferredCrossOriginPayload(rawLoader)) {
+    if (isMarketingCaseStudyValue(raw)) {
+      return { kind: 'ok' as const, study: raw };
+    }
+
+    if (!isDeferredCrossOriginPayload(raw)) {
+      return { kind: 'empty' as const };
+    }
+
     const phase = clientRetryPhase.value;
     if (phase === 'pending' || phase === 'idle') {
-      return (
-        <Section>
-          <Container size="narrow">
-            {/* Loading draft preview cross-origin */}
-            <p class="rounded-md bg-slate-100 px-4 py-6 text-center text-slate-600 dark:bg-slate-800 dark:text-slate-300">
-              Loading project… If you preview drafts across hosts (e.g. localhost + remote API), sign in via the dashboard
-              on that API domain so credentials can attach.
-            </p>
-          </Container>
-        </Section>
-      );
+      return { kind: 'loading' as const };
     }
-    if (phase === 'missing') {
-      return (
-        <Section>
-          <Container size="narrow" class="text-center">
-            <p class="text-lg text-slate-700 dark:text-slate-200">Case study not found.</p>
-            <Link href={MR.work} class="mt-4 inline-block text-primary-600 underline dark:text-primary-400">
-              Back to work
-            </Link>
-          </Container>
-        </Section>
-      );
-    }
-    if (phase === 'loaded' && clientCaseStudy.value) {
-      caseStudy = clientCaseStudy.value;
-    }
-  }
 
-  if (!caseStudy) {
+    if (phase === 'missing') {
+      return { kind: 'missing' as const };
+    }
+
+    const cs = clientCaseStudy.value;
+    if (cs && isMarketingCaseStudyValue(cs)) {
+      return { kind: 'ok' as const, study: cs };
+    }
+
+    return { kind: 'loading' as const };
+  });
+
+  const state = view.value;
+
+  if (state.kind === 'failed' || state.kind === 'empty') {
     return null;
   }
+
+  if (state.kind === 'loading') {
+    return (
+      <Section>
+        <Container size="narrow">
+          {/* Loading draft preview cross-origin */}
+          <p class="rounded-md bg-slate-100 px-4 py-6 text-center text-slate-600 dark:bg-slate-800 dark:text-slate-300">
+            Loading project… If you preview drafts across hosts (e.g. localhost + remote API), sign in via the dashboard on
+            that API domain so credentials can attach.
+          </p>
+        </Container>
+      </Section>
+    );
+  }
+
+  if (state.kind === 'missing') {
+    return (
+      <Section>
+        <Container size="narrow" class="text-center">
+          <p class="text-lg text-slate-700 dark:text-slate-200">Case study not found.</p>
+          <Link href={MR.work} class="mt-4 inline-block text-primary-600 underline dark:text-primary-400">
+            Back to work
+          </Link>
+        </Container>
+      </Section>
+    );
+  }
+
+  const caseStudy = state.study;
 
   const baseUrl = (import.meta.env?.VITE_SITE_URL as string) || '';
 

@@ -1,7 +1,7 @@
 import { component$, Slot } from '@builder.io/qwik';
 import { routeLoader$ } from '@builder.io/qwik-city';
 import { getSiteContent } from '~/lib/marketing/content-layer';
-import { readPreferredLocaleFromCookieHeader } from '~/lib/i18n/dashboard-locale';
+import { uiLocaleFromPublicRoute } from '~/lib/i18n/ui-locale-path';
 import { Header } from '~/components/marketing/Header';
 import { Footer } from '~/components/marketing/Footer';
 import { ParticlesBackground } from '~/components/marketing/ParticlesBackground';
@@ -15,9 +15,9 @@ import type { SiteLanguageRow } from '~/types/site-language';
 /**
  * Load site content once for layout (footer contact/socials).
  */
-export const useSiteContent = routeLoader$(async ({ request }) => {
+export const useSiteContent = routeLoader$(async ({ request, params }) => {
   const cookie = request.headers.get('cookie') || '';
-  const uiLocale = readPreferredLocaleFromCookieHeader(cookie) ?? undefined;
+  const uiLocale = uiLocaleFromPublicRoute(cookie, params.lang);
   return getSiteContent(uiLocale);
 });
 
@@ -40,11 +40,11 @@ export const usePublicAuth = routeLoader$(async ({ cookie }) => {
 /**
  * Primary header menu from Laravel (`menus` table, slug `primary`). Empty → Header uses built-in links.
  */
-export const usePublicPrimaryMenu = routeLoader$(async ({ cookie, request }) => {
+export const usePublicPrimaryMenu = routeLoader$(async ({ cookie, request, params }) => {
   const cookieHeader = extractCookieHeader(cookie, request);
   const apiClient = getApiClient(cookieHeader);
   const cookieStr = request.headers.get('cookie') || '';
-  const uiLocale = readPreferredLocaleFromCookieHeader(cookieStr) ?? 'en';
+  const uiLocale = uiLocaleFromPublicRoute(cookieStr, params.lang) ?? 'en';
 
   try {
     const path = `${MARKETING_ENDPOINTS.menuBySlug('primary')}?locale=${encodeURIComponent(uiLocale)}`;

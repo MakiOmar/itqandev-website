@@ -1,4 +1,5 @@
 import { speakConfig } from './config';
+import { readPreferredLocaleFromCookieHeader } from './dashboard-locale';
 
 /** First URL segment for dashboard + marketing UI (qwik-speak locales). */
 export const UI_LOCALE_SEGMENTS = new Set(speakConfig.supportedLocales.map((l) => l.lang.toLowerCase()));
@@ -50,6 +51,21 @@ export function swapUiLocaleInPathname(pathname: string, newLang: string): strin
     return p.replace(UI_PREFIX_RE, `/${code}`);
   }
   return withUiLocale(code, stripUiLocaleFromPathname(p));
+}
+
+/**
+ * Public marketing loaders: **`params.lang` wins** over cookies. `onRequest` sets `preferred-locale`
+ * during the same request, so cookie-only reads can miss the URL locale on SSR.
+ */
+export function uiLocaleFromPublicRoute(
+  cookieHeader: string | null | undefined,
+  paramsLang: string | undefined,
+): string | undefined {
+  const langSeg = String(paramsLang ?? '').trim().toLowerCase();
+  if (UI_LOCALE_SEGMENTS.has(langSeg)) {
+    return langSeg;
+  }
+  return readPreferredLocaleFromCookieHeader(cookieHeader ?? '') ?? undefined;
 }
 
 /** UI locale from `preferred-locale` cookie (set by `[lang]` layout); for loaders/actions. */

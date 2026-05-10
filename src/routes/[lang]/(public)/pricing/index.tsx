@@ -4,7 +4,7 @@ import { Link, useLocation } from '@builder.io/qwik-city';
 import { routeLoader$ } from '@builder.io/qwik-city';
 import { getConfig } from '~/lib/config';
 import { getSiteContent } from '~/lib/marketing/content-layer';
-import { readPreferredLocaleFromCookieHeader } from '~/lib/i18n/dashboard-locale';
+import { uiLocaleFromPublicRoute } from '~/lib/i18n/ui-locale-path';
 import { marketingRoutes } from '~/lib/marketing/constants';
 import { uiLangFromUrlPathname } from '~/lib/i18n/ui-locale-path';
 import { Container } from '~/components/marketing/Container';
@@ -15,9 +15,9 @@ import { Card } from '~/components/marketing/Card';
 import { FAQ } from '~/components/marketing/FAQ';
 import type { PricingTier } from '~/lib/marketing/types';
 
-export const usePricingData = routeLoader$(async ({ request }) => {
+export const usePricingData = routeLoader$(async ({ request, params }) => {
   const cookie = request.headers.get('cookie') || '';
-  const uiLocale = readPreferredLocaleFromCookieHeader(cookie) ?? undefined;
+  const uiLocale = uiLocaleFromPublicRoute(cookie, params.lang);
   return getSiteContent(uiLocale);
 });
 

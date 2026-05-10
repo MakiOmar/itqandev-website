@@ -3,16 +3,16 @@ import type { DocumentHead } from '@builder.io/qwik-city';
 import { routeLoader$ } from '@builder.io/qwik-city';
 import { getConfig } from '~/lib/config';
 import { getCaseStudies } from '~/lib/marketing/content-layer';
-import { readPreferredLocaleFromCookieHeader } from '~/lib/i18n/dashboard-locale';
+import { uiLocaleFromPublicRoute } from '~/lib/i18n/ui-locale-path';
 import { Container } from '~/components/marketing/Container';
 import { Section } from '~/components/marketing/Section';
 import { AnimatedReveal } from '~/components/marketing/AnimatedReveal';
 import { CaseStudyCard } from '~/components/marketing/CaseStudyCard';
 import type { CaseStudy } from '~/lib/marketing/types';
 
-export const useWorkData = routeLoader$(async ({ request, url }) => {
+export const useWorkData = routeLoader$(async ({ request, url, params }) => {
   const cookie = request.headers.get('cookie') || '';
-  const uiLocale = readPreferredLocaleFromCookieHeader(cookie) ?? undefined;
+  const uiLocale = uiLocaleFromPublicRoute(cookie, params.lang);
   const categorySlug = url.searchParams.get('category_slug') ?? undefined;
   const skillSlug = url.searchParams.get('skill_slug') ?? undefined;
   return getCaseStudies(uiLocale, { categorySlug: categorySlug ?? undefined, skillSlug: skillSlug ?? undefined });

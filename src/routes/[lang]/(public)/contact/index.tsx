@@ -3,7 +3,7 @@ import type { DocumentHead } from '@builder.io/qwik-city';
 import { routeLoader$ } from '@builder.io/qwik-city';
 import { getConfig } from '~/lib/config';
 import { getSiteContent } from '~/lib/marketing/content-layer';
-import { readPreferredLocaleFromCookieHeader } from '~/lib/i18n/dashboard-locale';
+import { uiLocaleFromPublicRoute } from '~/lib/i18n/ui-locale-path';
 import { MARKETING_ENDPOINTS } from '~/lib/marketing/endpoints';
 import { marketingPost } from '~/lib/marketing/api-client';
 import { Container } from '~/components/marketing/Container';
@@ -11,9 +11,9 @@ import { Section } from '~/components/marketing/Section';
 import { AnimatedReveal } from '~/components/marketing/AnimatedReveal';
 import { Button } from '~/components/marketing/Button';
 
-export const useContactData = routeLoader$(async ({ request }) => {
+export const useContactData = routeLoader$(async ({ request, params }) => {
   const cookie = request.headers.get('cookie') || '';
-  const uiLocale = readPreferredLocaleFromCookieHeader(cookie) ?? undefined;
+  const uiLocale = uiLocaleFromPublicRoute(cookie, params.lang);
   return getSiteContent(uiLocale);
 });
 

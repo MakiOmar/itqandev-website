@@ -4,7 +4,8 @@ import { routeLoader$ } from '@builder.io/qwik-city';
 import { Link, useLocation } from '@builder.io/qwik-city';
 import { getConfig } from '~/lib/config';
 import { getServiceBySlug } from '~/lib/marketing/content-layer';
-import { readPreferredLocaleFromCookieHeader } from '~/lib/i18n/dashboard-locale';
+import type { Service as MarketingService } from '~/lib/marketing/types';
+import { uiLocaleFromPublicRoute } from '~/lib/i18n/ui-locale-path';
 import { marketingRoutes } from '~/lib/marketing/constants';
 import { uiLangFromUrlPathname } from '~/lib/i18n/ui-locale-path';
 import { resolveServiceIconUrl } from '~/lib/marketing/service-icons';
@@ -12,22 +13,30 @@ import { Container } from '~/components/marketing/Container';
 import { Section } from '~/components/marketing/Section';
 import { AnimatedReveal } from '~/components/marketing/AnimatedReveal';
 
-export const useServiceDetail = routeLoader$(async ({ params, request }) => {
+export const useServiceDetail = routeLoader$(async ({ params, request, fail }) => {
   const slug = decodeURIComponent(String(params.slug ?? '').trim());
-  const langSeg = String(params.lang ?? '').trim().toLowerCase();
   const cookie = request.headers.get('cookie') || '';
-  const fromUrl = langSeg === 'ar' || langSeg === 'en' ? langSeg : undefined;
-  const fromCookie = readPreferredLocaleFromCookieHeader(cookie);
-  const uiLocale = fromUrl ?? fromCookie ?? undefined;
+  const uiLocale = uiLocaleFromPublicRoute(cookie, params.lang);
   const service = await getServiceBySlug(slug, uiLocale);
-  if (!service) throw new Error('Service not found');
+  if (!service) {
+    return fail(404, { message: 'Service not found' });
+  }
   return service;
 });
 
 export default component$(() => {
   const loc = useLocation();
   const MR = marketingRoutes(uiLangFromUrlPathname(loc.url.pathname));
-  const s = useServiceDetail().value;
+  const raw = useServiceDetail().value as unknown;
+  if (
+    raw == null ||
+    typeof raw !== 'object' ||
+    (raw as { failed?: boolean }).failed === true ||
+    typeof (raw as MarketingService).slug !== 'string'
+  ) {
+    return null;
+  }
+  const s = raw as MarketingService;
   const baseUrl = (import.meta.env?.VITE_SITE_URL as string) || '';
 
   return (
@@ -117,16 +126,23 @@ export default component$(() => {
 export const head: DocumentHead = ({ resolveValue }) => {
   const config = getConfig();
   const baseUrl = (import.meta.env?.VITE_SITE_URL as string) || 'https://example.com';
-  const s = resolveValue(useServiceDetail);
-  const description = s.shortDescription || s.description;
-  return {
-    title: `${s.name} | Services | ${config.branding.name}`,
-    meta: [
-      { name: 'description', content: description },
-      { property: 'og:title', content: s.name },
-      { property: 'og:description', content: description },
-      { property: 'og:url', content: `${baseUrl}/services/${s.slug}` },
-    ],
-    links: [{ rel: 'canonical', href: `${baseUrl}/services/${s.slug}` }],
-  };
+  try {
+    const s = resolveValue(useServiceDetail);
+    const description = s.shortDescription || s.description;
+    return {
+      title: `${s.name} | Services | ${config.branding.name}`,
+      meta: [
+        { name: 'description', content: description },
+        { property: 'og:title', content: s.name },
+        { property: 'og:description', content: description },
+        { property: 'og:url', content: `${baseUrl}/services/${s.slug}` },
+      ],
+      links: [{ rel: 'canonical', href: `${baseUrl}/services/${s.slug}` }],
+    };
+  } catch {
+    return {
+      title: `404 | ${config.branding.name}`,
+      meta: [{ name: 'robots', content: 'noindex, nofollow' }],
+    };
+  }
 };
