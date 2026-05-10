@@ -104,8 +104,8 @@ class ApiClient {
         headers,
       });
 
-      // Handle empty responses (204 No Content, 201 Created)
-      if (response.status === 204 || response.status === 201) {
+      // 204 No Content — no response body to parse
+      if (response.status === 204) {
         return {
           success: true,
           data: {} as T,

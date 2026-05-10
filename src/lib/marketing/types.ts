@@ -6,6 +6,8 @@
 export interface CaseStudy {
   id: string | number;
   slug: string;
+  /** Laravel project status when loaded from API (e.g. draft for staff preview). */
+  status?: string;
   title: string;
   summary: string;
   description?: string;

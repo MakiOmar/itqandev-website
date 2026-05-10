@@ -5,8 +5,10 @@
  */
 
 import type { CaseStudy, BlogPost, Testimonial, SiteContent, Service } from './types';
-import { getMarketingApiBaseUrl, marketingGet } from './api-client';
+import { getMarketingApiBaseUrl, marketingGet, type MarketingFetchContext } from './api-client';
 import { MARKETING_ENDPOINTS } from './endpoints';
+
+export type { MarketingFetchContext } from './api-client';
 
 import caseStudiesData from '../../content/case-studies.json';
 import testimonialsData from '../../content/testimonials.json';
@@ -43,9 +45,16 @@ function mapPublicProjectToCaseStudy(raw: Record<string, unknown>): CaseStudy {
         ? raw.imageAlt
         : undefined;
 
+  const statusRaw = raw.status;
+  const status =
+    typeof statusRaw === 'string' && statusRaw.trim() !== ''
+      ? statusRaw.trim()
+      : undefined;
+
   return {
     id: raw.id as string | number,
     slug: String(raw.slug ?? ''),
+    status,
     title: String(raw.title ?? ''),
     summary: String(raw.summary ?? ''),
     description: raw.description != null ? String(raw.description) : undefined,
@@ -219,21 +228,25 @@ export async function getCaseStudies(locale?: string, filters?: CaseStudyListFil
 }
 
 /** Get a single case study by slug. */
-export async function getCaseStudyBySlug(slug: string, locale?: string): Promise<CaseStudy | null> {
+export async function getCaseStudyBySlug(
+  slug: string,
+  locale?: string,
+  fetchContext?: MarketingFetchContext,
+): Promise<CaseStudy | null> {
   if (getMarketingApiBaseUrl().trim()) {
     try {
-      const data = await marketingGet<unknown>(MARKETING_ENDPOINTS.caseStudy(slug), locale);
+      const data = await marketingGet<unknown>(MARKETING_ENDPOINTS.caseStudy(slug), locale, fetchContext);
       if (data && typeof data === 'object' && !Array.isArray(data)) {
         return mapPublicProjectToCaseStudy(data as Record<string, unknown>);
       }
     } catch {
-      /* fall through */
+      /* swallow; fall through to api-only / json paths */
     }
   }
 
   if (contentSource === 'api') {
     try {
-      const data = await marketingGet<CaseStudy>(MARKETING_ENDPOINTS.caseStudy(slug), locale);
+      const data = await marketingGet<CaseStudy>(MARKETING_ENDPOINTS.caseStudy(slug), locale, fetchContext);
       return data ? normalizeCaseStudy(data) : null;
     } catch {
       return null;
@@ -376,6 +389,7 @@ function normalizeCaseStudy(raw: CaseStudy): CaseStudy {
   return {
     id: raw.id,
     slug: raw.slug,
+    status: raw.status,
     title: raw.title,
     summary: raw.summary,
     description: raw.description,

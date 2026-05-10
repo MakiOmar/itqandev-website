@@ -255,8 +255,8 @@ export class LaravelApiClient {
         const contentType = xhr.getResponseHeader('content-type');
         let data: any;
 
-        // Handle empty responses
-        if (xhr.status === 204 || xhr.status === 201) {
+        // 204 No Content — no body (201 parses below when present)
+        if (xhr.status === 204) {
           return resolve({
             success: true,
             data: {} as T,
@@ -518,15 +518,15 @@ export class LaravelApiClient {
       const response = await fetch(url, requestOptions);
       const contentType = response.headers.get('content-type');
 
-      // Handle empty responses
-      if (response.status === 204 || response.status === 201) {
+      // 204 No Content — no response body to parse
+      if (response.status === 204) {
         return {
           success: true,
           data: {} as T,
         };
       }
 
-      // Parse JSON response
+      // Parse JSON response (201 Created often includes a resource body from Laravel)
       let data: any;
       if (contentType && contentType.includes('application/json')) {
         data = await response.json();

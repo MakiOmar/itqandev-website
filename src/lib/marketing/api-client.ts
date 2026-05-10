@@ -33,24 +33,23 @@ function tryParseMarketingApiRoot(): URL | null {
  * - When the HTML host equals the configured API hostname, use **`doc.origin`** so Vite (**`:5173`**) stays
  *   aligned with Laravel’s default port — **SANCTUM_STATEFUL_DOMAINS** must include that port (see docs).
  */
-function sanctumSsrOriginAndReferer(forwardDocumentUrl: string): { origin: string; referer: string; canon: boolean } | null {
+function sanctumSsrOriginAndReferer(forwardDocumentUrl: string): { origin: string; referer: string } | null {
   try {
     const doc = new URL(forwardDocumentUrl);
     const pathPart = `${doc.pathname}${doc.search}`;
     const envSiteRaw = String(import.meta.env?.VITE_SITE_URL ?? '').trim().replace(/\/$/, '');
     if (envSiteRaw) {
       const site = new URL(envSiteRaw.startsWith('http') ? envSiteRaw : `https://${envSiteRaw}`);
-      return { origin: site.origin, referer: `${site.origin}${pathPart}`, canon: true };
+      return { origin: site.origin, referer: `${site.origin}${pathPart}` };
     }
     const api = tryParseMarketingApiRoot();
     if (api && doc.hostname === api.hostname) {
       return {
         origin: doc.origin,
         referer: `${doc.origin}${pathPart}`,
-        canon: false,
       };
     }
-    return { origin: doc.origin, referer: `${doc.origin}${pathPart}`, canon: false };
+    return { origin: doc.origin, referer: `${doc.origin}${pathPart}` };
   } catch {
     return null;
   }
@@ -141,8 +140,6 @@ export async function marketingFetch<T>(
     ...(fetchInit.headers as Record<string, string>),
     ...optionalBrowserBearerHeaders(),
   };
-  let fwdSanctumSsrHint = false;
-  let fwdSanctumCanon = false;
 
   if (locale && String(locale).trim() !== '') {
     headers['X-Content-Locale'] = String(locale).trim().toLowerCase();
@@ -158,8 +155,6 @@ export async function marketingFetch<T>(
         if (pair) {
           headers['Origin'] = pair.origin;
           headers['Referer'] = pair.referer;
-          fwdSanctumCanon = pair.canon;
-          fwdSanctumSsrHint = !!(headers['Origin'] && headers['Referer']);
         }
       }
     }
@@ -171,81 +166,14 @@ export async function marketingFetch<T>(
 
   const credentials: RequestCredentials = typeof window !== 'undefined' ? 'include' : 'omit';
 
-  let urlHost = '';
-  try {
-    urlHost = new URL(url).host;
-  } catch {
-    urlHost = 'parse-failed';
-  }
-  const hasAuthHeaderKey = Object.keys(headers).some((k) => k.toLowerCase() === 'authorization');
-
-  let res: Response;
-  try {
-    res = await fetch(url, {
-      ...fetchInit,
-      headers,
-      credentials,
-    });
-  } catch (netErr: unknown) {
-    // #region agent log
-    const netMsg = netErr instanceof Error ? netErr.message : String(netErr);
-    fetch('http://127.0.0.1:7469/ingest/ed85bb2c-c192-44f6-8c60-9fe04360649a', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'X-Debug-Session-Id': '597541' },
-      body: JSON.stringify({
-        sessionId: '597541',
-        hypothesisId: 'H1-H4',
-        location: 'api-client.ts:marketingFetch:networkCatch',
-        message: 'marketing fetch threw before response (possible CORS/network)',
-        data: {
-          netMsgSnippet: netMsg.slice(0, 160),
-          urlHost,
-          pathSlice: path.slice(0, 96),
-          isBrowser: typeof window !== 'undefined',
-          credMode: credentials,
-          fwdCookieLen: forwardCookies?.length ?? 0,
-          hasFwdAuth: !!(forwardAuthorization && String(forwardAuthorization).trim()),
-          hasBearerInHeaders: hasAuthHeaderKey,
-          fwdSanctumSsrHint,
-          fwdSanctumCanon,
-        },
-        timestamp: Date.now(),
-      }),
-    }).catch(() => {});
-    // #endregion
-    throw netErr;
-  }
+  const res = await fetch(url, {
+    ...fetchInit,
+    headers,
+    credentials,
+  });
 
   const contentType = res.headers.get('content-type');
   const isJson = contentType?.includes('application/json');
-
-  // #region agent log
-  fetch('http://127.0.0.1:7469/ingest/ed85bb2c-c192-44f6-8c60-9fe04360649a', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'X-Debug-Session-Id': '597541' },
-    body: JSON.stringify({
-      sessionId: '597541',
-      hypothesisId: 'H1-H2-H4',
-      location: 'api-client.ts:marketingFetch:afterResponse',
-      message: 'marketing fetch got response',
-      data: {
-        httpStatus: res.status,
-        resOk: res.ok,
-        urlHost,
-        pathSlice: path.slice(0, 96),
-        isBrowser: typeof window !== 'undefined',
-        credMode: credentials,
-        fwdCookieLen: forwardCookies?.length ?? 0,
-        hasFwdAuth: !!(forwardAuthorization && String(forwardAuthorization).trim()),
-        hasBearerInHeaders: hasAuthHeaderKey,
-        fwdSanctumSsrHint,
-        fwdSanctumCanon,
-        isJsonGuess: !!isJson,
-      },
-      timestamp: Date.now(),
-    }),
-  }).catch(() => {});
-  // #endregion
 
   if (!res.ok) {
     const text = isJson ? (await res.json()).message : await res.text();
