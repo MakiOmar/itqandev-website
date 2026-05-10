@@ -25,6 +25,15 @@ import type { AdminService } from '../../../../../types/service';
 import { ServiceIconSelect } from '../../../../../components/admin/ServiceIconSelect';
 import { useContentSlugAutosuggestForm } from '../../../../../lib/slug/content-slug-auto';
 import { AdminPublicPageLink } from '../../../../../components/admin/AdminPublicPageLink';
+import { ContentSeoFields } from '../../../../../components/admin/ContentSeoFields';
+import { putContentSeo } from '../../../../../lib/admin/content-seo-put';
+import {
+  contentSeoDraftFromRow,
+  emptyContentSeoDraft,
+  seoDraftToMetaRow,
+  type ContentSeoDraft,
+  type ContentSeoMetaRow,
+} from '../../../../../types/content-seo';
 
 function joinLines(arr: string[] | null | undefined): string {
   if (!Array.isArray(arr) || arr.length === 0) {
@@ -49,6 +58,11 @@ function mapServiceFromApi(raw: Record<string, unknown>): AdminService {
     translations: Array.isArray(raw.translations) ? (raw.translations as AdminService['translations']) : [],
     createdAt: (raw.created_at as string) ?? (raw.createdAt as string) ?? '',
     updatedAt: (raw.updated_at as string) ?? (raw.updatedAt as string) ?? '',
+    seoMetas: Array.isArray(raw.seoMetas)
+      ? (raw.seoMetas as AdminService['seoMetas'])
+      : Array.isArray(raw.seo_metas)
+        ? (raw.seo_metas as AdminService['seoMetas'])
+        : undefined,
   };
 }
 
@@ -92,6 +106,9 @@ export default component$(() => {
   const canonicalProcessLines = useSignal('');
   const canonicalDeliverablesLines = useSignal('');
   const translationsJson = useSignal('[]');
+  const seoDraft = useSignal<ContentSeoDraft>(emptyContentSeoDraft());
+  const seoMetasDraft = useSignal<ContentSeoMetaRow[]>([]);
+  const seoSaveRunning = useSignal(false);
 
   const formData = useSignal({
     name: '',
@@ -228,6 +245,80 @@ export default component$(() => {
       canonicalDescription.value = formData.value.description;
       canonicalProcessLines.value = formData.value.process_lines;
       canonicalDeliverablesLines.value = formData.value.deliverables_lines;
+    }
+  });
+
+  useTask$(({ track }) => {
+    track(() => serviceLoader.value?.id);
+    track(() => liveService.value?.id);
+    const s = (liveService.value ?? serviceLoader.value) as AdminService | undefined;
+    if (!s?.id) {
+      return;
+    }
+    const rows = Array.isArray(s.seoMetas) ? s.seoMetas : [];
+    seoMetasDraft.value = rows.map((r) => ({
+      id: typeof r.id === 'number' ? r.id : undefined,
+      locale: String(r.locale ?? '').toLowerCase().trim(),
+      meta_title: r.meta_title ?? '',
+      meta_description: r.meta_description ?? '',
+      canonical_url: r.canonical_url,
+      og_title: r.og_title,
+      og_description: r.og_description,
+      og_image: r.og_image,
+      twitter_card: r.twitter_card,
+      schema: r.schema,
+    }));
+  });
+
+  useTask$(({ track }) => {
+    track(() => editingLocaleDraft.value);
+    track(() => contentLocaleDraft.value);
+    track(() => langConfig.value.default_locale);
+    track(() => langConfig.value.site_languages);
+    track(() => seoMetasDraft.value);
+    const loc = normalizeEditingLocale(
+      editingLocaleDraft.value,
+      langConfig.value.site_languages,
+      langConfig.value.default_locale,
+      contentLocaleDraft.value.trim() !== '' ? contentLocaleDraft.value.trim() : null,
+    ).toLowerCase();
+    const row = seoMetasDraft.value.find((r) => String(r.locale).toLowerCase() === loc);
+    seoDraft.value = contentSeoDraftFromRow(row);
+  });
+
+  const saveServiceSeo = $(async () => {
+    const s = (liveService.value ?? serviceLoader.value) as AdminService | undefined;
+    if (!s?.id) {
+      return;
+    }
+    const loc = normalizeEditingLocale(
+      editingLocaleDraft.value,
+      langConfig.value.site_languages,
+      langConfig.value.default_locale,
+      contentLocaleDraft.value.trim() !== '' ? contentLocaleDraft.value.trim() : null,
+    ).toLowerCase();
+    seoSaveRunning.value = true;
+    try {
+      const apiClient = getApiClient();
+      await putContentSeo(apiClient, 'service', Number(s.id), loc, seoDraft.value);
+      const merged = seoDraftToMetaRow(loc, seoDraft.value);
+      const next = [...seoMetasDraft.value];
+      const idx = next.findIndex((r) => String(r.locale).toLowerCase() === loc);
+      if (idx >= 0) {
+        next[idx] = { ...next[idx], ...merged };
+      } else {
+        next.push(merged);
+      }
+      seoMetasDraft.value = next;
+      const mergedBase = liveService.value ?? serviceLoader.value;
+      if (mergedBase && typeof (mergedBase as AdminService).id === 'number') {
+        liveService.value = { ...(mergedBase as AdminService), seoMetas: next };
+      }
+      await success(saveTranslations.successTitle, { text: saveTranslations.updatedText });
+    } catch (err: any) {
+      await showError(err?.message || 'Failed to save SEO');
+    } finally {
+      seoSaveRunning.value = false;
     }
   });
 
@@ -506,6 +597,21 @@ export default component$(() => {
             <label for="esvc-published" class="text-sm font-medium text-gray-700 dark:text-gray-200">
               {translateApp(lang, 'services.published')}
             </label>
+          </div>
+
+          <div class="border-t border-gray-200 pt-4 dark:border-gray-700">
+            <h3 class="mb-2 text-base font-semibold text-gray-900 dark:text-gray-100">{translateApp(lang, 'seo.title')}</h3>
+            {/* <!-- SEO row per editing locale --> */}
+            <p class="mb-3 text-xs text-gray-600 dark:text-gray-400">{translateApp(lang, 'seo.forEditingLocale')}</p>
+            <ContentSeoFields lang={lang} idPrefix="service" draft={seoDraft} />
+            <button
+              type="button"
+              disabled={seoSaveRunning.value}
+              onClick$={saveServiceSeo}
+              class="mt-3 w-full rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-primary-700 disabled:opacity-60"
+            >
+              {seoSaveRunning.value ? translateApp(lang, 'common.loading') : translateApp(lang, 'seo.save')}
+            </button>
           </div>
 
           <div class="flex gap-2">

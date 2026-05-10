@@ -1,6 +1,8 @@
 /**
  * Admin / API service entity (Laravel `services` + `service_translations`).
  */
+import type { ContentSeoMetaRow } from './content-seo';
+
 export interface ServiceTranslationRow {
   locale: string;
   name?: string | null;
@@ -25,6 +27,7 @@ export interface AdminService {
   translations?: ServiceTranslationRow[];
   createdAt?: string;
   updatedAt?: string;
+  seoMetas?: ContentSeoMetaRow[];
 }
 
 export interface ServiceCreateInput {

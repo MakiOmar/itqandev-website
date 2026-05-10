@@ -3,6 +3,7 @@
  */
 import type { Media } from './media';
 import type { SkillTranslationRow } from './site-language';
+import type { ContentSeoMetaRow } from './content-seo';
 
 export interface Skill {
   id: number;
@@ -12,6 +13,7 @@ export interface Skill {
   description?: string;
   iconHint?: string;
   translations?: SkillTranslationRow[];
+  seoMetas?: ContentSeoMetaRow[];
   createdAt: string;
   updatedAt: string;
   projectsCount?: number;

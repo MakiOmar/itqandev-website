@@ -29,6 +29,14 @@ import { useSiteLanguageConfig } from '../../layout';
 import type { Project, ProjectUpdateInput, Category, Skill, Media, ProjectSeoMeta } from '../../../../../types';
 import { useContentSlugAutosuggestTitleSlugSignals } from '../../../../../lib/slug/content-slug-auto';
 import { AdminPublicPageLink } from '../../../../../components/admin/AdminPublicPageLink';
+import { ContentSeoFields } from '../../../../../components/admin/ContentSeoFields';
+import { putContentSeo } from '../../../../../lib/admin/content-seo-put';
+import {
+  contentSeoDraftFromRow,
+  emptyContentSeoDraft,
+  seoDraftToMetaRow,
+  type ContentSeoDraft,
+} from '../../../../../types/content-seo';
 
 /**
  * Project update schema
@@ -322,33 +330,6 @@ export const useUpdateProject = routeAction$(
   )
 );
 
-const projectSeoSchema = z.object({
-  locale: z.string().min(1).max(16),
-  meta_title: z.string().optional(),
-  meta_description: z.string().optional(),
-});
-
-/**
- * Persist SEO morph row via global SeoMeta API (`PUT /v1/seo/project/{id}`).
- */
-export const useSaveProjectSeo = routeAction$(
-  async (data, { params, cookie, request, fail }) => {
-    try {
-      const cookieHeader = extractCookieHeader(cookie, request as any);
-      const apiClient = getApiClient(cookieHeader, false);
-      await apiClient.put(`/v1/seo/project/${params.id}`, {
-        locale: typeof data.locale === 'string' ? data.locale.toLowerCase().trim() : '',
-        meta_title: typeof data.meta_title === 'string' ? data.meta_title : '',
-        meta_description: typeof data.meta_description === 'string' ? data.meta_description : '',
-      });
-      return { success: true };
-    } catch (error: any) {
-      return fail(500, { message: error?.message || 'Failed to save SEO' });
-    }
-  },
-  zod$(projectSeoSchema),
-);
-
 /**
  * Project edit page
  */
@@ -400,10 +381,8 @@ export default component$(() => {
     ctUseSiteDefault: translateApp(lang, 'contentTranslations.useSiteDefault'),
     ctFallbackHint: translateApp(lang, 'contentTranslations.fallbackPlaceholderHint'),
     seoTitle: translateApp(lang, 'seo.title'),
-    seoMetaTitle: translateApp(lang, 'seo.metaTitle'),
-    seoMetaDescription: translateApp(lang, 'seo.metaDescription'),
     seoSave: translateApp(lang, 'seo.save'),
-    seoForContentLanguage: translateApp(lang, 'projects.seoForContentLanguage'),
+    seoForEditingLocale: translateApp(lang, 'seo.forEditingLocale'),
   };
   
   const { success, error: showError } = useSwal({
@@ -422,10 +401,10 @@ export default component$(() => {
   const langConfig = useSiteLanguageConfig();
   const categoriesAndSkills = useCategoriesAndSkills();
   const updateAction = useUpdateProject();
-  const saveSeoAction = useSaveProjectSeo();
   const lastSuccessId = useSignal<number | null>(null);
-  const projectSeo = useSignal({ meta_title: '', meta_description: '' });
+  const seoDraft = useSignal<ContentSeoDraft>(emptyContentSeoDraft());
   const seoMetasDraft = useSignal<ProjectSeoMeta[]>([]);
+  const seoSaveRunning = useSignal(false);
 
   // Normalize media objects to ensure consistent structure
   const normalizeMedia = (media: any) => {
@@ -522,6 +501,7 @@ export default component$(() => {
       og_description: r.og_description,
       og_image: r.og_image,
       twitter_card: r.twitter_card,
+      schema: r.schema,
     }));
   });
 
@@ -538,10 +518,7 @@ export default component$(() => {
       contentLocaleDraft.value.trim() !== '' ? contentLocaleDraft.value.trim() : null,
     ).toLowerCase();
     const row = seoMetasDraft.value.find((r) => String(r.locale).toLowerCase() === loc);
-    projectSeo.value = {
-      meta_title: typeof row?.meta_title === 'string' ? row.meta_title : '',
-      meta_description: typeof row?.meta_description === 'string' ? row.meta_description : '',
-    };
+    seoDraft.value = contentSeoDraftFromRow(row);
   });
 
   const saveProjectSeo = $(async () => {
@@ -551,30 +528,25 @@ export default component$(() => {
       langConfig.value.default_locale,
       contentLocaleDraft.value.trim() !== '' ? contentLocaleDraft.value.trim() : null,
     ).toLowerCase();
-    const fd = new FormData();
-    fd.append('locale', loc);
-    fd.append('meta_title', projectSeo.value.meta_title);
-    fd.append('meta_description', projectSeo.value.meta_description);
-    const response = await saveSeoAction.submit(fd);
-    if (response.value?.failed) {
-      await showError((response.value as { message?: string }).message || 'Failed to save SEO');
-      return;
+    seoSaveRunning.value = true;
+    try {
+      const apiClient = getApiClient();
+      await putContentSeo(apiClient, 'project', Number(location.params.id), loc, seoDraft.value);
+      const merged = seoDraftToMetaRow(loc, seoDraft.value);
+      const next = [...seoMetasDraft.value];
+      const idx = next.findIndex((r) => String(r.locale).toLowerCase() === loc);
+      if (idx >= 0) {
+        next[idx] = { ...next[idx], ...merged };
+      } else {
+        next.push(merged);
+      }
+      seoMetasDraft.value = next;
+      await success(translations.success, { text: translations.updated });
+    } catch (err: any) {
+      await showError(err?.message || 'Failed to save SEO');
+    } finally {
+      seoSaveRunning.value = false;
     }
-    const next = [...seoMetasDraft.value];
-    const idx = next.findIndex((r) => String(r.locale).toLowerCase() === loc);
-    const merged: ProjectSeoMeta = {
-      ...(idx >= 0 ? next[idx] : ({} as ProjectSeoMeta)),
-      locale: loc,
-      meta_title: projectSeo.value.meta_title,
-      meta_description: projectSeo.value.meta_description,
-    };
-    if (idx >= 0) {
-      next[idx] = merged;
-    } else {
-      next.push(merged);
-    }
-    seoMetasDraft.value = next;
-    await success(translations.success, { text: translations.updated });
   });
 
   const categoryItems = categoriesAndSkills.value.categories.map((c) => ({
@@ -960,59 +932,17 @@ export default component$(() => {
                 <h3 class="mb-3 text-base font-semibold text-gray-900 dark:text-gray-100">
                   {translations.seoTitle}
                 </h3>
-                <p class="mb-3 text-xs text-gray-600 dark:text-gray-400">{translations.seoForContentLanguage}</p>
-                <div class="space-y-3">
-                  <div>
-                    <label
-                      for="project-meta-title"
-                      class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-200"
-                    >
-                      {translations.seoMetaTitle}
-                    </label>
-                    <input
-                      id="project-meta-title"
-                      type="text"
-                      value={projectSeo.value.meta_title}
-                      onInput$={(e: Event) => {
-                        projectSeo.value = {
-                          ...projectSeo.value,
-                          meta_title: (e.target as HTMLInputElement).value,
-                        };
-                      }}
-                      placeholder={translations.seoMetaTitle}
-                      class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-primary-500 focus:outline-none focus:ring focus:ring-primary-200 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:focus:ring-primary-700/40"
-                    />
-                  </div>
-                  <div>
-                    <label
-                      for="project-meta-description"
-                      class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-200"
-                    >
-                      {translations.seoMetaDescription}
-                    </label>
-                    <textarea
-                      id="project-meta-description"
-                      rows={3}
-                      value={projectSeo.value.meta_description}
-                      onInput$={(e: Event) => {
-                        projectSeo.value = {
-                          ...projectSeo.value,
-                          meta_description: (e.target as HTMLTextAreaElement).value,
-                        };
-                      }}
-                      placeholder={translations.seoMetaDescription}
-                      class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-primary-500 focus:outline-none focus:ring focus:ring-primary-200 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:focus:ring-primary-700/40"
-                    />
-                  </div>
-                  <button
-                    type="button"
-                    disabled={saveSeoAction.isRunning}
-                    onClick$={saveProjectSeo}
-                    class="w-full rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-primary-700 disabled:opacity-60"
-                  >
-                    {saveSeoAction.isRunning ? translations.loading : translations.seoSave}
-                  </button>
-                </div>
+                {/* <!-- SEO applies to the locale selected above --> */}
+                <p class="mb-3 text-xs text-gray-600 dark:text-gray-400">{translations.seoForEditingLocale}</p>
+                <ContentSeoFields lang={lang} idPrefix="project" draft={seoDraft} />
+                <button
+                  type="button"
+                  disabled={seoSaveRunning.value}
+                  onClick$={saveProjectSeo}
+                  class="mt-4 w-full rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-primary-700 disabled:opacity-60"
+                >
+                  {seoSaveRunning.value ? translations.loading : translations.seoSave}
+                </button>
               </div>
 
               <div class="rounded-lg border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-900">

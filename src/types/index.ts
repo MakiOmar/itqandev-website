@@ -3,6 +3,7 @@
  */
 
 export * from './site-language';
+export * from './content-seo';
 export * from './project';
 export * from './category';
 export * from './skill';

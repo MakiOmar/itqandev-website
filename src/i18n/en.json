@@ -452,6 +452,7 @@
   },
   "seo": {
     "title": "SEO",
+    "forEditingLocale": "SEO applies to the editing language selected above (one row per locale).",
     "metaTitle": "Meta title",
     "metaDescription": "Meta description",
     "canonicalUrl": "Canonical URL",
@@ -459,7 +460,11 @@
     "ogDescription": "OG Description",
     "ogImage": "OG Image URL",
     "twitterCard": "Twitter Card Type",
+    "twitterCardDefault": "Default (automatic)",
+    "twitterCardSummary": "Summary",
+    "twitterCardLarge": "Summary with large image",
     "schema": "Schema JSON-LD",
+    "schemaHint": "Paste a JSON object or array (JSON-LD). Invalid JSON is discarded when saving.",
     "save": "Save SEO"
   },
   "sidebar": {

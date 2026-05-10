@@ -3,6 +3,7 @@
  */
 import type { Media } from './media';
 import type { BlogTranslationRow } from './site-language';
+import type { ContentSeoMetaRow } from './content-seo';
 
 export interface BlogPost {
   id: number;
@@ -24,6 +25,7 @@ export interface BlogPost {
   };
   featuredImage?: Media;
   translations?: BlogTranslationRow[];
+  seoMetas?: ContentSeoMetaRow[];
 }
 
 export interface BlogPostCreateInput {

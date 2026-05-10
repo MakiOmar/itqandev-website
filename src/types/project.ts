@@ -5,19 +5,10 @@ import type { Category } from './category';
 import type { Skill } from './skill';
 import type { Media } from './media';
 import type { ProjectTranslationRow } from './site-language';
+import type { ContentSeoMetaRow } from './content-seo';
 
-/** Mirrors Laravel `seo_metas` rows (snake_case from API). */
-export interface ProjectSeoMeta {
-  id?: number;
-  locale: string;
-  meta_title?: string | null;
-  meta_description?: string | null;
-  canonical_url?: string | null;
-  og_title?: string | null;
-  og_description?: string | null;
-  og_image?: string | null;
-  twitter_card?: string | null;
-}
+/** @alias Per-locale SEO row from API */
+export type ProjectSeoMeta = ContentSeoMetaRow;
 
 export interface Project {
   id: number;

@@ -23,6 +23,15 @@ import {
 import { runCategoryUpdateFromBrowser } from '../../../../../lib/admin/category-actions';
 import type { Category } from '../../../../../types';
 import { useContentSlugAutosuggestForm } from '../../../../../lib/slug/content-slug-auto';
+import { ContentSeoFields } from '../../../../../components/admin/ContentSeoFields';
+import { putContentSeo } from '../../../../../lib/admin/content-seo-put';
+import {
+  contentSeoDraftFromRow,
+  emptyContentSeoDraft,
+  seoDraftToMetaRow,
+  type ContentSeoDraft,
+  type ContentSeoMetaRow,
+} from '../../../../../types/content-seo';
 
 function mapCategoryFromApi(raw: any): Category {
   return {
@@ -36,6 +45,11 @@ function mapCategoryFromApi(raw: any): Category {
     translations: Array.isArray(raw.translations) ? raw.translations : [],
     createdAt: raw.created_at ?? raw.createdAt ?? '',
     updatedAt: raw.updated_at ?? raw.updatedAt ?? '',
+    seoMetas: Array.isArray(raw.seoMetas)
+      ? raw.seoMetas
+      : Array.isArray((raw as Record<string, unknown>).seo_metas)
+        ? ((raw as Record<string, unknown>).seo_metas as Category['seoMetas'])
+        : undefined,
   };
 }
 
@@ -78,6 +92,9 @@ export default component$(() => {
   const canonicalName = useSignal('');
   const canonicalDescription = useSignal('');
   const translationsJson = useSignal('[]');
+  const seoDraft = useSignal<ContentSeoDraft>(emptyContentSeoDraft());
+  const seoMetasDraft = useSignal<ContentSeoMetaRow[]>([]);
+  const seoSaveRunning = useSignal(false);
 
   const formData = useSignal({
     name: '',
@@ -179,6 +196,80 @@ export default component$(() => {
     if (shouldWritePrimaryColumns(edit, eff)) {
       canonicalName.value = formData.value.name;
       canonicalDescription.value = formData.value.description;
+    }
+  });
+
+  useTask$(({ track }) => {
+    track(() => categoryLoader.value?.id);
+    track(() => liveCategory.value?.id);
+    const c = (liveCategory.value ?? categoryLoader.value) as Category | undefined;
+    if (!c?.id) {
+      return;
+    }
+    const rows = Array.isArray(c.seoMetas) ? c.seoMetas : [];
+    seoMetasDraft.value = rows.map((r) => ({
+      id: typeof r.id === 'number' ? r.id : undefined,
+      locale: String(r.locale ?? '').toLowerCase().trim(),
+      meta_title: r.meta_title ?? '',
+      meta_description: r.meta_description ?? '',
+      canonical_url: r.canonical_url,
+      og_title: r.og_title,
+      og_description: r.og_description,
+      og_image: r.og_image,
+      twitter_card: r.twitter_card,
+      schema: r.schema,
+    }));
+  });
+
+  useTask$(({ track }) => {
+    track(() => editingLocaleDraft.value);
+    track(() => contentLocaleDraft.value);
+    track(() => langConfig.value.default_locale);
+    track(() => langConfig.value.site_languages);
+    track(() => seoMetasDraft.value);
+    const loc = normalizeEditingLocale(
+      editingLocaleDraft.value,
+      langConfig.value.site_languages,
+      langConfig.value.default_locale,
+      contentLocaleDraft.value.trim() !== '' ? contentLocaleDraft.value.trim() : null,
+    ).toLowerCase();
+    const row = seoMetasDraft.value.find((r) => String(r.locale).toLowerCase() === loc);
+    seoDraft.value = contentSeoDraftFromRow(row);
+  });
+
+  const saveCategorySeo = $(async () => {
+    const c = (liveCategory.value ?? categoryLoader.value) as Category | undefined;
+    if (!c?.id) {
+      return;
+    }
+    const loc = normalizeEditingLocale(
+      editingLocaleDraft.value,
+      langConfig.value.site_languages,
+      langConfig.value.default_locale,
+      contentLocaleDraft.value.trim() !== '' ? contentLocaleDraft.value.trim() : null,
+    ).toLowerCase();
+    seoSaveRunning.value = true;
+    try {
+      const apiClient = getApiClient();
+      await putContentSeo(apiClient, 'category', Number(c.id), loc, seoDraft.value);
+      const merged = seoDraftToMetaRow(loc, seoDraft.value);
+      const next = [...seoMetasDraft.value];
+      const idx = next.findIndex((r) => String(r.locale).toLowerCase() === loc);
+      if (idx >= 0) {
+        next[idx] = { ...next[idx], ...merged };
+      } else {
+        next.push(merged);
+      }
+      seoMetasDraft.value = next;
+      const mergedBase = liveCategory.value ?? categoryLoader.value;
+      if (mergedBase && typeof (mergedBase as Category).id === 'number') {
+        liveCategory.value = { ...(mergedBase as Category), seoMetas: next };
+      }
+      await success(saveTranslations.successTitle, { text: saveTranslations.updatedText });
+    } catch (err: any) {
+      await showError(err?.message || 'Failed to save SEO');
+    } finally {
+      seoSaveRunning.value = false;
     }
   });
 
@@ -356,6 +447,21 @@ export default component$(() => {
             <label for="is_featured" class="text-sm font-medium text-gray-700 dark:text-gray-200">
               {translateApp(lang, 'categories.featured')}
             </label>
+          </div>
+
+          <div class="border-t border-gray-200 pt-4 dark:border-gray-700">
+            <h3 class="mb-2 text-base font-semibold text-gray-900 dark:text-gray-100">{translateApp(lang, 'seo.title')}</h3>
+            {/* <!-- SEO row per editing locale --> */}
+            <p class="mb-3 text-xs text-gray-600 dark:text-gray-400">{translateApp(lang, 'seo.forEditingLocale')}</p>
+            <ContentSeoFields lang={lang} idPrefix="category" draft={seoDraft} />
+            <button
+              type="button"
+              disabled={seoSaveRunning.value}
+              onClick$={saveCategorySeo}
+              class="mt-3 w-full rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-primary-700 disabled:opacity-60"
+            >
+              {seoSaveRunning.value ? translateApp(lang, 'common.loading') : translateApp(lang, 'seo.save')}
+            </button>
           </div>
 
           <div class="flex gap-2">

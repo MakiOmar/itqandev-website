@@ -27,6 +27,15 @@ import { routesFromPreferredCookie, useAppRoutes } from '../../../../../lib/cons
 import type { BlogPost, BlogPostUpdateInput } from '../../../../../types';
 import { useContentSlugAutosuggestTitleSlugSignals } from '../../../../../lib/slug/content-slug-auto';
 import { AdminPublicPageLink } from '../../../../../components/admin/AdminPublicPageLink';
+import { ContentSeoFields } from '../../../../../components/admin/ContentSeoFields';
+import { putContentSeo } from '../../../../../lib/admin/content-seo-put';
+import {
+  contentSeoDraftFromRow,
+  emptyContentSeoDraft,
+  seoDraftToMetaRow,
+  type ContentSeoDraft,
+  type ContentSeoMetaRow,
+} from '../../../../../types/content-seo';
 
 /**
  * Blog post update schema
@@ -173,6 +182,9 @@ export default component$(() => {
   const slugField = useSignal('');
   const excerptField = useSignal('');
   const contentField = useSignal('');
+  const seoDraft = useSignal<ContentSeoDraft>(emptyContentSeoDraft());
+  const seoMetasDraft = useSignal<ContentSeoMetaRow[]>([]);
+  const seoSaveRunning = useSignal(false);
 
   const blogSlugAuto = useContentSlugAutosuggestTitleSlugSignals({
     entity: 'blog_posts',
@@ -246,6 +258,72 @@ export default component$(() => {
     titleField.value = m.title;
     excerptField.value = m.excerpt;
     contentField.value = m.content;
+  });
+
+  useTask$(({ track }) => {
+    track(() => post.value?.id);
+    const p = post.value as unknown as BlogPost & { seo_metas?: ContentSeoMetaRow[] };
+    const rows = Array.isArray(p?.seoMetas)
+      ? p.seoMetas
+      : Array.isArray(p?.seo_metas)
+        ? p.seo_metas
+        : [];
+    seoMetasDraft.value = rows.map((r) => ({
+      id: typeof r.id === 'number' ? r.id : undefined,
+      locale: String(r.locale ?? '').toLowerCase().trim(),
+      meta_title: r.meta_title ?? '',
+      meta_description: r.meta_description ?? '',
+      canonical_url: r.canonical_url,
+      og_title: r.og_title,
+      og_description: r.og_description,
+      og_image: r.og_image,
+      twitter_card: r.twitter_card,
+      schema: r.schema,
+    }));
+  });
+
+  useTask$(({ track }) => {
+    track(() => editingLocaleDraft.value);
+    track(() => contentLocaleDraft.value);
+    track(() => langConfig.value.default_locale);
+    track(() => langConfig.value.site_languages);
+    track(() => seoMetasDraft.value);
+    const loc = normalizeEditingLocale(
+      editingLocaleDraft.value,
+      langConfig.value.site_languages,
+      langConfig.value.default_locale,
+      contentLocaleDraft.value.trim() !== '' ? contentLocaleDraft.value.trim() : null,
+    ).toLowerCase();
+    const row = seoMetasDraft.value.find((r) => String(r.locale).toLowerCase() === loc);
+    seoDraft.value = contentSeoDraftFromRow(row);
+  });
+
+  const saveBlogSeo = $(async () => {
+    const loc = normalizeEditingLocale(
+      editingLocaleDraft.value,
+      langConfig.value.site_languages,
+      langConfig.value.default_locale,
+      contentLocaleDraft.value.trim() !== '' ? contentLocaleDraft.value.trim() : null,
+    ).toLowerCase();
+    seoSaveRunning.value = true;
+    try {
+      const apiClient = getApiClient();
+      await putContentSeo(apiClient, 'blog-post', Number(location.params.id), loc, seoDraft.value);
+      const merged = seoDraftToMetaRow(loc, seoDraft.value);
+      const next = [...seoMetasDraft.value];
+      const idx = next.findIndex((r) => String(r.locale).toLowerCase() === loc);
+      if (idx >= 0) {
+        next[idx] = { ...next[idx], ...merged };
+      } else {
+        next.push(merged);
+      }
+      seoMetasDraft.value = next;
+      await success(successTitle, { text: translateApp(lang, 'common.updated') });
+    } catch (err: any) {
+      await showError(err?.message || 'Failed to save SEO');
+    } finally {
+      seoSaveRunning.value = false;
+    }
   });
 
   const uploadFeaturedImage = $(async () => {
@@ -637,6 +715,21 @@ export default component$(() => {
                 {featuredImage.value ? 'Change Image' : 'Select from Library'}
               </button>
             </div>
+          </div>
+
+          <div class="mt-6 border-t border-gray-200 pt-6 dark:border-gray-700">
+            <h3 class="mb-3 text-lg font-semibold text-gray-900 dark:text-gray-100">{translateApp(lang, 'seo.title')}</h3>
+            {/* <!-- SEO morph row keyed by dashboard editing locale --> */}
+            <p class="mb-3 text-xs text-gray-600 dark:text-gray-400">{translateApp(lang, 'seo.forEditingLocale')}</p>
+            <ContentSeoFields lang={lang} idPrefix="blog-post" draft={seoDraft} />
+            <button
+              type="button"
+              disabled={seoSaveRunning.value}
+              onClick$={saveBlogSeo}
+              class="mt-4 w-full rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-primary-700 disabled:opacity-60 sm:w-auto"
+            >
+              {seoSaveRunning.value ? translateApp(lang, 'common.loading') : translateApp(lang, 'seo.save')}
+            </button>
           </div>
 
           {updateAction.value?.failed && (updateAction.value as any).error && (

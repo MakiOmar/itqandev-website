@@ -452,6 +452,7 @@
   },
   "seo": {
     "title": "SEO",
+    "forEditingLocale": "تهيئة SEO تخص لغة التحرير المحددة أعلاه (صف لكل لغة).",
     "metaTitle": "Meta title",
     "metaDescription": "Meta description",
     "canonicalUrl": "Canonical URL",
@@ -459,7 +460,11 @@
     "ogDescription": "OG Description",
     "ogImage": "OG Image URL",
     "twitterCard": "Twitter Card Type",
+    "twitterCardDefault": "افتراضي (تلقائي)",
+    "twitterCardSummary": "ملخص",
+    "twitterCardLarge": "ملخص بصورة كبيرة",
     "schema": "Schema JSON-LD",
+    "schemaHint": "الصق كائنًا أو مصفوفة JSON (JSON-LD). يتم تجاهل JSON غير الصالح عند الحفظ.",
     "save": "حفظ SEO"
   },
   "sidebar": {

@@ -2,6 +2,7 @@
  * Category entity types
  */
 import type { Media } from './media';
+import type { ContentSeoMetaRow } from './content-seo';
 
 export interface Category {
   id: number;
@@ -17,6 +18,7 @@ export interface Category {
   thumb?: Media;
   banner?: Media;
   translations?: Array<{ locale: string; name?: string | null; description?: string | null }>;
+  seoMetas?: ContentSeoMetaRow[];
 }
 
 export interface CategoryCreateInput {

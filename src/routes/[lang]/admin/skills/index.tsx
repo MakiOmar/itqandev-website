@@ -24,6 +24,15 @@ import {
   shouldWritePrimaryColumns,
 } from '../../../../lib/content-display-locale';
 import { useContentSlugAutosuggestForm } from '../../../../lib/slug/content-slug-auto';
+import { ContentSeoFields } from '../../../../components/admin/ContentSeoFields';
+import { putContentSeo } from '../../../../lib/admin/content-seo-put';
+import {
+  contentSeoDraftFromRow,
+  emptyContentSeoDraft,
+  seoDraftToMetaRow,
+  type ContentSeoDraft,
+  type ContentSeoMetaRow,
+} from '../../../../types/content-seo';
 
 /**
  * Skill schema
@@ -103,7 +112,8 @@ export const useCreateSkill = routeAction$(
       );
     }
     const response = await apiClient.post<Skill>(API_ENDPOINTS.SKILLS.CREATE, payload);
-    return { success: true, skill: response?.data ?? response };
+    const rPost = response as { data?: Skill };
+    return { success: true, skill: rPost?.data ?? (response as unknown as Skill) };
   },
   zod$(skillSchema)
 );
@@ -142,8 +152,10 @@ export const useUpdateSkill = routeAction$(
         { name: String(data.name || ''), description: String(data.description ?? '') },
       );
     }
-    await apiClient.put(API_ENDPOINTS.SKILLS.UPDATE(String(data.id)), payload);
-    return { success: true };
+    const responsePut = await apiClient.put<Skill>(API_ENDPOINTS.SKILLS.UPDATE(String(data.id)), payload);
+    const rPut = responsePut as { data?: Skill };
+    const skill = rPut?.data ?? (responsePut as unknown as Skill);
+    return { success: true, skill };
   },
   zod$(skillSchema.extend({ id: z.string() }))
 );
@@ -231,6 +243,9 @@ export default component$(() => {
   const canonicalName = useSignal('');
   const canonicalDescription = useSignal('');
   const translationsJson = useSignal('[]');
+  const seoDraft = useSignal<ContentSeoDraft>(emptyContentSeoDraft());
+  const seoMetasDraft = useSignal<ContentSeoMetaRow[]>([]);
+  const seoSaveRunning = useSignal(false);
 
   const handleSearch = $((value: string) => {
     searchQuery.value = value;
@@ -250,6 +265,8 @@ export default component$(() => {
     canonicalName.value = '';
     canonicalDescription.value = '';
     translationsJson.value = '[]';
+    seoMetasDraft.value = [];
+    seoDraft.value = emptyContentSeoDraft();
   });
 
   // Pre-compute translation strings to avoid serialization issues
@@ -305,6 +322,87 @@ export default component$(() => {
     formData.value = { ...formData.value, name: m.name, description: m.description };
   });
 
+  useTask$(({ track }) => {
+    track(() => editingId.value);
+    track(() => skillsState.value);
+    if (!editingId.value) {
+      seoMetasDraft.value = [];
+      seoDraft.value = emptyContentSeoDraft();
+      return;
+    }
+    const sk = (skillsState.value || []).find((s) => s.id === editingId.value);
+    if (!sk) {
+      return;
+    }
+    const rows = Array.isArray(sk.seoMetas) ? sk.seoMetas : [];
+    seoMetasDraft.value = rows.map((r) => ({
+      id: typeof r.id === 'number' ? r.id : undefined,
+      locale: String(r.locale ?? '').toLowerCase().trim(),
+      meta_title: r.meta_title ?? '',
+      meta_description: r.meta_description ?? '',
+      canonical_url: r.canonical_url,
+      og_title: r.og_title,
+      og_description: r.og_description,
+      og_image: r.og_image,
+      twitter_card: r.twitter_card,
+      schema: r.schema,
+    }));
+  });
+
+  useTask$(({ track }) => {
+    track(() => editingId.value);
+    track(() => editingLocaleDraft.value);
+    track(() => contentLocaleDraft.value);
+    track(() => langConfig.value.default_locale);
+    track(() => langConfig.value.site_languages);
+    track(() => seoMetasDraft.value);
+    if (!editingId.value) {
+      return;
+    }
+    const loc = normalizeEditingLocale(
+      editingLocaleDraft.value,
+      langConfig.value.site_languages,
+      langConfig.value.default_locale,
+      contentLocaleDraft.value.trim() !== '' ? contentLocaleDraft.value.trim() : null,
+    ).toLowerCase();
+    const row = seoMetasDraft.value.find((r) => String(r.locale).toLowerCase() === loc);
+    seoDraft.value = contentSeoDraftFromRow(row);
+  });
+
+  const saveSkillSeo = $(async () => {
+    if (!editingId.value) {
+      return;
+    }
+    const loc = normalizeEditingLocale(
+      editingLocaleDraft.value,
+      langConfig.value.site_languages,
+      langConfig.value.default_locale,
+      contentLocaleDraft.value.trim() !== '' ? contentLocaleDraft.value.trim() : null,
+    ).toLowerCase();
+    seoSaveRunning.value = true;
+    try {
+      const apiClient = getApiClient();
+      await putContentSeo(apiClient, 'skill', editingId.value, loc, seoDraft.value);
+      const merged = seoDraftToMetaRow(loc, seoDraft.value);
+      const next = [...seoMetasDraft.value];
+      const idx = next.findIndex((r) => String(r.locale).toLowerCase() === loc);
+      if (idx >= 0) {
+        next[idx] = { ...next[idx], ...merged };
+      } else {
+        next.push(merged);
+      }
+      seoMetasDraft.value = next;
+      skillsState.value = skillsState.value.map((s) =>
+        s.id === editingId.value ? { ...s, seoMetas: next } : s,
+      );
+      await success(saveTranslations.successTitle, { text: saveTranslations.updatedText });
+    } catch (err: any) {
+      await showError(err?.message || 'Failed to save SEO');
+    } finally {
+      seoSaveRunning.value = false;
+    }
+  });
+
   const handleSave = $(async () => {
     const successTitle = saveTranslations.successTitle;
     const updatedText = saveTranslations.updatedText;
@@ -338,7 +436,9 @@ export default component$(() => {
         // keep edit form open after update (do not exit to list)
         const updated = (response.value as any)?.skill as Skill | undefined;
         if (updated) {
-          skillsState.value = skillsState.value.map((s) => (s.id === updated.id ? updated : s));
+          skillsState.value = skillsState.value.map((s) =>
+            s.id === updated.id ? ({ ...updated, seoMetas: updated.seoMetas ?? s.seoMetas } as Skill) : s,
+          );
         } else {
           const id = editingId.value;
           skillsState.value = skillsState.value.map((s) =>
@@ -614,6 +714,24 @@ export default component$(() => {
                   class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-primary-500 focus:outline-none focus:ring focus:ring-primary-200 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:focus:ring-primary-700/40"
                 />
               </div>
+              {editingId.value ? (
+                <div class="border-t border-gray-200 pt-4 dark:border-gray-700">
+                  <h3 class="mb-2 text-base font-semibold text-gray-900 dark:text-gray-100">
+                    {translateApp(lang, 'seo.title')}
+                  </h3>
+                  {/* <!-- SEO row per editing locale (edit mode only) --> */}
+                  <p class="mb-3 text-xs text-gray-600 dark:text-gray-400">{translateApp(lang, 'seo.forEditingLocale')}</p>
+                  <ContentSeoFields lang={lang} idPrefix={`skill-${editingId.value}`} draft={seoDraft} />
+                  <button
+                    type="button"
+                    disabled={seoSaveRunning.value}
+                    onClick$={saveSkillSeo}
+                    class="mt-3 w-full rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-primary-700 disabled:opacity-60"
+                  >
+                    {seoSaveRunning.value ? translateApp(lang, 'common.loading') : translateApp(lang, 'seo.save')}
+                  </button>
+                </div>
+              ) : null}
               <div class="flex gap-2">
                 <button
                   onClick$={handleSave}
