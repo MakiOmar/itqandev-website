@@ -1,8 +1,10 @@
-import { component$ } from '@builder.io/qwik';
+import { component$, useSignal, useVisibleTask$ } from '@builder.io/qwik';
 import type { DocumentHead } from '@builder.io/qwik-city';
 import { routeLoader$ } from '@builder.io/qwik-city';
 import { getConfig } from '~/lib/config';
+import { marketingApiPageOriginMismatch } from '~/lib/marketing/api-client';
 import { getCaseStudyBySlug } from '~/lib/marketing/content-layer';
+import type { CaseStudy as MarketingCaseStudy } from '~/lib/marketing/types';
 import { readPreferredLocaleFromCookieHeader } from '~/lib/i18n/dashboard-locale';
 import { marketingRoutes } from '~/lib/marketing/constants';
 import { uiLangFromUrlPathname } from '~/lib/i18n/ui-locale-path';
@@ -12,19 +14,129 @@ import { AnimatedReveal } from '~/components/marketing/AnimatedReveal';
 import { Link, useLocation } from '@builder.io/qwik-city';
 import { ContentImage } from '~/components/marketing/ContentImage';
 
-export const useCaseStudy = routeLoader$(async ({ params, request }) => {
+/** SSR cannot forward cross-origin Laravel cookies; loaders return this marker for a client retry. */
+type DeferredCrossOriginPayload = {
+  _deferredCrossOrigin: true;
+  slug: string;
+  uiLocale?: string;
+};
+
+function isMarketingCaseStudyValue(v: unknown): v is MarketingCaseStudy {
+  return v != null && typeof v === 'object' && typeof (v as MarketingCaseStudy).slug === 'string';
+}
+
+function isDeferredCrossOriginPayload(v: unknown): v is DeferredCrossOriginPayload {
+  return (
+    v != null &&
+    typeof v === 'object' &&
+    (v as DeferredCrossOriginPayload)._deferredCrossOrigin === true &&
+    typeof (v as DeferredCrossOriginPayload).slug === 'string'
+  );
+}
+
+export const useCaseStudy = routeLoader$(async ({ params, request, fail }) => {
   const slug = params.slug;
   const cookie = request.headers.get('cookie') || '';
-  const uiLocale = readPreferredLocaleFromCookieHeader(cookie) ?? undefined;
-  const caseStudy = await getCaseStudyBySlug(slug, uiLocale);
-  if (!caseStudy) throw new Error('Case study not found');
-  return caseStudy;
+  const langSeg = String(params.lang ?? '').trim().toLowerCase();
+  const fromUrl = langSeg === 'ar' || langSeg === 'en' ? langSeg : undefined;
+  const fromCookie = readPreferredLocaleFromCookieHeader(cookie);
+  const uiLocale = fromUrl ?? fromCookie ?? undefined;
+  const forwardAuthorization = request.headers.get('authorization') || '';
+
+  const caseStudy = await getCaseStudyBySlug(slug, uiLocale, {
+    forwardCookies: cookie || undefined,
+    forwardAuthorization: forwardAuthorization.trim() !== '' ? forwardAuthorization : undefined,
+    forwardDocumentUrl: request.url,
+  });
+  if (caseStudy) {
+    return caseStudy;
+  }
+
+  /** Cross-origin SSR (e.g. localhost UI + remote Laravel): session jars differ; browser retries with credentials. */
+  if (marketingApiPageOriginMismatch(request.url)) {
+    return { _deferredCrossOrigin: true, slug, uiLocale } satisfies DeferredCrossOriginPayload;
+  }
+
+  return fail(404, { message: 'Case study not found' });
 });
 
 export default component$(() => {
   const loc = useLocation();
   const MR = marketingRoutes(uiLangFromUrlPathname(loc.url.pathname));
-  const caseStudy = useCaseStudy().value;
+  const loader = useCaseStudy();
+  const clientCaseStudy = useSignal<MarketingCaseStudy | null>(null);
+  const clientRetryPhase = useSignal<'idle' | 'pending' | 'loaded' | 'missing'>('idle');
+
+  useVisibleTask$(async ({ track }) => {
+    track(() => loader.value);
+
+    clientCaseStudy.value = null;
+    const raw = loader.value as unknown;
+
+    if (!isDeferredCrossOriginPayload(raw)) {
+      clientRetryPhase.value = 'idle';
+      return;
+    }
+
+    clientRetryPhase.value = 'pending';
+    try {
+      const cs = await getCaseStudyBySlug(raw.slug, raw.uiLocale, undefined);
+      if (cs) {
+        clientCaseStudy.value = cs;
+        clientRetryPhase.value = 'loaded';
+        return;
+      }
+    } catch {
+      /* swallow */
+    }
+    clientRetryPhase.value = 'missing';
+  });
+
+  const rawLoader = loader.value as unknown;
+
+  if (rawLoader != null && typeof rawLoader === 'object' && (rawLoader as { failed?: boolean }).failed === true) {
+    return null;
+  }
+
+  let caseStudy: MarketingCaseStudy | null = null;
+  if (isMarketingCaseStudyValue(rawLoader)) {
+    caseStudy = rawLoader;
+  } else if (isDeferredCrossOriginPayload(rawLoader)) {
+    const phase = clientRetryPhase.value;
+    if (phase === 'pending' || phase === 'idle') {
+      return (
+        <Section>
+          <Container size="narrow">
+            {/* Loading draft preview cross-origin */}
+            <p class="rounded-md bg-slate-100 px-4 py-6 text-center text-slate-600 dark:bg-slate-800 dark:text-slate-300">
+              Loading project… If you preview drafts across hosts (e.g. localhost + remote API), sign in via the dashboard
+              on that API domain so credentials can attach.
+            </p>
+          </Container>
+        </Section>
+      );
+    }
+    if (phase === 'missing') {
+      return (
+        <Section>
+          <Container size="narrow" class="text-center">
+            <p class="text-lg text-slate-700 dark:text-slate-200">Case study not found.</p>
+            <Link href={MR.work} class="mt-4 inline-block text-primary-600 underline dark:text-primary-400">
+              Back to work
+            </Link>
+          </Container>
+        </Section>
+      );
+    }
+    if (phase === 'loaded' && clientCaseStudy.value) {
+      caseStudy = clientCaseStudy.value;
+    }
+  }
+
+  if (!caseStudy) {
+    return null;
+  }
+
   const baseUrl = (import.meta.env?.VITE_SITE_URL as string) || '';
 
   return (
@@ -73,6 +185,15 @@ export default component$(() => {
               <h1 class="mt-4 text-3xl font-bold text-slate-900 dark:text-white sm:text-4xl">
                 {caseStudy.title}
               </h1>
+              {/* Non-published status from API appears only when the viewer is authorized on the Laravel public preview route */}
+              {caseStudy.status && caseStudy.status !== 'published' && (
+                <p
+                  class="mt-3 rounded-md bg-amber-100 px-3 py-2 text-sm text-amber-950 dark:bg-amber-900/35 dark:text-amber-50"
+                  role="status"
+                >
+                  Preview: status is "{caseStudy.status}" — visible because you can manage projects (not shown to visitors).
+                </p>
+              )}
               <p class="mt-4 text-lg text-slate-600 dark:text-slate-400">
                 {caseStudy.summary}
               </p>
@@ -141,15 +262,29 @@ export default component$(() => {
 export const head: DocumentHead = ({ resolveValue }) => {
   const config = getConfig();
   const baseUrl = (import.meta.env?.VITE_SITE_URL as string) || 'https://example.com';
-  const caseStudy = resolveValue(useCaseStudy);
-  return {
-    title: `${caseStudy.title} | Work | ${config.branding.name}`,
-    meta: [
-      { name: 'description', content: caseStudy.summary },
-      { property: 'og:title', content: caseStudy.title },
-      { property: 'og:description', content: caseStudy.summary },
-      { property: 'og:url', content: `${baseUrl}/work/${caseStudy.slug}` },
-    ],
-    links: [{ rel: 'canonical', href: `${baseUrl}/work/${caseStudy.slug}` }],
-  };
+  try {
+    const caseStudyResolved = resolveValue(useCaseStudy) as MarketingCaseStudy | DeferredCrossOriginPayload;
+    if (isDeferredCrossOriginPayload(caseStudyResolved)) {
+      return {
+        title: `Work | ${config.branding.name}`,
+        meta: [{ name: 'robots', content: 'noindex, nofollow' }],
+      };
+    }
+    const caseStudy = caseStudyResolved;
+    return {
+      title: `${caseStudy.title} | Work | ${config.branding.name}`,
+      meta: [
+        { name: 'description', content: caseStudy.summary },
+        { property: 'og:title', content: caseStudy.title },
+        { property: 'og:description', content: caseStudy.summary },
+        { property: 'og:url', content: `${baseUrl}/work/${caseStudy.slug}` },
+      ],
+      links: [{ rel: 'canonical', href: `${baseUrl}/work/${caseStudy.slug}` }],
+    };
+  } catch {
+    return {
+      title: `404 | ${config.branding.name}`,
+      meta: [{ name: 'robots', content: 'noindex, nofollow' }],
+    };
+  }
 };

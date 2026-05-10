@@ -49,6 +49,8 @@ VITE_AUTH_STORAGE=cookie
 
 **Behavior:** the dashboard is aligned with the Laravel API’s **Bearer token** from `POST /api/auth/login`. `GET /api/me` must return `user.permissions` (Spatie) so the sidebar can show modules the user is allowed to manage. Cookie-only SPA mode remains documented in [LARAVEL_INTEGRATION.md](./LARAVEL_INTEGRATION.md) if you add Sanctum stateful middleware on the server.
 
+**Marketing site — draft `/work/{slug}` preview:** requests from `website/` to Laravel `GET /api/public/projects/{slug}` use **`credentials: 'include'`** in the browser and forward **`Cookie`** / **`Authorization`** from the document request during SSR loaders. SSR also sends **`Origin` / `Referer`** so Laravel Sanctum treats the hop as stateful. If the HTML origin and the Laravel API **`VITE_*_API_*` URL** differ by host or port (**localhost** dev against a hosted API counts), SSR cannot replay the Laravel session cookie; the **`/work/{slug}`** route falls back to a **browser retry** using `credentials: 'include'` so draft preview still loads when you are logged in against that API. If the browser URL host does not match **`SANCTUM_STATEFUL_DOMAINS`** (common case: users open `www.example.com` but `.env` lists only `example.com`), set **`VITE_SITE_URL`** in `website/` to a canonical origin that **is** listed there — the SSR client uses that origin for Sanctum headers while keeping the path from `request.url`. You can instead add both apex and `www` (or a wildcard host pattern Laravel accepts, e.g. **`*.example.com`**) to **`SANCTUM_STATEFUL_DOMAINS`**. For cookie-based preview when ports differ locally (e.g. Vite `:5173` → Laravel `:8000`), include both hosts with ports under **`SANCTUM_STATEFUL_DOMAINS`**.
+
 ### Branding Configuration
 
 ```env
