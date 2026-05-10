@@ -51,7 +51,7 @@ export const CaseStudyCard = component$<CaseStudyCardProps>(({ caseStudy, featur
           </p>
           {featured && caseStudy.description && (
             <p class="mt-2 text-sm text-slate-500 dark:text-slate-500 line-clamp-2">
-              {caseStudy.description}
+              {caseStudy.description.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim()}
             </p>
           )}
         </div>

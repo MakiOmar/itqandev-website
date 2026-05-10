@@ -224,9 +224,10 @@ export default component$(() => {
                 {caseStudy.summary}
               </p>
               {caseStudy.description && (
-                <div class="prose prose-slate mt-8 dark:prose-invert max-w-none">
-                  <p class="text-slate-700 dark:text-slate-300">{caseStudy.description}</p>
-                </div>
+                <div
+                  class="prose prose-slate mt-8 dark:prose-invert max-w-none text-slate-700 dark:text-slate-300"
+                  dangerouslySetInnerHTML={caseStudy.description}
+                />
               )}
               <div class="mt-8 flex flex-wrap gap-4">
                 {caseStudy.linkUrl && (
