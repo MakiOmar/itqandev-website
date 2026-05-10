@@ -51,6 +51,20 @@ function mapPublicProjectToCaseStudy(raw: Record<string, unknown>): CaseStudy {
       ? statusRaw.trim()
       : undefined;
 
+  const seoRaw = raw.seo_meta;
+  let seoMeta: CaseStudy['seoMeta'];
+  if (seoRaw && typeof seoRaw === 'object' && !Array.isArray(seoRaw)) {
+    const o = seoRaw as Record<string, unknown>;
+    seoMeta = {
+      metaTitle: typeof o.meta_title === 'string' ? o.meta_title : undefined,
+      metaDescription: typeof o.meta_description === 'string' ? o.meta_description : undefined,
+      canonicalUrl: typeof o.canonical_url === 'string' ? o.canonical_url : undefined,
+      ogTitle: typeof o.og_title === 'string' ? o.og_title : undefined,
+      ogDescription: typeof o.og_description === 'string' ? o.og_description : undefined,
+      ogImage: typeof o.og_image === 'string' ? o.og_image : undefined,
+    };
+  }
+
   return {
     id: raw.id as string | number,
     slug: String(raw.slug ?? ''),
@@ -68,6 +82,7 @@ function mapPublicProjectToCaseStudy(raw: Record<string, unknown>): CaseStudy {
         : typeof raw.publishedAt === 'string'
           ? raw.publishedAt
           : undefined,
+    seoMeta,
   };
 }
 

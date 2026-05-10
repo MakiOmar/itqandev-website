@@ -6,6 +6,17 @@ import type { Skill } from './skill';
 import type { Media } from './media';
 import type { ProjectTranslationRow } from './site-language';
 
+/** Mirrors Laravel `seo_meta` row attached to projects (snake_case from API). */
+export interface ProjectSeoMeta {
+  meta_title?: string | null;
+  meta_description?: string | null;
+  canonical_url?: string | null;
+  og_title?: string | null;
+  og_description?: string | null;
+  og_image?: string | null;
+  twitter_card?: string | null;
+}
+
 export interface Project {
   id: number;
   title: string;
@@ -26,6 +37,7 @@ export interface Project {
   skills?: Skill[];
   heroImage?: Media;
   translations?: ProjectTranslationRow[];
+  seoMeta?: ProjectSeoMeta | null;
 }
 
 export interface ProjectCreateInput {

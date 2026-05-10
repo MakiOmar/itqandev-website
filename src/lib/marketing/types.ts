@@ -23,6 +23,15 @@ export interface CaseStudy {
   publishedAt?: string;
   createdAt?: string;
   updatedAt?: string;
+  /** From public API `seo_meta` when present (for document head). */
+  seoMeta?: {
+    metaTitle?: string;
+    metaDescription?: string;
+    canonicalUrl?: string;
+    ogTitle?: string;
+    ogDescription?: string;
+    ogImage?: string;
+  };
 }
 
 export interface BlogPost {

@@ -322,6 +322,31 @@ export const useUpdateProject = routeAction$(
   )
 );
 
+const projectSeoSchema = z.object({
+  meta_title: z.string().optional(),
+  meta_description: z.string().optional(),
+});
+
+/**
+ * Persist SEO morph row via global SeoMeta API (`PUT /v1/seo/project/{id}`).
+ */
+export const useSaveProjectSeo = routeAction$(
+  async (data, { params, cookie, request, fail }) => {
+    try {
+      const cookieHeader = extractCookieHeader(cookie, request as any);
+      const apiClient = getApiClient(cookieHeader, false);
+      await apiClient.put(`/v1/seo/project/${params.id}`, {
+        meta_title: typeof data.meta_title === 'string' ? data.meta_title : '',
+        meta_description: typeof data.meta_description === 'string' ? data.meta_description : '',
+      });
+      return { success: true };
+    } catch (error: any) {
+      return fail(500, { message: error?.message || 'Failed to save SEO' });
+    }
+  },
+  zod$(projectSeoSchema),
+);
+
 /**
  * Project edit page
  */
@@ -372,9 +397,13 @@ export default component$(() => {
     ctPrimaryHint: translateApp(lang, 'contentTranslations.contentPrimaryHint'),
     ctUseSiteDefault: translateApp(lang, 'contentTranslations.useSiteDefault'),
     ctFallbackHint: translateApp(lang, 'contentTranslations.fallbackPlaceholderHint'),
+    seoTitle: translateApp(lang, 'seo.title'),
+    seoMetaTitle: translateApp(lang, 'seo.metaTitle'),
+    seoMetaDescription: translateApp(lang, 'seo.metaDescription'),
+    seoSave: translateApp(lang, 'seo.save'),
   };
   
-  const { success } = useSwal({
+  const { success, error: showError } = useSwal({
     confirmTitle: translateApp(lang, 'common.confirm'),
     yes: translateApp(lang, 'common.yes'),
     no: translateApp(lang, 'common.no'),
@@ -390,7 +419,9 @@ export default component$(() => {
   const langConfig = useSiteLanguageConfig();
   const categoriesAndSkills = useCategoriesAndSkills();
   const updateAction = useUpdateProject();
+  const saveSeoAction = useSaveProjectSeo();
   const lastSuccessId = useSignal<number | null>(null);
+  const projectSeo = useSignal({ meta_title: '', meta_description: '' });
 
   // Normalize media objects to ensure consistent structure
   const normalizeMedia = (media: any) => {
@@ -471,6 +502,32 @@ export default component$(() => {
     titleField.value = m.title;
     summaryField.value = m.summary;
     descriptionField.value = m.description;
+  });
+
+  useTask$(({ track }) => {
+    track(() => project.value?.id);
+    const sm = project.value?.seoMeta;
+    if (!sm || typeof sm !== 'object') {
+      projectSeo.value = { meta_title: '', meta_description: '' };
+      return;
+    }
+    const row = sm as Record<string, unknown>;
+    projectSeo.value = {
+      meta_title: typeof row.meta_title === 'string' ? row.meta_title : '',
+      meta_description: typeof row.meta_description === 'string' ? row.meta_description : '',
+    };
+  });
+
+  const saveProjectSeo = $(async () => {
+    const fd = new FormData();
+    fd.append('meta_title', projectSeo.value.meta_title);
+    fd.append('meta_description', projectSeo.value.meta_description);
+    const response = await saveSeoAction.submit(fd);
+    if (response.value?.failed) {
+      await showError((response.value as { message?: string }).message || 'Failed to save SEO');
+      return;
+    }
+    await success(translations.success, { text: translations.updated });
   });
 
   const categoryItems = categoriesAndSkills.value.categories.map((c) => ({
@@ -850,6 +907,64 @@ export default component$(() => {
                     value={String(id)}
                   />
                 ))}
+              </div>
+
+              <div class="rounded-lg border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-900">
+                <h3 class="mb-3 text-base font-semibold text-gray-900 dark:text-gray-100">
+                  {translations.seoTitle}
+                </h3>
+                <div class="space-y-3">
+                  <div>
+                    <label
+                      for="project-meta-title"
+                      class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-200"
+                    >
+                      {translations.seoMetaTitle}
+                    </label>
+                    <input
+                      id="project-meta-title"
+                      type="text"
+                      value={projectSeo.value.meta_title}
+                      onInput$={(e: Event) => {
+                        projectSeo.value = {
+                          ...projectSeo.value,
+                          meta_title: (e.target as HTMLInputElement).value,
+                        };
+                      }}
+                      placeholder={translations.seoMetaTitle}
+                      class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-primary-500 focus:outline-none focus:ring focus:ring-primary-200 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:focus:ring-primary-700/40"
+                    />
+                  </div>
+                  <div>
+                    <label
+                      for="project-meta-description"
+                      class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-200"
+                    >
+                      {translations.seoMetaDescription}
+                    </label>
+                    <textarea
+                      id="project-meta-description"
+                      rows={3}
+                      value={projectSeo.value.meta_description}
+                      onInput$={(e: Event) => {
+                        projectSeo.value = {
+                          ...projectSeo.value,
+                          meta_description: (e.target as HTMLTextAreaElement).value,
+                        };
+                      }}
+                      placeholder={translations.seoMetaDescription}
+                      class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-primary-500 focus:outline-none focus:ring focus:ring-primary-200 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:focus:ring-primary-700/40"
+                    />
+                  </div>
+                  <button
+                    type="button"
+                    disabled={saveSeoAction.isRunning}
+                    onClick$={saveProjectSeo}
+                    class="w-full rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-primary-700 disabled:opacity-60"
+                  >
+                    {saveSeoAction.isRunning ? translations.loading : translations.seoSave}
+                  </button>
+                </div>
               </div>
 
               <div class="rounded-lg border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-900">

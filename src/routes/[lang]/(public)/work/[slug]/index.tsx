@@ -304,15 +304,26 @@ export const head: DocumentHead = ({ resolveValue }) => {
       };
     }
     const caseStudy = caseStudyResolved;
+    const seo = caseStudy.seoMeta;
+    const docTitle = (seo?.metaTitle?.trim() || caseStudy.title).trim();
+    const docDesc = (seo?.metaDescription?.trim() || caseStudy.summary).trim();
+    const ogTitle = (seo?.ogTitle?.trim() || docTitle).trim();
+    const ogDesc = (seo?.ogDescription?.trim() || docDesc).trim();
+    const canonical =
+      (seo?.canonicalUrl?.trim() || `${baseUrl}/work/${caseStudy.slug}`).trim();
+    const meta: { name?: string; property?: string; content: string }[] = [
+      { name: 'description', content: docDesc },
+      { property: 'og:title', content: ogTitle },
+      { property: 'og:description', content: ogDesc },
+      { property: 'og:url', content: `${baseUrl}/work/${caseStudy.slug}` },
+    ];
+    if (seo?.ogImage?.trim()) {
+      meta.push({ property: 'og:image', content: seo.ogImage.trim() });
+    }
     return {
-      title: `${caseStudy.title} | Work | ${config.branding.name}`,
-      meta: [
-        { name: 'description', content: caseStudy.summary },
-        { property: 'og:title', content: caseStudy.title },
-        { property: 'og:description', content: caseStudy.summary },
-        { property: 'og:url', content: `${baseUrl}/work/${caseStudy.slug}` },
-      ],
-      links: [{ rel: 'canonical', href: `${baseUrl}/work/${caseStudy.slug}` }],
+      title: `${docTitle} | Work | ${config.branding.name}`,
+      meta,
+      links: [{ rel: 'canonical', href: canonical }],
     };
   } catch {
     return {
