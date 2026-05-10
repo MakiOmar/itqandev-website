@@ -223,12 +223,7 @@ export default component$(() => {
     icon_hint: '',
   });
 
-  const skillSlugAuto = useContentSlugAutosuggestForm(
-    'skills',
-    formData,
-    'name',
-    () => (editingId.value != null ? Number(editingId.value) : undefined),
-  );
+  const skillSlugAuto = useContentSlugAutosuggestForm('skills', formData, 'name', editingId);
 
   const contentLocaleDraft = useSignal('');
   const editingLocaleDraft = useSignal(langConfig.value.content_editing_locale);

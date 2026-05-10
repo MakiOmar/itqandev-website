@@ -1,4 +1,4 @@
-import { component$, useSignal, $ } from '@builder.io/qwik';
+import { component$, useSignal, $, useComputed$ } from '@builder.io/qwik';
 import type { DocumentHead } from '@builder.io/qwik-city';
 import { routeLoader$, routeAction$, zod$, z } from '@builder.io/qwik-city';
 import { LoadingSpinner } from '../../../../components/common/LoadingSpinner';
@@ -187,12 +187,11 @@ export default component$(() => {
     published_at: '',
   });
 
-  const blogSlugForm = useContentSlugAutosuggestForm(
-    'blog_posts',
-    formPost,
-    'title',
-    () => (formPost.value.id != null ? Number(formPost.value.id) : undefined),
+  const blogPostIdForSlugIgnore = useComputed$(() =>
+    formPost.value.id != null ? Number(formPost.value.id) : undefined,
   );
+
+  const blogSlugForm = useContentSlugAutosuggestForm('blog_posts', formPost, 'title', blogPostIdForSlugIgnore);
 
   const formSeo = useSignal({
     meta_title: '',

@@ -104,14 +104,14 @@ export default component$(() => {
     is_published: true,
   });
 
+  /** Stable signal for QRL serialization (do not pass a closure for ignore id). */
+  const serviceSlugIgnoreRecordId = useSignal<number | undefined>(undefined);
+
   const serviceSlugAuto = useContentSlugAutosuggestForm(
     'services',
     formData,
     'name',
-    () => {
-      const s = (liveService.value ?? serviceLoader.value) as AdminService | undefined;
-      return s?.id != null ? Number(s.id) : undefined;
-    },
+    serviceSlugIgnoreRecordId,
   );
 
   useTask$(({ track }) => {
@@ -128,6 +128,7 @@ export default component$(() => {
       serviceSlugAuto.slugLocked.value = false;
     }
     const s = (liveService.value ?? loaderSvc) as AdminService;
+    serviceSlugIgnoreRecordId.value = s.id != null ? Number(s.id) : undefined;
     contentLocaleDraft.value =
       s.content_locale != null && String(s.content_locale).trim() !== '' ? String(s.content_locale).trim() : '';
     canonicalName.value = s.name ?? '';
@@ -184,6 +185,7 @@ export default component$(() => {
       langConfig.value.default_locale,
       contentLocaleDraft.value.trim() !== '' ? contentLocaleDraft.value.trim() : null,
     );
+    serviceSlugIgnoreRecordId.value = s.id != null ? Number(s.id) : undefined;
     formData.value = {
       ...formData.value,
       name: m.name,

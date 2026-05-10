@@ -57,14 +57,28 @@ export async function applyUniqueContentSlugToDomInput(
 
 type FormWithSlug = { slug: string };
 
+function normalizeIgnoreRecordId(signal: Signal<number | null | undefined> | undefined): number | undefined {
+  if (!signal) {
+    return undefined;
+  }
+  const v = signal.value;
+  if (v == null) {
+    return undefined;
+  }
+  const n = Number(v);
+  return Number.isFinite(n) ? n : undefined;
+}
+
 /**
  * Controlled forms with a dedicated title/name field — WordPress-style auto slug from title/name blur.
+ *
+ * @param ignoreRecordId Optional signal — use a reactive id (never a plain closure) so QRLs serialize.
  */
 export function useContentSlugAutosuggestForm<T extends FormWithSlug>(
   entity: ContentSlugEntity,
   form: Signal<T>,
   titleKey: keyof T & string,
-  ignoreId?: () => number | undefined,
+  ignoreRecordId?: Signal<number | null | undefined>,
 ) {
   /** When true, blurring the title field will not regenerate the slug from the title. */
   const slugLocked = useSignal(false);
@@ -81,7 +95,9 @@ export function useContentSlugAutosuggestForm<T extends FormWithSlug>(
     if (!raw) {
       return;
     }
-    const slug = await suggestUniqueContentSlug(entity, raw, { ignoreId: ignoreId?.() });
+    const slug = await suggestUniqueContentSlug(entity, raw, {
+      ignoreId: normalizeIgnoreRecordId(ignoreRecordId),
+    });
     if (slug) {
       form.value = { ...form.value, slug };
     }
@@ -96,7 +112,9 @@ export function useContentSlugAutosuggestForm<T extends FormWithSlug>(
     if (!raw) {
       return;
     }
-    const slug = await suggestUniqueContentSlug(entity, raw, { ignoreId: ignoreId?.() });
+    const slug = await suggestUniqueContentSlug(entity, raw, {
+      ignoreId: normalizeIgnoreRecordId(ignoreRecordId),
+    });
     if (slug) {
       form.value = { ...form.value, slug };
     }

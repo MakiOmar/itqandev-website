@@ -86,14 +86,13 @@ export default component$(() => {
     is_featured: false,
   });
 
+  const categorySlugIgnoreRecordId = useSignal<number | undefined>(undefined);
+
   const categorySlugAuto = useContentSlugAutosuggestForm(
     'categories',
     formData,
     'name',
-    () => {
-      const c = (liveCategory.value ?? categoryLoader.value) as Category | undefined;
-      return c?.id != null ? Number(c.id) : undefined;
-    },
+    categorySlugIgnoreRecordId,
   );
 
   useTask$(({ track }) => {
@@ -107,6 +106,7 @@ export default component$(() => {
       categorySlugAuto.slugLocked.value = false;
     }
     const c = (liveCategory.value ?? loaderCat) as Category;
+    categorySlugIgnoreRecordId.value = c.id != null ? Number(c.id) : undefined;
     contentLocaleDraft.value =
       (c as any).content_locale != null && String((c as any).content_locale).trim() !== ''
         ? String((c as any).content_locale).trim()
@@ -148,6 +148,7 @@ export default component$(() => {
       langConfig.value.default_locale,
       contentLocaleDraft.value.trim() !== '' ? contentLocaleDraft.value.trim() : null,
     );
+    categorySlugIgnoreRecordId.value = c.id != null ? Number(c.id) : undefined;
     formData.value = {
       ...formData.value,
       name: m.name,
