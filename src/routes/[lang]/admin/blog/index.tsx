@@ -10,6 +10,7 @@ import type { BlogPost } from '../../../../types/blog';
 import { useSiteLanguageConfig } from '../layout';
 import { primaryLocaleForContent } from '../../../../lib/content-display-locale';
 import { useLocaleAwareList } from '../../../../lib/hooks/useLocaleAwareList';
+import { useContentSlugAutosuggestForm } from '../../../../lib/slug/content-slug-auto';
 
 /**
  * Load blog posts
@@ -186,6 +187,13 @@ export default component$(() => {
     published_at: '',
   });
 
+  const blogSlugForm = useContentSlugAutosuggestForm(
+    'blog_posts',
+    formPost,
+    'title',
+    () => (formPost.value.id != null ? Number(formPost.value.id) : undefined),
+  );
+
   const formSeo = useSignal({
     meta_title: '',
     meta_description: '',
@@ -231,6 +239,7 @@ export default component$(() => {
   });
 
   const resetForm = $(() => {
+    blogSlugForm.slugLocked.value = false;
     formPost.value = {
       id: null,
       title: '',
@@ -246,6 +255,7 @@ export default component$(() => {
   });
 
   const editPost = $((post: BlogPost) => {
+    blogSlugForm.slugLocked.value = false;
     formPost.value = {
       id: post.id as number,
       title: post.title || '',
@@ -382,6 +392,7 @@ export default component$(() => {
                     type="text"
                     value={formPost.value.title}
                     onInput$={(e: any) => (formPost.value.title = e.target.value)}
+                    onBlur$={blogSlugForm.onTitleBlurSuggestSlug$}
                     required
                     class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-primary-500 focus:outline-none focus:ring focus:ring-primary-200 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:focus:ring-primary-700/40"
                   />
@@ -393,7 +404,14 @@ export default component$(() => {
                   <input
                     type="text"
                     value={formPost.value.slug}
-                    onInput$={(e: any) => (formPost.value.slug = e.target.value)}
+                    onInput$={$((e: Event) => {
+                      blogSlugForm.slugLocked.value = true;
+                      formPost.value = {
+                        ...formPost.value,
+                        slug: (e.target as HTMLInputElement).value,
+                      };
+                    })}
+                    onBlur$={blogSlugForm.onSlugBlurEnsureUnique$}
                     required
                     class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-primary-500 focus:outline-none focus:ring focus:ring-primary-200 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:focus:ring-primary-700/40"
                   />

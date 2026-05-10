@@ -27,6 +27,7 @@ import {
 } from '../../../../../lib/content-display-locale';
 import { useSiteLanguageConfig } from '../../layout';
 import type { Project, ProjectUpdateInput, Category, Skill, Media } from '../../../../../types';
+import { useContentSlugAutosuggestTitleSlugSignals } from '../../../../../lib/slug/content-slug-auto';
 
 /**
  * Project update schema
@@ -431,8 +432,24 @@ export default component$(() => {
   );
   const editingLocaleDraft = useSignal(langConfig.value.content_editing_locale);
   const titleField = useSignal('');
+  const slugField = useSignal('');
   const summaryField = useSignal('');
   const descriptionField = useSignal('');
+
+  const projectSlugAuto = useContentSlugAutosuggestTitleSlugSignals({
+    entity: 'projects',
+    title: titleField,
+    slug: slugField,
+    ignoreRecordId: Number(location.params.id),
+  });
+
+  useTask$(({ track }) => {
+    track(() => project.value?.id);
+    if (project.value?.id != null) {
+      slugField.value = project.value.slug || '';
+      projectSlugAuto.slugLocked.value = false;
+    }
+  });
 
   useTask$(({ track }) => {
     track(() => project.value);
@@ -580,6 +597,7 @@ export default component$(() => {
                       onInput$={(e) => {
                         titleField.value = (e.target as HTMLInputElement).value;
                       }}
+                      onBlur$={projectSlugAuto.onTitleBlurSuggestSlug$}
                       required
                       class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-primary-500 focus:outline-none focus:ring focus:ring-primary-200 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:focus:ring-primary-700/40"
                     />
@@ -601,7 +619,12 @@ export default component$(() => {
                       id="slug"
                       name="slug"
                       type="text"
-                      value={project.value.slug || ''}
+                      value={slugField.value}
+                      onInput$={$((e) => {
+                        projectSlugAuto.slugLocked.value = true;
+                        slugField.value = (e.target as HTMLInputElement).value;
+                      })}
+                      onBlur$={projectSlugAuto.onSlugBlurEnsureUnique$}
                       class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-primary-500 focus:outline-none focus:ring focus:ring-primary-200 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:focus:ring-primary-700/40"
                     />
                   </div>

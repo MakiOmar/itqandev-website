@@ -25,6 +25,7 @@ import { getApiClient, extractCookieHeader } from '../../../../../lib/api/client
 import { API_ENDPOINTS } from '../../../../../lib/api/endpoints';
 import { routesFromPreferredCookie, useAppRoutes } from '../../../../../lib/constants/routes';
 import type { BlogPost, BlogPostUpdateInput } from '../../../../../types';
+import { useContentSlugAutosuggestTitleSlugSignals } from '../../../../../lib/slug/content-slug-auto';
 
 /**
  * Blog post update schema
@@ -168,8 +169,16 @@ export default component$(() => {
   const contentLocaleDraft = useSignal('');
   const editingLocaleDraft = useSignal(langConfig.value.content_editing_locale);
   const titleField = useSignal('');
+  const slugField = useSignal('');
   const excerptField = useSignal('');
   const contentField = useSignal('');
+
+  const blogSlugAuto = useContentSlugAutosuggestTitleSlugSignals({
+    entity: 'blog_posts',
+    title: titleField,
+    slug: slugField,
+    ignoreRecordId: Number(location.params.id),
+  });
 
   // Handle postMessage from media iframe
   // eslint-disable-next-line qwik/no-use-visible-task
@@ -205,6 +214,14 @@ export default component$(() => {
       const cl = (post.value as BlogPost).content_locale;
       contentLocaleDraft.value =
         cl != null && String(cl).trim() !== '' ? String(cl).trim() : '';
+    }
+  });
+
+  useTask$(({ track }) => {
+    track(() => post.value?.id);
+    if (post.value?.id != null) {
+      slugField.value = post.value.slug || '';
+      blogSlugAuto.slugLocked.value = false;
     }
   });
 
@@ -367,6 +384,7 @@ export default component$(() => {
                     onInput$={(e) => {
                       titleField.value = (e.target as HTMLInputElement).value;
                     }}
+                    onBlur$={blogSlugAuto.onTitleBlurSuggestSlug$}
                     required
                     class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-primary-500 focus:outline-none focus:ring focus:ring-primary-200 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:focus:ring-primary-700/40"
                   />
@@ -389,7 +407,12 @@ export default component$(() => {
                   id="slug"
                   name="slug"
                   type="text"
-                  value={post.value.slug || ''}
+                  value={slugField.value}
+                  onInput$={$((e) => {
+                    blogSlugAuto.slugLocked.value = true;
+                    slugField.value = (e.target as HTMLInputElement).value;
+                  })}
+                  onBlur$={blogSlugAuto.onSlugBlurEnsureUnique$}
                   class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-primary-500 focus:outline-none focus:ring focus:ring-primary-200 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:focus:ring-primary-700/40"
                 />
               </div>

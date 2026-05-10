@@ -96,6 +96,28 @@ Requires `Authorization` as above. Responds **403** if the user cannot run syste
 }
 ```
 
+### POST `/api/v1/content-slugs/suggest`
+
+**Auth:** Required (Sanctum). Authorizes with `viewAny` on the chosen content model.
+
+**Body (JSON):**
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `entity` | string | One of: `projects`, `blog_posts`, `services`, `categories`, `skills` |
+| `source` | string | Title or provisional slug text (max 255); server runs `Str::slug()` then uniquifies |
+| `ignore_id` | int (optional) | When editing, current record id so its own slug is not treated as a collision |
+
+**Success (200):**
+```json
+{
+  "slug": "my-post-2",
+  "base": "my-post"
+}
+```
+
+**Error (422):** Empty slug after normalization (e.g. only punctuation).
+
 ---
 
 ## User Management Endpoints

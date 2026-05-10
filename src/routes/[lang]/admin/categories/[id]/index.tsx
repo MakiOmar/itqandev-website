@@ -22,6 +22,7 @@ import {
 } from '../../../../../lib/content-display-locale';
 import { runCategoryUpdateFromBrowser } from '../../../../../lib/admin/category-actions';
 import type { Category } from '../../../../../types';
+import { useContentSlugAutosuggestForm } from '../../../../../lib/slug/content-slug-auto';
 
 function mapCategoryFromApi(raw: any): Category {
   return {
@@ -85,6 +86,16 @@ export default component$(() => {
     is_featured: false,
   });
 
+  const categorySlugAuto = useContentSlugAutosuggestForm(
+    'categories',
+    formData,
+    'name',
+    () => {
+      const c = (liveCategory.value ?? categoryLoader.value) as Category | undefined;
+      return c?.id != null ? Number(c.id) : undefined;
+    },
+  );
+
   useTask$(({ track }) => {
     track(() => langConfig.value.site_languages);
     track(() => langConfig.value.default_locale);
@@ -93,6 +104,7 @@ export default component$(() => {
     const existingCat = liveCategory.value;
     if (existingCat == null || existingCat.id !== loaderCat.id) {
       liveCategory.value = loaderCat;
+      categorySlugAuto.slugLocked.value = false;
     }
     const c = (liveCategory.value ?? loaderCat) as Category;
     contentLocaleDraft.value =
@@ -288,6 +300,7 @@ export default component$(() => {
               type="text"
               value={formData.value.name}
               onInput$={(e) => (formData.value = { ...formData.value, name: (e.target as HTMLInputElement).value })}
+              onBlur$={categorySlugAuto.onTitleBlurSuggestSlug$}
               class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-primary-500 focus:outline-none focus:ring focus:ring-primary-200 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:focus:ring-primary-700/40"
               required
             />
@@ -302,7 +315,11 @@ export default component$(() => {
               name="slug"
               type="text"
               value={formData.value.slug}
-              onInput$={(e) => (formData.value = { ...formData.value, slug: (e.target as HTMLInputElement).value })}
+              onInput$={$((e) => {
+                categorySlugAuto.slugLocked.value = true;
+                formData.value = { ...formData.value, slug: (e.target as HTMLInputElement).value };
+              })}
+              onBlur$={categorySlugAuto.onSlugBlurEnsureUnique$}
               class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-primary-500 focus:outline-none focus:ring focus:ring-primary-200 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:focus:ring-primary-700/40"
             />
           </div>

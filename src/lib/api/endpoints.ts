@@ -42,6 +42,10 @@ export const API_ENDPOINTS = {
     HEALTH: '/system/health',
     STATS: '/system/stats',
   },
+  /** Authenticated helpers (admin UI); server enforces uniqueness on the owning table. */
+  CONTENT_SLUGS: {
+    SUGGEST: '/v1/content-slugs/suggest',
+  },
   // Projects
   PROJECTS: {
     LIST: '/v1/projects',

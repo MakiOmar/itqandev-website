@@ -23,6 +23,7 @@ import {
   primaryLocaleForContent,
   shouldWritePrimaryColumns,
 } from '../../../../lib/content-display-locale';
+import { useContentSlugAutosuggestForm } from '../../../../lib/slug/content-slug-auto';
 
 /**
  * Skill schema
@@ -221,6 +222,14 @@ export default component$(() => {
     description: '',
     icon_hint: '',
   });
+
+  const skillSlugAuto = useContentSlugAutosuggestForm(
+    'skills',
+    formData,
+    'name',
+    () => (editingId.value != null ? Number(editingId.value) : undefined),
+  );
+
   const contentLocaleDraft = useSignal('');
   const editingLocaleDraft = useSignal(langConfig.value.content_editing_locale);
   const canonicalName = useSignal('');
@@ -232,6 +241,7 @@ export default component$(() => {
   });
 
   const resetForm = $(() => {
+    skillSlugAuto.slugLocked.value = false;
     formData.value = {
       name: '',
       slug: '',
@@ -254,6 +264,7 @@ export default component$(() => {
   };
 
   const editSkill = $((skill: Skill) => {
+    skillSlugAuto.slugLocked.value = false;
     canonicalName.value = (skill as any).name ?? '';
     canonicalDescription.value = (skill as any).description ?? '';
     formData.value = {
@@ -548,6 +559,7 @@ export default component$(() => {
                   onInput$={(e) => {
                     formData.value = { ...formData.value, name: (e.target as HTMLInputElement).value };
                   }}
+                  onBlur$={skillSlugAuto.onTitleBlurSuggestSlug$}
                   class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-primary-500 focus:outline-none focus:ring focus:ring-primary-200 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:focus:ring-primary-700/40"
                   required
                 />
@@ -563,9 +575,11 @@ export default component$(() => {
                   id="slug"
                   type="text"
                   value={formData.value.slug}
-                  onInput$={(e) => {
+                  onInput$={$((e) => {
+                    skillSlugAuto.slugLocked.value = true;
                     formData.value = { ...formData.value, slug: (e.target as HTMLInputElement).value };
-                  }}
+                  })}
+                  onBlur$={skillSlugAuto.onSlugBlurEnsureUnique$}
                   class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-primary-500 focus:outline-none focus:ring focus:ring-primary-200 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:focus:ring-primary-700/40"
                 />
               </div>

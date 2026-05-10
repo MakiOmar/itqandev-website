@@ -20,6 +20,7 @@ import { useCreateCategory } from '../../../../../lib/admin/category-actions';
 import { submitRouteActionFormData } from '../../../../../lib/admin/route-action-form-submit';
 import { adminCategoryEditHref, getLocalizedRoutes, useAppRoutes } from '../../../../../lib/constants/routes';
 import type { Category } from '../../../../../types';
+import { useContentSlugAutosuggestForm } from '../../../../../lib/slug/content-slug-auto';
 
 /**
  * Create category — primary language only on insert
@@ -49,6 +50,8 @@ export default component$(() => {
     description: '',
     is_featured: false,
   });
+
+  const categorySlugAuto = useContentSlugAutosuggestForm('categories', formData, 'name');
 
   useTask$(({ track }) => {
     track(() => contentLocaleDraft.value);
@@ -198,6 +201,7 @@ export default component$(() => {
               type="text"
               value={formData.value.name}
               onInput$={(e) => (formData.value = { ...formData.value, name: (e.target as HTMLInputElement).value })}
+              onBlur$={categorySlugAuto.onTitleBlurSuggestSlug$}
               class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-primary-500 focus:outline-none focus:ring focus:ring-primary-200 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:focus:ring-primary-700/40"
               required
             />
@@ -212,7 +216,11 @@ export default component$(() => {
               name="slug"
               type="text"
               value={formData.value.slug}
-              onInput$={(e) => (formData.value = { ...formData.value, slug: (e.target as HTMLInputElement).value })}
+              onInput$={$((e) => {
+                categorySlugAuto.slugLocked.value = true;
+                formData.value = { ...formData.value, slug: (e.target as HTMLInputElement).value };
+              })}
+              onBlur$={categorySlugAuto.onSlugBlurEnsureUnique$}
               class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-primary-500 focus:outline-none focus:ring focus:ring-primary-200 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:focus:ring-primary-700/40"
             />
           </div>
