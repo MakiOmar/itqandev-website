@@ -22,7 +22,14 @@ type DeferredCrossOriginPayload = {
 };
 
 function isMarketingCaseStudyValue(v: unknown): v is MarketingCaseStudy {
-  return v != null && typeof v === 'object' && typeof (v as MarketingCaseStudy).slug === 'string';
+  /** Require `title` so deferred `{ slug }` placeholders are not mistaken for full API rows */
+  return (
+    v != null &&
+    typeof v === 'object' &&
+    !Array.isArray(v) &&
+    typeof (v as MarketingCaseStudy).slug === 'string' &&
+    typeof (v as MarketingCaseStudy).title === 'string'
+  );
 }
 
 function isDeferredCrossOriginPayload(v: unknown): v is DeferredCrossOriginPayload {
@@ -96,11 +103,11 @@ export default component$(() => {
       return { kind: 'failed' as const };
     }
 
-    if (isMarketingCaseStudyValue(raw)) {
-      return { kind: 'ok' as const, study: raw };
-    }
-
+    /** Defer marker includes `slug` — must precede slug-only CaseStudy guard */
     if (!isDeferredCrossOriginPayload(raw)) {
+      if (isMarketingCaseStudyValue(raw)) {
+        return { kind: 'ok' as const, study: raw };
+      }
       return { kind: 'empty' as const };
     }
 
