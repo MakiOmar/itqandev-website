@@ -91,6 +91,8 @@ export default defineConfig(({ command, mode }): UserConfig => {
     //     : undefined,
 
     server: {
+      /** Bind beyond loopback so a hosts-file vhost (e.g. itqandev.com → 127.0.0.1) can open :5173. */
+      host: true,
       headers: {
         // Don't cache the server response in dev mode
         "Cache-Control": "public, max-age=0",

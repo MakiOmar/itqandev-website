@@ -14,11 +14,24 @@ function getBaseUrl(): string {
   return getMarketingApiBaseUrl();
 }
 
+/** Parsed API root URL (`VITE_MARKETING_API_URL` / `VITE_API_BASE_URL`). */
+function tryParseMarketingApiRoot(): URL | null {
+  const raw = getMarketingApiBaseUrl().trim();
+  if (!raw) {
+    return null;
+  }
+  try {
+    return new URL(/^https?:\/\//i.test(raw) ? raw : `https://${raw}`);
+  } catch {
+    return null;
+  }
+}
+
 /**
- * Sanctum matches Referer/Origin host against SANCTUM_STATEFUL_DOMAINS. A common miss is
- * listing `itqandev.com` but serving the site on `www.itqandev.com` — no match, no session.
- * When VITE_SITE_URL is set to the canonical origin that is included in stateful domains,
- * use it for Origin/Referer while keeping path/query from the real document URL.
+ * Sanctum matches Referer/Origin against SANCTUM_STATEFUL_DOMAINS.
+ * - Prefer **VITE_SITE_URL** when set (apex vs `www` when you list only one hostname).
+ * - When the HTML host equals the configured API hostname, use **`doc.origin`** so Vite (**`:5173`**) stays
+ *   aligned with Laravel’s default port — **SANCTUM_STATEFUL_DOMAINS** must include that port (see docs).
  */
 function sanctumSsrOriginAndReferer(forwardDocumentUrl: string): { origin: string; referer: string; canon: boolean } | null {
   try {
@@ -28,6 +41,14 @@ function sanctumSsrOriginAndReferer(forwardDocumentUrl: string): { origin: strin
     if (envSiteRaw) {
       const site = new URL(envSiteRaw.startsWith('http') ? envSiteRaw : `https://${envSiteRaw}`);
       return { origin: site.origin, referer: `${site.origin}${pathPart}`, canon: true };
+    }
+    const api = tryParseMarketingApiRoot();
+    if (api && doc.hostname === api.hostname) {
+      return {
+        origin: doc.origin,
+        referer: `${doc.origin}${pathPart}`,
+        canon: false,
+      };
     }
     return { origin: doc.origin, referer: `${doc.origin}${pathPart}`, canon: false };
   } catch {
@@ -39,20 +60,21 @@ function sanctumSsrOriginAndReferer(forwardDocumentUrl: string): { origin: strin
  * True when `VITE_MARKETING_API_URL` / `VITE_API_BASE_URL` points at a different browser origin than
  * `documentUrl` (incoming `request.url` during SSR or `window.location` on the client).
  *
- * Laravel session cookies are keyed by API host — they cannot be forwarded from SSR when the HTML
- * request lands on localhost / another hostname. The browser can still attach them via
- * `credentials: 'include'` on same fetch to that API origin.
+ * Laravel session cookies are **host + scheme scoped** — port is not stored in cookie domain, so e.g.
+ * `http://itqandev.com:5173` and `http://itqandev.com` share cookies as long as the **hostname matches**
+ * the API hostname. SSR can forward cookies in that case; only unrelated hosts (localhost vs vhost alias,
+ * apex vs stray hostname) require a browser retry (`/work/[slug]` deferred loader).
+ *
+ * Requests where **scheme** or **hostname** differ remain cross-origin for this check.
  */
 export function marketingApiPageOriginMismatch(documentUrl: string): boolean {
-  const raw = getMarketingApiBaseUrl().trim();
-  if (!raw) {
+  const api = tryParseMarketingApiRoot();
+  if (!api) {
     return false;
   }
   try {
-    const pageOrigin = new URL(documentUrl).origin;
-    const apiSeed = /^https?:\/\//i.test(raw) ? raw : `https://${raw}`;
-    const apiOrigin = new URL(apiSeed).origin;
-    return apiOrigin !== pageOrigin;
+    const page = new URL(documentUrl);
+    return page.protocol !== api.protocol || page.hostname !== api.hostname;
   } catch {
     return false;
   }
