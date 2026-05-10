@@ -9,6 +9,7 @@ import { uiLocaleFromPublicRoute } from '~/lib/i18n/ui-locale-path';
 import { marketingRoutes } from '~/lib/marketing/constants';
 import { uiLangFromUrlPathname } from '~/lib/i18n/ui-locale-path';
 import { resolveServiceIconUrl } from '~/lib/marketing/service-icons';
+import { marketingEntityDetailHead } from '~/lib/marketing/marketing-entity-document-head';
 import { Container } from '~/components/marketing/Container';
 import { Section } from '~/components/marketing/Section';
 import { AnimatedReveal } from '~/components/marketing/AnimatedReveal';
@@ -119,26 +120,33 @@ export default component$(() => {
           ],
         })}
       />
+      {/* <!-- Optional JSON-LD from CMS seo_meta.schema --> */}
+      {s.seoMeta?.schema != null ? (
+        <script type="application/ld+json" dangerouslySetInnerHTML={JSON.stringify(s.seoMeta.schema)} />
+      ) : null}
     </>
   );
 });
 
 export const head: DocumentHead = ({ resolveValue }) => {
   const config = getConfig();
-  const baseUrl = (import.meta.env?.VITE_SITE_URL as string) || 'https://example.com';
+  const baseUrl = ((import.meta.env?.VITE_SITE_URL as string) || 'https://example.com').replace(/\/$/, '');
   try {
-    const s = resolveValue(useServiceDetail);
-    const description = s.shortDescription || s.description;
-    return {
-      title: `${s.name} | Services | ${config.branding.name}`,
-      meta: [
-        { name: 'description', content: description },
-        { property: 'og:title', content: s.name },
-        { property: 'og:description', content: description },
-        { property: 'og:url', content: `${baseUrl}/services/${s.slug}` },
-      ],
-      links: [{ rel: 'canonical', href: `${baseUrl}/services/${s.slug}` }],
-    };
+    const s = resolveValue(useServiceDetail) as MarketingService;
+    if (!s?.slug || typeof s.name !== 'string') {
+      throw new Error('Invalid service');
+    }
+    const description = s.shortDescription || s.description || '';
+    return marketingEntityDetailHead({
+      brandName: config.branding.name,
+      baseUrl,
+      sectionLabel: 'Services',
+      sectionPath: 'services',
+      slug: s.slug,
+      defaultTitle: s.name,
+      defaultDescription: description,
+      seo: s.seoMeta,
+    });
   } catch {
     return {
       title: `404 | ${config.branding.name}`,

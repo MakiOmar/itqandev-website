@@ -5,6 +5,7 @@
  */
 
 import type { CaseStudy, BlogPost, Testimonial, SiteContent, Service } from './types';
+import { mapMarketingSeoMetaFromApi } from './seo-snippet';
 import { getMarketingApiBaseUrl, marketingGet, type MarketingFetchContext } from './api-client';
 import { MARKETING_ENDPOINTS } from './endpoints';
 
@@ -51,19 +52,7 @@ function mapPublicProjectToCaseStudy(raw: Record<string, unknown>): CaseStudy {
       ? statusRaw.trim()
       : undefined;
 
-  const seoRaw = raw.seo_meta;
-  let seoMeta: CaseStudy['seoMeta'];
-  if (seoRaw && typeof seoRaw === 'object' && !Array.isArray(seoRaw)) {
-    const o = seoRaw as Record<string, unknown>;
-    seoMeta = {
-      metaTitle: typeof o.meta_title === 'string' ? o.meta_title : undefined,
-      metaDescription: typeof o.meta_description === 'string' ? o.meta_description : undefined,
-      canonicalUrl: typeof o.canonical_url === 'string' ? o.canonical_url : undefined,
-      ogTitle: typeof o.og_title === 'string' ? o.og_title : undefined,
-      ogDescription: typeof o.og_description === 'string' ? o.og_description : undefined,
-      ogImage: typeof o.og_image === 'string' ? o.og_image : undefined,
-    };
-  }
+  const seoMeta = mapMarketingSeoMetaFromApi(raw.seo_meta);
 
   return {
     id: raw.id as string | number,
@@ -322,6 +311,7 @@ function normalizeServiceFromPublicApi(raw: Record<string, unknown>): Service {
     process: Array.isArray(raw.process) ? (raw.process as string[]) : undefined,
     deliverables: Array.isArray(raw.deliverables) ? (raw.deliverables as string[]) : undefined,
     icon: typeof raw.icon === 'string' ? raw.icon : undefined,
+    seoMeta: mapMarketingSeoMetaFromApi(raw.seo_meta),
   };
 }
 
@@ -411,6 +401,7 @@ function normalizeCaseStudy(raw: CaseStudy): CaseStudy {
     image: image || undefined,
     imageAlt: raw.imageAlt,
     tags: raw.tags,
+    skills: raw.skills,
     categories: raw.categories,
     linkUrl: raw.linkUrl,
     demoUrl: raw.demoUrl,
@@ -419,6 +410,7 @@ function normalizeCaseStudy(raw: CaseStudy): CaseStudy {
     publishedAt: raw.publishedAt,
     createdAt: raw.createdAt,
     updatedAt: raw.updatedAt,
+    seoMeta: raw.seoMeta,
   };
 }
 

@@ -7,11 +7,39 @@ import { useSwal } from '../../../../lib/hooks/useSwal';
 import { getApiClient, extractCookieHeader } from '../../../../lib/api/client';
 import { API_ENDPOINTS } from '../../../../lib/api/endpoints';
 import type { BlogPost } from '../../../../types/blog';
+import type { ContentSeoMetaRow } from '../../../../types/content-seo';
 import { useSiteLanguageConfig } from '../layout';
 import { normalizeEditingLocale, primaryLocaleForContent } from '../../../../lib/content-display-locale';
 import { useLocaleAwareList } from '../../../../lib/hooks/useLocaleAwareList';
 import { useContentSlugAutosuggestForm } from '../../../../lib/slug/content-slug-auto';
 import { AdminPublicPageLink } from '../../../../components/admin/AdminPublicPageLink';
+
+function blogSeoRowHasData(row: ContentSeoMetaRow | Record<string, unknown>): boolean {
+  const nonempty = (v: unknown) => typeof v === 'string' && v.trim().length > 0;
+  return (
+    nonempty(row.meta_title) ||
+    nonempty(row.meta_description) ||
+    nonempty(row.canonical_url) ||
+    nonempty(row.og_title) ||
+    nonempty(row.og_description) ||
+    nonempty(row.og_image) ||
+    nonempty(row.twitter_card) ||
+    (row.schema != null &&
+      row.schema !== '' &&
+      !(typeof row.schema === 'object' &&
+        row.schema !== null &&
+        !Array.isArray(row.schema) &&
+        Object.keys(row.schema).length === 0) &&
+      !(Array.isArray(row.schema) && row.schema.length === 0))
+  );
+}
+
+/** Count locales with any non-empty SEO morph field (for list badge). */
+function countBlogLocalesWithSeoData(post: BlogPost): number {
+  const raw = post.seoMetas ?? ((post as unknown as { seo_metas?: unknown[] }).seo_metas ?? []);
+  if (!Array.isArray(raw)) return 0;
+  return raw.filter((r) => r && typeof r === 'object' && blogSeoRowHasData(r as ContentSeoMetaRow)).length;
+}
 
 /**
  * Load blog posts
@@ -523,7 +551,9 @@ export default component$(() => {
             <div class="py-8 text-center text-gray-500 dark:text-gray-400">{translateApp(lang, 'blog.noPosts')}</div>
           ) : (
             <div class="divide-y divide-gray-200 dark:divide-gray-700">
-              {posts.value.map((post) => (
+              {posts.value.map((post) => {
+                const seoLocaleCount = countBlogLocalesWithSeoData(post);
+                return (
                 <div
                   key={post.id}
                   class="p-4 transition-colors hover:bg-gray-50 dark:hover:bg-gray-700/50"
@@ -568,6 +598,20 @@ export default component$(() => {
                                 {translateApp(lang, 'blog.featured')}
                               </span>
                             )}
+                            <span
+                              class={
+                                seoLocaleCount > 0
+                                  ? 'rounded-full bg-sky-100 px-2 py-1 text-xs font-medium text-sky-800 dark:bg-sky-900/30 dark:text-sky-300'
+                                  : 'rounded-full bg-gray-100 px-2 py-1 text-xs font-medium text-gray-600 dark:bg-gray-700 dark:text-gray-400'
+                              }
+                              title={translateApp(lang, 'blog.seoLocalesHint')}
+                            >
+                              {seoLocaleCount > 0
+                                ? translateApp(lang, 'blog.seoLocalesCount', {
+                                    count: String(seoLocaleCount),
+                                  })
+                                : translateApp(lang, 'blog.seoLocalesNone')}
+                            </span>
                             {post.author && (
                               <span class="text-xs text-gray-500 dark:text-gray-400">
                                 {translateApp(lang, 'blog.author', { name: (post.author as any)?.name || 'Unknown' })}
@@ -648,7 +692,8 @@ export default component$(() => {
                     </div>
                   </div>
                 </div>
-              ))}
+              );
+              })}
             </div>
           )}
         </div>

@@ -3,6 +3,19 @@
  * Backend-agnostic interfaces so we can switch between local content and API.
  */
 
+/** Public API `seo_meta` snippet (camelCase). */
+export interface MarketingPublicSeoMeta {
+  locale?: string;
+  metaTitle?: string;
+  metaDescription?: string;
+  canonicalUrl?: string;
+  ogTitle?: string;
+  ogDescription?: string;
+  ogImage?: string;
+  twitterCard?: string;
+  schema?: unknown;
+}
+
 export interface CaseStudy {
   id: string | number;
   slug: string;
@@ -24,14 +37,7 @@ export interface CaseStudy {
   createdAt?: string;
   updatedAt?: string;
   /** From public API `seo_meta` when present (for document head). */
-  seoMeta?: {
-    metaTitle?: string;
-    metaDescription?: string;
-    canonicalUrl?: string;
-    ogTitle?: string;
-    ogDescription?: string;
-    ogImage?: string;
-  };
+  seoMeta?: MarketingPublicSeoMeta;
 }
 
 export interface BlogPost {
@@ -68,6 +74,8 @@ export interface Service {
   process?: string[];
   deliverables?: string[];
   icon?: string;
+  /** From public API `seo_meta` when merged from `/public/services`. */
+  seoMeta?: MarketingPublicSeoMeta;
 }
 
 export interface PricingTier {

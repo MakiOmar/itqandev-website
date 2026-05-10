@@ -204,7 +204,10 @@
     "uploadImage": "Upload Image",
     "deleteConfirm": "Are you sure you want to delete this post?",
     "noPosts": "No posts",
-    "author": "Author: {{name}}"
+    "author": "Author: {{name}}",
+    "seoLocalesCount": "SEO · {{count}} locales",
+    "seoLocalesNone": "SEO · none",
+    "seoLocalesHint": "Locales with saved SEO data. Use Edit Post for full canonical, OG, and JSON-LD."
   },
   "media": {
     "title": "Media Library",

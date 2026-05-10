@@ -14,6 +14,7 @@ import { AnimatedReveal } from '~/components/marketing/AnimatedReveal';
 import { Link, useLocation } from '@builder.io/qwik-city';
 import { ContentImage } from '~/components/marketing/ContentImage';
 import { MarketingImageLightbox } from '~/components/marketing/MarketingImageLightbox';
+import { marketingEntityDetailHead } from '~/lib/marketing/marketing-entity-document-head';
 
 /** SSR cannot forward cross-origin Laravel cookies; loaders return this marker for a client retry. */
 type DeferredCrossOriginPayload = {
@@ -288,6 +289,12 @@ export default component$(() => {
           ],
         })}
       />
+      {caseStudy.seoMeta?.schema != null ? (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={JSON.stringify(caseStudy.seoMeta.schema)}
+        />
+      ) : null}
     </>
   );
 });
@@ -304,27 +311,16 @@ export const head: DocumentHead = ({ resolveValue }) => {
       };
     }
     const caseStudy = caseStudyResolved;
-    const seo = caseStudy.seoMeta;
-    const docTitle = (seo?.metaTitle?.trim() || caseStudy.title).trim();
-    const docDesc = (seo?.metaDescription?.trim() || caseStudy.summary).trim();
-    const ogTitle = (seo?.ogTitle?.trim() || docTitle).trim();
-    const ogDesc = (seo?.ogDescription?.trim() || docDesc).trim();
-    const canonical =
-      (seo?.canonicalUrl?.trim() || `${baseUrl}/work/${caseStudy.slug}`).trim();
-    const meta: { name?: string; property?: string; content: string }[] = [
-      { name: 'description', content: docDesc },
-      { property: 'og:title', content: ogTitle },
-      { property: 'og:description', content: ogDesc },
-      { property: 'og:url', content: `${baseUrl}/work/${caseStudy.slug}` },
-    ];
-    if (seo?.ogImage?.trim()) {
-      meta.push({ property: 'og:image', content: seo.ogImage.trim() });
-    }
-    return {
-      title: `${docTitle} | Work | ${config.branding.name}`,
-      meta,
-      links: [{ rel: 'canonical', href: canonical }],
-    };
+    return marketingEntityDetailHead({
+      brandName: config.branding.name,
+      baseUrl: baseUrl.replace(/\/$/, ''),
+      sectionLabel: 'Work',
+      sectionPath: 'work',
+      slug: caseStudy.slug,
+      defaultTitle: caseStudy.title,
+      defaultDescription: caseStudy.summary,
+      seo: caseStudy.seoMeta,
+    });
   } catch {
     return {
       title: `404 | ${config.branding.name}`,

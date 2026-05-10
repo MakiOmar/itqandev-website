@@ -204,7 +204,10 @@
     "uploadImage": "رفع صورة",
     "deleteConfirm": "هل أنت متأكد من حذف هذه المقالة؟",
     "noPosts": "لا توجد مقالات",
-    "author": "الكاتب: {{name}}"
+    "author": "الكاتب: {{name}}",
+    "seoLocalesCount": "SEO · {{count}} لغات",
+    "seoLocalesNone": "SEO · لا يوجد",
+    "seoLocalesHint": "لغات بها SEO محفوظ. للحقول الكاملة استخدم تعديل المقالة."
   },
   "media": {
     "title": "المكتبة الإعلامية",
