@@ -14,9 +14,9 @@ import { useAppRoutes } from '../../../../../lib/constants/routes';
 import {
   ContentEditingLanguageSelect,
   EditingLocaleFieldsShell,
-  FieldTranslationGlobe,
   TranslationsFormRoot,
 } from '../../../../../components/admin/PerFieldContentTranslations';
+import { RichTextEditorField } from '../../../../../components/admin/RichTextEditorField';
 import { initialTranslationsJson, parseTranslationsJson, secondaryLocalesForContent } from '../../../../../lib/content-translations';
 import {
   mergeProjectFieldsForUiLocale,
@@ -41,11 +41,18 @@ const projectSchema = z.object({
   featured: z.union([z.boolean(), z.string()]).optional(),
   category_ids: z.array(z.string()).optional(),
   skill_ids: z.array(z.string()).optional(),
-  link_url: z.string().url().optional().or(z.literal('')),
-  repo_url: z.string().url().optional().or(z.literal('')),
-  demo_url: z.string().url().optional().or(z.literal('')),
+  link_url: z.union([z.string().url(), z.literal(''), z.literal('#')]).optional(),
+  repo_url: z.union([z.string().url(), z.literal(''), z.literal('#')]).optional(),
+  demo_url: z.union([z.string().url(), z.literal(''), z.literal('#')]).optional(),
   published_at: z.string().optional(),
 });
+
+const normalizeOptionalUrl = (value: unknown): string | undefined => {
+  if (typeof value !== 'string') return undefined;
+  const trimmed = value.trim();
+  if (!trimmed) return undefined;
+  return trimmed;
+};
 
 /**
  * Load project data
@@ -170,9 +177,9 @@ export const useUpdateProject = routeAction$(
         featured: data.featured === true || data.featured === '1' || data.featured === 'on',
         category_ids: normalizeArray(data.category_ids),
         skill_ids: normalizeArray(data.skill_ids),
-        link_url: data.link_url || undefined,
-        repo_url: data.repo_url || undefined,
-        demo_url: data.demo_url || undefined,
+        link_url: normalizeOptionalUrl(data.link_url),
+        repo_url: normalizeOptionalUrl(data.repo_url),
+        demo_url: normalizeOptionalUrl(data.demo_url),
         published_at: data.published_at || undefined,
       };
 
@@ -363,9 +370,6 @@ export default component$(() => {
     ctPrimaryHint: translateApp(lang, 'contentTranslations.contentPrimaryHint'),
     ctUseSiteDefault: translateApp(lang, 'contentTranslations.useSiteDefault'),
     ctFallbackHint: translateApp(lang, 'contentTranslations.fallbackPlaceholderHint'),
-    ctGlobeTitle: translateApp(lang, 'contentTranslations.globeTitle'),
-    ctGlobeSummary: translateApp(lang, 'contentTranslations.globeSummary'),
-    ctGlobeDescription: translateApp(lang, 'contentTranslations.globeDescription'),
   };
   
   const { success } = useSwal({
@@ -561,37 +565,30 @@ export default component$(() => {
                     <p class="md:col-span-2 text-sm text-gray-600 dark:text-gray-400">{translations.ctNoLangs}</p>
                   ) : null}
 
-                  <FieldTranslationGlobe
-                    fieldKey="title"
-                    gridSpan="one"
-                    globeAriaLabel={translations.ctGlobeTitle}
-                    fallbackText={project.value.title ?? ''}
-                  >
-                    <div>
-                      <label
-                        for="title"
-                        class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-200"
-                      >
-                        {translations.name} *
-                      </label>
-                      <input
-                        id="title"
-                        name="title"
-                        type="text"
-                        value={titleField.value}
-                        onInput$={(e) => {
-                          titleField.value = (e.target as HTMLInputElement).value;
-                        }}
-                        required
-                        class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-primary-500 focus:outline-none focus:ring focus:ring-primary-200 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:focus:ring-primary-700/40"
-                      />
-                      {updateAction.value?.failed && updateAction.value.fieldErrors?.title && (
-                        <p class="mt-1 text-sm text-red-600 dark:text-red-400">
-                          {updateAction.value.fieldErrors.title}
-                        </p>
-                      )}
-                    </div>
-                  </FieldTranslationGlobe>
+                  <div>
+                    <label
+                      for="title"
+                      class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-200"
+                    >
+                      {translations.name} *
+                    </label>
+                    <input
+                      id="title"
+                      name="title"
+                      type="text"
+                      value={titleField.value}
+                      onInput$={(e) => {
+                        titleField.value = (e.target as HTMLInputElement).value;
+                      }}
+                      required
+                      class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-primary-500 focus:outline-none focus:ring focus:ring-primary-200 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:focus:ring-primary-700/40"
+                    />
+                    {updateAction.value?.failed && updateAction.value.fieldErrors?.title && (
+                      <p class="mt-1 text-sm text-red-600 dark:text-red-400">
+                        {updateAction.value.fieldErrors.title}
+                      </p>
+                    )}
+                  </div>
 
                   <div>
                     <label
@@ -609,57 +606,41 @@ export default component$(() => {
                     />
                   </div>
 
-                  <FieldTranslationGlobe
-                    fieldKey="summary"
-                    gridSpan="full"
-                    globeAriaLabel={translations.ctGlobeSummary}
-                    fallbackText={project.value.summary || ''}
-                  >
-                    <div>
-                      <label
-                        for="summary"
-                        class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-200"
-                      >
-                        {translations.summary}
-                      </label>
-                      <textarea
-                        id="summary"
-                        name="summary"
-                        rows={2}
-                        value={summaryField.value}
-                        onInput$={(e) => {
-                          summaryField.value = (e.target as HTMLTextAreaElement).value;
-                        }}
-                        class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-primary-500 focus:outline-none focus:ring focus:ring-primary-200 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:focus:ring-primary-700/40"
-                      />
-                    </div>
-                  </FieldTranslationGlobe>
+                  <div class="md:col-span-2">
+                    <label
+                      for="summary"
+                      class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-200"
+                    >
+                      {translations.summary}
+                    </label>
+                    <textarea
+                      id="summary"
+                      name="summary"
+                      rows={2}
+                      value={summaryField.value}
+                      onInput$={(e) => {
+                        summaryField.value = (e.target as HTMLTextAreaElement).value;
+                      }}
+                      class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-primary-500 focus:outline-none focus:ring focus:ring-primary-200 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:focus:ring-primary-700/40"
+                    />
+                  </div>
 
-                  <FieldTranslationGlobe
-                    fieldKey="description"
-                    gridSpan="full"
-                    globeAriaLabel={translations.ctGlobeDescription}
-                    fallbackText={project.value.description || ''}
-                  >
-                    <div>
-                      <label
-                        for="description"
-                        class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-200"
-                      >
-                        {translations.description}
-                      </label>
-                      <textarea
-                        id="description"
-                        name="description"
-                        rows={4}
-                        value={descriptionField.value}
-                        onInput$={(e) => {
-                          descriptionField.value = (e.target as HTMLTextAreaElement).value;
-                        }}
-                        class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-primary-500 focus:outline-none focus:ring focus:ring-primary-200 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:focus:ring-primary-700/40"
-                      />
-                    </div>
-                  </FieldTranslationGlobe>
+                  <div class="md:col-span-2">
+                    <label
+                      for="description"
+                      class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-200"
+                    >
+                      {translations.description}
+                    </label>
+                    <RichTextEditorField
+                      id="description"
+                      name="description"
+                      value={descriptionField.value}
+                      onValueChange$={(value) => {
+                        descriptionField.value = value;
+                      }}
+                    />
+                  </div>
                   </EditingLocaleFieldsShell>
                 </TranslationsFormRoot>
 
@@ -682,6 +663,11 @@ export default component$(() => {
                     value={project.value.link_url || ''}
                     class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-primary-500 focus:outline-none focus:ring focus:ring-primary-200 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:focus:ring-primary-700/40"
                   />
+                  {updateAction.value?.failed && updateAction.value.fieldErrors?.link_url && (
+                    <p class="mt-1 text-sm text-red-600 dark:text-red-400">
+                      {updateAction.value.fieldErrors.link_url}
+                    </p>
+                  )}
                 </div>
 
                 <div>
@@ -698,6 +684,11 @@ export default component$(() => {
                     value={project.value.repo_url || ''}
                     class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-primary-500 focus:outline-none focus:ring focus:ring-primary-200 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:focus:ring-primary-700/40"
                   />
+                  {updateAction.value?.failed && updateAction.value.fieldErrors?.repo_url && (
+                    <p class="mt-1 text-sm text-red-600 dark:text-red-400">
+                      {updateAction.value.fieldErrors.repo_url}
+                    </p>
+                  )}
                 </div>
 
                 <div>
@@ -714,6 +705,11 @@ export default component$(() => {
                     value={project.value.demo_url || ''}
                     class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-primary-500 focus:outline-none focus:ring focus:ring-primary-200 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:focus:ring-primary-700/40"
                   />
+                  {updateAction.value?.failed && updateAction.value.fieldErrors?.demo_url && (
+                    <p class="mt-1 text-sm text-red-600 dark:text-red-400">
+                      {updateAction.value.fieldErrors.demo_url}
+                    </p>
+                  )}
                 </div>
 
                 <div>

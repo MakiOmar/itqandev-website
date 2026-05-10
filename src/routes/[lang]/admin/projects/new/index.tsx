@@ -16,6 +16,7 @@ import {
   FieldTranslationGlobe,
   TranslationsFormRoot,
 } from '../../../../../components/admin/PerFieldContentTranslations';
+import { RichTextEditorField } from '../../../../../components/admin/RichTextEditorField';
 import { initialTranslationsJson, parseTranslationsJson, secondaryLocalesForContent } from '../../../../../lib/content-translations';
 import {
   mergeSecondaryProjectTranslations,
@@ -39,11 +40,18 @@ const projectSchema = z.object({
   featured: z.union([z.boolean(), z.string()]).optional(),
   category_ids: z.array(z.string()).optional(),
   skill_ids: z.array(z.string()).optional(),
-  link_url: z.string().url().optional().or(z.literal('')),
-  repo_url: z.string().url().optional().or(z.literal('')),
-  demo_url: z.string().url().optional().or(z.literal('')),
+  link_url: z.union([z.string().url(), z.literal(''), z.literal('#')]).optional(),
+  repo_url: z.union([z.string().url(), z.literal(''), z.literal('#')]).optional(),
+  demo_url: z.union([z.string().url(), z.literal(''), z.literal('#')]).optional(),
   published_at: z.string().optional(),
 });
+
+const normalizeOptionalUrl = (value: unknown): string | undefined => {
+  if (typeof value !== 'string') return undefined;
+  const trimmed = value.trim();
+  if (!trimmed) return undefined;
+  return trimmed;
+};
 
 /**
  * Load categories and skills for form
@@ -107,9 +115,9 @@ export const useCreateProject = routeAction$(
         featured: data.featured === true || data.featured === '1' || data.featured === 'on',
         category_ids: normalizeArray(data.category_ids),
         skill_ids: normalizeArray(data.skill_ids),
-        link_url: data.link_url || undefined,
-        repo_url: data.repo_url || undefined,
-        demo_url: data.demo_url || undefined,
+        link_url: normalizeOptionalUrl(data.link_url),
+        repo_url: normalizeOptionalUrl(data.repo_url),
+        demo_url: normalizeOptionalUrl(data.demo_url),
         published_at : data.published_at || undefined,
       };
 
@@ -561,6 +569,7 @@ export default component$(() => {
                 gridSpan="full"
                 globeAriaLabel={translateApp(lang, 'contentTranslations.globeDescription')}
                 fallbackText=""
+                richText
               >
                 <div>
                   <label
@@ -569,11 +578,9 @@ export default component$(() => {
                   >
                     {translateApp(lang, 'projects.description')}
                   </label>
-                  <textarea
+                  <RichTextEditorField
                     id="description"
                     name="description"
-                    rows={4}
-                    class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-primary-500 focus:outline-none focus:ring focus:ring-primary-200 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:focus:ring-primary-700/40"
                   />
                 </div>
               </FieldTranslationGlobe>
@@ -591,6 +598,11 @@ export default component$(() => {
                 type="url"
                 class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-primary-500 focus:outline-none focus:ring focus:ring-primary-200 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:focus:ring-primary-700/40"
               />
+              {createAction.value?.failed && createAction.value.fieldErrors?.link_url && (
+                <p class="mt-1 text-sm text-red-600 dark:text-red-400">
+                  {createAction.value.fieldErrors.link_url}
+                </p>
+              )}
             </div>
 
             <div>
@@ -606,6 +618,11 @@ export default component$(() => {
                 type="url"
                 class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-primary-500 focus:outline-none focus:ring focus:ring-primary-200 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:focus:ring-primary-700/40"
               />
+              {createAction.value?.failed && createAction.value.fieldErrors?.repo_url && (
+                <p class="mt-1 text-sm text-red-600 dark:text-red-400">
+                  {createAction.value.fieldErrors.repo_url}
+                </p>
+              )}
             </div>
 
             <div>
@@ -621,6 +638,11 @@ export default component$(() => {
                 type="url"
                 class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-primary-500 focus:outline-none focus:ring focus:ring-primary-200 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:focus:ring-primary-700/40"
               />
+              {createAction.value?.failed && createAction.value.fieldErrors?.demo_url && (
+                <p class="mt-1 text-sm text-red-600 dark:text-red-400">
+                  {createAction.value.fieldErrors.demo_url}
+                </p>
+              )}
             </div>
 
             <div>

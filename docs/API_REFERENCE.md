@@ -433,6 +433,14 @@ return response()->json([
 
 Returns branding and `site_languages` for the marketing shell (see `SettingsController::publicMeta`).
 
+### Locale behavior for public listings
+
+When a locale is provided (for example via `X-Content-Locale` header or the menus `locale` query), listing responses are strict by locale:
+
+- Records are included only if they have content in the selected locale.
+- Primary-language fallback is not used for missing translations in listings.
+- For default locale, records with default primary content (including `content_locale = null` where applicable) are still valid.
+
 ### GET `/api/public/menus/{slug}`
 
 **Query:** `locale` — UI locale code (e.g. `en`, `ar`); must be an enabled site language or the default is used.
