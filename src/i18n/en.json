@@ -38,7 +38,8 @@
     "created": "Created successfully",
     "updated": "Updated successfully",
     "deleted": "Deleted successfully",
-    "cacheCleared": "Cache cleared"
+    "cacheCleared": "Cache cleared",
+    "viewPublicPage": "View public page"
   },
   "auth": {
     "login": "Login",

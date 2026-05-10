@@ -26,6 +26,7 @@ import { API_ENDPOINTS } from '../../../../../lib/api/endpoints';
 import { routesFromPreferredCookie, useAppRoutes } from '../../../../../lib/constants/routes';
 import type { BlogPost, BlogPostUpdateInput } from '../../../../../types';
 import { useContentSlugAutosuggestTitleSlugSignals } from '../../../../../lib/slug/content-slug-auto';
+import { AdminPublicPageLink } from '../../../../../components/admin/AdminPublicPageLink';
 
 /**
  * Blog post update schema
@@ -415,6 +416,7 @@ export default component$(() => {
                   onBlur$={blogSlugAuto.onSlugBlurEnsureUnique$}
                   class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-primary-500 focus:outline-none focus:ring focus:ring-primary-200 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:focus:ring-primary-700/40"
                 />
+                <AdminPublicPageLink lang={lang} kind="blog" slug={slugField.value} />
               </div>
 
               <div>

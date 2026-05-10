@@ -72,8 +72,9 @@ export const useSkills = routeLoader$(async ({ cookie, request }) => {
  * Create skill action
  */
 export const useCreateSkill = routeAction$(
-  async (data) => {
-    const apiClient = getApiClient();
+  async (data, { cookie, request }) => {
+    const cookieHeader = extractCookieHeader(cookie, request);
+    const apiClient = getApiClient(cookieHeader);
     const payload: SkillCreateInput = {
       name: data.name,
       slug: data.slug || undefined,
@@ -111,8 +112,8 @@ export const useCreateSkill = routeAction$(
  * Update skill action
  */
 export const useUpdateSkill = routeAction$(
-  async (data) => {
-    const apiClient = getApiClient();
+  async (data, { cookie, request }) => {
+    const apiClient = getApiClient(extractCookieHeader(cookie, request));
     const payload: SkillUpdateInput = {
       id: Number(data.id),
       name: data.name,
@@ -150,9 +151,9 @@ export const useUpdateSkill = routeAction$(
 /**
  * Delete skill action
  */
-export const useDeleteSkill = routeAction$(async (data, { fail }) => {
+export const useDeleteSkill = routeAction$(async (data, { fail, cookie, request }) => {
   try {
-    const apiClient = getApiClient();
+    const apiClient = getApiClient(extractCookieHeader(cookie, request));
     await apiClient.delete(API_ENDPOINTS.SKILLS.DELETE(data.id as string));
     return { success: true };
   } catch (error: any) {
@@ -163,9 +164,9 @@ export const useDeleteSkill = routeAction$(async (data, { fail }) => {
 /**
  * Bulk delete skills action
  */
-export const useBulkDeleteSkills = routeAction$(async (data, { fail }) => {
+export const useBulkDeleteSkills = routeAction$(async (data, { fail, cookie, request }) => {
   try {
-    const apiClient = getApiClient();
+    const apiClient = getApiClient(extractCookieHeader(cookie, request));
     await apiClient.post(API_ENDPOINTS.SKILLS.BULK_DELETE, { ids: data.ids });
     return { success: true };
   } catch (error: any) {

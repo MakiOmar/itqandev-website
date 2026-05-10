@@ -27,6 +27,7 @@ import {
 import { useSiteLanguageConfig } from '../../layout';
 import type { ProjectCreateInput, Project, Category, Skill } from '../../../../../types';
 import { useContentSlugAutosuggestDom } from '../../../../../lib/slug/content-slug-auto';
+import { AdminPublicPageLink } from '../../../../../components/admin/AdminPublicPageLink';
 
 /**
  * Project creation schema
@@ -247,6 +248,8 @@ export default component$(() => {
   const editingLocaleDraft = useSignal(langConfig.value.content_editing_locale);
 
   const contentSlugDom = useContentSlugAutosuggestDom({ entity: 'projects' });
+  /** Sync public “view page” link with slug on this uncontrolled form */
+  const slugLiveForPublicLink = useSignal('');
 
   // Extract submit method reference to avoid serialization issues
   const submitMethod = createAction.submit.bind(createAction);
@@ -466,10 +469,17 @@ export default component$(() => {
                   id="slug"
                   name="slug"
                   type="text"
-                  onInput$={contentSlugDom.onSlugInput$}
-                  onBlur$={contentSlugDom.onSlugBlur$}
+                  onInput$={$((ev: InputEvent) => {
+                    slugLiveForPublicLink.value = String((ev.target as HTMLInputElement).value ?? '');
+                    contentSlugDom.onSlugInput$();
+                  })}
+                  onBlur$={$(async (ev: FocusEvent) => {
+                    await contentSlugDom.onSlugBlur$(ev);
+                    slugLiveForPublicLink.value = String((ev.target as HTMLInputElement).value ?? '');
+                  })}
                   class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-primary-500 focus:outline-none focus:ring focus:ring-primary-200 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:focus:ring-primary-700/40"
                 />
+                <AdminPublicPageLink lang={lang} kind="projects" slug={slugLiveForPublicLink.value} />
               </div>
 
             <div>
