@@ -104,7 +104,8 @@
     "searchCategories": "Search categories...",
     "searchSkills": "Search skills...",
     "noCategoriesFound": "No categories found",
-    "noSkillsFound": "No skills found"
+    "noSkillsFound": "No skills found",
+    "seoForContentLanguage": "SEO applies to the content language selected above (one set per locale)."
   },
   "categories": {
     "title": "Categories",

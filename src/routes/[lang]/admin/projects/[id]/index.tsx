@@ -26,7 +26,7 @@ import {
   shouldWritePrimaryColumns,
 } from '../../../../../lib/content-display-locale';
 import { useSiteLanguageConfig } from '../../layout';
-import type { Project, ProjectUpdateInput, Category, Skill, Media } from '../../../../../types';
+import type { Project, ProjectUpdateInput, Category, Skill, Media, ProjectSeoMeta } from '../../../../../types';
 import { useContentSlugAutosuggestTitleSlugSignals } from '../../../../../lib/slug/content-slug-auto';
 import { AdminPublicPageLink } from '../../../../../components/admin/AdminPublicPageLink';
 
@@ -323,6 +323,7 @@ export const useUpdateProject = routeAction$(
 );
 
 const projectSeoSchema = z.object({
+  locale: z.string().min(1).max(16),
   meta_title: z.string().optional(),
   meta_description: z.string().optional(),
 });
@@ -336,6 +337,7 @@ export const useSaveProjectSeo = routeAction$(
       const cookieHeader = extractCookieHeader(cookie, request as any);
       const apiClient = getApiClient(cookieHeader, false);
       await apiClient.put(`/v1/seo/project/${params.id}`, {
+        locale: typeof data.locale === 'string' ? data.locale.toLowerCase().trim() : '',
         meta_title: typeof data.meta_title === 'string' ? data.meta_title : '',
         meta_description: typeof data.meta_description === 'string' ? data.meta_description : '',
       });
@@ -401,6 +403,7 @@ export default component$(() => {
     seoMetaTitle: translateApp(lang, 'seo.metaTitle'),
     seoMetaDescription: translateApp(lang, 'seo.metaDescription'),
     seoSave: translateApp(lang, 'seo.save'),
+    seoForContentLanguage: translateApp(lang, 'projects.seoForContentLanguage'),
   };
   
   const { success, error: showError } = useSwal({
@@ -422,6 +425,7 @@ export default component$(() => {
   const saveSeoAction = useSaveProjectSeo();
   const lastSuccessId = useSignal<number | null>(null);
   const projectSeo = useSignal({ meta_title: '', meta_description: '' });
+  const seoMetasDraft = useSignal<ProjectSeoMeta[]>([]);
 
   // Normalize media objects to ensure consistent structure
   const normalizeMedia = (media: any) => {
@@ -506,20 +510,49 @@ export default component$(() => {
 
   useTask$(({ track }) => {
     track(() => project.value?.id);
-    const sm = project.value?.seoMeta;
-    if (!sm || typeof sm !== 'object') {
-      projectSeo.value = { meta_title: '', meta_description: '' };
-      return;
-    }
-    const row = sm as Record<string, unknown>;
+    const p = project.value as unknown as Project & { seo_metas?: ProjectSeoMeta[] };
+    const rows = Array.isArray(p?.seoMetas) ? p.seoMetas : Array.isArray(p?.seo_metas) ? p.seo_metas : [];
+    seoMetasDraft.value = rows.map((r) => ({
+      id: typeof r.id === 'number' ? r.id : undefined,
+      locale: String(r.locale ?? '').toLowerCase().trim(),
+      meta_title: r.meta_title ?? '',
+      meta_description: r.meta_description ?? '',
+      canonical_url: r.canonical_url,
+      og_title: r.og_title,
+      og_description: r.og_description,
+      og_image: r.og_image,
+      twitter_card: r.twitter_card,
+    }));
+  });
+
+  useTask$(({ track }) => {
+    track(() => editingLocaleDraft.value);
+    track(() => contentLocaleDraft.value);
+    track(() => langConfig.value.default_locale);
+    track(() => langConfig.value.site_languages);
+    track(() => seoMetasDraft.value);
+    const loc = normalizeEditingLocale(
+      editingLocaleDraft.value,
+      langConfig.value.site_languages,
+      langConfig.value.default_locale,
+      contentLocaleDraft.value.trim() !== '' ? contentLocaleDraft.value.trim() : null,
+    ).toLowerCase();
+    const row = seoMetasDraft.value.find((r) => String(r.locale).toLowerCase() === loc);
     projectSeo.value = {
-      meta_title: typeof row.meta_title === 'string' ? row.meta_title : '',
-      meta_description: typeof row.meta_description === 'string' ? row.meta_description : '',
+      meta_title: typeof row?.meta_title === 'string' ? row.meta_title : '',
+      meta_description: typeof row?.meta_description === 'string' ? row.meta_description : '',
     };
   });
 
   const saveProjectSeo = $(async () => {
+    const loc = normalizeEditingLocale(
+      editingLocaleDraft.value,
+      langConfig.value.site_languages,
+      langConfig.value.default_locale,
+      contentLocaleDraft.value.trim() !== '' ? contentLocaleDraft.value.trim() : null,
+    ).toLowerCase();
     const fd = new FormData();
+    fd.append('locale', loc);
     fd.append('meta_title', projectSeo.value.meta_title);
     fd.append('meta_description', projectSeo.value.meta_description);
     const response = await saveSeoAction.submit(fd);
@@ -527,6 +560,20 @@ export default component$(() => {
       await showError((response.value as { message?: string }).message || 'Failed to save SEO');
       return;
     }
+    const next = [...seoMetasDraft.value];
+    const idx = next.findIndex((r) => String(r.locale).toLowerCase() === loc);
+    const merged: ProjectSeoMeta = {
+      ...(idx >= 0 ? next[idx] : ({} as ProjectSeoMeta)),
+      locale: loc,
+      meta_title: projectSeo.value.meta_title,
+      meta_description: projectSeo.value.meta_description,
+    };
+    if (idx >= 0) {
+      next[idx] = merged;
+    } else {
+      next.push(merged);
+    }
+    seoMetasDraft.value = next;
     await success(translations.success, { text: translations.updated });
   });
 
@@ -913,6 +960,7 @@ export default component$(() => {
                 <h3 class="mb-3 text-base font-semibold text-gray-900 dark:text-gray-100">
                   {translations.seoTitle}
                 </h3>
+                <p class="mb-3 text-xs text-gray-600 dark:text-gray-400">{translations.seoForContentLanguage}</p>
                 <div class="space-y-3">
                   <div>
                     <label

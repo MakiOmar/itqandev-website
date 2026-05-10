@@ -8,7 +8,7 @@ import { getApiClient, extractCookieHeader } from '../../../../lib/api/client';
 import { API_ENDPOINTS } from '../../../../lib/api/endpoints';
 import type { BlogPost } from '../../../../types/blog';
 import { useSiteLanguageConfig } from '../layout';
-import { primaryLocaleForContent } from '../../../../lib/content-display-locale';
+import { normalizeEditingLocale, primaryLocaleForContent } from '../../../../lib/content-display-locale';
 import { useLocaleAwareList } from '../../../../lib/hooks/useLocaleAwareList';
 import { useContentSlugAutosuggestForm } from '../../../../lib/slug/content-slug-auto';
 import { AdminPublicPageLink } from '../../../../components/admin/AdminPublicPageLink';
@@ -106,6 +106,7 @@ export const useSaveSeo = routeAction$(async (data, { fail }) => {
   try {
     const apiClient = getApiClient();
     await apiClient.put(`/v1/seo/blog-post/${data.postId}`, {
+      locale: String(data.locale || '').trim().toLowerCase(),
       meta_title: data.meta_title || '',
       meta_description: data.meta_description || '',
     });
@@ -115,6 +116,7 @@ export const useSaveSeo = routeAction$(async (data, { fail }) => {
   }
 }, zod$({
   postId: z.string(),
+  locale: z.string().min(1).max(16),
   meta_title: z.string().optional(),
   meta_description: z.string().optional(),
 }));
@@ -332,8 +334,16 @@ export default component$(() => {
   const saveSeo = $(async (postId: number) => {
     if (selectedPostId.value !== postId) return;
 
+    const locale = normalizeEditingLocale(
+      langConfig.value.content_editing_locale,
+      langConfig.value.site_languages,
+      langConfig.value.default_locale,
+      null,
+    );
+
     const formData = new FormData();
     formData.append('postId', String(postId));
+    formData.append('locale', locale);
     formData.append('meta_title', formSeo.value.meta_title);
     formData.append('meta_description', formSeo.value.meta_description);
 

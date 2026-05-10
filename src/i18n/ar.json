@@ -104,7 +104,8 @@
     "searchCategories": "ابحث عن التصنيفات...",
     "searchSkills": "ابحث عن المهارات...",
     "noCategoriesFound": "لم يتم العثور على تصنيفات",
-    "noSkillsFound": "لم يتم العثور على مهارات"
+    "noSkillsFound": "لم يتم العثور على مهارات",
+    "seoForContentLanguage": "الحقول تخص لغة المحتوى المحددة أعلاه (صفحة واحدة لكل لغة)."
   },
   "categories": {
     "title": "التصنيفات",
