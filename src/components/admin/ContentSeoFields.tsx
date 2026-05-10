@@ -1,4 +1,4 @@
-import { component$, type Signal } from '@builder.io/qwik';
+import { $, component$, type Signal } from '@builder.io/qwik';
 import { translateApp } from '../../lib/i18n/useTranslate';
 import type { ContentSeoDraft } from '../../types/content-seo';
 
@@ -17,9 +17,9 @@ export type ContentSeoFieldsProps = {
 export const ContentSeoFields = component$<ContentSeoFieldsProps>(({ lang, idPrefix, draft }) => {
   const p = `${idPrefix}-`;
 
-  const patch = (partial: Partial<ContentSeoDraft>) => {
+  const patch = $((partial: Partial<ContentSeoDraft>) => {
     draft.value = { ...draft.value, ...partial };
-  };
+  });
 
   return (
     <div class="space-y-4">
