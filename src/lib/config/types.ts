@@ -25,7 +25,7 @@ export interface ApiConfig {
  * Authentication configuration
  */
 export interface AuthConfig {
-  provider: 'laravel' | 'mock' | 'custom';
+  provider: 'laravel' | 'mock';
   cookieName: string;
   tokenHeader: string;
   refreshToken?: boolean;

@@ -6,11 +6,12 @@ import { Header } from '~/components/marketing/Header';
 import { Footer } from '~/components/marketing/Footer';
 import { ParticlesBackground } from '~/components/marketing/ParticlesBackground';
 import { auth } from '~/lib/auth';
-import { getApiClient, extractCookieHeader } from '~/lib/api/client';
+import { extractCookieHeader, getApiClient } from '~/lib/api/client';
+import { marketingGet } from '~/lib/marketing/api-client';
 import { MARKETING_ENDPOINTS } from '~/lib/marketing/endpoints';
+import { resolvePublicSiteLanguages } from '~/lib/i18n/public-site-languages';
 import type { PublicNavItem } from '~/lib/marketing/public-menu';
 import { getConfig } from '~/lib/config';
-import type { SiteLanguageRow } from '~/types/site-language';
 
 /**
  * Load site content once for layout (footer contact/socials).
@@ -18,16 +19,16 @@ import type { SiteLanguageRow } from '~/types/site-language';
 export const useSiteContent = routeLoader$(async ({ request, params }) => {
   const cookie = request.headers.get('cookie') || '';
   const uiLocale = uiLocaleFromPublicRoute(cookie, params.lang, request.url);
-  return getSiteContent(uiLocale);
+  return getSiteContent(uiLocale, { forwardDocumentUrl: request.url });
 });
 
 /**
  * Load authenticated user session for public header UI.
  * If auth check fails, keep public pages accessible.
  */
-export const usePublicAuth = routeLoader$(async ({ cookie }) => {
+export const usePublicAuth = routeLoader$(async ({ cookie, request }) => {
   try {
-    return await auth.getSession(cookie);
+    return await auth.getSession(cookie, request.url);
   } catch {
     return null;
   }
@@ -59,23 +60,38 @@ export const usePublicPrimaryMenu = routeLoader$(async ({ cookie, request, param
 
 export const usePublicBranding = routeLoader$(async ({ cookie, request }) => {
   const fallbackName = getConfig().branding.name;
+  const cookieHeader = extractCookieHeader(cookie, request);
 
   try {
-    const cookieHeader = extractCookieHeader(cookie, request);
-    const apiClient = getApiClient(cookieHeader);
-    const response = await apiClient.get<Record<string, any>>(MARKETING_ENDPOINTS.siteMeta);
-    const settings = (response?.data ?? response) as Record<string, any>;
+    const settings = await marketingGet<Record<string, unknown>>(MARKETING_ENDPOINTS.siteMeta, null, {
+      forwardCookies: cookieHeader,
+      forwardDocumentUrl: request.url,
+    });
 
-    const name = settings?.site_name || settings?.name || fallbackName;
-    const logo = settings?.logo || settings?.site_logo || '';
+    const name =
+      (typeof settings?.site_name === 'string' && settings.site_name) ||
+      (typeof settings?.name === 'string' && settings.name) ||
+      fallbackName;
+    const logo = (settings?.logo as string) || (settings?.site_logo as string) || '';
     const logoDark =
-      settings?.logoDark || settings?.logo_dark || settings?.dark_logo || settings?.site_logo_dark || '';
+      (settings?.logoDark as string) ||
+      (settings?.logo_dark as string) ||
+      (settings?.dark_logo as string) ||
+      (settings?.site_logo_dark as string) ||
+      '';
     const logoLight =
-      settings?.logoLight || settings?.logo_light || settings?.light_logo || settings?.site_logo_light || '';
+      (settings?.logoLight as string) ||
+      (settings?.logo_light as string) ||
+      (settings?.light_logo as string) ||
+      (settings?.site_logo_light as string) ||
+      '';
 
-    const site_languages = Array.isArray(settings?.site_languages)
-      ? (settings.site_languages as SiteLanguageRow[])
-      : [];
+    const site_languages = resolvePublicSiteLanguages(settings?.site_languages);
+
+    const features =
+      settings?.features && typeof settings.features === 'object'
+        ? (settings.features as Record<string, boolean>)
+        : undefined;
 
     return {
       name,
@@ -83,6 +99,7 @@ export const usePublicBranding = routeLoader$(async ({ cookie, request }) => {
       logoDark,
       logoLight,
       site_languages,
+      features,
     };
   } catch {
     return {
@@ -90,7 +107,8 @@ export const usePublicBranding = routeLoader$(async ({ cookie, request }) => {
       logo: '',
       logoDark: '',
       logoLight: '',
-      site_languages: [] as SiteLanguageRow[],
+      site_languages: resolvePublicSiteLanguages(null),
+      features: undefined as Record<string, boolean> | undefined,
     };
   }
 });
@@ -113,7 +131,12 @@ export default component$(() => {
       {/* Full-viewport particles behind page chrome + content */}
       <ParticlesBackground />
       <div class="relative z-10 flex min-h-screen flex-1 flex-col">
-        <Header session={authSession.value} branding={branding.value} navItems={primaryMenu.value} />
+        <Header
+          session={authSession.value}
+          branding={branding.value}
+          navItems={primaryMenu.value}
+          features={branding.value?.features}
+        />
         <main class="flex-1 overflow-y-auto">
           <Slot />
         </main>

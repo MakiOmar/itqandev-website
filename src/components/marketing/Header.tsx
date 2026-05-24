@@ -12,6 +12,8 @@ import { SiteLanguageSwitcher } from '~/components/common/SiteLanguageSwitcher';
 import type { AuthSession } from '~/lib/auth/types';
 import type { PublicNavItem } from '~/lib/marketing/public-menu';
 import type { SiteLanguageRow } from '~/types/site-language';
+import { isFeatureModuleEnabled, type FeatureModuleKey } from '~/lib/api/project-settings';
+import { getFeatureModuleForPublicHref } from '~/lib/admin/feature-module-routes';
 
 interface HeaderBranding {
   name: string;
@@ -27,6 +29,8 @@ interface HeaderProps {
   branding?: HeaderBranding | null;
   /** When non-empty, replaces the default marketing nav (from GET /api/public/menus/primary). */
   navItems?: PublicNavItem[] | null;
+  /** Module toggles from GET /api/public/site-meta */
+  features?: Partial<Record<FeatureModuleKey, boolean>> & Record<string, boolean>;
 }
 
 export const Header = component$<HeaderProps>((props) => {
@@ -57,8 +61,18 @@ export const Header = component$<HeaderProps>((props) => {
     { label: 'Contact', href: MR.contact, open_in_new_tab: false },
   ];
 
-  const navLinks =
-    props.navItems && props.navItems.length > 0 ? props.navItems : defaultNav;
+  const filterByFeatures = (items: PublicNavItem[]) =>
+    items.filter((item) => {
+      const mod = getFeatureModuleForPublicHref(item.href);
+      if (!mod) {
+        return true;
+      }
+      return isFeatureModuleEnabled(props.features, mod);
+    });
+
+  const navLinks = filterByFeatures(
+    props.navItems && props.navItems.length > 0 ? props.navItems : defaultNav,
+  );
 
   const linkClass =
     'rounded-lg px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white';

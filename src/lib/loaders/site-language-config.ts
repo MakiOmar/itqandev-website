@@ -1,9 +1,11 @@
 import { routeLoader$ } from '@builder.io/qwik-city';
-import { getApiClient, extractCookieHeader } from '../api/client';
+import { extractCookieHeader } from '../api/client';
 import type { SiteLanguageRow } from '../../types/site-language';
 import { secondaryLocales } from '../content-translations';
 import { MARKETING_ENDPOINTS } from '../marketing/endpoints';
+import { marketingGet } from '../marketing/api-client';
 import { readPreferredLocaleFromCookieHeader } from '../i18n/dashboard-locale';
+import { resolvePublicSiteLanguages } from '../i18n/public-site-languages';
 
 export interface SiteLanguageConfig {
   site_languages: SiteLanguageRow[];
@@ -35,14 +37,13 @@ function pickContentEditingLocale(
  * when Sanctum cookies or Bearer tokens are not available — previously caused 401 and English-only fallback.
  */
 export const useSiteLanguageConfig = routeLoader$(async ({ cookie, request }): Promise<SiteLanguageConfig> => {
+  const cookieHeader = extractCookieHeader(cookie, request);
   try {
-    const cookieHeader = extractCookieHeader(cookie, request);
-    const apiClient = getApiClient(cookieHeader);
-    const response = await apiClient.get<Record<string, unknown>>(MARKETING_ENDPOINTS.siteMeta);
-    const settings = (response?.data ?? response) as Record<string, unknown>;
-    const site_languages = Array.isArray(settings.site_languages)
-      ? (settings.site_languages as SiteLanguageRow[])
-      : [];
+    const settings = await marketingGet<Record<string, unknown>>(MARKETING_ENDPOINTS.siteMeta, null, {
+      forwardCookies: cookieHeader,
+      forwardDocumentUrl: request.url,
+    });
+    const site_languages = resolvePublicSiteLanguages(settings?.site_languages);
     const default_locale =
       typeof settings.default_locale === 'string' && settings.default_locale
         ? settings.default_locale.toLowerCase()
@@ -55,12 +56,20 @@ export const useSiteLanguageConfig = routeLoader$(async ({ cookie, request }): P
       content_editing_locale,
     };
   } catch (e) {
-    console.warn('useSiteLanguageConfig: falling back to English only', e);
+    if (import.meta.env.DEV) {
+      console.warn(
+        'useSiteLanguageConfig: site-meta request failed; using qwik-speak locale fallback. ' +
+          'Set VITE_API_BASE_URL=/api and VITE_API_PROXY_TARGET to your Laravel public URL (see website/.env.example).',
+        e,
+      );
+    }
+    const site_languages = resolvePublicSiteLanguages(null);
+    const default_locale = 'en';
     return {
-      site_languages: [{ code: 'en', label: 'English', native_label: 'English', rtl: false }],
-      default_locale: 'en',
-      secondary: [],
-      content_editing_locale: 'en',
+      site_languages,
+      default_locale,
+      secondary: secondaryLocales(site_languages, default_locale),
+      content_editing_locale: pickContentEditingLocale(site_languages, default_locale, cookieHeader),
     };
   }
 });

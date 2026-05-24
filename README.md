@@ -11,7 +11,7 @@ For complete integration instructions, see [docs/LARAVEL_INTEGRATION.md](./docs/
 ## Features
 
 ### Core Features
-- **Authentication System** - Mock authentication with role-based access control
+- **Authentication System** - Laravel Sanctum API auth (`VITE_AUTH_PROVIDER=laravel`; mock auth for offline demos only)
 - **Dashboard Home** - Overview with statistics cards and recent activity
 - **User Profile** - Manage personal information and change password
 - **User Management** - Full CRUD operations for users (Admin only)
@@ -26,7 +26,7 @@ For complete integration instructions, see [docs/LARAVEL_INTEGRATION.md](./docs/
 - **Qwik UI** - Styled components with Tailwind CSS
 - **Role-Based Access Control** - Super Admin, Admin, and User roles
 - **Responsive Design** - Mobile-first approach
-- **Mock API Structure** - Ready for backend integration
+- **Laravel API integration** - Dashboard and marketing site consume `backend/` JSON API
 - **TypeScript** - Full type safety
 - **SweetAlert2** - Beautiful confirmation dialogs and toasts
 
@@ -63,11 +63,12 @@ npm run dev
 
 ### Login Credentials
 
-The application includes mock authentication with the following demo accounts:
+With `VITE_AUTH_PROVIDER=laravel`, sign in using seeded Laravel users (see `backend/database/seeders/DatabaseSeeder.php`), for example:
 
-- **Super Admin**: `superadmin@example.com` / `password123`
-- **Admin**: `admin@example.com` / `password123`
-- **User**: `user@example.com` / `password123`
+- **Super Admin**: `superadmin@credocode.test`
+- **Admin**: `admin@credocode.test`
+
+(Mock demo accounts in `mock-auth.ts` apply only when `VITE_AUTH_PROVIDER=mock`.)
 
 ## Project Structure
 

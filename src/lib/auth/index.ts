@@ -50,8 +50,11 @@ export const auth = {
   logout: async (cookie?: Parameters<AuthAdapter['logout']>[0], request?: Parameters<AuthAdapter['logout']>[1]) => {
     return getAuthAdapter().logout(cookie, request);
   },
-  getSession: async (cookie?: Parameters<AuthAdapter['getSession']>[0]) => {
-    return getAuthAdapter().getSession(cookie);
+  getSession: async (
+    cookie?: Parameters<AuthAdapter['getSession']>[0],
+    forwardDocumentUrl?: string | null,
+  ) => {
+    return getAuthAdapter().getSession(cookie, forwardDocumentUrl);
   },
   isAuthenticated: async (cookie?: Parameters<AuthAdapter['isAuthenticated']>[0]) => {
     return getAuthAdapter().isAuthenticated(cookie);

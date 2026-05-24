@@ -6,9 +6,8 @@ export const API_ENDPOINTS = {
   AUTH: {
     LOGIN: '/auth/login',
     LOGOUT: '/auth/logout',
-    REGISTER: '/auth/register',
-    ME: '/auth/me',
-    REFRESH: '/auth/refresh',
+    ME: '/me',
+    ME_PASSWORD: '/me/password',
   },
   // Users
   USERS: {
@@ -26,16 +25,15 @@ export const API_ENDPOINTS = {
   },
   // Activity
   ACTIVITY: {
-    LIST: '/activity',
-    EXPORT: '/activity/export',
+    LIST: '/v1/activity',
+    EXPORT: '/v1/activity/export',
   },
   // Notifications
   NOTIFICATIONS: {
-    LIST: '/notifications',
-    MARK_READ: (id: string) => `/notifications/${id}/read`,
-    MARK_UNREAD: (id: string) => `/notifications/${id}/unread`,
-    DELETE: (id: string) => `/notifications/${id}`,
-    PREFERENCES: '/notifications/preferences',
+    LIST: '/v1/notifications',
+    MARK_READ: (id: string) => `/v1/notifications/${id}/read`,
+    MARK_UNREAD: (id: string) => `/v1/notifications/${id}/unread`,
+    DELETE: (id: string) => `/v1/notifications/${id}`,
   },
   // System
   SYSTEM: {

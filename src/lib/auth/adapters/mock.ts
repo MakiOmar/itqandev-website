@@ -79,7 +79,7 @@ export class MockAuthAdapter implements AuthAdapter {
     }
   }
 
-  async getSession(cookie?: Cookie): Promise<AuthSession | null> {
+  async getSession(cookie?: Cookie, _forwardDocumentUrl?: string | null): Promise<AuthSession | null> {
     if (cookie) {
       return getSessionFromCookie(cookie);
     }

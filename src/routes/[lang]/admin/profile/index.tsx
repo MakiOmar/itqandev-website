@@ -3,55 +3,40 @@ import type { DocumentHead } from '@builder.io/qwik-city';
 import { routeLoader$, routeAction$, Form, zod$, z } from '@builder.io/qwik-city';
 import { PageHeader } from '../../../../components/common/PageHeader';
 import { useTranslate, translateApp } from '../../../../lib/i18n/useTranslate';
-import { mockAuth } from '../../../../lib/auth/mock-auth';
+import { auth } from '../../../../lib/auth';
+import { runMePasswordUpdateFromBrowser, runMeUpdateFromBrowser } from '../../../../lib/admin/me-actions';
 
 /**
  * User profile route loader
  */
 export const useUserProfile = routeLoader$(async ({ cookie }) => {
-  try {
-    const session = mockAuth.getSession(cookie);
-    if (!session) {
-      throw new Error('Unauthorized');
-    }
-    
-    // Simulate API delay
-    await new Promise((resolve) => setTimeout(resolve, 100));
-    
-    return session.user;
-  } catch (error: any) {
-    throw new Error(error.message || 'Failed to load user profile');
+  const session = await auth.getSession(cookie);
+  if (!session) {
+    throw new Error('Unauthorized');
   }
+  return session.user;
 });
 
 /**
  * Update profile route action
  */
 export const useUpdateProfile = routeAction$(
-  async (data, { cookie }) => {
-    const session = mockAuth.getSession(cookie);
-    if (!session) {
-      return {
-        success: false,
-        error: 'Unauthorized',
-      };
-    }
-
-    const updated = mockAuth.updateUser(session.user.id, {
+  async (data) => {
+    const result = await runMeUpdateFromBrowser({
       name: data.name as string,
       email: data.email as string,
     });
 
-    if (!updated) {
+    if (!result.success) {
       return {
         success: false,
-        error: 'Failed to update profile',
+        error: result.error ?? 'Failed to update profile',
       };
     }
 
     return {
       success: true,
-      user: updated,
+      user: result.user,
     };
   },
   zod$({
@@ -64,15 +49,7 @@ export const useUpdateProfile = routeAction$(
  * Change password route action
  */
 export const useChangePassword = routeAction$(
-  async (data, { cookie }) => {
-    const session = mockAuth.getSession(cookie);
-    if (!session) {
-      return {
-        success: false,
-        error: 'Unauthorized',
-      };
-    }
-
+  async (data) => {
     const newPassword = data.newPassword as string;
     const confirmPassword = data.confirmPassword as string;
 
@@ -83,15 +60,19 @@ export const useChangePassword = routeAction$(
       };
     }
 
-    if (newPassword.length < 8) {
+    const result = await runMePasswordUpdateFromBrowser({
+      current_password: data.currentPassword as string,
+      password: newPassword,
+      password_confirmation: confirmPassword,
+    });
+
+    if (!result.success) {
       return {
         success: false,
-        error: 'Password must be at least 8 characters long',
+        error: result.error ?? 'Failed to change password',
       };
     }
 
-    // In a real app, verify current password and update password
-    // For now, just return success
     return {
       success: true,
     };
@@ -114,7 +95,6 @@ export default component$(() => {
 
   return (
     <>
-      {/* Component: ProfilePage */}
       <div>
       <PageHeader
         title={translateApp(lang, 'profile.title')}
@@ -122,7 +102,6 @@ export default component$(() => {
       />
 
       <div class="space-y-6">
-        {/* Profile Information */}
         <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
           <h2 class="mb-4 text-xl font-semibold text-gray-900 dark:text-white">
             {translateApp(lang, 'profile.profileInformation')}
@@ -173,14 +152,14 @@ export default component$(() => {
                 {translateApp(lang, 'profile.role')}
               </label>
               <p class="mt-1 text-sm text-gray-600 dark:text-gray-400 capitalize">
-                {user.value?.role 
+                {user.value?.role
                   ? String(user.value.role).replace(/_/g, ' ')
-                  : (user.value as any)?.roles?.map((r: any) => r.name || r).join(', ') || 'N/A'}
+                  : (user.value as { roles?: { name?: string }[] })?.roles?.map((r) => r.name || r).join(', ') || 'N/A'}
               </p>
             </div>
-            {updateProfileAction.value?.failed && (updateProfileAction.value as any).error && (
+            {updateProfileAction.value?.failed && (updateProfileAction.value as { error?: string }).error && (
               <div class="rounded-md bg-red-50 p-3 text-sm text-red-800">
-                {(updateProfileAction.value as any).error}
+                {(updateProfileAction.value as { error?: string }).error}
               </div>
             )}
             {updateProfileAction.value?.success && (
@@ -198,7 +177,6 @@ export default component$(() => {
           </Form>
         </div>
 
-        {/* Change Password */}
         <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
           <h2 class="mb-4 text-xl font-semibold text-gray-900 dark:text-white">
             {translateApp(lang, 'profile.changePassword')}
@@ -217,11 +195,6 @@ export default component$(() => {
                 type="password"
                 class="mt-1 block w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2 text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
               />
-              {changePasswordAction.value?.failed && changePasswordAction.value.fieldErrors?.currentPassword && (
-                <p class="mt-1 text-sm text-red-600">
-                  {changePasswordAction.value.fieldErrors.currentPassword}
-                </p>
-              )}
             </div>
             <div>
               <label
@@ -236,11 +209,6 @@ export default component$(() => {
                 type="password"
                 class="mt-1 block w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2 text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
               />
-              {changePasswordAction.value?.failed && changePasswordAction.value.fieldErrors?.newPassword && (
-                <p class="mt-1 text-sm text-red-600">
-                  {changePasswordAction.value.fieldErrors.newPassword}
-                </p>
-              )}
             </div>
             <div>
               <label
@@ -255,15 +223,10 @@ export default component$(() => {
                 type="password"
                 class="mt-1 block w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2 text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
               />
-              {changePasswordAction.value?.failed && changePasswordAction.value.fieldErrors?.confirmPassword && (
-                <p class="mt-1 text-sm text-red-600">
-                  {changePasswordAction.value.fieldErrors.confirmPassword}
-                </p>
-              )}
             </div>
-            {changePasswordAction.value?.failed && (changePasswordAction.value as any).error && (
+            {changePasswordAction.value?.failed && (changePasswordAction.value as { error?: string }).error && (
               <div class="rounded-md bg-red-50 p-3 text-sm text-red-800">
-                {(changePasswordAction.value as any).error}
+                {(changePasswordAction.value as { error?: string }).error}
               </div>
             )}
             {changePasswordAction.value?.success && (

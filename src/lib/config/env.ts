@@ -1,4 +1,5 @@
 import type { DashboardConfig } from './types';
+import { resolveApiBaseUrlForConfig } from '../marketing/resolve-api-base';
 
 /**
  * Environment variable loader
@@ -32,7 +33,7 @@ function getEnvBool(key: string, defaultValue = false): boolean {
 export function loadEnvConfig(): Partial<DashboardConfig> {
   return {
     api: {
-      baseUrl: getEnv('VITE_API_BASE_URL', '/api') || '/api',
+      baseUrl: resolveApiBaseUrlForConfig(),
       sanctum: getEnvBool('VITE_LARAVEL_SANCTUM', false),
       csrfToken: getEnv('VITE_CSRF_TOKEN'),
       timeout: Number(getEnv('VITE_API_TIMEOUT', '30000')) || 30000,
@@ -50,7 +51,7 @@ export function loadEnvConfig(): Partial<DashboardConfig> {
       },
     },
     auth: {
-      provider: (getEnv('VITE_AUTH_PROVIDER', 'mock') as 'laravel' | 'mock' | 'custom') || 'mock',
+      provider: (getEnv('VITE_AUTH_PROVIDER', 'laravel') as 'laravel' | 'mock') || 'laravel',
       cookieName: getEnv('VITE_AUTH_COOKIE_NAME', 'auth_session') || 'auth_session',
       tokenHeader: getEnv('VITE_AUTH_TOKEN_HEADER', 'Authorization') || 'Authorization',
       refreshToken: getEnvBool('VITE_AUTH_REFRESH_TOKEN', false),

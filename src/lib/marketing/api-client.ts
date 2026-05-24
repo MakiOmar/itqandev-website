@@ -5,13 +5,14 @@
  */
 
 import { getConfig } from '~/lib/config';
+import { resolveMarketingApiBaseUrl } from './resolve-api-base';
 
-export function getMarketingApiBaseUrl(): string {
-  return (import.meta.env?.VITE_MARKETING_API_URL ?? import.meta.env?.VITE_API_BASE_URL ?? '') as string;
+export function getMarketingApiBaseUrl(forwardDocumentUrl?: string | null): string {
+  return resolveMarketingApiBaseUrl(forwardDocumentUrl);
 }
 
-function getBaseUrl(): string {
-  return getMarketingApiBaseUrl();
+function getBaseUrl(forwardDocumentUrl?: string | null): string {
+  return getMarketingApiBaseUrl(forwardDocumentUrl);
 }
 
 /** Parsed API root URL (`VITE_MARKETING_API_URL` / `VITE_API_BASE_URL`). */
@@ -130,8 +131,13 @@ export async function marketingFetch<T>(
     MarketingFetchContext & { locale?: string | null } = {},
 ): Promise<T> {
   const { locale, forwardCookies, forwardAuthorization, forwardDocumentUrl, ...fetchInit } = options;
-  const base = getBaseUrl().replace(/\/$/, '');
-  const url = path.startsWith('http') ? path : `${base}${path}`;
+  const base = getBaseUrl(forwardDocumentUrl).replace(/\/$/, '');
+  let url = path.startsWith('http') ? path : `${base}${path.startsWith('/') ? path : `/${path}`}`;
+  if (!/^https?:\/\//i.test(url)) {
+    throw new Error(
+      `[marketing] API base must be absolute during SSR (got "${base}"). Set VITE_API_PROXY_TARGET or VITE_SSR_API_BASE_URL.`,
+    );
+  }
   const authHeaderName = String(import.meta.env?.VITE_AUTH_TOKEN_HEADER ?? 'Authorization');
 
   const headers: Record<string, string> = {

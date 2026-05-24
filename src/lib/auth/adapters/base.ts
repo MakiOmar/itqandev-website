@@ -20,7 +20,7 @@ export interface AuthAdapter {
   /**
    * Get current session
    */
-  getSession(cookie?: any): Promise<AuthSession | null>;
+  getSession(cookie?: any, forwardDocumentUrl?: string | null): Promise<AuthSession | null>;
 
   /**
    * Refresh authentication token

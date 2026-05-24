@@ -3,58 +3,88 @@ import type { DocumentHead } from '@builder.io/qwik-city';
 import { routeLoader$ } from '@builder.io/qwik-city';
 import { PageHeader } from '../../../../components/common/PageHeader';
 import { useTranslate, translateApp } from '../../../../lib/i18n/useTranslate';
-import { mockNotifications, type Notification } from '../../../../lib/api/mock-data';
 import { formatRelativeTime } from '../../../../lib/utils/formatters';
-import { showSuccess } from '../../../../lib/utils/toast';
+import { showSuccess, showError } from '../../../../lib/utils/toast';
+import { getApiClient, extractCookieHeader } from '../../../../lib/api/client';
+import { API_ENDPOINTS } from '../../../../lib/api/endpoints';
 
-/**
- * Load notifications
- */
-export const useNotifications = routeLoader$(async () => {
+export interface NotificationRow {
+  id: string;
+  userId: string;
+  title: string;
+  message: string;
+  type: 'info' | 'success' | 'warning' | 'error';
+  read: boolean;
+  createdAt: string;
+}
+
+export const useNotifications = routeLoader$(async ({ cookie, request }) => {
   try {
-    // TODO: Replace with real API call
-    // const apiClient = getApiClient();
-    // const response = await apiClient.get(API_ENDPOINTS.NOTIFICATIONS.LIST);
-    // return response?.data ?? [];
-    
-    // For now, return mock data
-    return mockNotifications;
-  } catch (error: any) {
+    const cookieHeader = extractCookieHeader(cookie, request);
+    const client = getApiClient(cookieHeader);
+    const res = await client.get<{ data?: NotificationRow[] }>(API_ENDPOINTS.NOTIFICATIONS.LIST);
+    const payload = res.data as { data?: NotificationRow[] } | NotificationRow[] | undefined;
+    if (Array.isArray(payload)) {
+      return payload;
+    }
+    return Array.isArray(payload?.data) ? payload.data : [];
+  } catch (error) {
     console.error('Failed to load notifications:', error);
-    return [];
+    return [] as NotificationRow[];
   }
 });
 
-/**
- * Notifications page
- */
 export default component$(() => {
   const notificationsLoader = useNotifications();
   const notifications = useSignal(notificationsLoader.value);
   const { lang } = useTranslate();
 
-  const handleMarkRead = $((id: string) => {
-    const notification = notifications.value.find((n) => n.id === id);
-    if (notification) {
-      notification.read = true;
+  const apiMutate = $(async (path: string, method: 'POST' | 'DELETE') => {
+    const client = getApiClient(null);
+    if (method === 'POST') {
+      await client.post(path, {});
+    } else {
+      await client.delete(path);
+    }
+  });
+
+  const handleMarkRead = $(async (id: string) => {
+    try {
+      await apiMutate(API_ENDPOINTS.NOTIFICATIONS.MARK_READ(id), 'POST');
+      const n = notifications.value.find((x) => x.id === id);
+      if (n) {
+        n.read = true;
+      }
       showSuccess('Notification marked as read');
+    } catch {
+      showError('Failed to update notification');
     }
   });
 
-  const handleMarkUnread = $((id: string) => {
-    const notification = notifications.value.find((n) => n.id === id);
-    if (notification) {
-      notification.read = false;
+  const handleMarkUnread = $(async (id: string) => {
+    try {
+      await apiMutate(API_ENDPOINTS.NOTIFICATIONS.MARK_UNREAD(id), 'POST');
+      const n = notifications.value.find((x) => x.id === id);
+      if (n) {
+        n.read = false;
+      }
       showSuccess('Notification marked as unread');
+    } catch {
+      showError('Failed to update notification');
     }
   });
 
-  const handleDelete = $((id: string) => {
-    notifications.value = notifications.value.filter((n) => n.id !== id);
-    showSuccess('Notification deleted');
+  const handleDelete = $(async (id: string) => {
+    try {
+      await apiMutate(API_ENDPOINTS.NOTIFICATIONS.DELETE(id), 'DELETE');
+      notifications.value = notifications.value.filter((n) => n.id !== id);
+      showSuccess('Notification deleted');
+    } catch {
+      showError('Failed to delete notification');
+    }
   });
 
-  const getTypeColor = (type: Notification['type']) => {
+  const getTypeColor = (type: NotificationRow['type']) => {
     switch (type) {
       case 'success':
         return 'bg-green-100 text-green-800';
@@ -69,7 +99,6 @@ export default component$(() => {
 
   return (
     <>
-      {/* Component: NotificationsPage */}
       <div>
       <PageHeader
         title={translateApp(lang, 'notifications.title')}
@@ -114,6 +143,7 @@ export default component$(() => {
                 <div class="ml-4 flex gap-2">
                   {notification.read ? (
                     <button
+                      type="button"
                       onClick$={() => handleMarkUnread(notification.id)}
                       class="text-xs text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200"
                     >
@@ -121,6 +151,7 @@ export default component$(() => {
                     </button>
                   ) : (
                     <button
+                      type="button"
                       onClick$={() => handleMarkRead(notification.id)}
                       class="text-xs text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200"
                     >
@@ -128,6 +159,7 @@ export default component$(() => {
                     </button>
                   )}
                   <button
+                    type="button"
                     onClick$={() => handleDelete(notification.id)}
                     class="text-xs text-red-600 hover:text-red-800"
                   >

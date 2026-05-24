@@ -15,7 +15,11 @@ export const useWorkData = routeLoader$(async ({ request, url, params }) => {
   const uiLocale = uiLocaleFromPublicRoute(cookie, params.lang, request.url);
   const categorySlug = url.searchParams.get('category_slug') ?? undefined;
   const skillSlug = url.searchParams.get('skill_slug') ?? undefined;
-  return getCaseStudies(uiLocale, { categorySlug: categorySlug ?? undefined, skillSlug: skillSlug ?? undefined });
+  return getCaseStudies(
+    uiLocale,
+    { categorySlug: categorySlug ?? undefined, skillSlug: skillSlug ?? undefined },
+    { forwardDocumentUrl: request.url },
+  );
 });
 
 export default component$(() => {

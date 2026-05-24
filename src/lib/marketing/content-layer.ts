@@ -75,15 +75,18 @@ function mapPublicProjectToCaseStudy(raw: Record<string, unknown>): CaseStudy {
   };
 }
 
-async function fetchTestimonialsFromApi(locale?: string): Promise<Testimonial[]> {
-  if (!getMarketingApiBaseUrl().trim()) {
+async function fetchTestimonialsFromApi(
+  locale?: string,
+  fetchContext?: MarketingFetchContext,
+): Promise<Testimonial[]> {
+  if (!getMarketingApiBaseUrl(fetchContext?.forwardDocumentUrl).trim()) {
     return [];
   }
   try {
     const q = new URLSearchParams();
     q.set('per_page', '48');
     const path = `${MARKETING_ENDPOINTS.testimonials}?${q.toString()}`;
-    const payload = await marketingGet<unknown>(path, locale);
+    const payload = await marketingGet<unknown>(path, locale, fetchContext);
     const list = unwrapMarketingListRecords(payload as Record<string, unknown>);
     return list
       .map((raw) => mapPublicTestimonialRecord(raw))
@@ -144,14 +147,17 @@ function mapPublicTestimonialRecord(raw: Record<string, unknown>): Testimonial {
   };
 }
 
-async function fetchPublishedProjectsFromApi(options: {
-  featured?: boolean;
-  per_page: number;
-  locale?: string;
-  categorySlug?: string;
-  skillSlug?: string;
-}): Promise<CaseStudy[]> {
-  if (!getMarketingApiBaseUrl().trim()) {
+async function fetchPublishedProjectsFromApi(
+  options: {
+    featured?: boolean;
+    per_page: number;
+    locale?: string;
+    categorySlug?: string;
+    skillSlug?: string;
+  },
+  fetchContext?: MarketingFetchContext,
+): Promise<CaseStudy[]> {
+  if (!getMarketingApiBaseUrl(fetchContext?.forwardDocumentUrl).trim()) {
     return [];
   }
   try {
@@ -167,7 +173,7 @@ async function fetchPublishedProjectsFromApi(options: {
       q.set('skill_slug', options.skillSlug.trim());
     }
     const path = `${MARKETING_ENDPOINTS.caseStudies}?${q.toString()}`;
-    const payload = await marketingGet<unknown>(path, options.locale);
+    const payload = await marketingGet<unknown>(path, options.locale, fetchContext);
     return unwrapMarketingListRecords(payload)
       .map(mapPublicProjectToCaseStudy)
       .filter((c) => c.slug.length > 0);
@@ -183,13 +189,20 @@ export type CaseStudyListFilters = {
 };
 
 /** Get all case studies (portfolio). Optional filters apply to API-backed lists only. */
-export async function getCaseStudies(locale?: string, filters?: CaseStudyListFilters): Promise<CaseStudy[]> {
-  const live = await fetchPublishedProjectsFromApi({
-    per_page: 48,
-    locale,
-    categorySlug: filters?.categorySlug,
-    skillSlug: filters?.skillSlug,
-  });
+export async function getCaseStudies(
+  locale?: string,
+  filters?: CaseStudyListFilters,
+  fetchContext?: MarketingFetchContext,
+): Promise<CaseStudy[]> {
+  const live = await fetchPublishedProjectsFromApi(
+    {
+      per_page: 48,
+      locale,
+      categorySlug: filters?.categorySlug,
+      skillSlug: filters?.skillSlug,
+    },
+    fetchContext,
+  );
   if (live.length > 0) {
     return live;
   }
@@ -204,7 +217,11 @@ export async function getCaseStudies(locale?: string, filters?: CaseStudyListFil
       if (filters?.skillSlug?.trim()) {
         q.set('skill_slug', filters.skillSlug.trim());
       }
-      const data = await marketingGet<unknown>(`${MARKETING_ENDPOINTS.caseStudies}?${q.toString()}`, locale);
+      const data = await marketingGet<unknown>(
+        `${MARKETING_ENDPOINTS.caseStudies}?${q.toString()}`,
+        locale,
+        fetchContext,
+      );
       const list = unwrapMarketingListRecords(data);
       if (list.length > 0) {
         return list.map(mapPublicProjectToCaseStudy);
@@ -261,13 +278,20 @@ export async function getCaseStudyBySlug(
 }
 
 /** Get featured case studies for home page. */
-export async function getFeaturedCaseStudies(limit = 3, locale?: string): Promise<CaseStudy[]> {
-  const live = await fetchPublishedProjectsFromApi({ featured: true, per_page: limit, locale });
+export async function getFeaturedCaseStudies(
+  limit = 3,
+  locale?: string,
+  fetchContext?: MarketingFetchContext,
+): Promise<CaseStudy[]> {
+  const live = await fetchPublishedProjectsFromApi(
+    { featured: true, per_page: limit, locale },
+    fetchContext,
+  );
   if (live.length > 0) {
     return live.slice(0, limit);
   }
 
-  const all = await getCaseStudies(locale);
+  const all = await getCaseStudies(locale, undefined, fetchContext);
   const featured = all.filter((c) => c.featured).slice(0, limit);
   if (featured.length >= limit) {
     return featured;
@@ -276,8 +300,11 @@ export async function getFeaturedCaseStudies(limit = 3, locale?: string): Promis
 }
 
 /** Get approved testimonials (from API when configured, else local JSON). Respects locale via X-Content-Locale when using the API. */
-export async function getTestimonials(locale?: string): Promise<Testimonial[]> {
-  const live = await fetchTestimonialsFromApi(locale);
+export async function getTestimonials(
+  locale?: string,
+  fetchContext?: MarketingFetchContext,
+): Promise<Testimonial[]> {
+  const live = await fetchTestimonialsFromApi(locale, fetchContext);
   if (live.length > 0) {
     return live;
   }
@@ -287,7 +314,7 @@ export async function getTestimonials(locale?: string): Promise<Testimonial[]> {
       const q = new URLSearchParams();
       q.set('per_page', '48');
       const path = `${MARKETING_ENDPOINTS.testimonials}?${q.toString()}`;
-      const payload = await marketingGet<unknown>(path, locale);
+      const payload = await marketingGet<unknown>(path, locale, fetchContext);
       const list = unwrapMarketingListRecords(payload as Record<string, unknown>)
         .map((raw) => mapPublicTestimonialRecord(raw))
         .filter((t) => t.quote.length > 0 && t.approved !== false);
@@ -319,12 +346,19 @@ function normalizeServiceFromPublicApi(raw: Record<string, unknown>): Service {
  * Get site content (services, pricing, FAQ, contact, about).
  * When `VITE_MARKETING_API_URL` / `VITE_API_BASE_URL` is set, merges `GET /public/services` (optional `locale` → X-Content-Locale) over local `site.json` for the `services` array only.
  */
-export async function getSiteContent(locale?: string | null): Promise<SiteContent> {
+export async function getSiteContent(
+  locale?: string | null,
+  fetchContext?: MarketingFetchContext,
+): Promise<SiteContent> {
   let merged: SiteContent = siteContent;
 
   if (contentSource === 'api') {
     try {
-      const data = await marketingGet<SiteContent>(MARKETING_ENDPOINTS.siteContent, locale ?? undefined);
+      const data = await marketingGet<SiteContent>(
+        MARKETING_ENDPOINTS.siteContent,
+        locale ?? undefined,
+        fetchContext,
+      );
       if (data) {
         merged = { ...merged, ...data };
       }
@@ -333,9 +367,13 @@ export async function getSiteContent(locale?: string | null): Promise<SiteConten
     }
   }
 
-  if (getMarketingApiBaseUrl().trim()) {
+  if (getMarketingApiBaseUrl(fetchContext?.forwardDocumentUrl).trim()) {
     try {
-      const payload = await marketingGet<unknown>(MARKETING_ENDPOINTS.services, locale ?? undefined);
+      const payload = await marketingGet<unknown>(
+        MARKETING_ENDPOINTS.services,
+        locale ?? undefined,
+        fetchContext,
+      );
       const arr = Array.isArray(payload)
         ? payload
         : payload && typeof payload === 'object' && Array.isArray((payload as { data?: unknown }).data)

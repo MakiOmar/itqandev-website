@@ -10,6 +10,10 @@ import { getApiClient } from '../../../lib/api/client';
 import { ProjectSettingsContext } from '../../../stores/project-settings-store';
 import { getLocalizedRoutes, routesFromPreferredCookie } from '../../../lib/constants/routes';
 import { stripUiLocaleFromPathname } from '../../../lib/i18n/ui-locale-path';
+import { getFeatureModuleForAdminPath } from '../../../lib/admin/feature-module-routes';
+import { isFeatureModuleEnabled } from '../../../lib/api/project-settings';
+import { API_ENDPOINTS } from '../../../lib/api/endpoints';
+import { extractCookieHeader } from '../../../lib/api/client';
 
 /**
  * Site languages for admin content forms (must be re-exported from a route file — see Qwik routeLoader$ rules).
@@ -64,6 +68,40 @@ export const useAdminAuth = routeLoader$(async ({ cookie, url, redirect: redirec
     }
     return null;
   }
+});
+
+/**
+ * Redirect when visiting a disabled feature module admin route directly.
+ */
+export const useAdminFeatureModuleGuard = routeLoader$(async ({ cookie, request, url, redirect: redirectFn }) => {
+  const module = getFeatureModuleForAdminPath(url.pathname);
+  if (!module) {
+    return null;
+  }
+
+  const R = routesFromPreferredCookie(cookie);
+  const logicalPath = stripUiLocaleFromPathname(url.pathname.replace(/\/+$/, '') || '/');
+  const isLoginPage = logicalPath === '/admin/login' || logicalPath.endsWith('/admin/login');
+  if (isLoginPage) {
+    return null;
+  }
+
+  try {
+    const cookieHeader = extractCookieHeader(cookie, request);
+    const apiClient = getApiClient(cookieHeader);
+    const response = await apiClient.get<{ features?: Record<string, boolean> }>(API_ENDPOINTS.SETTINGS.GET);
+    const features = (response?.data as { features?: Record<string, boolean> } | undefined)?.features
+      ?? (response as { features?: Record<string, boolean> }).features;
+    if (!isFeatureModuleEnabled(features, module)) {
+      throw redirectFn(302, R.ADMIN.HOME);
+    }
+  } catch (error: unknown) {
+    if (error && typeof error === 'object' && 'status' in error && 'location' in error) {
+      throw error;
+    }
+  }
+
+  return null;
 });
 
 /**
@@ -126,6 +164,7 @@ export default component$(() => {
   // Check authentication status (redirects are handled in routeLoader$)
   // This is the ONLY server-side operation - security critical
   const adminAuth = useAdminAuth();
+  useAdminFeatureModuleGuard();
   
   // CLIENT-SIDE: Load project settings (logo, branding, etc.)
   // Settings are cached client-side to avoid repeated API calls

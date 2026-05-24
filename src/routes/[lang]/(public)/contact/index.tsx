@@ -14,7 +14,7 @@ import { Button } from '~/components/marketing/Button';
 export const useContactData = routeLoader$(async ({ request, params }) => {
   const cookie = request.headers.get('cookie') || '';
   const uiLocale = uiLocaleFromPublicRoute(cookie, params.lang, request.url);
-  return getSiteContent(uiLocale);
+  return getSiteContent(uiLocale, { forwardDocumentUrl: request.url });
 });
 
 function getContactUrl(): string {
@@ -36,8 +36,7 @@ export default component$(() => {
     const form = e.target as HTMLFormElement;
     const url = getContactUrl();
     if (!url) {
-      submitted.value = true;
-      if (typeof console !== 'undefined') console.info('Contact form: backend endpoint not configured (VITE_CONTACT_API_URL or VITE_API_BASE_URL + /api/contact). See README for required backend shape.');
+      error.value = 'Contact form is not configured. Set VITE_API_BASE_URL to your Laravel API.';
       return;
     }
 

@@ -4,6 +4,7 @@ import type { Cookie } from '@builder.io/qwik-city';
 import { getConfig } from '../../config';
 import { LaravelApiClient } from '../../api/laravel-client';
 import { extractCookieHeader } from '../../api/client';
+import { resolveMarketingApiBaseUrl } from '../../marketing/resolve-api-base';
 
 /**
  * Laravel Sanctum authentication adapter
@@ -133,10 +134,14 @@ export class LaravelAuthAdapter implements AuthAdapter {
   /**
    * Get current session from Laravel
    */
-  async getSession(cookie?: Cookie): Promise<AuthSession | null> {
+  async getSession(cookie?: Cookie, forwardDocumentUrl?: string | null): Promise<AuthSession | null> {
+    const apiClient =
+      forwardDocumentUrl != null && String(forwardDocumentUrl).trim() !== ''
+        ? new LaravelApiClient(resolveMarketingApiBaseUrl(forwardDocumentUrl), extractCookieHeader(cookie))
+        : this.apiClient;
     try {
       // Try to get from Laravel /me endpoint (protected route)
-      const response = await this.apiClient.get<{ user: AuthSession['user'] }>('/me');
+      const response = await apiClient.get<{ user: AuthSession['user'] }>('/me');
 
       if (response.success && response.data) {
         // Transform Laravel user data to match frontend User interface

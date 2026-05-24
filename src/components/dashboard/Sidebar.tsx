@@ -5,6 +5,7 @@ import { useAppRoutes } from '../../lib/constants/routes';
 import { useAdminAuth } from '../../routes/[lang]/admin/layout';
 import { ProjectSettingsContext } from '../../stores/project-settings-store';
 import { isFeatureModuleEnabled, type FeatureModuleKey } from '../../lib/api/project-settings';
+import { getConfig } from '../../lib/config';
 import { useTranslate, translateApp } from '../../lib/i18n/useTranslate';
 import {
   DashboardIcon,
@@ -228,6 +229,16 @@ export const Sidebar = component$<SidebarProps>((props) => {
       return { ...item, children };
     })
     .filter((item) => {
+      const dashFeatures = getConfig().features;
+      if (item.href === R.ADMIN.ACTIVITY && dashFeatures.activityLogs === false) {
+        return false;
+      }
+      if (item.href === R.ADMIN.NOTIFICATIONS && dashFeatures.notifications === false) {
+        return false;
+      }
+      if (item.href === R.ADMIN.SYSTEM && dashFeatures.systemHealth === false) {
+        return false;
+      }
       if (item.featureModule && !isFeatureModuleEnabled(featureFlags, item.featureModule)) {
         return false;
       }

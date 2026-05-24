@@ -12,7 +12,7 @@ import { AnimatedCounter } from '~/components/marketing/AnimatedCounter';
 export const useAboutData = routeLoader$(async ({ request, params }) => {
   const cookie = request.headers.get('cookie') || '';
   const uiLocale = uiLocaleFromPublicRoute(cookie, params.lang, request.url);
-  return getSiteContent(uiLocale);
+  return getSiteContent(uiLocale, { forwardDocumentUrl: request.url });
 });
 
 export default component$(() => {

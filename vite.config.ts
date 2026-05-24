@@ -2,7 +2,7 @@
  * This is the base config for vite.
  * When building, the adapter config is used which loads this file and extends it.
  */
-import { defineConfig, type UserConfig } from "vite";
+import { defineConfig, loadEnv, type UserConfig } from "vite";
 import { qwikVite } from "@builder.io/qwik/optimizer";
 import { qwikCity } from "@builder.io/qwik-city/vite";
 import tsconfigPaths from "vite-tsconfig-paths";
@@ -20,6 +20,9 @@ errorOnDuplicatesPkgDeps(devDependencies, dependencies);
  * Note that Vite normally starts from `index.html` but the qwikCity plugin makes start at `src/entry.ssr.tsx` instead.
  */
 export default defineConfig(({ command, mode }): UserConfig => {
+  const env = loadEnv(mode, process.cwd(), "");
+  const apiProxyTarget = (env.VITE_API_PROXY_TARGET || "http://itqandev.com").replace(/\/$/, "");
+
   // Determine if this is a client-only build (not SSR/preview)
   // SSR builds use --ssr flag or have entry.preview/entry.ssr, so we check mode and command
   const isClientBuild = command === 'build' && mode === 'production' && !process.argv.includes('--ssr');
@@ -96,6 +99,18 @@ export default defineConfig(({ command, mode }): UserConfig => {
       headers: {
         // Don't cache the server response in dev mode
         "Cache-Control": "public, max-age=0",
+      },
+      /**
+       * Proxy /api to Laravel during dev when VITE_API_BASE_URL=/api.
+       * Set VITE_API_PROXY_TARGET to your WAMP public folder, e.g.
+       * http://itqandev.com/credocode/backend/public
+       */
+      proxy: {
+        "/api": {
+          target: apiProxyTarget,
+          changeOrigin: true,
+          secure: false,
+        },
       },
     },
     preview: {

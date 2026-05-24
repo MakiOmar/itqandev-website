@@ -19,10 +19,11 @@ import { BlogCard } from '~/components/marketing/BlogCard';
 export const useHomeData = routeLoader$(async ({ request, params }) => {
   const cookie = request.headers.get('cookie') || '';
   const uiLocale = uiLocaleFromPublicRoute(cookie, params.lang, request.url);
+  const fetchContext = { forwardDocumentUrl: request.url };
   const [caseStudies, testimonials, siteContent, blogPosts] = await Promise.all([
-    getFeaturedCaseStudies(3, uiLocale),
-    getTestimonials(uiLocale),
-    getSiteContent(uiLocale),
+    getFeaturedCaseStudies(3, uiLocale, fetchContext),
+    getTestimonials(uiLocale, fetchContext),
+    getSiteContent(uiLocale, fetchContext),
     getBlogPosts(),
   ]);
   return { caseStudies, testimonials, siteContent, blogPosts: blogPosts.slice(0, 3) };

@@ -11,6 +11,7 @@ import type { Project } from '../../../types/project';
 import type { Category } from '../../../types/category';
 import type { Skill } from '../../../types/skill';
 import type { Testimonial } from '../../../types/testimonial';
+import { isFeatureModuleEnabled } from '../../../lib/api/project-settings';
 
 /**
  * Dashboard metrics interface
@@ -30,6 +31,16 @@ interface DashboardMetrics {
   testimonials: {
     total: number;
   };
+  blog: {
+    total: number;
+    published: number;
+  };
+  services: {
+    total: number;
+  };
+  media: {
+    total: number;
+  };
 }
 
 /**
@@ -41,12 +52,35 @@ export const useDashboardMetrics = routeLoader$(async ({ cookie, request }) => {
     const apiClient = getApiClient(cookieHeader);
     
     // Load all data in parallel with better error handling
-    const [projectsRes, categoriesRes, skillsRes, testimonialsRes] = await Promise.allSettled([
-      apiClient.get<Project[]>(API_ENDPOINTS.PROJECTS.LIST),
-      apiClient.get<Category[]>(API_ENDPOINTS.CATEGORIES.LIST),
-      apiClient.get<Skill[]>(API_ENDPOINTS.SKILLS.LIST),
-      apiClient.get<Testimonial[]>(API_ENDPOINTS.TESTIMONIALS.LIST),
+    const settingsRes = await apiClient.get<{ features?: Record<string, boolean> }>(API_ENDPOINTS.SETTINGS.GET);
+    const features =
+      (settingsRes?.data as { features?: Record<string, boolean> } | undefined)?.features ?? undefined;
+
+    const fetches: PromiseSettledResult<unknown>[] = await Promise.allSettled([
+      isFeatureModuleEnabled(features, 'projects')
+        ? apiClient.get<Project[]>(API_ENDPOINTS.PROJECTS.LIST)
+        : Promise.resolve({ data: [] }),
+      isFeatureModuleEnabled(features, 'categories')
+        ? apiClient.get<Category[]>(API_ENDPOINTS.CATEGORIES.LIST)
+        : Promise.resolve({ data: [] }),
+      isFeatureModuleEnabled(features, 'skills')
+        ? apiClient.get<Skill[]>(API_ENDPOINTS.SKILLS.LIST)
+        : Promise.resolve({ data: [] }),
+      isFeatureModuleEnabled(features, 'testimonials')
+        ? apiClient.get<Testimonial[]>(API_ENDPOINTS.TESTIMONIALS.LIST)
+        : Promise.resolve({ data: [] }),
+      isFeatureModuleEnabled(features, 'blog')
+        ? apiClient.get<unknown[]>(API_ENDPOINTS.BLOG.LIST)
+        : Promise.resolve({ data: [] }),
+      isFeatureModuleEnabled(features, 'services')
+        ? apiClient.get<unknown[]>(API_ENDPOINTS.SERVICES.LIST)
+        : Promise.resolve({ data: [] }),
+      isFeatureModuleEnabled(features, 'media')
+        ? apiClient.get<unknown>(`${API_ENDPOINTS.MEDIA.LIST}?per_page=1`)
+        : Promise.resolve({ data: { total: 0 } }),
     ]);
+
+    const [projectsRes, categoriesRes, skillsRes, testimonialsRes, blogRes, servicesRes, mediaRes] = fetches;
 
     // Extract data from settled promises, handling paginated responses
     const extractData = <T,>(result: PromiseSettledResult<any>): T[] => {
@@ -80,6 +114,20 @@ export const useDashboardMetrics = routeLoader$(async ({ cookie, request }) => {
       ? testimonialsData 
       : (testimonialsData as any)?.data ?? [];
 
+    const blogList = blogRes.status === 'fulfilled' ? extractData<{ status?: string }>(blogRes as PromiseFulfilledResult<unknown>) : [];
+    const servicesList =
+      servicesRes.status === 'fulfilled' ? extractData(servicesRes as PromiseFulfilledResult<unknown>) : [];
+    let mediaTotal = 0;
+    if (mediaRes.status === 'fulfilled' && mediaRes.value) {
+      const md = (mediaRes as PromiseFulfilledResult<{ data?: { total?: number } }>).value?.data;
+      if (md && typeof md === 'object' && 'total' in md && typeof md.total === 'number') {
+        mediaTotal = md.total;
+      } else {
+        const list = extractData(mediaRes as PromiseFulfilledResult<unknown>);
+        mediaTotal = list.length;
+      }
+    }
+
     const metrics: DashboardMetrics = {
       projects: {
         total: projects.length,
@@ -95,6 +143,16 @@ export const useDashboardMetrics = routeLoader$(async ({ cookie, request }) => {
       testimonials: {
         total: testimonials.length,
       },
+      blog: {
+        total: blogList.length,
+        published: blogList.filter((b) => b.status === 'published').length,
+      },
+      services: {
+        total: servicesList.length,
+      },
+      media: {
+        total: mediaTotal,
+      },
     };
 
     return metrics;
@@ -106,6 +164,9 @@ export const useDashboardMetrics = routeLoader$(async ({ cookie, request }) => {
       categories: { total: 0 },
       skills: { total: 0 },
       testimonials: { total: 0 },
+      blog: { total: 0, published: 0 },
+      services: { total: 0 },
+      media: { total: 0 },
     };
   }
 });
