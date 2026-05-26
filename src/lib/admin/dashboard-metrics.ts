@@ -1,6 +1,7 @@
 import { getApiClient } from '../api/client';
 import { API_ENDPOINTS } from '../api/endpoints';
 import { isFeatureModuleEnabled } from '../api/project-settings';
+import { shouldSkipSsrMarketingApi } from '../marketing/ssr-api-reachability';
 import type { Project } from '../../types/project';
 import type { Category } from '../../types/category';
 import type { Skill } from '../../types/skill';
@@ -77,6 +78,11 @@ function extractTotalCount(result: PromiseSettledResult<unknown>): number {
  * Works server-side (routeLoader$ + cookies) and client-side (localStorage token + /api proxy).
  */
 export async function fetchDashboardMetrics(cookieHeader?: string | null): Promise<DashboardMetrics> {
+  // Dev SSR cannot reach WAMP reliably; hydrate from browser via useVisibleTask$ on dashboard.
+  if (typeof window === 'undefined' && shouldSkipSsrMarketingApi()) {
+    return EMPTY_DASHBOARD_METRICS;
+  }
+
   // Omit X-Content-Locale: dashboard totals should reflect all records, not locale-filtered lists.
   const apiClient = getApiClient(cookieHeader ?? undefined, false);
 

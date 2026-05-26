@@ -66,14 +66,13 @@ function isViteDevServerOrigin(origin: string): boolean {
 function resolveSsrAbsoluteApiBase(normalizedPath: string): string {
   if (import.meta.env.DEV) {
     const vhost = envString('VITE_API_PROXY_HOST');
-    // WAMP named vhost: use hostname (Node fetch ignores Host on 127.0.0.1); ipv4first in marketingFetch.
-    if (vhost) {
-      return trimSlash(`http://${vhost}${normalizedPath}`);
-    }
     const proxyTarget = envString('VITE_API_PROXY_TARGET');
-    // php artisan serve on loopback only
+    // Node can reach loopback; Apache/WAMP vhost routing uses Host header (see ssrFetch).
     if (proxyTarget && isLoopbackHttpOrigin(proxyTarget)) {
       return trimSlash(`${trimSlash(proxyTarget)}${normalizedPath}`);
+    }
+    if (vhost) {
+      return trimSlash(`http://${vhost}${normalizedPath}`);
     }
     return trimSlash(`${trimSlash(devServerOrigin())}${normalizedPath}`);
   }

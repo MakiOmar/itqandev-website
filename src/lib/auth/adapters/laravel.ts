@@ -143,17 +143,64 @@ export class LaravelAuthAdapter implements AuthAdapter {
     );
   }
 
+  /** Parse auth_session HttpOnly cookie into a session (SSR / API-unreachable fallback). */
+  private parseSessionFromAuthCookie(cookie?: Cookie): AuthSession | null {
+    const sessionStr = cookie?.get(this.config.auth.cookieName)?.value;
+    if (!sessionStr) {
+      return null;
+    }
+    try {
+      const rawSession: any = JSON.parse(sessionStr);
+      let user = rawSession.user;
+      if (user && user.roles && Array.isArray(user.roles)) {
+        user = {
+          id: user.id?.toString() || user.id,
+          email: user.email,
+          name: user.name,
+          avatar: user.avatar,
+          role: user.role || user.roles?.[0]?.name || 'user',
+          permissions: Array.isArray(user.permissions) ? user.permissions : undefined,
+          status: user.status || 'active',
+          createdAt: user.created_at || user.createdAt,
+          updatedAt: user.updated_at || user.updatedAt,
+        };
+      }
+      const session: AuthSession = { ...rawSession, user };
+      if (session.expiresAt > Date.now() && session.user) {
+        return session;
+      }
+    } catch {
+      /* invalid */
+    }
+    return null;
+  }
+
   /**
    * Get current session from Laravel
    */
   async getSession(cookie?: Cookie, forwardDocumentUrl?: string | null): Promise<AuthSession | null> {
-    if (typeof window === 'undefined' && !this.hasAuthCookies(cookie)) {
+    const isSsr = typeof window === 'undefined';
+    if (isSsr && !this.hasAuthCookies(cookie)) {
       return null;
     }
 
+    // Dev SSR: Node often cannot reach WAMP before timeout — use auth_session cookie set at login.
+    if (isSsr && import.meta.env.DEV) {
+      const fromCookie = this.parseSessionFromAuthCookie(cookie);
+      if (fromCookie) {
+        return fromCookie;
+      }
+    }
+
+    const cookieHeader = extractCookieHeader(cookie);
     const apiClient =
-      forwardDocumentUrl != null && String(forwardDocumentUrl).trim() !== ''
-        ? new LaravelApiClient(resolveMarketingApiBaseUrl(forwardDocumentUrl), extractCookieHeader(cookie))
+      isSsr || (forwardDocumentUrl != null && String(forwardDocumentUrl).trim() !== '')
+        ? new LaravelApiClient(
+            forwardDocumentUrl != null && String(forwardDocumentUrl).trim() !== ''
+              ? resolveMarketingApiBaseUrl(forwardDocumentUrl)
+              : undefined,
+            cookieHeader ?? undefined,
+          )
         : this.apiClient;
     try {
       // Try to get from Laravel /me endpoint (protected route)

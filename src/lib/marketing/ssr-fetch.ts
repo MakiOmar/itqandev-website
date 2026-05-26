@@ -47,6 +47,31 @@ function ssrFetchTimeoutMs(): number {
   return Number.isFinite(n) && n > 0 ? n : 30000;
 }
 
+/** When SSR hits loopback, set Host so Apache/WAMP routes to the named vhost (matches vite.config proxy). */
+function withSsrProxyHostHeader(input: RequestInfo | URL, init?: RequestInit): RequestInit {
+  const vhost = String(import.meta.env?.VITE_API_PROXY_HOST ?? '').trim();
+  const proxyTarget = String(import.meta.env?.VITE_API_PROXY_TARGET ?? 'http://127.0.0.1').trim();
+  if (!vhost) {
+    return init ?? {};
+  }
+  try {
+    const urlStr = typeof input === 'string' ? input : input instanceof URL ? input.href : input.url;
+    const reqUrl = new URL(urlStr);
+    const targetUrl = new URL(proxyTarget);
+    const isLoopback = (h: string) => h === '127.0.0.1' || h === 'localhost';
+    if (isLoopback(reqUrl.hostname) && isLoopback(targetUrl.hostname)) {
+      const headers = new Headers(init?.headers as HeadersInit);
+      if (!headers.has('Host')) {
+        headers.set('Host', vhost);
+      }
+      return { ...init, headers };
+    }
+  } catch {
+    /* ignore */
+  }
+  return init ?? {};
+}
+
 async function fetchWithTimeout(
   input: RequestInfo | URL,
   init?: RequestInit,
@@ -54,8 +79,9 @@ async function fetchWithTimeout(
   const timeoutMs = ssrFetchTimeoutMs();
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+  const initWithHost = withSsrProxyHostHeader(input, init);
   try {
-    return await fetch(input, { ...init, signal: controller.signal });
+    return await fetch(input, { ...initWithHost, signal: controller.signal });
   } catch (e) {
     if (e instanceof Error && e.name === 'AbortError') {
       throw new Error(`SSR API request timed out after ${timeoutMs}ms`);
