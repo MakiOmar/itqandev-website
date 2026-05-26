@@ -6,6 +6,9 @@
 
 import { getConfig } from '~/lib/config';
 import { resolveMarketingApiBaseUrl } from './resolve-api-base';
+import { ensureSsrIpv4First } from './ssr-dns';
+import { shouldSkipSsrMarketingApi } from './ssr-api-reachability';
+import { ssrFetch } from './ssr-fetch';
 
 export function getMarketingApiBaseUrl(forwardDocumentUrl?: string | null): string {
   return resolveMarketingApiBaseUrl(forwardDocumentUrl);
@@ -97,6 +100,16 @@ export interface MarketingApiResponse<T> {
   message?: string;
 }
 
+function marketingFetchTimeoutMs(): number {
+  const envMs = Number(import.meta.env?.VITE_API_TIMEOUT ?? 0);
+  if (import.meta.env.DEV) {
+    const devDefault = 8000;
+    return Number.isFinite(envMs) && envMs > 0 ? Math.min(envMs, 15000) : devDefault;
+  }
+  const n = envMs || 30000;
+  return Number.isFinite(n) && n > 0 ? n : 30000;
+}
+
 function optionalBrowserBearerHeaders(): Record<string, string> {
   if (typeof window === 'undefined') {
     return {};
@@ -152,6 +165,10 @@ export async function marketingFetch<T>(
   }
 
   if (typeof window === 'undefined') {
+    if (shouldSkipSsrMarketingApi()) {
+      throw new Error('DEV_SSR_SKIP_MARKETING_API');
+    }
+    await ensureSsrIpv4First();
     const c = forwardCookies?.trim();
     if (c) {
       headers['Cookie'] = c;
@@ -172,11 +189,34 @@ export async function marketingFetch<T>(
 
   const credentials: RequestCredentials = typeof window !== 'undefined' ? 'include' : 'omit';
 
-  const res = await fetch(url, {
-    ...fetchInit,
-    headers,
-    credentials,
-  });
+  const timeoutMs = marketingFetchTimeoutMs();
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+  const userSignal = fetchInit.signal;
+  if (userSignal) {
+    if (userSignal.aborted) {
+      controller.abort();
+    } else {
+      userSignal.addEventListener('abort', () => controller.abort(), { once: true });
+    }
+  }
+
+  let res: Response;
+  try {
+    res = await ssrFetch(url, {
+      ...fetchInit,
+      headers,
+      credentials,
+      signal: controller.signal,
+    });
+  } catch (e) {
+    if (e instanceof Error && e.name === 'AbortError') {
+      throw new Error(`Marketing API request timed out after ${timeoutMs}ms: ${url}`);
+    }
+    throw e;
+  } finally {
+    clearTimeout(timeoutId);
+  }
 
   const contentType = res.headers.get('content-type');
   const isJson = contentType?.includes('application/json');

@@ -1,5 +1,5 @@
-import { component$, Slot } from '@builder.io/qwik';
-import { routeLoader$ } from '@builder.io/qwik-city';
+import { component$, Slot, useSignal } from '@builder.io/qwik';
+import { routeLoader$, useLocation } from '@builder.io/qwik-city';
 import { getSiteContent } from '~/lib/marketing/content-layer';
 import { uiLocaleFromPublicRoute } from '~/lib/i18n/ui-locale-path';
 import { Header } from '~/components/marketing/Header';
@@ -12,6 +12,11 @@ import { MARKETING_ENDPOINTS } from '~/lib/marketing/endpoints';
 import { resolvePublicSiteLanguages } from '~/lib/i18n/public-site-languages';
 import type { PublicNavItem } from '~/lib/marketing/public-menu';
 import { getConfig } from '~/lib/config';
+import {
+  useDevClientMarketingHydration,
+  type PublicBrandingState,
+} from '~/lib/marketing/dev-client-marketing';
+import { uiLangFromUrlPathname } from '~/lib/i18n/ui-locale-path';
 
 /**
  * Load site content once for layout (footer contact/socials).
@@ -117,10 +122,15 @@ export const usePublicBranding = routeLoader$(async ({ cookie, request }) => {
  * Public marketing layout: Header + main + Footer.
  */
 export default component$(() => {
+  const loc = useLocation();
+  const uiLocale = uiLangFromUrlPathname(loc.url.pathname);
   const siteContent = useSiteContent();
   const authSession = usePublicAuth();
-  const branding = usePublicBranding();
-  const primaryMenu = usePublicPrimaryMenu();
+  const brandingLoader = usePublicBranding();
+  const branding = useSignal<PublicBrandingState>(brandingLoader.value);
+  const primaryMenuLoader = usePublicPrimaryMenu();
+  const primaryMenu = useSignal<PublicNavItem[]>(primaryMenuLoader.value);
+  useDevClientMarketingHydration(branding, primaryMenu, uiLocale);
   const contact = siteContent.value?.contact;
 
   return (

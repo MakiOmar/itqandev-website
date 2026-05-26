@@ -1,6 +1,9 @@
 import type { ApiResponse, ApiError } from './types';
 import { getConfig } from '../config';
 import { readPreferredLocaleFromCookieHeader } from '../i18n/dashboard-locale';
+import { ensureSsrIpv4First } from '../marketing/ssr-dns';
+import { shouldSkipSsrMarketingApi } from '../marketing/ssr-api-reachability';
+import { ssrFetch } from '../marketing/ssr-fetch';
 
 /**
  * Laravel-specific API client
@@ -375,9 +378,19 @@ export class LaravelApiClient {
     endpoint: string,
     options: RequestInit = {},
   ): Promise<ApiResponse<T>> {
+    if (typeof window === 'undefined' && shouldSkipSsrMarketingApi(endpoint)) {
+      return {
+        success: false,
+        message: 'DEV_SSR_SKIP_MARKETING_API',
+        data: {} as T,
+      };
+    }
+    if (typeof window === 'undefined') {
+      await ensureSsrIpv4First();
+    }
     const config = getConfig();
     const url = `${this.baseUrl}${endpoint}`;
-    
+
     // Get CSRF token for state-changing requests (only if not using Bearer token)
     const csrfToken = await this.getCsrfToken();
     const authHeaders = this.getAuthHeaders();
@@ -515,7 +528,7 @@ export class LaravelApiClient {
     if (options.keepalive !== undefined) requestOptions.keepalive = options.keepalive;
     
     try {
-      const response = await fetch(url, requestOptions);
+      const response = await ssrFetch(url, requestOptions);
       const contentType = response.headers.get('content-type');
 
       // 204 No Content — no response body to parse
@@ -642,7 +655,7 @@ export class LaravelApiClient {
       // Extract base URL without /api suffix for Sanctum endpoint
       const sanctumBaseUrl = this.baseUrl.replace(/\/api\/?$/, '');
       const csrfUrl = `${sanctumBaseUrl}/sanctum/csrf-cookie`;
-      const response = await fetch(csrfUrl, {
+      const response = await ssrFetch(csrfUrl, {
         method: 'GET',
         credentials: 'include',
       });

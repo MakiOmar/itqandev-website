@@ -18,6 +18,10 @@ import blogData from '../../content/blog.json';
 
 const contentSource = (import.meta.env?.VITE_MARKETING_CONTENT_SOURCE ?? 'local') as string;
 
+function isDevSsrMarketingSkip(e: unknown): boolean {
+  return e instanceof Error && e.message.includes('DEV_SSR_SKIP_MARKETING_API');
+}
+
 const caseStudies = caseStudiesData as CaseStudy[];
 const testimonials = testimonialsData as Testimonial[];
 const siteContent = siteData as SiteContent;
@@ -92,7 +96,9 @@ async function fetchTestimonialsFromApi(
       .map((raw) => mapPublicTestimonialRecord(raw))
       .filter((t) => t.quote.length > 0 && t.approved !== false);
   } catch (e) {
-    console.warn('[marketing] fetch public testimonials failed', e);
+    if (!isDevSsrMarketingSkip(e)) {
+      console.warn('[marketing] fetch public testimonials failed', e);
+    }
     return [];
   }
 }
@@ -178,7 +184,9 @@ async function fetchPublishedProjectsFromApi(
       .map(mapPublicProjectToCaseStudy)
       .filter((c) => c.slug.length > 0);
   } catch (e) {
-    console.warn('[marketing] fetch public projects failed', e);
+    if (!isDevSsrMarketingSkip(e)) {
+      console.warn('[marketing] fetch public projects failed', e);
+    }
     return [];
   }
 }
@@ -388,7 +396,9 @@ export async function getSiteContent(
         };
       }
     } catch (e) {
-      console.warn('[marketing] fetch public services failed', e);
+      if (!isDevSsrMarketingSkip(e)) {
+        console.warn('[marketing] fetch public services failed', e);
+      }
     }
   }
 

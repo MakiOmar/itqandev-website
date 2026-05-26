@@ -131,10 +131,26 @@ export class LaravelAuthAdapter implements AuthAdapter {
     }
   }
 
+  /** True when Sanctum/session cookies suggest a logged-in user. */
+  private hasAuthCookies(cookie?: Cookie): boolean {
+    if (!cookie) {
+      return false;
+    }
+    return !!(
+      cookie.get(this.config.auth.cookieName)?.value ||
+      cookie.get('laravel_session')?.value ||
+      cookie.get('XSRF-TOKEN')?.value
+    );
+  }
+
   /**
    * Get current session from Laravel
    */
   async getSession(cookie?: Cookie, forwardDocumentUrl?: string | null): Promise<AuthSession | null> {
+    if (typeof window === 'undefined' && !this.hasAuthCookies(cookie)) {
+      return null;
+    }
+
     const apiClient =
       forwardDocumentUrl != null && String(forwardDocumentUrl).trim() !== ''
         ? new LaravelApiClient(resolveMarketingApiBaseUrl(forwardDocumentUrl), extractCookieHeader(cookie))

@@ -21,7 +21,9 @@ errorOnDuplicatesPkgDeps(devDependencies, dependencies);
  */
 export default defineConfig(({ command, mode }): UserConfig => {
   const env = loadEnv(mode, process.cwd(), "");
-  const apiProxyTarget = (env.VITE_API_PROXY_TARGET || "http://itqandev.com").replace(/\/$/, "");
+  const apiProxyTarget = (env.VITE_API_PROXY_TARGET || "http://127.0.0.1").replace(/\/$/, "");
+  /** Apache vhost name when proxy target is loopback (avoids Node connecting via IPv6 ::1). */
+  const apiProxyHost = (env.VITE_API_PROXY_HOST || "itqandev.com").replace(/\/$/, "");
 
   // Determine if this is a client-only build (not SSR/preview)
   // SSR builds use --ssr flag or have entry.preview/entry.ssr, so we check mode and command
@@ -110,6 +112,18 @@ export default defineConfig(({ command, mode }): UserConfig => {
           target: apiProxyTarget,
           changeOrigin: true,
           secure: false,
+          configure: (proxy) => {
+            proxy.on("proxyReq", (proxyReq) => {
+              try {
+                const targetHost = new URL(apiProxyTarget).hostname;
+                if (targetHost === "127.0.0.1" || targetHost === "localhost") {
+                  proxyReq.setHeader("Host", apiProxyHost);
+                }
+              } catch {
+                /* ignore */
+              }
+            });
+          },
         },
       },
     },

@@ -451,6 +451,36 @@ return response()->json([
 
 ## Public marketing (no auth)
 
+### GET `/api/public/ping`
+
+Unauthenticated server check for local dev, Vite proxy, and deployment smoke tests. Returns Laravel/PHP versions and database connectivity (no secrets).
+
+**Success (200):**
+
+```json
+{
+  "success": true,
+  "data": {
+    "status": "ok",
+    "message": "Laravel API is reachable",
+    "timestamp": "2026-05-24T12:00:00+00:00",
+    "app_env": "local",
+    "app_url": "http://localhost",
+    "laravel_version": "11.x",
+    "php_version": "8.3.x",
+    "database": {
+      "status": "ok",
+      "connection": "sqlite",
+      "error": null
+    }
+  }
+}
+```
+
+When the database is unreachable, `data.status` is `degraded` and `database.status` is `error` (error message only when `APP_DEBUG=true`).
+
+Also available: `GET /api/health` (minimal `{ "status": "ok" }`) and Laravel’s `GET /up`.
+
 ### GET `/api/public/site-meta`
 
 Returns branding and `site_languages` for the marketing shell (see `SettingsController::publicMeta`).

@@ -1,4 +1,4 @@
-import { component$ } from '@builder.io/qwik';
+import { component$, useSignal, useVisibleTask$ } from '@builder.io/qwik';
 import type { DocumentHead } from '@builder.io/qwik-city';
 import { Link, useLocation } from '@builder.io/qwik-city';
 import { routeLoader$ } from '@builder.io/qwik-city';
@@ -15,6 +15,7 @@ import { AnimatedReveal } from '~/components/marketing/AnimatedReveal';
 import { CaseStudyCard } from '~/components/marketing/CaseStudyCard';
 import { TestimonialGrid } from '~/components/marketing/TestimonialGrid';
 import { BlogCard } from '~/components/marketing/BlogCard';
+import { fetchHomeDataClient } from '~/lib/marketing/dev-client-marketing';
 
 export const useHomeData = routeLoader$(async ({ request, params }) => {
   const cookie = request.headers.get('cookie') || '';
@@ -31,10 +32,18 @@ export const useHomeData = routeLoader$(async ({ request, params }) => {
 
 export default component$(() => {
   const loc = useLocation();
-  const MR = marketingRoutes(uiLangFromUrlPathname(loc.url.pathname));
+  const uiLocale = uiLangFromUrlPathname(loc.url.pathname);
+  const MR = marketingRoutes(uiLocale);
   const data = useHomeData();
+  const homeData = useSignal(data.value);
+  useVisibleTask$(async () => {
+    if (!import.meta.env.DEV) {
+      return;
+    }
+    homeData.value = await fetchHomeDataClient(uiLocale);
+  });
   const config = getConfig();
-  const { caseStudies, testimonials, siteContent, blogPosts } = data.value;
+  const { caseStudies, testimonials, siteContent, blogPosts } = homeData.value;
   const services = siteContent?.services ?? [];
   const techStack = siteContent?.techStack ?? [];
 

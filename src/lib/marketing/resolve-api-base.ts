@@ -47,15 +47,34 @@ function isLoopbackHttpOrigin(origin: string): boolean {
   }
 }
 
+/** True when origin is the Vite/Qwik dev server (SSR must not fetch it — same-process deadlock). */
+function isViteDevServerOrigin(origin: string): boolean {
+  try {
+    const page = new URL(origin);
+    const dev = new URL(devServerOrigin());
+    const loopback = (h: string) => h === '127.0.0.1' || h === 'localhost';
+    if (!loopback(page.hostname) || !loopback(dev.hostname)) {
+      return false;
+    }
+    return page.port === dev.port;
+  } catch {
+    return false;
+  }
+}
+
 /** Node SSR cannot fetch relative URLs; resolve /api to Laravel or the Vite dev proxy. */
 function resolveSsrAbsoluteApiBase(normalizedPath: string): string {
   if (import.meta.env.DEV) {
+    const vhost = envString('VITE_API_PROXY_HOST');
+    // WAMP named vhost: use hostname (Node fetch ignores Host on 127.0.0.1); ipv4first in marketingFetch.
+    if (vhost) {
+      return trimSlash(`http://${vhost}${normalizedPath}`);
+    }
     const proxyTarget = envString('VITE_API_PROXY_TARGET');
-    // Loopback proxy target (e.g. php artisan serve): call Laravel directly — avoids Vite port drift.
+    // php artisan serve on loopback only
     if (proxyTarget && isLoopbackHttpOrigin(proxyTarget)) {
       return trimSlash(`${trimSlash(proxyTarget)}${normalizedPath}`);
     }
-    // WAMP vhost / subdirectory: use the Vite dev server so /api is proxied like the browser.
     return trimSlash(`${trimSlash(devServerOrigin())}${normalizedPath}`);
   }
   const proxyTarget = envString('VITE_API_PROXY_TARGET');
@@ -96,7 +115,10 @@ export function resolveMarketingApiBaseUrl(forwardDocumentUrl?: string | null): 
   if (forwardDocumentUrl) {
     const doc = parseForwardDocumentUrl(forwardDocumentUrl);
     if (doc) {
-      return trimSlash(`${doc.origin}${normalizedPath}`);
+      const skipViteOrigin = isSsr && isViteDevServerOrigin(doc.origin);
+      if (!skipViteOrigin) {
+        return trimSlash(`${doc.origin}${normalizedPath}`);
+      }
     }
   }
 

@@ -7,6 +7,8 @@
  * Paths are appended to VITE_MARKETING_API_URL / VITE_API_BASE_URL (usually ends with `/api`).
  */
 export const MARKETING_ENDPOINTS = {
+  /** GET Laravel reachability + DB status (no auth; use to verify API / Vite proxy) */
+  ping: '/public/ping',
   /** GET list of published projects (public; supports ?featured=1&per_page=) */
   caseStudies: '/public/projects',
   /** GET single case study by id or slug */
