@@ -4,6 +4,7 @@ import { routeLoader$ } from '@builder.io/qwik-city';
 import { Link } from '@builder.io/qwik-city';
 import { useTranslate, translateApp } from '../../../lib/i18n/useTranslate';
 import { extractCookieHeader } from '../../../lib/api/client';
+import { getConfig } from '../../../lib/config';
 import { useAppRoutes } from '../../../lib/constants/routes';
 import { auth } from '../../../lib/auth';
 import {
@@ -48,13 +49,29 @@ export default component$(() => {
   const userSession = useUserSession();
   const userName = userSession.value?.user?.name || 'User';
 
-  // Dev SSR may skip or fail WAMP calls; hydrate stat cards from the browser /api proxy.
+  // SSR may return zeros when Node cannot reach WAMP; hydrate from browser /api proxy.
   useVisibleTask$(async () => {
-    if (!import.meta.env.DEV) {
+    const config = getConfig();
+    const sessionKey = config.auth.cookieName;
+    const session = userSession.value;
+    if (session?.token && session.token !== 'sanctum_cookie') {
+      const existing = localStorage.getItem(sessionKey);
+      if (!existing) {
+        localStorage.setItem(sessionKey, JSON.stringify(session));
+      }
+    }
+
+    const needsHydrate =
+      metrics.value.projects.total === 0 &&
+      metrics.value.categories.total === 0 &&
+      metrics.value.skills.total === 0;
+    if (!needsHydrate && !import.meta.env.DEV) {
       return;
     }
+
     try {
-      metrics.value = await fetchDashboardMetrics();
+      const next = await fetchDashboardMetrics();
+      metrics.value = next;
     } catch (error) {
       console.warn('[dashboard] client metrics refresh failed', error);
     }

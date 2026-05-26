@@ -22,12 +22,15 @@ export class LaravelAuthAdapter implements AuthAdapter {
    * Login with Laravel backend
    */
   async login(credentials: LoginCredentials, cookie?: Cookie): Promise<AuthSession | null> {
+    const isSsr = typeof window === 'undefined';
+    const apiClient =
+      isSsr
+        ? new LaravelApiClient(resolveMarketingApiBaseUrl(), extractCookieHeader(cookie) ?? undefined)
+        : this.apiClient;
     try {
-      // First, get CSRF cookie from Laravel
-      await this.apiClient.refreshCsrfToken();
+      await apiClient.refreshCsrfToken();
 
-      // Login request
-      const response = await this.apiClient.post<{
+      const response = await apiClient.post<{
         user: AuthSession['user'];
         token?: string;
       }>('/auth/login', credentials);

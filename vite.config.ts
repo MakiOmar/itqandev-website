@@ -103,9 +103,8 @@ export default defineConfig(({ command, mode }): UserConfig => {
         "Cache-Control": "public, max-age=0",
       },
       /**
-       * Proxy /api to Laravel during dev when VITE_API_BASE_URL=/api.
-       * Set VITE_API_PROXY_TARGET to your WAMP public folder, e.g.
-       * http://itqandev.com/credocode/backend/public
+       * Proxy /api and /sanctum to Laravel during dev when VITE_API_BASE_URL=/api.
+       * SSR routeAction$ (login) calls the Vite dev server origin so requests use this proxy.
        */
       proxy: {
         "/api": {
@@ -115,8 +114,32 @@ export default defineConfig(({ command, mode }): UserConfig => {
           configure: (proxy) => {
             proxy.on("proxyReq", (proxyReq) => {
               try {
-                const targetHost = new URL(apiProxyTarget).hostname;
-                if (targetHost === "127.0.0.1" || targetHost === "localhost") {
+                const target = new URL(apiProxyTarget);
+                const targetHost = target.hostname;
+                const targetPort = target.port || (target.protocol === "https:" ? "443" : "80");
+                // Only rewrite Host for loopback WAMP on port 80 (named vhost). Not for artisan serve :8000.
+                const isLoopback = targetHost === "127.0.0.1" || targetHost === "localhost";
+                if (isLoopback && targetPort === "80") {
+                  proxyReq.setHeader("Host", apiProxyHost);
+                }
+              } catch {
+                /* ignore */
+              }
+            });
+          },
+        },
+        "/sanctum": {
+          target: apiProxyTarget,
+          changeOrigin: true,
+          secure: false,
+          configure: (proxy) => {
+            proxy.on("proxyReq", (proxyReq) => {
+              try {
+                const target = new URL(apiProxyTarget);
+                const targetHost = target.hostname;
+                const targetPort = target.port || (target.protocol === "https:" ? "443" : "80");
+                const isLoopback = targetHost === "127.0.0.1" || targetHost === "localhost";
+                if (isLoopback && targetPort === "80") {
                   proxyReq.setHeader("Host", apiProxyHost);
                 }
               } catch {

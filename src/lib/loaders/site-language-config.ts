@@ -4,6 +4,7 @@ import type { SiteLanguageRow } from '../../types/site-language';
 import { secondaryLocales } from '../content-translations';
 import { MARKETING_ENDPOINTS } from '../marketing/endpoints';
 import { marketingGet } from '../marketing/api-client';
+import { shouldSkipSsrMarketingApi } from '../marketing/ssr-api-reachability';
 import { readPreferredLocaleFromCookieHeader } from '../i18n/dashboard-locale';
 import { resolvePublicSiteLanguages } from '../i18n/public-site-languages';
 
@@ -36,8 +37,22 @@ function pickContentEditingLocale(
  * Uses GET /public/site-meta (no auth). Authenticated GET /settings fails from SSR/routeLoader$
  * when Sanctum cookies or Bearer tokens are not available — previously caused 401 and English-only fallback.
  */
+function siteLanguageFallback(cookieHeader: string | null): SiteLanguageConfig {
+  const site_languages = resolvePublicSiteLanguages(null);
+  const default_locale = 'en';
+  return {
+    site_languages,
+    default_locale,
+    secondary: secondaryLocales(site_languages, default_locale),
+    content_editing_locale: pickContentEditingLocale(site_languages, default_locale, cookieHeader),
+  };
+}
+
 export const useSiteLanguageConfig = routeLoader$(async ({ cookie, request }): Promise<SiteLanguageConfig> => {
   const cookieHeader = extractCookieHeader(cookie, request);
+  if (typeof window === 'undefined' && shouldSkipSsrMarketingApi()) {
+    return siteLanguageFallback(cookieHeader);
+  }
   try {
     const settings = await marketingGet<Record<string, unknown>>(MARKETING_ENDPOINTS.siteMeta, null, {
       forwardCookies: cookieHeader,
@@ -56,20 +71,15 @@ export const useSiteLanguageConfig = routeLoader$(async ({ cookie, request }): P
       content_editing_locale,
     };
   } catch (e) {
-    if (import.meta.env.DEV) {
+    const isDevSkip =
+      e instanceof Error && e.message.includes('DEV_SSR_SKIP_MARKETING_API');
+    if (import.meta.env.DEV && !isDevSkip) {
       console.warn(
         'useSiteLanguageConfig: site-meta request failed; using qwik-speak locale fallback. ' +
           'Set VITE_API_BASE_URL=/api and VITE_API_PROXY_TARGET to your Laravel public URL (see website/.env.example).',
         e,
       );
     }
-    const site_languages = resolvePublicSiteLanguages(null);
-    const default_locale = 'en';
-    return {
-      site_languages,
-      default_locale,
-      secondary: secondaryLocales(site_languages, default_locale),
-      content_editing_locale: pickContentEditingLocale(site_languages, default_locale, cookieHeader),
-    };
+    return siteLanguageFallback(cookieHeader);
   }
 });

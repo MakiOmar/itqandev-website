@@ -65,15 +65,11 @@ function isViteDevServerOrigin(origin: string): boolean {
 /** Node SSR cannot fetch relative URLs; resolve /api to Laravel or the Vite dev proxy. */
 function resolveSsrAbsoluteApiBase(normalizedPath: string): string {
   if (import.meta.env.DEV) {
-    const vhost = envString('VITE_API_PROXY_HOST');
-    const proxyTarget = envString('VITE_API_PROXY_TARGET');
-    // Node can reach loopback; Apache/WAMP vhost routing uses Host header (see ssrFetch).
-    if (proxyTarget && isLoopbackHttpOrigin(proxyTarget)) {
-      return trimSlash(`${trimSlash(proxyTarget)}${normalizedPath}`);
+    const ssrOverride = envString('VITE_SSR_API_BASE_URL');
+    if (ssrOverride) {
+      return trimSlash(ssrOverride);
     }
-    if (vhost) {
-      return trimSlash(`http://${vhost}${normalizedPath}`);
-    }
+    // Same path as the browser: Vite dev server proxies /api → WAMP (loopback/vhost direct fetch often times out).
     return trimSlash(`${trimSlash(devServerOrigin())}${normalizedPath}`);
   }
   const proxyTarget = envString('VITE_API_PROXY_TARGET');

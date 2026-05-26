@@ -2,7 +2,7 @@ import { component$, type QRL, type Component, useContext, useSignal, useVisible
 import { Link, useLocation } from '@builder.io/qwik-city';
 import { useSpeakLocale } from 'qwik-speak';
 import { useAppRoutes } from '../../lib/constants/routes';
-import { useAdminAuth } from '../../routes/[lang]/admin/layout';
+import { useAdminAuth } from '../../lib/loaders/admin-auth';
 import { ProjectSettingsContext } from '../../stores/project-settings-store';
 import { isFeatureModuleEnabled, type FeatureModuleKey } from '../../lib/api/project-settings';
 import { getConfig } from '../../lib/config';

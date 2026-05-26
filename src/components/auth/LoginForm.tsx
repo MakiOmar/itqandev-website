@@ -1,4 +1,4 @@
-import { component$ } from '@builder.io/qwik';
+import { $, component$, useSignal } from '@builder.io/qwik';
 import type { ActionStore } from '@builder.io/qwik-city';
 import { Form } from '@builder.io/qwik-city';
 import { useTranslate, translateApp } from '../../lib/i18n/useTranslate';
@@ -9,6 +9,11 @@ import { LanguageSwitcher } from '../common/LanguageSwitcher';
  */
 interface LoginFormProps {
   action: ActionStore<any, any>;
+  /** Dev-only: sync HttpOnly cookie after browser login (no external API in routeAction). */
+  syncSessionAction?: ActionStore<any, any>;
+  adminHomeUrl?: string;
+  /** When true, login runs in the browser to avoid Vite SSR self-fetch deadlocks. */
+  clientSideLogin?: boolean;
 }
 
 /**
@@ -19,6 +24,64 @@ interface LoginFormProps {
 export const LoginForm = component$<LoginFormProps>((props) => {
   const loginAction = props.action;
   const { lang } = useTranslate();
+  const clientError = useSignal('');
+  const clientRunning = useSignal(false);
+
+  const handleClientLogin$ = $(async (event: SubmitEvent) => {
+    event.preventDefault();
+    if (!props.syncSessionAction || !props.adminHomeUrl) {
+      return;
+    }
+
+    clientRunning.value = true;
+    clientError.value = '';
+
+    const form = event.target as HTMLFormElement;
+    const formData = new FormData(form);
+    const email = String(formData.get('email') ?? '').trim();
+    const password = String(formData.get('password') ?? '');
+
+    if (!email || !password) {
+      clientError.value = translateApp(lang, 'auth.login') + ' — email and password are required';
+      clientRunning.value = false;
+      return;
+    }
+
+    try {
+      const { auth } = await import('../../lib/auth');
+      const session = await auth.login({ email, password });
+      if (!session) {
+        clientError.value = 'Invalid email or password';
+        return;
+      }
+
+      const syncResult = await props.syncSessionAction.submit({
+        sessionJson: JSON.stringify(session),
+      });
+
+      if (syncResult.value?.failed) {
+        clientError.value =
+          (syncResult.value as { error?: string }).error || 'Failed to persist session. Please try again.';
+        return;
+      }
+
+      window.location.assign(props.adminHomeUrl);
+    } catch (error: unknown) {
+      const msg = error instanceof Error ? error.message : 'Login failed. Please try again.';
+      clientError.value = msg.includes('timed out')
+        ? `${msg} — ensure Laravel is running (e.g. php artisan serve) and VITE_API_PROXY_TARGET matches it.`
+        : msg;
+    } finally {
+      clientRunning.value = false;
+    }
+  });
+
+  const isRunning = props.clientSideLogin ? clientRunning.value : loginAction.isRunning;
+  const failedError = props.clientSideLogin
+    ? clientError.value
+    : loginAction.value?.failed
+      ? (loginAction.value as { error?: string }).error
+      : '';
 
   return (
     <>
@@ -29,7 +92,7 @@ export const LoginForm = component$<LoginFormProps>((props) => {
           <div class="flex justify-end">
             <LanguageSwitcher />
           </div>
-          
+
           <div class="text-center">
             <h1 class="text-3xl font-bold text-gray-900 dark:text-slate-100 transition-colors">{translateApp(lang, 'auth.login')}</h1>
             <p class="mt-2 text-sm text-gray-600 dark:text-slate-400 transition-colors">
@@ -37,65 +100,117 @@ export const LoginForm = component$<LoginFormProps>((props) => {
             </p>
           </div>
 
-          <Form action={loginAction} class="space-y-6">
-            <div>
-              <label
-                for="email"
-                class="block text-sm font-medium text-gray-700 dark:text-gray-300"
-              >
-                {translateApp(lang, 'auth.email')}
-              </label>
-              <input
-                id="email"
-                name="email"
-                type="email"
-                required
-                class="mt-1 block w-full rounded-lg border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 px-3 py-2 text-sm text-gray-900 dark:text-slate-100 placeholder:text-gray-500 dark:placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-colors"
-                placeholder={translateApp(lang, 'auth.enterEmail')}
-              />
-              {loginAction.value?.failed && loginAction.value.fieldErrors?.email && (
-                <p class="mt-1 text-sm text-red-600 dark:text-red-400">
-                  {loginAction.value.fieldErrors.email}
-                </p>
-              )}
-            </div>
-
-            <div>
-              <label
-                for="password"
-                class="block text-sm font-medium text-gray-700 dark:text-slate-300 transition-colors"
-              >
-                {translateApp(lang, 'auth.password')}
-              </label>
-              <input
-                id="password"
-                name="password"
-                type="password"
-                required
-                class="mt-1 block w-full rounded-lg border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 px-3 py-2 text-sm text-gray-900 dark:text-slate-100 placeholder:text-gray-500 dark:placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-colors"
-                placeholder={translateApp(lang, 'auth.enterPassword')}
-              />
-              {loginAction.value?.failed && loginAction.value.fieldErrors?.password && (
-                <p class="mt-1 text-sm text-red-600 dark:text-red-400">
-                  {loginAction.value.fieldErrors.password}
-                </p>
-              )}
-            </div>
-
-            {loginAction.value?.failed && (loginAction.value as any).error && (
-              <div class="rounded-md bg-red-50 dark:bg-red-900/20 p-3 text-sm text-red-800 dark:text-red-300 transition-colors">
-                {(loginAction.value as any).error}
+          {props.clientSideLogin ? (
+            <form preventdefault:submit onSubmit$={handleClientLogin$} class="space-y-6">
+              <div>
+                <label
+                  for="email"
+                  class="block text-sm font-medium text-gray-700 dark:text-gray-300"
+                >
+                  {translateApp(lang, 'auth.email')}
+                </label>
+                <input
+                  id="email"
+                  name="email"
+                  type="email"
+                  required
+                  class="mt-1 block w-full rounded-lg border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 px-3 py-2 text-sm text-gray-900 dark:text-slate-100 placeholder:text-gray-500 dark:placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-colors"
+                  placeholder={translateApp(lang, 'auth.enterEmail')}
+                />
               </div>
-            )}
 
-            <button
-              type="submit"
-              disabled={loginAction.isRunning}
-              class="w-full rounded-lg bg-primary-600 text-white px-4 py-2 text-sm font-medium hover:bg-primary-700 transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 disabled:opacity-50"
-            >
-              {loginAction.isRunning ? translateApp(lang, 'auth.loggingIn') : translateApp(lang, 'auth.login')}
-            </button>
-          </Form>
+              <div>
+                <label
+                  for="password"
+                  class="block text-sm font-medium text-gray-700 dark:text-gray-300 transition-colors"
+                >
+                  {translateApp(lang, 'auth.password')}
+                </label>
+                <input
+                  id="password"
+                  name="password"
+                  type="password"
+                  required
+                  class="mt-1 block w-full rounded-lg border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 px-3 py-2 text-sm text-gray-900 dark:text-slate-100 placeholder:text-gray-500 dark:placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-colors"
+                  placeholder={translateApp(lang, 'auth.enterPassword')}
+                />
+              </div>
+
+              {failedError && (
+                <div class="rounded-md bg-red-50 dark:bg-red-900/20 p-3 text-sm text-red-800 dark:text-red-300 transition-colors">
+                  {failedError}
+                </div>
+              )}
+
+              <button
+                type="submit"
+                disabled={isRunning}
+                class="w-full rounded-lg bg-primary-600 text-white px-4 py-2 text-sm font-medium hover:bg-primary-700 transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 disabled:opacity-50"
+              >
+                {isRunning ? translateApp(lang, 'auth.loggingIn') : translateApp(lang, 'auth.login')}
+              </button>
+            </form>
+          ) : (
+            <Form action={loginAction} class="space-y-6">
+              <div>
+                <label
+                  for="email"
+                  class="block text-sm font-medium text-gray-700 dark:text-gray-300"
+                >
+                  {translateApp(lang, 'auth.email')}
+                </label>
+                <input
+                  id="email"
+                  name="email"
+                  type="email"
+                  required
+                  class="mt-1 block w-full rounded-lg border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 px-3 py-2 text-sm text-gray-900 dark:text-slate-100 placeholder:text-gray-500 dark:placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-colors"
+                  placeholder={translateApp(lang, 'auth.enterEmail')}
+                />
+                {loginAction.value?.failed && loginAction.value.fieldErrors?.email && (
+                  <p class="mt-1 text-sm text-red-600 dark:text-red-400">
+                    {loginAction.value.fieldErrors.email}
+                  </p>
+                )}
+              </div>
+
+              <div>
+                <label
+                  for="password"
+                  class="block text-sm font-medium text-gray-700 dark:text-gray-300 transition-colors"
+                >
+                  {translateApp(lang, 'auth.password')}
+                </label>
+                <input
+                  id="password"
+                  name="password"
+                  type="password"
+                  required
+                  class="mt-1 block w-full rounded-lg border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 px-3 py-2 text-sm text-gray-900 dark:text-slate-100 placeholder:text-gray-500 dark:placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-colors"
+                  placeholder={translateApp(lang, 'auth.enterPassword')}
+                />
+                {loginAction.value?.failed && loginAction.value.fieldErrors?.password && (
+                  <p class="mt-1 text-sm text-red-600 dark:text-red-400">
+                    {loginAction.value.fieldErrors.password}
+                  </p>
+                )}
+              </div>
+
+              {loginAction.value?.failed && (loginAction.value as any).error && (
+                <div class="rounded-md bg-red-50 dark:bg-red-900/20 p-3 text-sm text-red-800 dark:text-red-300 transition-colors">
+                  {(loginAction.value as any).error}
+                </div>
+              )}
+
+              <button
+                type="submit"
+                disabled={loginAction.isRunning}
+                class="w-full rounded-lg bg-primary-600 text-white px-4 py-2 text-sm font-medium hover:bg-primary-700 transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 disabled:opacity-50"
+              >
+                {loginAction.isRunning ? translateApp(lang, 'auth.loggingIn') : translateApp(lang, 'auth.login')}
+              </button>
+            </Form>
+          )}
         </div>
       </div>
     </>

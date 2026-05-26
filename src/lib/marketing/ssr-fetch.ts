@@ -47,16 +47,22 @@ function ssrFetchTimeoutMs(): number {
   return Number.isFinite(n) && n > 0 ? n : 30000;
 }
 
-/** When SSR hits loopback, set Host so Apache/WAMP routes to the named vhost (matches vite.config proxy). */
+/** When SSR hits loopback Apache (port 80), set Host so WAMP routes to the named vhost. Skip for Vite dev server. */
 function withSsrProxyHostHeader(input: RequestInfo | URL, init?: RequestInit): RequestInit {
   const vhost = String(import.meta.env?.VITE_API_PROXY_HOST ?? '').trim();
   const proxyTarget = String(import.meta.env?.VITE_API_PROXY_TARGET ?? 'http://127.0.0.1').trim();
+  const devOrigin = String(import.meta.env?.VITE_DEV_SERVER_ORIGIN ?? 'http://127.0.0.1:5173').trim();
   if (!vhost) {
     return init ?? {};
   }
   try {
     const urlStr = typeof input === 'string' ? input : input instanceof URL ? input.href : input.url;
     const reqUrl = new URL(urlStr);
+    const devUrl = new URL(devOrigin);
+    // Requests routed through Vite (/api proxy) must not override Host.
+    if (reqUrl.port === devUrl.port || reqUrl.origin === devUrl.origin) {
+      return init ?? {};
+    }
     const targetUrl = new URL(proxyTarget);
     const isLoopback = (h: string) => h === '127.0.0.1' || h === 'localhost';
     if (isLoopback(reqUrl.hostname) && isLoopback(targetUrl.hostname)) {
@@ -94,6 +100,25 @@ async function fetchWithTimeout(
 
 export function ssrFetch(input: RequestInfo | URL, init?: RequestInit): Promise<Response> {
   if (typeof window !== 'undefined') {
+    if (import.meta.env.DEV) {
+      const timeoutMs = ssrFetchTimeoutMs();
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+      const userSignal = init?.signal;
+      if (userSignal?.aborted) {
+        controller.abort();
+      } else {
+        userSignal?.addEventListener('abort', () => controller.abort(), { once: true });
+      }
+      return fetch(input, { ...init, signal: controller.signal })
+        .catch((e) => {
+          if (e instanceof Error && e.name === 'AbortError') {
+            throw new Error(`API request timed out after ${timeoutMs}ms`);
+          }
+          throw e;
+        })
+        .finally(() => clearTimeout(timeoutId));
+    }
     return fetch(input, init);
   }
 

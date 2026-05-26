@@ -3,7 +3,7 @@ import { Link } from '@builder.io/qwik-city';
 import { UserDropdown } from '../common/UserDropdown';
 import { LanguageSwitcher } from '../common/LanguageSwitcher';
 import { useAppRoutes } from '../../lib/constants/routes';
-import { useAdminAuth } from '../../routes/[lang]/admin/layout';
+import { useAdminAuth } from '../../lib/loaders/admin-auth';
 import { MenuIcon } from './icons';
 import { ProjectSettingsContext } from '../../stores/project-settings-store';
 

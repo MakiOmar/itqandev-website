@@ -31,10 +31,13 @@ function getEnvBool(key: string, defaultValue = false): boolean {
  * Load configuration from environment variables
  */
 export function loadEnvConfig(): Partial<DashboardConfig> {
+  const authProvider = getEnv('VITE_AUTH_PROVIDER', 'laravel') || 'laravel';
+  const useLaravel = authProvider === 'laravel';
+
   return {
     api: {
       baseUrl: resolveApiBaseUrlForConfig(),
-      sanctum: getEnvBool('VITE_LARAVEL_SANCTUM', false),
+      sanctum: getEnvBool('VITE_LARAVEL_SANCTUM', useLaravel),
       csrfToken: getEnv('VITE_CSRF_TOKEN'),
       timeout: Number(getEnv('VITE_API_TIMEOUT', '30000')) || 30000,
     },
