@@ -2,7 +2,6 @@ import type { ApiResponse, ApiError } from './types';
 import { getConfig } from '../config';
 import { readPreferredLocaleFromCookieHeader } from '../i18n/dashboard-locale';
 import { ensureSsrIpv4First } from '../marketing/ssr-dns';
-import { shouldSkipSsrMarketingApi } from '../marketing/ssr-api-reachability';
 import { ssrFetch } from '../marketing/ssr-fetch';
 
 /**
@@ -378,13 +377,6 @@ export class LaravelApiClient {
     endpoint: string,
     options: RequestInit = {},
   ): Promise<ApiResponse<T>> {
-    if (typeof window === 'undefined' && shouldSkipSsrMarketingApi(endpoint)) {
-      return {
-        success: false,
-        message: 'DEV_SSR_SKIP_MARKETING_API',
-        data: {} as T,
-      };
-    }
     if (typeof window === 'undefined') {
       await ensureSsrIpv4First();
     }
