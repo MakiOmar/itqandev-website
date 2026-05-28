@@ -3,6 +3,7 @@ import type { DocumentHead } from '@builder.io/qwik-city';
 import { Link, useLocation } from '@builder.io/qwik-city';
 import { routeLoader$ } from '@builder.io/qwik-city';
 import { getConfig } from '~/lib/config';
+import { isFeatureModuleEnabled } from '~/lib/api/project-settings';
 import { getFeaturedCaseStudies, getTestimonials, getSiteContent, getBlogPosts } from '~/lib/marketing/content-layer';
 import { uiLocaleFromPublicRoute } from '~/lib/i18n/ui-locale-path';
 import { marketingRoutes } from '~/lib/marketing/constants';
@@ -15,6 +16,7 @@ import { AnimatedReveal } from '~/components/marketing/AnimatedReveal';
 import { CaseStudyCard } from '~/components/marketing/CaseStudyCard';
 import { TestimonialGrid } from '~/components/marketing/TestimonialGrid';
 import { BlogCard } from '~/components/marketing/BlogCard';
+import { usePublicBranding } from './layout';
 
 export const useHomeData = routeLoader$(async ({ request, params }) => {
   const cookie = request.headers.get('cookie') || '';
@@ -34,10 +36,13 @@ export default component$(() => {
   const uiLocale = uiLangFromUrlPathname(loc.url.pathname);
   const MR = marketingRoutes(uiLocale);
   const data = useHomeData();
+  const branding = usePublicBranding();
   const config = getConfig();
   const { caseStudies, testimonials, siteContent, blogPosts } = data.value;
   const services = siteContent?.services ?? [];
   const techStack = siteContent?.techStack ?? [];
+  const showTestimonials =
+    isFeatureModuleEnabled(branding.value.features, 'testimonials') && testimonials.length > 0;
 
   return (
     <>
@@ -237,7 +242,7 @@ export default component$(() => {
       )}
 
       {/* Testimonials */}
-      {testimonials.length > 0 && (
+      {showTestimonials && (
         <Section variant="muted">
           <TestimonialGrid
             testimonials={testimonials.slice(0, 6)}

@@ -325,7 +325,7 @@ export async function getFeaturedCaseStudies(
   return all.slice(0, limit);
 }
 
-/** Get approved testimonials (from API when configured, else local JSON). Respects locale via X-Content-Locale when using the API. */
+/** Get approved testimonials (API when configured, else local JSON). Respects locale via X-Content-Locale when using the API. */
 export async function getTestimonials(
   locale?: string,
   fetchContext?: MarketingFetchContext,
@@ -334,7 +334,8 @@ export async function getTestimonials(
   if (live.length > 0) {
     return live;
   }
-  if (hasMarketingApiBase(fetchContext)) {
+  // Strict API-only mode: no local placeholder when the marketing API is configured.
+  if (contentSource === 'api' && hasMarketingApiBase(fetchContext)) {
     return [];
   }
 
