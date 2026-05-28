@@ -79,6 +79,16 @@ VITE_FEATURE_ACTIVITY_LOGS=true
 VITE_FEATURE_SYSTEM_HEALTH=true
 ```
 
+### Adding a UI language (dynamic URLs, robots, admin noindex)
+
+UI route prefixes (`/en/`, `/ar/`, `/fr/`, …), dashboard `robots.txt` disallow rules, and admin search blocking are driven by **`UI_LOCALE_DEFINITIONS`** in `website/src/lib/i18n/config.ts` (see `ui-locale-segments.ts`).
+
+1. Add a row to `UI_LOCALE_DEFINITIONS` (e.g. `{ lang: 'fr', currency: '…', timeZone: '…', rtl: false }`).
+2. Add `website/src/i18n/fr.json` for qwik-speak UI strings.
+3. Redeploy — `GET /robots.txt` picks up the new `Disallow: /fr/admin/` automatically.
+
+For **content** translations (API `X-Content-Locale`), also enable the language in admin **Settings → Languages** (`site_languages` in `project-settings.json`). That is separate from the URL/UI list above.
+
 ---
 
 ## Configuration File

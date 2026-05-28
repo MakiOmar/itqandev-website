@@ -1,24 +1,23 @@
 import { speakConfig } from './config';
 import { readPreferredLocaleFromCookieHeader } from './dashboard-locale';
+import { getUiLocalePrefixRegex, isSupportedUiLocale, supportedUiLocaleCodes } from './ui-locale-segments';
 
 /** First URL segment for dashboard + marketing UI (qwik-speak locales). */
-export const UI_LOCALE_SEGMENTS = new Set(speakConfig.supportedLocales.map((l) => l.lang.toLowerCase()));
-
-const UI_PREFIX_RE = /^\/(en|ar)(?=\/|$)/i;
+export const UI_LOCALE_SEGMENTS = new Set(supportedUiLocaleCodes());
 
 /**
- * True when pathname already starts with `/en` or `/ar` (optionally after Vite base).
+ * True when pathname already starts with a configured UI locale segment.
  */
 export function pathnameHasUiLocale(pathname: string): boolean {
-  return UI_PREFIX_RE.test(pathname || '/');
+  return getUiLocalePrefixRegex().test(pathname || '/');
 }
 
 /**
- * Strip `/en` or `/ar` prefix from pathname for route matching (e.g. `/en/admin` → `/admin`).
+ * Strip `/en`, `/ar`, `/fr`, … prefix from pathname for route matching (e.g. `/en/admin` → `/admin`).
  */
 export function stripUiLocaleFromPathname(pathname: string): string {
   const p = pathname || '/';
-  const m = p.match(UI_PREFIX_RE);
+  const m = p.match(getUiLocalePrefixRegex());
   if (!m) {
     return p.startsWith('/') ? p : `/${p}`;
   }
@@ -32,8 +31,8 @@ export function stripUiLocaleFromPathname(pathname: string): string {
 export function withUiLocale(lang: string, path: string): string {
   const code = UI_LOCALE_SEGMENTS.has(String(lang).toLowerCase()) ? String(lang).toLowerCase() : speakConfig.defaultLocale.lang;
   const raw = path.startsWith('/') ? path : `/${path}`;
-  if (UI_PREFIX_RE.test(raw)) {
-    return raw.replace(UI_PREFIX_RE, `/${code}`);
+  if (getUiLocalePrefixRegex().test(raw)) {
+    return raw.replace(getUiLocalePrefixRegex(), `/${code}`);
   }
   if (raw === '/') {
     return `/${code}/`;
@@ -47,8 +46,8 @@ export function withUiLocale(lang: string, path: string): string {
 export function swapUiLocaleInPathname(pathname: string, newLang: string): string {
   const code = UI_LOCALE_SEGMENTS.has(String(newLang).toLowerCase()) ? String(newLang).toLowerCase() : speakConfig.defaultLocale.lang;
   const p = pathname || '/';
-  if (UI_PREFIX_RE.test(p)) {
-    return p.replace(UI_PREFIX_RE, `/${code}`);
+  if (getUiLocalePrefixRegex().test(p)) {
+    return p.replace(getUiLocalePrefixRegex(), `/${code}`);
   }
   return withUiLocale(code, stripUiLocaleFromPathname(p));
 }
@@ -100,26 +99,40 @@ export function uiLocaleFromPublicRoute(
       /* malformed request.url during tests */
     }
   }
-  return readPreferredLocaleFromCookieHeader(cookieHeader ?? '') ?? undefined;
+  const fromCookie = readPreferredLocaleFromCookieHeader(cookieHeader ?? '');
+  if (fromCookie && isSupportedUiLocale(fromCookie)) {
+    return fromCookie.toLowerCase();
+  }
+  return undefined;
 }
 
 /** UI locale from `preferred-locale` cookie (set by `[lang]` layout); for loaders/actions. */
 export function uiLangFromPreferredCookie(cookie: { get(name: string): unknown }): string {
   const raw = cookie.get('preferred-locale') as { value?: string } | null | undefined;
-  const pref = raw?.value;
-  return pref === 'ar' || pref === 'en' ? pref : speakConfig.defaultLocale.lang;
+  const pref = raw?.value?.trim().toLowerCase() ?? '';
+  if (pref && UI_LOCALE_SEGMENTS.has(pref)) {
+    return pref;
+  }
+  return speakConfig.defaultLocale.lang;
 }
 
-/** Leading `/en` or `/ar` segment only; `null` if the path has no UI locale prefix. */
-export function uiLangPrefixFromPathname(pathname: string): 'en' | 'ar' | null {
-  const m = (pathname || '/').match(UI_PREFIX_RE);
-  if (!m) {
+/** Leading UI locale segment; `null` if the path has no configured prefix. */
+export function uiLangPrefixFromPathname(pathname: string): string | null {
+  const m = (pathname || '/').match(getUiLocalePrefixRegex());
+  if (!m?.[1]) {
     return null;
   }
-  return m[1].toLowerCase() === 'ar' ? 'ar' : 'en';
+  const code = m[1].toLowerCase();
+  return UI_LOCALE_SEGMENTS.has(code) ? code : null;
 }
 
-/** UI locale from URL (`/en/...`, `/ar/...`); falls back to English when there is no prefix. */
-export function uiLangFromUrlPathname(pathname: string): 'en' | 'ar' {
-  return uiLangPrefixFromPathname(pathname) ?? 'en';
+/** UI locale from URL; falls back to site default when there is no prefix. */
+export function uiLangFromUrlPathname(pathname: string): string {
+  return uiLangPrefixFromPathname(pathname) ?? speakConfig.defaultLocale.lang;
+}
+
+/** True when pathname targets the operator dashboard (logical path `/admin` or `/admin/...`). */
+export function isAdminDashboardPath(pathname: string): boolean {
+  const logical = stripUiLocaleFromPathname(pathname || '/');
+  return logical === '/admin' || logical.startsWith('/admin/');
 }

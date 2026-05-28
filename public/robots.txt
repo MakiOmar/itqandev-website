@@ -1,5 +1,0 @@
-User-agent: *
-Allow: /
-
-# Sitemap (replace with your production URL if different)
-Sitemap: https://example.com/sitemap.xml

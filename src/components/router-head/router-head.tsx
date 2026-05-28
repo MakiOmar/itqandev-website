@@ -1,6 +1,8 @@
 import { component$ } from "@builder.io/qwik";
 import { useDocumentHead, useLocation } from "@builder.io/qwik-city";
 import { getConfig } from "~/lib/config";
+import { uiLocaleBootstrapJson } from "~/lib/i18n/ui-locale-segments";
+import { isAdminDashboardPath } from "~/lib/i18n/ui-locale-path";
 
 /**
  * The RouterHead component is placed inside of the document `<head>` element.
@@ -8,12 +10,18 @@ import { getConfig } from "~/lib/config";
 export const RouterHead = component$(() => {
   const head = useDocumentHead();
   const loc = useLocation();
+  const isAdmin = isAdminDashboardPath(loc.url.pathname);
+  const uiLocaleBootstrap = uiLocaleBootstrapJson();
 
   return (
     <>
       <title>{head.title}</title>
 
-      <link rel="canonical" href={loc.url.href} />
+      {isAdmin ? (
+        <meta name="robots" content="noindex, nofollow" />
+      ) : (
+        <link rel="canonical" href={loc.url.href} />
+      )}
       <meta name="viewport" content="width=device-width, initial-scale=1.0" />
       <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
       
@@ -60,8 +68,13 @@ export const RouterHead = component$(() => {
               setTheme('light');
             }
 
+            var __uiLocales = ${uiLocaleBootstrap};
+            function __escapeRe(s) {
+              return String(s).replace(/[.*+?^\${}()|[\\]\\\\]/g, '\\\\$&');
+            }
+            var __uiLocalePattern = '^/(' + __uiLocales.codes.map(__escapeRe).join('|') + ')(?=/|$)';
             var path = (document.location.pathname || '/').replace(/\\/$/, '') || '/';
-            var locMatch = path.match(/^\\/(en|ar)(?=\\/|$)/i);
+            var locMatch = path.match(new RegExp(__uiLocalePattern, 'i'));
             var logical = locMatch ? (path.slice(locMatch[0].length) || '/') : path;
             if (logical.charAt(0) !== '/') logical = '/' + logical;
             var isPublicRoute = logical === '/' || logical === '' || logical.indexOf('/services') === 0 || logical.indexOf('/work') === 0 || logical.indexOf('/about') === 0 || logical.indexOf('/pricing') === 0 || logical.indexOf('/contact') === 0 || logical.indexOf('/blog') === 0;
@@ -93,16 +106,18 @@ export const RouterHead = component$(() => {
 
             // URL segment wins over cookie/storage so /ar/... paints RTL even if storage still says en.
             var urlUiLang = locMatch ? String(locMatch[1]).toLowerCase() : '';
-            var fromUrl = (urlUiLang === 'ar' || urlUiLang === 'en') ? urlUiLang : null;
+            var fromUrl = (__uiLocales.codes.indexOf(urlUiLang) >= 0) ? urlUiLang : null;
 
-            var rawLocale = fromUrl || decodeCookieVal(preferredLocale) || 'en';
+            var rawLocale = fromUrl || decodeCookieVal(preferredLocale) || __uiLocales.default;
             var locale = rawLocale.toLowerCase();
-            if (!/^[a-z]{2}(-[a-z0-9]+)*$/i.test(locale)) {
-              locale = 'en';
+            if (__uiLocales.codes.indexOf(locale) < 0) {
+              locale = __uiLocales.default;
             }
 
             var rtlFlag = preferredRtl != null ? String(preferredRtl).trim() : '';
-            var isRtl = fromUrl === 'ar' ? true : fromUrl === 'en' ? false : ((rtlFlag === '1') || (rtlFlag !== '0' && locale === 'ar'));
+            var isRtl = fromUrl
+              ? !!__uiLocales.rtl[fromUrl]
+              : ((rtlFlag === '1') || (rtlFlag !== '0' && !!__uiLocales.rtl[locale]));
             var dir = isRtl ? 'rtl' : 'ltr';
             var lang = locale;
 
@@ -132,7 +147,7 @@ export const RouterHead = component$(() => {
                 document.head.appendChild(link);
               }
             }
-            if (locale === 'ar') {
+            if (__uiLocales.rtl[locale]) {
               loadFontStylesheet('https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800;900&display=swap');
             } else {
               loadFontStylesheet('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');

@@ -1,6 +1,7 @@
 import { component$, Slot } from '@builder.io/qwik';
 import type { RequestHandler } from '@builder.io/qwik-city';
 import { speakConfig } from '../../lib/i18n/config';
+import { isUiLocaleRtl } from '../../lib/i18n/ui-locale-segments';
 import { UI_LOCALE_SEGMENTS, stripUiLocaleFromPathname, withUiLocale } from '../../lib/i18n/ui-locale-path';
 
 /**
@@ -25,7 +26,7 @@ export const onRequest: RequestHandler = ({ params, locale, url, cookie, redirec
     secure: import.meta.env.PROD,
     maxAge: [365, 'days'],
   });
-  cookie.set('preferred-locale-rtl', code === 'ar' ? '1' : '0', {
+  cookie.set('preferred-locale-rtl', isUiLocaleRtl(code) ? '1' : '0', {
     path: '/',
     sameSite: 'lax',
     secure: import.meta.env.PROD,

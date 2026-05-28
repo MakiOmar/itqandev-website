@@ -1,9 +1,10 @@
 import { speakConfig } from './config';
+import { isUiLocaleRtl } from './ui-locale-segments';
 import type { SiteLanguageRow } from '../../types/site-language';
 
-const SPEAK_UI_LABELS: Record<string, { label: string; native_label: string; rtl: boolean }> = {
-  en: { label: 'English', native_label: 'English', rtl: false },
-  ar: { label: 'Arabic', native_label: 'العربية', rtl: true },
+const SPEAK_UI_LABELS: Record<string, { label: string; native_label: string }> = {
+  en: { label: 'English', native_label: 'English' },
+  ar: { label: 'Arabic', native_label: 'العربية' },
 };
 
 /**
@@ -15,13 +16,12 @@ export function speakUiLanguageRows(): SiteLanguageRow[] {
     const meta = SPEAK_UI_LABELS[code] ?? {
       label: code,
       native_label: code.toUpperCase(),
-      rtl: code === 'ar',
     };
     return {
       code,
       label: meta.label,
       native_label: meta.native_label,
-      rtl: meta.rtl,
+      rtl: isUiLocaleRtl(code),
     };
   });
 }

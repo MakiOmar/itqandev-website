@@ -2,19 +2,14 @@ import { component$ } from '@builder.io/qwik';
 import type { DocumentHead } from '@builder.io/qwik-city';
 import { Link, useLocation } from '@builder.io/qwik-city';
 import { getLocalizedRoutes } from '../lib/constants/routes';
-import { speakConfig } from '../lib/i18n/config';
-
-function uiLangFromPathname(pathname: string): string {
-  const m = (pathname || '/').match(/^\/(en|ar)(?=\/|$)/i);
-  return m ? m[1].toLowerCase() : speakConfig.defaultLocale.lang;
-}
+import { uiLangFromUrlPathname } from '../lib/i18n/ui-locale-path';
 
 /**
  * 404 Not Found page
  */
 export default component$(() => {
   const loc = useLocation();
-  const R = getLocalizedRoutes(uiLangFromPathname(loc.url.pathname));
+  const R = getLocalizedRoutes(uiLangFromUrlPathname(loc.url.pathname));
 
   return (
     <>

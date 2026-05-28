@@ -1,5 +1,6 @@
 import { component$, Slot, useSignal, $, useStore, useContextProvider, useVisibleTask$ } from '@builder.io/qwik';
 import { useSpeakLocale } from 'qwik-speak';
+import { isUiLocaleRtl } from '../../lib/i18n/ui-locale-segments';
 import { Sidebar } from './Sidebar';
 import { Header } from './Header';
 import { getConfig } from '../../lib/config';
@@ -20,7 +21,7 @@ export const AuthenticatedAdminLayout = component$(() => {
   const loginHrefClient = localized.ADMIN.LOGIN.replace(/\/+$/, '');
   const adminAuth = useAdminAuth();
 
-  const isRTL = useSignal(locale.lang === 'ar');
+  const isRTL = useSignal(isUiLocaleRtl(locale.lang));
 
   // eslint-disable-next-line qwik/no-use-visible-task
   useVisibleTask$(({ cleanup }) => {

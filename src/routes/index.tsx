@@ -1,13 +1,12 @@
 import { component$ } from '@builder.io/qwik';
 import type { RequestHandler } from '@builder.io/qwik-city';
-import { speakConfig } from '../lib/i18n/config';
+import { uiLangFromPreferredCookie } from '../lib/i18n/ui-locale-path';
 
 /**
- * Bare `/` → preferred or default locale home (`/en/`, `/ar/`).
+ * Bare `/` → preferred or default locale home (`/en/`, `/ar/`, …).
  */
 export const onGet: RequestHandler = ({ cookie, url, redirect: redirectFn }) => {
-  const pref = cookie.get('preferred-locale')?.value;
-  const lang = pref === 'ar' || pref === 'en' ? pref : speakConfig.defaultLocale.lang;
+  const lang = uiLangFromPreferredCookie(cookie);
   throw redirectFn(302, `/${lang}/${url.search}`);
 };
 

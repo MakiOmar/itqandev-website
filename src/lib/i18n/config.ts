@@ -1,19 +1,34 @@
 import type { SpeakConfig } from 'qwik-speak';
 
+/** Single source for UI locales: add a row here (+ matching `src/i18n/{lang}.json`). */
+export const UI_LOCALE_DEFINITIONS = [
+  {
+    lang: 'en',
+    currency: 'USD',
+    timeZone: 'America/Los_Angeles',
+    rtl: false,
+  },
+  {
+    lang: 'ar',
+    currency: 'USD',
+    timeZone: 'Asia/Riyadh',
+    rtl: true,
+  },
+] as const;
+
 /**
  * qwik-speak configuration
  */
 export const speakConfig: SpeakConfig = {
   defaultLocale: {
-    lang: 'en', // Default to English as primary language
-    currency: 'USD',
-    timeZone: 'America/Los_Angeles',
+    lang: UI_LOCALE_DEFINITIONS[0].lang,
+    currency: UI_LOCALE_DEFINITIONS[0].currency,
+    timeZone: UI_LOCALE_DEFINITIONS[0].timeZone,
   },
-  supportedLocales: [
-    { lang: 'en', currency: 'USD', timeZone: 'America/Los_Angeles' },
-    { lang: 'ar', currency: 'USD', timeZone: 'Asia/Riyadh' },
-  ],
-  // Translations will be loaded from src/i18n/{lang}.json
-  // Assets are the top-level keys in the JSON files
-  assets: ['app'], // Use 'app' as the main asset, containing all translations
+  supportedLocales: UI_LOCALE_DEFINITIONS.map(({ lang, currency, timeZone }) => ({
+    lang,
+    currency,
+    timeZone,
+  })),
+  assets: ['app'],
 };

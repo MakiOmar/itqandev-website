@@ -5,6 +5,7 @@ import { RouterHead } from "./components/router-head/router-head";
 import { DarkModeToggle } from "./components/common/DarkModeToggle";
 import { speakConfig } from "./lib/i18n/config";
 import { translationFn } from "./lib/i18n/translation-fn";
+import { isUiLocaleRtl } from "./lib/i18n/ui-locale-segments";
 import { stripUiLocaleFromPathname, uiLangPrefixFromPathname } from "./lib/i18n/ui-locale-path";
 import { persistPreferredLocale } from "./lib/i18n/preferred-locale-persist";
 
@@ -55,16 +56,18 @@ const INTER_FONT_HREF =
 const CAIRO_FONT_HREF =
   "https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800;900&display=swap";
 
-function normalizeLocale(lang: string | undefined): "en" | "ar" {
-  return lang === "ar" ? "ar" : "en";
+function normalizeLocale(lang: string | undefined): string {
+  const code = String(lang ?? speakConfig.defaultLocale.lang).toLowerCase();
+  const supported = new Set(speakConfig.supportedLocales.map((l) => l.lang.toLowerCase()));
+  return supported.has(code) ? code : speakConfig.defaultLocale.lang;
 }
 
-function ensureLocaleFont(locale: "en" | "ar") {
+function ensureLocaleFont(locale: string) {
   if (typeof document === "undefined") {
     return;
   }
 
-  const href = locale === "ar" ? CAIRO_FONT_HREF : INTER_FONT_HREF;
+  const href = isUiLocaleRtl(locale) ? CAIRO_FONT_HREF : INTER_FONT_HREF;
   let fontLink = document.getElementById(
     LOCALE_FONT_LINK_ID,
   ) as HTMLLinkElement | null;
@@ -122,7 +125,7 @@ const UrlLocaleBodySync = component$(() => {
 
     const urlLang = uiLangPrefixFromPathname(location.url.pathname);
     if (urlLang != null && speakCodes.has(urlLang)) {
-      const isRtl = urlLang === "ar";
+      const isRtl = isUiLocaleRtl(urlLang);
       locale.lang = urlLang;
       bodyLang.value = urlLang;
       bodyDir.value = isRtl ? "rtl" : "ltr";
@@ -143,7 +146,7 @@ const UrlLocaleBodySync = component$(() => {
       const savedLocale = localStorage.getItem("preferred-locale");
       const normalized = savedLocale?.trim().toLowerCase() ?? "";
       const rtlStored = localStorage.getItem("preferred-locale-rtl");
-      const isRtl = rtlStored === "1" || (rtlStored !== "0" && normalized === "ar");
+      const isRtl = rtlStored === "1" || (rtlStored !== "0" && isUiLocaleRtl(normalized));
       if (normalized && speakCodes.has(normalized)) {
         locale.lang = normalized;
         bodyLang.value = normalized;
@@ -154,7 +157,7 @@ const UrlLocaleBodySync = component$(() => {
 
     const currentLang = normalizeLocale(locale.lang);
     bodyLang.value = currentLang;
-    bodyDir.value = currentLang === "ar" ? "rtl" : "ltr";
+    bodyDir.value = isUiLocaleRtl(currentLang) ? "rtl" : "ltr";
     if (typeof document !== "undefined") {
       if (document.body) {
         document.body.setAttribute("lang", currentLang);
@@ -186,7 +189,7 @@ export default component$(() => {
 
   const locale = useSpeakLocale();
   const bodyLang = useSignal(locale.lang || speakConfig.defaultLocale.lang);
-  const bodyDir = useSignal((locale.lang || speakConfig.defaultLocale.lang) === "ar" ? "rtl" : "ltr");
+  const bodyDir = useSignal(isUiLocaleRtl(locale.lang || speakConfig.defaultLocale.lang) ? "rtl" : "ltr");
 
   useContextProvider(rootBodyLocaleContext, { bodyLang, bodyDir });
 

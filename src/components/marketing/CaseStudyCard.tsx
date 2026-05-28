@@ -14,7 +14,7 @@ export interface CaseStudyCardProps {
 
 export const CaseStudyCard = component$<CaseStudyCardProps>(({ caseStudy, featured }) => {
   const locale = useSpeakLocale();
-  const MR = marketingRoutes(locale.lang === 'ar' ? 'ar' : 'en');
+  const MR = marketingRoutes(locale.lang);
   const href = MR.workSlug(caseStudy.slug);
 
   return (

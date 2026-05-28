@@ -18,8 +18,8 @@ export const MARKETING_ROUTES = {
   blogSlug: (slug: string) => `/blog/${slug}/`,
 } as const;
 
-/** Locale-prefixed marketing paths (`/en/services`, `/ar/blog/...`). */
-export function marketingRoutes(lang: 'en' | 'ar') {
+/** Locale-prefixed marketing paths (`/en/services`, `/fr/blog/...`). */
+export function marketingRoutes(lang: string) {
   return {
     home: withUiLocale(lang, MARKETING_ROUTES.home),
     services: withUiLocale(lang, MARKETING_ROUTES.services),

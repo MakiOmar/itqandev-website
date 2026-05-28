@@ -6,6 +6,7 @@ import { useAdminAuth } from '../../lib/loaders/admin-auth';
 import { ProjectSettingsContext } from '../../stores/project-settings-store';
 import { isFeatureModuleEnabled, type FeatureModuleKey } from '../../lib/api/project-settings';
 import { getConfig } from '../../lib/config';
+import { isUiLocaleRtl } from '../../lib/i18n/ui-locale-segments';
 import { useTranslate, translateApp } from '../../lib/i18n/useTranslate';
 import {
   DashboardIcon,
@@ -72,7 +73,7 @@ export const Sidebar = component$<SidebarProps>((props) => {
   // Check direction directly from document attribute (set immediately by blocking script)
   // This ensures sidebar position changes simultaneously with direction, preventing flash
   // Initialize from locale for SSR, then sync with document attribute on client
-  const isRTL = useSignal(locale.lang === 'ar');
+  const isRTL = useSignal(isUiLocaleRtl(locale.lang));
   
   // Track direction from document attribute and update immediately
   // eslint-disable-next-line qwik/no-use-visible-task

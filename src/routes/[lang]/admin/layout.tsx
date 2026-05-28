@@ -1,4 +1,5 @@
 import { component$, Slot } from '@builder.io/qwik';
+import type { DocumentHead, RequestHandler } from '@builder.io/qwik-city';
 import { routeLoader$, useLocation } from '@builder.io/qwik-city';
 import { AuthenticatedAdminLayout } from '../../../components/dashboard/AuthenticatedAdminLayout';
 import { getConfig } from '../../../lib/config';
@@ -12,6 +13,15 @@ import { routesFromPreferredCookie } from '../../../lib/constants/routes';
 import { useAdminAuth } from '../../../lib/loaders/admin-auth';
 
 export { useAdminAuth };
+
+/** Prevent search engines from indexing any dashboard HTML (all child admin routes). */
+export const onRequest: RequestHandler = ({ headers }) => {
+  headers.set('X-Robots-Tag', 'noindex, nofollow');
+};
+
+export const head: DocumentHead = {
+  meta: [{ name: 'robots', content: 'noindex, nofollow' }],
+};
 
 /**
  * Site languages for admin content forms (must be re-exported from a route file — see Qwik routeLoader$ rules).

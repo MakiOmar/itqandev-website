@@ -12,7 +12,7 @@ export interface BlogCardProps {
 
 export const BlogCard = component$<BlogCardProps>(({ post }) => {
   const locale = useSpeakLocale();
-  const MR = marketingRoutes(locale.lang === 'ar' ? 'ar' : 'en');
+  const MR = marketingRoutes(locale.lang);
   const href = MR.blogSlug(post.slug);
   const dateStr = post.date ? new Date(post.date).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) : '';
 

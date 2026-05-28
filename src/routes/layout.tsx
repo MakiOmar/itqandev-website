@@ -5,7 +5,7 @@ import { auth } from '../lib/auth';
 import { getConfig } from '../lib/config';
 import { speakConfig } from '../lib/i18n/config';
 import { NavigationIndicator } from '../components/navigation-indicator/navigation-indicator';
-import { pathnameHasUiLocale, stripUiLocaleFromPathname, withUiLocale } from '../lib/i18n/ui-locale-path';
+import { pathnameHasUiLocale, stripUiLocaleFromPathname, uiLangFromPreferredCookie, uiLangPrefixFromPathname, withUiLocale } from '../lib/i18n/ui-locale-path';
 import { getLocalizedRoutes } from '../lib/constants/routes';
 
 /**
@@ -23,8 +23,7 @@ export const onRequest: RequestHandler = ({ url, locale, redirect: redirectFn, c
     path = `/${path}`;
   }
 
-  const pref = cookie.get('preferred-locale')?.value;
-  const fallbackLang = pref === 'ar' || pref === 'en' ? pref : speakConfig.defaultLocale.lang;
+  const fallbackLang = uiLangFromPreferredCookie(cookie);
 
   if (path.startsWith('/api')) {
     locale(fallbackLang);
@@ -38,9 +37,9 @@ export const onRequest: RequestHandler = ({ url, locale, redirect: redirectFn, c
   }
 
   if (pathnameHasUiLocale(path)) {
-    const m = path.match(/^\/(en|ar)(?=\/|$)/i);
-    if (m) {
-      locale(m[1].toLowerCase());
+    const urlLang = uiLangPrefixFromPathname(path);
+    if (urlLang) {
+      locale(urlLang);
     }
     return;
   }
@@ -88,8 +87,7 @@ export const useAuth = routeLoader$(async ({ cookie, url, redirect: redirectFn }
   const config = getConfig();
   const normalizedPath = pathname.replace(/\/+$/, '') || '/';
   const logicalPath = stripUiLocaleFromPathname(normalizedPath);
-  const pref = cookie.get('preferred-locale')?.value;
-  const lang = pref === 'ar' || pref === 'en' ? pref : speakConfig.defaultLocale.lang;
+  const lang = uiLangFromPreferredCookie(cookie);
   const R = getLocalizedRoutes(lang);
 
   const isAdminLoginPage =

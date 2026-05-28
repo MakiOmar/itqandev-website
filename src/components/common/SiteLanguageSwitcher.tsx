@@ -4,6 +4,7 @@ import { useSpeakLocale } from 'qwik-speak';
 import { speakConfig } from '~/lib/i18n/config';
 import { persistPreferredLocale } from '~/lib/i18n/preferred-locale-persist';
 import { getLanguageFlagEmoji } from '~/lib/i18n/language-flags';
+import { isUiLocaleRtl } from '~/lib/i18n/ui-locale-segments';
 import { swapUiLocaleInPathname } from '~/lib/i18n/ui-locale-path';
 import type { SiteLanguageRow } from '~/types/site-language';
 
@@ -29,7 +30,7 @@ export const SiteLanguageSwitcher = component$<{ languages: SiteLanguageRow[] | 
   }
 
   const currentRtl = options.find((o) => o.code.toLowerCase() === locale.lang.toLowerCase())?.rtl ?? false;
-  const isRTL = currentRtl || locale.lang === 'ar';
+  const isRTL = currentRtl || isUiLocaleRtl(locale.lang);
 
   const toggleDropdown = $(() => {
     isOpen.value = !isOpen.value;

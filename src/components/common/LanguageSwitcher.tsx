@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from '@builder.io/qwik-city';
 import { useSpeakLocale, useSpeakConfig } from 'qwik-speak';
 import { persistPreferredLocale } from '../../lib/i18n/preferred-locale-persist';
 import { getLanguageFlagEmoji } from '../../lib/i18n/language-flags';
+import { isUiLocaleRtl } from '../../lib/i18n/ui-locale-segments';
 import { swapUiLocaleInPathname } from '../../lib/i18n/ui-locale-path';
 
 /**
@@ -17,7 +18,7 @@ export const LanguageSwitcher = component$(() => {
   const isOpen = useSignal(false);
   
   // Check if current locale is RTL (Arabic)
-  const isRTL = locale.lang === 'ar';
+  const isRTL = isUiLocaleRtl(locale.lang);
 
   // Toggle dropdown
   const toggleDropdown = $(() => {
@@ -31,7 +32,7 @@ export const LanguageSwitcher = component$(() => {
 
   // Change language
   const changeLanguage = $((nextLang: string) => {
-    const isRtl = nextLang === 'ar';
+    const isRtl = isUiLocaleRtl(nextLang);
     persistPreferredLocale(nextLang, isRtl);
 
     locale.lang = nextLang;
