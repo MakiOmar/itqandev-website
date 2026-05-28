@@ -561,6 +561,83 @@ User::create([
 
 ---
 
+## Categories export / import (authenticated)
+
+Requires Sanctum auth, `feature.module:categories`, and a valid **`X-Content-Locale`** header (enabled site language). Export/import operate on **localized** `name` / `description` for that locale (same visibility rules as `GET /api/v1/categories` with the header).
+
+### GET `/api/v1/categories/export`
+
+**Query (optional):**
+
+| Param | Type | Description |
+|-------|------|-------------|
+| `ids[]` | int[] | Export only these category IDs (still filtered by locale content rules) |
+
+**Success (200):** JSON file download (`Content-Type: application/json`) with envelope:
+
+```json
+{
+  "format": "credocode.content-export",
+  "version": 1,
+  "entity": "categories",
+  "locale": "ar",
+  "exported_at": "2026-05-28T12:00:00+00:00",
+  "items": [
+    {
+      "id": 12,
+      "slug": "web-development",
+      "name": "Localized name",
+      "description": "Localized description",
+      "is_featured": false
+    }
+  ]
+}
+```
+
+Each item includes **`id`** (database primary key) so imports can target the exact record on this server. `slug` remains the stable key for creates and slug-based matching.
+
+**Error (422):** Missing or invalid `X-Content-Locale`.
+
+### POST `/api/v1/categories/import`
+
+**Query or body:**
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `mode` | string | `upsert` (default) or `translation_only` |
+
+**Body:** Full export envelope JSON (must match `entity`, `version`, and `locale` with the request header).
+
+**Item matching (per row):**
+
+1. If **`id`** is set, load that category first. When **`slug`** is also present, it must match that record or the row is rejected.
+2. Otherwise match by **`slug`** (required for new creates in `upsert` mode).
+3. In **`translation_only`** mode, each row must resolve via **`id`** or **`slug`**; unknown records are skipped with an error.
+
+**Import modes:**
+
+- **`upsert`:** Update primary columns when import locale is the record’s primary language, otherwise upsert a `category_translations` row; create a new category when neither `id` nor `slug` matches an existing row (create requires `slug`).
+- **`translation_only`:** Update existing records only (`id` or `slug`); never create; unknown rows go to `errors`.
+
+**Success (200):**
+
+```json
+{
+  "mode": "upsert",
+  "locale": "ar",
+  "created": 1,
+  "updated": 4,
+  "skipped": 0,
+  "errors": [{ "slug": "unknown", "message": "Category not found (translation_only mode)." }]
+}
+```
+
+**Error (422):** Invalid envelope (`format`, `entity`, `version`, or `locale` mismatch).
+
+Throttle: `throttle:bulk` on import.
+
+---
+
 ## Common Issues
 
 ### Issue: 419 CSRF Token Mismatch

@@ -1,9 +1,6 @@
-import type { Cookie } from '@builder.io/qwik-city';
-import { getApiClient, extractCookieHeader } from '../api/client';
+import { getApiClient } from '../api/client';
 import { adminApiClient } from './admin-api-client';
 import { API_ENDPOINTS } from '../api/endpoints';
-import { speakConfig } from '../i18n/config';
-import { uiLangFromPublicRoute } from '../i18n/ui-locale-path';
 import type { Category } from '../../types';
 import type { Skill } from '../../types';
 
@@ -11,18 +8,6 @@ export type TaxonomyListOptions = {
   categories: Category[];
   skills: Skill[];
 };
-
-export function presentationLocaleFromAdminRoute(
-  cookie: Cookie,
-  request: { headers: Headers; url: string },
-  paramsLang?: string,
-): string {
-  const cookieHeader = extractCookieHeader(cookie, request);
-  return (
-    uiLangFromPublicRoute(cookieHeader, paramsLang, request.url) ??
-    speakConfig.defaultLocale.lang
-  );
-}
 
 export function extractApiListPayload<T>(response: unknown): T[] {
   const root = (response as { data?: unknown })?.data ?? response;

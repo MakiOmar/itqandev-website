@@ -16,11 +16,9 @@ import {
   primaryLocaleForContent,
   shouldWritePrimaryColumns,
 } from '../../../../../lib/content-display-locale';
-import { useCreateCategory } from '../../../../../lib/admin/category-actions';
-import { submitRouteActionFormData } from '../../../../../lib/admin/route-action-form-submit';
+import { runCategoryCreateFromBrowser } from '../../../../../lib/admin/category-actions';
 import { adminCategoryEditHref, getLocalizedRoutes, useAppRoutes } from '../../../../../lib/constants/routes';
-import type { Category } from '../../../../../types';
-import { useContentSlugAutosuggestForm } from '../../../../../lib/slug/content-slug-auto';
+import { suggestUniqueContentSlug, useContentSlugAutosuggestForm } from '../../../../../lib/slug/content-slug-auto';
 
 /**
  * Create category — primary language only on insert
@@ -31,7 +29,7 @@ export default component$(() => {
   const { success, error: showError } = useSwal();
   const navigate = useNavigate();
   const langConfig = useSiteLanguageConfig();
-  const createAction = useCreateCategory();
+  const saveRunning = useSignal(false);
 
   const saveTranslations = {
     successTitle: String(translateApp(lang, 'common.success')),
@@ -93,43 +91,52 @@ export default component$(() => {
   });
 
   const handleSave = $(async () => {
-    const val = await submitRouteActionFormData(
-      createAction,
-      {
-        editing_locale: normalizeEditingLocale(
-          editingLocaleDraft.value,
-          langConfig.value.site_languages,
-          langConfig.value.default_locale,
-          contentLocaleDraft.value.trim() !== '' ? contentLocaleDraft.value.trim() : null,
-        ),
-        form_site_default_locale: langConfig.value.default_locale,
-        effective_primary_locale: primaryLocaleForContent(
-          langConfig.value.site_languages,
-          langConfig.value.default_locale,
-          contentLocaleDraft.value.trim() !== '' ? contentLocaleDraft.value.trim() : null,
-        ),
-        canonical_name: canonicalName.value,
-        canonical_description: canonicalDescription.value,
-        translations_json: translationsJson.value,
-        content_locale: contentLocaleDraft.value,
-        name: formData.value.name,
-        slug: formData.value.slug,
-        description: formData.value.description,
-        is_featured: formData.value.is_featured ? '1' : undefined,
-      },
-      (x) =>
-        x != null &&
-        typeof x === 'object' &&
-        ('success' in (x as object) || 'category' in (x as object) || 'failed' in (x as object)),
-    );
+    if (saveRunning.value) {
+      return;
+    }
+    saveRunning.value = true;
 
-    if (val?.failed) {
-      await showError(val.message || val.error || 'Failed to create category');
+    let slug = formData.value.slug.trim();
+    if (!slug && formData.value.name.trim()) {
+      const suggested = await suggestUniqueContentSlug('categories', formData.value.name);
+      if (suggested) {
+        slug = suggested;
+        formData.value = { ...formData.value, slug };
+      }
+    }
+
+    const val = await runCategoryCreateFromBrowser({
+      editing_locale: normalizeEditingLocale(
+        editingLocaleDraft.value,
+        langConfig.value.site_languages,
+        langConfig.value.default_locale,
+        contentLocaleDraft.value.trim() !== '' ? contentLocaleDraft.value.trim() : null,
+      ),
+      form_site_default_locale: langConfig.value.default_locale,
+      effective_primary_locale: primaryLocaleForContent(
+        langConfig.value.site_languages,
+        langConfig.value.default_locale,
+        contentLocaleDraft.value.trim() !== '' ? contentLocaleDraft.value.trim() : null,
+      ),
+      canonical_name: canonicalName.value,
+      canonical_description: canonicalDescription.value,
+      translations_json: translationsJson.value,
+      content_locale: contentLocaleDraft.value,
+      name: formData.value.name,
+      slug,
+      description: formData.value.description,
+      is_featured: formData.value.is_featured ? '1' : undefined,
+    });
+
+    if (!val.ok) {
+      saveRunning.value = false;
+      await showError(val.message || 'Failed to create category');
       return;
     }
 
     await success(saveTranslations.successTitle, { text: saveTranslations.createdText });
-    const created = val?.category as Category | undefined;
+    saveRunning.value = false;
+    const created = val.value.category;
     if (created?.id != null) {
       await navigate(adminCategoryEditHref(lang, created.id));
     } else {
@@ -262,10 +269,13 @@ export default component$(() => {
             <button
               type="button"
               preventdefault:click
+              disabled={saveRunning.value}
               onClick$={handleSave}
-              class="flex-1 rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-primary-700"
+              class="flex-1 rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-primary-700 disabled:cursor-not-allowed disabled:opacity-60"
             >
-              {translateApp(lang, 'common.add')}
+              {saveRunning.value
+                ? translateApp(lang, 'common.saving') || translateApp(lang, 'common.add')
+                : translateApp(lang, 'common.add')}
             </button>
             <Link
               href={R.ADMIN.CATEGORIES}

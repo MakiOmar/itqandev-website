@@ -4,7 +4,7 @@ import { routeLoader$, useLocation } from '@builder.io/qwik-city';
 import { Link } from '@builder.io/qwik-city';
 import { useTranslate, translateApp } from '../../../lib/i18n/useTranslate';
 import { uiLangFromUrlPathname } from '../../../lib/i18n/ui-locale-path';
-import { presentationLocaleFromAdminRoute } from '../../../lib/admin/taxonomy-list-options';
+import { presentationLocaleFromAdminRoute } from '../../../lib/admin/admin-api-client';
 import { getConfig } from '../../../lib/config';
 import { useAppRoutes } from '../../../lib/constants/routes';
 import { auth } from '../../../lib/auth';

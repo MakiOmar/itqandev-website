@@ -61,6 +61,8 @@ export const API_ENDPOINTS = {
     UPDATE: (id: string | number) => `/v1/categories/${id}`,
     DELETE: (id: string | number) => `/v1/categories/${id}`,
     BULK_DELETE: '/v1/categories/bulk-delete',
+    EXPORT: '/v1/categories/export',
+    IMPORT: '/v1/categories/import',
   },
 
 

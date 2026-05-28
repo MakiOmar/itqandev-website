@@ -119,7 +119,18 @@
     "featured": "مميز",
     "projectsCount": "مشاريع: {{count}}",
     "deleteConfirm": "هل أنت متأكد من حذف هذا التصنيف؟",
-    "noCategories": "لا توجد تصنيفات"
+    "noCategories": "لا توجد تصنيفات",
+    "exportAll": "تصدير الكل",
+    "exportSelected": "تصدير المحدد ({{count}})",
+    "import": "استيراد",
+    "importTitle": "استيراد التصنيفات",
+    "importChooseFile": "اختر ملف JSON للغة المحتوى الحالية.",
+    "importModeUpsert": "دمج — إنشاء التصنيفات الناقصة وتحديث هذه اللغة",
+    "importModeTranslationOnly": "ترجمات فقط — تحديث المعرفات الموجودة وتخطي غير المعروف",
+    "importConfirm": "استيراد",
+    "exportSuccess": "تم تصدير التصنيفات.",
+    "importSuccess": "اكتمل الاستيراد: {{created}} أُنشئ، {{updated}} حُدّث، {{skipped}} تُخطّى.",
+    "importErrors": "فشلت بعض الصفوف: {{details}}"
   },
   "skills": {
     "title": "المهارات",

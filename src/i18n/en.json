@@ -119,7 +119,18 @@
     "featured": "Featured",
     "projectsCount": "Projects: {{count}}",
     "deleteConfirm": "Are you sure you want to delete this category?",
-    "noCategories": "No categories"
+    "noCategories": "No categories",
+    "exportAll": "Export all",
+    "exportSelected": "Export selected ({{count}})",
+    "import": "Import",
+    "importTitle": "Import categories",
+    "importChooseFile": "Choose a JSON export file for the current content language.",
+    "importModeUpsert": "Upsert — create missing categories and update this locale",
+    "importModeTranslationOnly": "Translations only — update existing slugs, skip unknown",
+    "importConfirm": "Import",
+    "exportSuccess": "Categories exported.",
+    "importSuccess": "Import complete: {{created}} created, {{updated}} updated, {{skipped}} skipped.",
+    "importErrors": "Some rows failed: {{details}}"
   },
   "skills": {
     "title": "Skills",
