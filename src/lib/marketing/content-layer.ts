@@ -27,6 +27,10 @@ const testimonials = testimonialsData as Testimonial[];
 const siteContent = siteData as SiteContent;
 const blogPosts = blogData as BlogPost[];
 
+function hasMarketingApiBase(fetchContext?: MarketingFetchContext): boolean {
+  return getMarketingApiBaseUrl(fetchContext?.forwardDocumentUrl).trim().length > 0;
+}
+
 function unwrapMarketingListRecords(data: unknown): Record<string, unknown>[] {
   if (Array.isArray(data)) {
     return data as Record<string, unknown>[];
@@ -83,7 +87,7 @@ async function fetchTestimonialsFromApi(
   locale?: string,
   fetchContext?: MarketingFetchContext,
 ): Promise<Testimonial[]> {
-  if (!getMarketingApiBaseUrl(fetchContext?.forwardDocumentUrl).trim()) {
+  if (!hasMarketingApiBase(fetchContext)) {
     return [];
   }
   try {
@@ -163,7 +167,7 @@ async function fetchPublishedProjectsFromApi(
   },
   fetchContext?: MarketingFetchContext,
 ): Promise<CaseStudy[]> {
-  if (!getMarketingApiBaseUrl(fetchContext?.forwardDocumentUrl).trim()) {
+  if (!hasMarketingApiBase(fetchContext)) {
     return [];
   }
   try {
@@ -180,9 +184,11 @@ async function fetchPublishedProjectsFromApi(
     }
     const path = `${MARKETING_ENDPOINTS.caseStudies}?${q.toString()}`;
     const payload = await marketingGet<unknown>(path, options.locale, fetchContext);
-    return unwrapMarketingListRecords(payload)
+    const records = unwrapMarketingListRecords(payload);
+    const mapped = records
       .map(mapPublicProjectToCaseStudy)
       .filter((c) => c.slug.length > 0);
+    return mapped;
   } catch (e) {
     if (!isDevSsrMarketingSkip(e)) {
       console.warn('[marketing] fetch public projects failed', e);
@@ -213,6 +219,9 @@ export async function getCaseStudies(
   );
   if (live.length > 0) {
     return live;
+  }
+  if (hasMarketingApiBase(fetchContext)) {
+    return [];
   }
 
   if (contentSource === 'api') {
@@ -262,15 +271,17 @@ export async function getCaseStudyBySlug(
   locale?: string,
   fetchContext?: MarketingFetchContext,
 ): Promise<CaseStudy | null> {
-  if (getMarketingApiBaseUrl().trim()) {
+  const hasApiBase = hasMarketingApiBase(fetchContext);
+  if (hasApiBase) {
     try {
       const data = await marketingGet<unknown>(MARKETING_ENDPOINTS.caseStudy(slug), locale, fetchContext);
       if (data && typeof data === 'object' && !Array.isArray(data)) {
         return mapPublicProjectToCaseStudy(data as Record<string, unknown>);
       }
     } catch {
-      /* swallow; fall through to api-only / json paths */
+      return null;
     }
+    return null;
   }
 
   if (contentSource === 'api') {
@@ -298,6 +309,13 @@ export async function getFeaturedCaseStudies(
   if (live.length > 0) {
     return live.slice(0, limit);
   }
+  if (hasMarketingApiBase(fetchContext)) {
+    const latest = await fetchPublishedProjectsFromApi(
+      { per_page: limit, locale },
+      fetchContext,
+    );
+    return latest.slice(0, limit);
+  }
 
   const all = await getCaseStudies(locale, undefined, fetchContext);
   const featured = all.filter((c) => c.featured).slice(0, limit);
@@ -315,6 +333,9 @@ export async function getTestimonials(
   const live = await fetchTestimonialsFromApi(locale, fetchContext);
   if (live.length > 0) {
     return live;
+  }
+  if (hasMarketingApiBase(fetchContext)) {
+    return [];
   }
 
   if (contentSource === 'api') {
@@ -375,7 +396,7 @@ export async function getSiteContent(
     }
   }
 
-  if (getMarketingApiBaseUrl(fetchContext?.forwardDocumentUrl).trim()) {
+  if (hasMarketingApiBase(fetchContext)) {
     try {
       const payload = await marketingGet<unknown>(
         MARKETING_ENDPOINTS.services,

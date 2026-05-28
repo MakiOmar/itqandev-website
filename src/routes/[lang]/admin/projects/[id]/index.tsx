@@ -194,7 +194,6 @@ export const useUpdateProject = routeAction$(
         demo_url: normalizeOptionalUrl(data.demo_url),
         published_at: data.published_at || undefined,
       };
-
       const rawContentLocale = (data as { content_locale?: string }).content_locale?.trim();
       (payload as ProjectUpdateInput & { content_locale?: string | null }).content_locale =
         rawContentLocale && rawContentLocale.length > 0 ? rawContentLocale : null;
@@ -1208,12 +1207,10 @@ export default component$(() => {
                   if (videoMedia.value) {
                     formData.append('videoMedia', JSON.stringify(videoMedia.value));
                   }
-                  await updateAction.submit(formData);
-                  
-                  // Check for success after submission completes
-                  // Wait a bit for the action value to be set
-                  await new Promise(resolve => setTimeout(resolve, 200));
-                  const actionValue = (updateAction as any).value as { success?: boolean; projectId?: number } | null;
+                  const response = await updateAction.submit(formData as any);
+                  const actionValue = (response as any)?.value as
+                    | { success?: boolean; projectId?: number; error?: string; failed?: boolean }
+                    | null;
                   if (actionValue && actionValue.success === true && actionValue.projectId) {
                     const loc = normalizeEditingLocale(
                       editingLocaleDraft.value,
@@ -1237,6 +1234,10 @@ export default component$(() => {
                         text: translations.updated,
                       });
                     }
+                  } else if (actionValue && (actionValue.error || actionValue.failed)) {
+                    showError(translations.error, {
+                      text: actionValue.error || 'Failed to update project',
+                    });
                   }
                 }
               }}

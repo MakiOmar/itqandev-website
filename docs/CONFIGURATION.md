@@ -57,6 +57,8 @@ If the HTML URL and API URL differ by **hostname or scheme** (**localhost** vs a
 
 **`www` vs apex:** if the hostname in the browser does not match an entry in **`SANCTUM_STATEFUL_DOMAINS`**, set **`VITE_SITE_URL`** to an origin **that is** listed, or add apex + **`www`** (or a pattern Laravel **`Str::is`** accepts, e.g. **`*.example.com`**) there. **`VITE_SITE_URL`** controls optional SSR **`Origin` / `Referer`** normalization while preserving the path from `request.url`.
 
+**Marketing API behavior in dev:** use `VITE_API_PROXY_TARGET` as the single proxy origin for `/api` and `/sanctum`. `VITE_API_PROXY_HOST` and `VITE_DEV_SSR_SKIP_MARKETING_API` are not used. When a marketing API base is configured, marketing loaders do not fall back to local demo JSON; they return API data (or empty/null on API failure).
+
 ### Branding Configuration
 
 ```env

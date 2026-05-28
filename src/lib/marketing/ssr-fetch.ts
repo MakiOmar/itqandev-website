@@ -34,7 +34,11 @@ function getInflight(): Map<string, Promise<Response>> {
 function requestKey(input: RequestInfo | URL, init?: RequestInit): string {
   const url =
     typeof input === 'string' ? input : input instanceof URL ? input.href : input.url;
-  return `${(init?.method ?? 'GET').toUpperCase()} ${url}`;
+  const headers = new Headers(init?.headers as HeadersInit);
+  const locale = headers.get('X-Content-Locale') ?? '';
+  const auth = headers.get('Authorization') ? 'auth:1' : 'auth:0';
+  const cookie = headers.get('Cookie') ? 'cookie:1' : 'cookie:0';
+  return `${(init?.method ?? 'GET').toUpperCase()} ${url} locale:${locale} ${auth} ${cookie}`;
 }
 
 function ssrFetchTimeoutMs(): number {
@@ -47,37 +51,6 @@ function ssrFetchTimeoutMs(): number {
   return Number.isFinite(n) && n > 0 ? n : 30000;
 }
 
-/** When SSR hits loopback Apache (port 80), set Host so WAMP routes to the named vhost. Skip for Vite dev server. */
-function withSsrProxyHostHeader(input: RequestInfo | URL, init?: RequestInit): RequestInit {
-  const vhost = String(import.meta.env?.VITE_API_PROXY_HOST ?? '').trim();
-  const proxyTarget = String(import.meta.env?.VITE_API_PROXY_TARGET ?? 'http://127.0.0.1').trim();
-  const devOrigin = String(import.meta.env?.VITE_DEV_SERVER_ORIGIN ?? 'http://127.0.0.1:5173').trim();
-  if (!vhost) {
-    return init ?? {};
-  }
-  try {
-    const urlStr = typeof input === 'string' ? input : input instanceof URL ? input.href : input.url;
-    const reqUrl = new URL(urlStr);
-    const devUrl = new URL(devOrigin);
-    // Requests routed through Vite (/api proxy) must not override Host.
-    if (reqUrl.port === devUrl.port || reqUrl.origin === devUrl.origin) {
-      return init ?? {};
-    }
-    const targetUrl = new URL(proxyTarget);
-    const isLoopback = (h: string) => h === '127.0.0.1' || h === 'localhost';
-    if (isLoopback(reqUrl.hostname) && isLoopback(targetUrl.hostname)) {
-      const headers = new Headers(init?.headers as HeadersInit);
-      if (!headers.has('Host')) {
-        headers.set('Host', vhost);
-      }
-      return { ...init, headers };
-    }
-  } catch {
-    /* ignore */
-  }
-  return init ?? {};
-}
-
 async function fetchWithTimeout(
   input: RequestInfo | URL,
   init?: RequestInit,
@@ -85,9 +58,8 @@ async function fetchWithTimeout(
   const timeoutMs = ssrFetchTimeoutMs();
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
-  const initWithHost = withSsrProxyHostHeader(input, init);
   try {
-    return await fetch(input, { ...initWithHost, signal: controller.signal });
+    return await fetch(input, { ...init, signal: controller.signal });
   } catch (e) {
     if (e instanceof Error && e.name === 'AbortError') {
       throw new Error(`SSR API request timed out after ${timeoutMs}ms`);
@@ -126,7 +98,7 @@ export function ssrFetch(input: RequestInfo | URL, init?: RequestInit): Promise<
   const inflight = getInflight();
   const existing = inflight.get(key);
   if (existing) {
-    return existing;
+    return existing.then((res) => res.clone());
   }
 
   const run = () => fetchWithTimeout(input, init);
@@ -143,5 +115,5 @@ export function ssrFetch(input: RequestInfo | URL, init?: RequestInit): Promise<
     inflight.delete(key);
   });
   inflight.set(key, result);
-  return result;
+  return result.then((res) => res.clone());
 }

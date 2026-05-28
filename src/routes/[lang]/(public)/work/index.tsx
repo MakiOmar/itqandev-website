@@ -1,9 +1,9 @@
-import { component$ } from '@builder.io/qwik';
+import { component$, useSignal, useVisibleTask$ } from '@builder.io/qwik';
 import type { DocumentHead } from '@builder.io/qwik-city';
-import { routeLoader$ } from '@builder.io/qwik-city';
+import { routeLoader$, useLocation } from '@builder.io/qwik-city';
 import { getConfig } from '~/lib/config';
 import { getCaseStudies } from '~/lib/marketing/content-layer';
-import { uiLocaleFromPublicRoute } from '~/lib/i18n/ui-locale-path';
+import { uiLangFromUrlPathname, uiLocaleFromPublicRoute } from '~/lib/i18n/ui-locale-path';
 import { Container } from '~/components/marketing/Container';
 import { Section } from '~/components/marketing/Section';
 import { AnimatedReveal } from '~/components/marketing/AnimatedReveal';
@@ -23,7 +23,30 @@ export const useWorkData = routeLoader$(async ({ request, url, params }) => {
 });
 
 export default component$(() => {
-  const caseStudies = useWorkData().value;
+  const loc = useLocation();
+  const loaderData = useWorkData();
+  const caseStudiesState = useSignal(loaderData.value);
+
+  // Ensure listings appear on in-app navigation when SSR q-data briefly returns empty.
+  useVisibleTask$(async ({ track }) => {
+    const pathname = track(() => loc.url.pathname);
+    const search = track(() => loc.url.search);
+    const current = track(() => loaderData.value);
+    caseStudiesState.value = current;
+    if (current.length > 0) {
+      return;
+    }
+    const uiLocale = uiLangFromUrlPathname(pathname);
+    const url = new URL(`http://local${pathname}${search}`);
+    const categorySlug = url.searchParams.get('category_slug') ?? undefined;
+    const skillSlug = url.searchParams.get('skill_slug') ?? undefined;
+    const fetched = await getCaseStudies(
+      uiLocale,
+      { categorySlug, skillSlug },
+      { forwardDocumentUrl: typeof window !== 'undefined' ? window.location.href : null },
+    );
+    caseStudiesState.value = fetched;
+  });
 
   return (
     <>
@@ -41,7 +64,7 @@ export default component$(() => {
           </AnimatedReveal>
 
           <ul class="mx-auto mt-16 grid max-w-5xl gap-10 sm:grid-cols-2 lg:grid-cols-3" role="list">
-            {caseStudies.map((cs: CaseStudy, i: number) => (
+            {caseStudiesState.value.map((cs: CaseStudy, i: number) => (
               <li key={cs.id}>
                 <AnimatedReveal delay={i * 60}>
                   <CaseStudyCard caseStudy={cs} />
