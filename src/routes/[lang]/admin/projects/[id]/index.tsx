@@ -10,6 +10,11 @@ import { useTranslate, translateApp } from '../../../../../lib/i18n/useTranslate
 import { useSwal } from '../../../../../lib/hooks/useSwal';
 import { getApiClient, extractCookieHeader } from '../../../../../lib/api/client';
 import { API_ENDPOINTS } from '../../../../../lib/api/endpoints';
+import {
+  fetchTaxonomyListOptions,
+  fetchTaxonomyListOptionsForAdminRoute,
+} from '../../../../../lib/admin/taxonomy-list-options';
+import { useLocaleAwareTaxonomyOptions } from '../../../../../lib/hooks/useLocaleAwareTaxonomyOptions';
 import { useAppRoutes } from '../../../../../lib/constants/routes';
 import {
   ContentEditingLanguageSelect,
@@ -117,29 +122,9 @@ export const useProject = routeLoader$(async ({ params, fail, cookie, request })
 /**
  * Load categories and skills for form
  */
-export const useCategoriesAndSkills = routeLoader$(async ({ cookie, request }) => {
+export const useCategoriesAndSkills = routeLoader$(async ({ cookie, request, params }) => {
   try {
-    const cookieHeader = extractCookieHeader(cookie, request);
-    const apiClient = getApiClient(cookieHeader);
-    const [categoriesRes, skillsRes] = await Promise.all([
-      apiClient.get<Category[]>(API_ENDPOINTS.CATEGORIES.LIST),
-      apiClient.get<Skill[]>(API_ENDPOINTS.SKILLS.LIST),
-    ]);
-
-    // Handle paginated responses
-    const extractData = <T,>(response: any): T[] => {
-      if (!response?.data) return [];
-      if (Array.isArray(response.data)) return response.data as T[];
-      if (response.data && typeof response.data === 'object' && 'data' in response.data && Array.isArray(response.data.data)) {
-        return response.data.data as T[];
-      }
-      return [];
-    };
-
-    return {
-      categories: extractData<Category>(categoriesRes),
-      skills: extractData<Skill>(skillsRes),
-    };
+    return await fetchTaxonomyListOptionsForAdminRoute(cookie, request, params.lang);
   } catch (error: any) {
     console.error('Failed to load categories/skills:', error);
     return { categories: [], skills: [] };
@@ -421,7 +406,11 @@ export default component$(() => {
   const location = useLocation();
   const project = useProject();
   const langConfig = useSiteLanguageConfig();
-  const categoriesAndSkills = useCategoriesAndSkills();
+  const categoriesAndSkillsLoader = useCategoriesAndSkills();
+  const { options: categoriesAndSkills } = useLocaleAwareTaxonomyOptions(
+    categoriesAndSkillsLoader,
+    $((loc) => fetchTaxonomyListOptions(null, loc).catch(() => ({ categories: [], skills: [] }))),
+  );
   const updateAction = useUpdateProject();
   const lastSuccessId = useSignal<number | null>(null);
   const seoDraft = useSignal<ContentSeoDraft>(emptyContentSeoDraft());
@@ -571,7 +560,6 @@ export default component$(() => {
     id: s.id,
     name: s.name,
   }));
-
   const translationSecondaries = secondaryLocalesForContent(
     langConfig.value.site_languages,
     langConfig.value.default_locale,
