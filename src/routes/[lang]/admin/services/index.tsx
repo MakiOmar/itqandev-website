@@ -3,6 +3,7 @@ import type { DocumentHead } from '@builder.io/qwik-city';
 import { Link } from '@builder.io/qwik-city';
 import { routeLoader$ } from '@builder.io/qwik-city';
 import { PageHeader } from '../../../../components/common/PageHeader';
+import { AdminContentImportExportButtons } from '../../../../components/admin/AdminContentImportExportButtons';
 import { EmptyState } from '../../../../components/common/EmptyState';
 import { useTranslate, translateApp } from '../../../../lib/i18n/useTranslate';
 import { useSwal } from '../../../../lib/hooks/useSwal';
@@ -72,7 +73,7 @@ export default component$(() => {
   const services = useServices();
   const langConfig = useSiteLanguageConfig();
 
-  const { items: servicesState, loading } = useLocaleAwareList<AdminService>(
+  const { items: servicesState, loading, refetch } = useLocaleAwareList<AdminService>(
     services,
     $((loc) => {
       const apiClient = getApiClient(undefined, loc);
@@ -100,6 +101,7 @@ export default component$(() => {
   };
 
   const selectedItems = useSignal<string[]>([]);
+  const exportImportBusy = useSignal(false);
   const searchQuery = useSignal('');
 
   const languageLabelByCode = new Map(
@@ -200,10 +202,22 @@ export default component$(() => {
     selectedItems.value = [];
   });
 
+  const refetchList = $((locale: string) => refetch(locale));
+
   return (
     <>
       <PageHeader title={translateApp(lang, 'services.title')} description={translateApp(lang, 'services.subtitle')}>
         <div class="flex flex-wrap gap-2">
+          <AdminContentImportExportButtons
+            lang={lang}
+            exportEndpoint={API_ENDPOINTS.SERVICES.EXPORT}
+            importEndpoint={API_ENDPOINTS.SERVICES.IMPORT}
+            filePrefix="services"
+            selectedIds={selectedItems}
+            busy={exportImportBusy}
+            onRefetch$={refetchList}
+          />
+
           {selectedItems.value.length > 0 && (
             <>
               <button

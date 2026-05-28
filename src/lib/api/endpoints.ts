@@ -52,6 +52,8 @@ export const API_ENDPOINTS = {
     UPDATE: (id: string | number) => `/v1/projects/${id}`,
     DELETE: (id: string | number) => `/v1/projects/${id}`,
     BULK_DELETE: '/v1/projects/bulk-delete',
+    EXPORT: '/v1/projects/export',
+    IMPORT: '/v1/projects/import',
   },
   // Categories
   CATEGORIES: {
@@ -74,6 +76,8 @@ export const API_ENDPOINTS = {
     UPDATE: (id: string | number) => `/v1/skills/${id}`,
     DELETE: (id: string | number) => `/v1/skills/${id}`,
     BULK_DELETE: '/v1/skills/bulk-delete',
+    EXPORT: '/v1/skills/export',
+    IMPORT: '/v1/skills/import',
   },
   SERVICES: {
     LIST: '/v1/services',
@@ -82,6 +86,8 @@ export const API_ENDPOINTS = {
     UPDATE: (id: string | number) => `/v1/services/${id}`,
     DELETE: (id: string | number) => `/v1/services/${id}`,
     BULK_DELETE: '/v1/services/bulk-delete',
+    EXPORT: '/v1/services/export',
+    IMPORT: '/v1/services/import',
   },
   // Testimonials
   TESTIMONIALS: {
@@ -91,6 +97,8 @@ export const API_ENDPOINTS = {
     UPDATE: (id: string | number) => `/v1/testimonials/${id}`,
     DELETE: (id: string | number) => `/v1/testimonials/${id}`,
     BULK_DELETE: '/v1/testimonials/bulk-delete',
+    EXPORT: '/v1/testimonials/export',
+    IMPORT: '/v1/testimonials/import',
   },
   // Blog
   BLOG: {
@@ -100,6 +108,8 @@ export const API_ENDPOINTS = {
     UPDATE: (id: string | number) => `/v1/blog-posts/${id}`,
     DELETE: (id: string | number) => `/v1/blog-posts/${id}`,
     BULK_DELETE: '/v1/blog-posts/bulk-delete',
+    EXPORT: '/v1/blog-posts/export',
+    IMPORT: '/v1/blog-posts/import',
   },
   // Menus (WordPress-style nav)
   MENUS: {

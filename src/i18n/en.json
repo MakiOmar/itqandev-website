@@ -41,6 +41,20 @@
     "cacheCleared": "Cache cleared",
     "viewPublicPage": "View public page"
   },
+  "contentExport": {
+    "exportAll": "Export all",
+    "exportSelected": "Export selected ({{count}})",
+    "import": "Import",
+    "importTitle": "Import content",
+    "importChooseFile": "Choose a JSON export file. Data is saved for the current admin language (URL). Translate name and description fields in the file — changing only the top-level locale does not translate text.",
+    "importLocaleRetargeted": "The file was exported for another language; it will be imported for the current language instead.",
+    "importModeUpsert": "Upsert — create missing items and update this locale",
+    "importModeTranslationOnly": "Translations only — update existing records by id or slug, skip unknown",
+    "importConfirm": "Import",
+    "exportSuccess": "Export downloaded.",
+    "importSuccess": "Import complete: {{created}} created, {{updated}} updated, {{skipped}} skipped.",
+    "importErrors": "Some rows failed: {{details}}"
+  },
   "auth": {
     "login": "Login",
     "logout": "Logout",

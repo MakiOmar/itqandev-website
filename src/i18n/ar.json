@@ -41,6 +41,20 @@
     "cacheCleared": "تم مسح الذاكرة المؤقتة",
     "viewPublicPage": "عرض الصفحة العامة"
   },
+  "contentExport": {
+    "exportAll": "تصدير الكل",
+    "exportSelected": "تصدير المحدد ({{count}})",
+    "import": "استيراد",
+    "importTitle": "استيراد المحتوى",
+    "importChooseFile": "اختر ملف JSON. يُحفظ المحتوى للغة الحالية في لوحة التحكم (من الرابط). ترجم حقول الاسم والوصف في الملف — تغيير locale فقط لا يترجم النص.",
+    "importLocaleRetargeted": "الملف مُصدَّر بلغة أخرى؛ سيُستورد للغة الحالية.",
+    "importModeUpsert": "دمج — إنشاء العناصر الناقصة وتحديث هذه اللغة",
+    "importModeTranslationOnly": "ترجمات فقط — تحديث السجلات الموجودة بالمعرف أو slug وتخطي غير المعروف",
+    "importConfirm": "استيراد",
+    "exportSuccess": "تم تنزيل التصدير.",
+    "importSuccess": "اكتمل الاستيراد: {{created}} أُنشئ، {{updated}} حُدّث، {{skipped}} تُخطّى.",
+    "importErrors": "فشلت بعض الصفوف: {{details}}"
+  },
   "auth": {
     "login": "تسجيل الدخول",
     "logout": "تسجيل خروج",

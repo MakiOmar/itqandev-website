@@ -3,6 +3,7 @@ import type { Category } from '../types/category';
 import type { Project } from '../types/project';
 import type { AdminService } from '../types/service';
 import type { Skill } from '../types/skill';
+import type { Testimonial } from '../types/testimonial';
 import type { SiteLanguageRow } from '../types/site-language';
 import { parseTranslationsJson } from './content-translations';
 
@@ -222,6 +223,60 @@ export function mergeSkillFieldsForUiLocale(
     name: row?.name != null && row.name !== '' ? row.name : baseName,
     description: row?.description != null && row.description !== '' ? row.description : baseDescription,
   };
+}
+
+export function mergeTestimonialFieldsForUiLocale(
+  testimonial: Testimonial,
+  uiLocale: string,
+  siteLanguages: SiteLanguageRow[] | undefined | null,
+  siteDefaultLocale: string | undefined | null,
+  contentLocaleOverride?: string | null,
+): { content: string; client_role: string; company: string } {
+  const primary = primaryLocaleForContent(
+    siteLanguages,
+    siteDefaultLocale,
+    contentLocaleOverride ?? testimonial.contentLocale ?? null,
+  );
+  const u = uiLocale.toLowerCase();
+  const baseContent = testimonial.content ?? '';
+  const baseRole = testimonial.clientRole ?? '';
+  const baseCompany = testimonial.company ?? '';
+  if (u === primary) {
+    return { content: baseContent, client_role: baseRole, company: baseCompany };
+  }
+  const row = testimonial.translations?.find((t) => String(t?.locale).toLowerCase() === u);
+  return {
+    content: row?.content != null && row.content !== '' ? row.content : baseContent,
+    client_role: row?.client_role != null && row.client_role !== '' ? row.client_role : baseRole,
+    company: row?.company != null && row.company !== '' ? row.company : baseCompany,
+  };
+}
+
+export function mergeSecondaryTestimonialTranslations(
+  translationsJson: string | undefined,
+  uiLocale: string,
+  edited: { content: string; client_role: string; company: string },
+): unknown[] {
+  const base = parseTranslationsJson(translationsJson) ?? [];
+  const u = uiLocale.toLowerCase();
+  const idx = base.findIndex((row) => {
+    if (!row || typeof row !== 'object') {
+      return false;
+    }
+    return String((row as Record<string, unknown>).locale ?? '').toLowerCase() === u;
+  });
+  const row = {
+    locale: u,
+    content: edited.content,
+    client_role: edited.client_role,
+    company: edited.company,
+  };
+  if (idx >= 0) {
+    base[idx] = { ...(base[idx] as object), ...row };
+  } else {
+    base.push(row);
+  }
+  return base;
 }
 
 export function mergeSecondarySkillTranslations(

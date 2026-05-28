@@ -15,6 +15,7 @@ import { useLocaleAwareList } from '../../../../lib/hooks/useLocaleAwareList';
 import { uiLangFromUrlPathname } from '../../../../lib/i18n/ui-locale-path';
 import { useContentSlugAutosuggestForm } from '../../../../lib/slug/content-slug-auto';
 import { AdminPublicPageLink } from '../../../../components/admin/AdminPublicPageLink';
+import { AdminContentImportExportButtons } from '../../../../components/admin/AdminContentImportExportButtons';
 
 function blogSeoRowHasData(row: ContentSeoMetaRow | Record<string, unknown>): boolean {
   const nonempty = (v: unknown) => typeof v === 'string' && v.trim().length > 0;
@@ -208,6 +209,8 @@ export default component$(() => {
   const editingPostId = useSignal<number | null>(null);
   const featuredImageFile = useSignal<File | null>(null);
   const selectedPostId = useSignal<number | null>(null);
+  const exportImportBusy = useSignal(false);
+  const blogSelectionForExport = useSignal<string[]>([]);
   
   const formPost = useSignal({
     id: null as number | null,
@@ -225,6 +228,8 @@ export default component$(() => {
   );
 
   const blogSlugForm = useContentSlugAutosuggestForm('blog_posts', formPost, 'title', blogPostIdForSlugIgnore);
+
+  const refetchList = $((locale: string) => refetch(locale));
 
   const formSeo = useSignal({
     meta_title: '',
@@ -397,7 +402,16 @@ export default component$(() => {
             <h1 class="text-2xl font-bold text-gray-900 dark:text-gray-100">{translateApp(lang, 'blog.title')}</h1>
             <p class="text-gray-600 dark:text-gray-400">{translateApp(lang, 'blog.subtitle')}</p>
           </div>
-          <div class="flex gap-2">
+          <div class="flex flex-wrap gap-2">
+            <AdminContentImportExportButtons
+              lang={lang}
+              exportEndpoint={API_ENDPOINTS.BLOG.EXPORT}
+              importEndpoint={API_ENDPOINTS.BLOG.IMPORT}
+              filePrefix="blog-posts"
+              selectedIds={blogSelectionForExport}
+              busy={exportImportBusy}
+              onRefetch$={refetchList}
+            />
             {!showForm.value ? (
               <button
                 onClick$={() => (showForm.value = true)}

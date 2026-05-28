@@ -2,6 +2,7 @@ import { component$, useSignal, $ } from '@builder.io/qwik';
 import type { DocumentHead } from '@builder.io/qwik-city';
 import { routeLoader$, routeAction$, useNavigate, Link, zod$, z } from '@builder.io/qwik-city';
 import { PageHeader } from '../../../../components/common/PageHeader';
+import { AdminContentImportExportButtons } from '../../../../components/admin/AdminContentImportExportButtons';
 import { LoadingSpinner } from '../../../../components/common/LoadingSpinner';
 import { useTranslate, translateApp } from '../../../../lib/i18n/useTranslate';
 import { useSwal } from '../../../../lib/hooks/useSwal';
@@ -90,7 +91,7 @@ export default component$(() => {
   const deleteAction = useDeleteProject();
   const bulkDeleteAction = useBulkDeleteProjects();
 
-  const { items: projects, loading } = useLocaleAwareList<Project>(
+  const { items: projects, loading, refetch } = useLocaleAwareList<Project>(
     projectsLoader,
     $((loc) => {
       const apiClient = getApiClient(undefined, loc);
@@ -111,6 +112,7 @@ export default component$(() => {
     }),
   );
   const selectedItems = useSignal<Set<string | number>>(new Set());
+  const exportImportBusy = useSignal(false);
 
   // Pre-compute translation strings to avoid serialization issues
   const translations = {
@@ -214,6 +216,8 @@ export default component$(() => {
     navigate(adminProjectEditHref(lang, id));
   });
 
+  const refetchList = $((locale: string) => refetch(locale));
+
   return (
     <>
       {/* Component: ProjectsPage */}
@@ -222,7 +226,16 @@ export default component$(() => {
           title={translateApp(lang, 'projects.title')}
           description={translateApp(lang, 'projects.subtitle')}
         >
-          <div class="flex gap-2">
+          <div class="flex flex-wrap gap-2">
+            <AdminContentImportExportButtons
+              lang={lang}
+              exportEndpoint={API_ENDPOINTS.PROJECTS.EXPORT}
+              importEndpoint={API_ENDPOINTS.PROJECTS.IMPORT}
+              filePrefix="projects"
+              selectedIds={selectedItems}
+              busy={exportImportBusy}
+              onRefetch$={refetchList}
+            />
             <Link
               href={R.ADMIN.PROJECTS_NEW}
               class="rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-primary-700"

@@ -2,8 +2,8 @@ import { component$, useSignal, $, useComputed$ } from '@builder.io/qwik';
 import type { DocumentHead } from '@builder.io/qwik-city';
 import { Link } from '@builder.io/qwik-city';
 import { routeLoader$ } from '@builder.io/qwik-city';
-import Swal from 'sweetalert2';
 import { PageHeader } from '../../../../components/common/PageHeader';
+import { AdminContentImportExportButtons } from '../../../../components/admin/AdminContentImportExportButtons';
 import { EmptyState } from '../../../../components/common/EmptyState';
 import { useTranslate, translateApp } from '../../../../lib/i18n/useTranslate';
 import { useSwal } from '../../../../lib/hooks/useSwal';
@@ -17,12 +17,6 @@ import { useLocaleAwareList } from '../../../../lib/hooks/useLocaleAwareList';
 import { primaryLocaleForContent } from '../../../../lib/content-display-locale';
 import { useDeleteCategory, useBulkDeleteCategories } from '../../../../lib/admin/category-actions';
 import { looksLikeRouteActionResult, submitRouteActionFormData } from '../../../../lib/admin/route-action-form-submit';
-import {
-  exportCategoriesJson,
-  importCategoriesJson,
-  type CategoryImportMode,
-} from '../../../../lib/admin/category-import-export';
-import { uiLangFromUrlPathname } from '../../../../lib/i18n/ui-locale-path';
 
 /**
  * API payload shape returned by Laravel index()
@@ -113,19 +107,7 @@ export default component$(() => {
 
   const selectedItems = useSignal<string[]>([]);
   const searchQuery = useSignal('');
-  const importFileRef = useSignal<HTMLInputElement | undefined>();
   const exportImportBusy = useSignal(false);
-
-  /** QRL: only captures serializable `lang` (not plain functions) for export/import handlers. */
-  const getContentLocale = $(() => {
-    if (typeof window !== 'undefined') {
-      const fromPath = uiLangFromUrlPathname(window.location.pathname);
-      if (fromPath) {
-        return fromPath;
-      }
-    }
-    return String(lang || 'en').toLowerCase();
-  });
 
   const languageLabelByCode = new Map(
     langConfig.value.site_languages.map((l) => [String(l.code).toLowerCase(), l.native_label || l.label || l.code]),
@@ -225,155 +207,21 @@ export default component$(() => {
     selectedItems.value = [];
   });
 
-  const handleExportAll = $(async () => {
-    if (exportImportBusy.value) {
-      return;
-    }
-    exportImportBusy.value = true;
-    try {
-      const loc = await getContentLocale();
-      await exportCategoriesJson(loc);
-      await success(translateApp(lang, 'categories.exportSuccess'));
-    } catch (err: unknown) {
-      await showError(err instanceof Error ? err.message : 'Export failed');
-    } finally {
-      exportImportBusy.value = false;
-    }
-  });
-
-  const handleExportSelected = $(async () => {
-    if (exportImportBusy.value || selectedItems.value.length === 0) {
-      return;
-    }
-    exportImportBusy.value = true;
-    try {
-      const loc = await getContentLocale();
-      await exportCategoriesJson(loc, [...selectedItems.value]);
-      await success(translateApp(lang, 'categories.exportSuccess'));
-    } catch (err: unknown) {
-      await showError(err instanceof Error ? err.message : 'Export failed');
-    } finally {
-      exportImportBusy.value = false;
-    }
-  });
-
-  const handleImportClick = $(() => {
-    importFileRef.value?.click();
-  });
-
-  const handleImportFile = $(async (ev: Event) => {
-    const input = ev.target as HTMLInputElement;
-    const file = input.files?.[0];
-    input.value = '';
-    if (!file) {
-      return;
-    }
-
-    const upsertLabel = translateApp(lang, 'categories.importModeUpsert');
-    const translationLabel = translateApp(lang, 'categories.importModeTranslationOnly');
-
-    const modeResult = await Swal.fire({
-      title: translateApp(lang, 'categories.importTitle'),
-      html: `
-        <p class="text-sm text-gray-600 mb-3">${translateApp(lang, 'categories.importChooseFile')}</p>
-        <p class="text-sm font-medium mb-2">${file.name}</p>
-        <label class="flex items-start gap-2 mb-2 text-sm text-left">
-          <input type="radio" name="import-mode" value="upsert" checked class="mt-1" />
-          <span>${upsertLabel}</span>
-        </label>
-        <label class="flex items-start gap-2 text-sm text-left">
-          <input type="radio" name="import-mode" value="translation_only" class="mt-1" />
-          <span>${translationLabel}</span>
-        </label>
-      `,
-      showCancelButton: true,
-      confirmButtonText: translateApp(lang, 'categories.importConfirm'),
-      cancelButtonText: translateApp(lang, 'common.cancel'),
-      focusConfirm: false,
-      preConfirm: () => {
-        const selected = document.querySelector<HTMLInputElement>('input[name="import-mode"]:checked');
-        return (selected?.value === 'translation_only' ? 'translation_only' : 'upsert') as CategoryImportMode;
-      },
-    });
-
-    if (!modeResult.isConfirmed || !modeResult.value) {
-      return;
-    }
-
-    if (exportImportBusy.value) {
-      return;
-    }
-    exportImportBusy.value = true;
-
-    try {
-      const loc = await getContentLocale();
-      const text = await file.text();
-      const payload = JSON.parse(text) as unknown;
-      const result = await importCategoriesJson(loc, payload, modeResult.value as CategoryImportMode);
-
-      let summary = translateApp(lang, 'categories.importSuccess', {
-        created: String(result.created),
-        updated: String(result.updated),
-        skipped: String(result.skipped),
-      });
-
-      if (result.errors?.length) {
-        const details = result.errors
-          .slice(0, 3)
-          .map((e) => `${e.slug}: ${e.message}`)
-          .join('; ');
-        summary += ` ${translateApp(lang, 'categories.importErrors', { details })}`;
-      }
-
-      await success(summary);
-      await refetch(loc);
-    } catch (err: unknown) {
-      await showError(err instanceof Error ? err.message : 'Import failed');
-    } finally {
-      exportImportBusy.value = false;
-    }
-  });
+  const refetchList = $((locale: string) => refetch(locale));
 
   return (
     <>
       <PageHeader title={translateApp(lang, 'categories.title')} description={translateApp(lang, 'categories.subtitle')}>
         <div class="flex flex-wrap gap-2">
-          <input
-            ref={importFileRef}
-            type="file"
-            accept="application/json,.json"
-            class="hidden"
-            onChange$={handleImportFile}
+          <AdminContentImportExportButtons
+            lang={lang}
+            exportEndpoint={API_ENDPOINTS.CATEGORIES.EXPORT}
+            importEndpoint={API_ENDPOINTS.CATEGORIES.IMPORT}
+            filePrefix="categories"
+            selectedIds={selectedItems}
+            busy={exportImportBusy}
+            onRefetch$={refetchList}
           />
-
-          <button
-            type="button"
-            disabled={exportImportBusy.value}
-            onClick$={handleExportAll}
-            class="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm transition hover:bg-gray-50 disabled:opacity-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 dark:hover:bg-gray-700"
-          >
-            {translateApp(lang, 'categories.exportAll')}
-          </button>
-
-          {selectedItems.value.length > 0 && (
-            <button
-              type="button"
-              disabled={exportImportBusy.value}
-              onClick$={handleExportSelected}
-              class="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm transition hover:bg-gray-50 disabled:opacity-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 dark:hover:bg-gray-700"
-            >
-              {translateApp(lang, 'categories.exportSelected', { count: String(selectedItems.value.length) })}
-            </button>
-          )}
-
-          <button
-            type="button"
-            disabled={exportImportBusy.value}
-            onClick$={handleImportClick}
-            class="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm transition hover:bg-gray-50 disabled:opacity-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 dark:hover:bg-gray-700"
-          >
-            {translateApp(lang, 'categories.import')}
-          </button>
 
           {selectedItems.value.length > 0 && (
             <>

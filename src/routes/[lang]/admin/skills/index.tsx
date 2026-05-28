@@ -3,6 +3,7 @@ import type { DocumentHead } from '@builder.io/qwik-city';
 import { Link } from '@builder.io/qwik-city';
 import { routeLoader$ } from '@builder.io/qwik-city';
 import { PageHeader } from '../../../../components/common/PageHeader';
+import { AdminContentImportExportButtons } from '../../../../components/admin/AdminContentImportExportButtons';
 import { EmptyState } from '../../../../components/common/EmptyState';
 import { useTranslate, translateApp } from '../../../../lib/i18n/useTranslate';
 import { useSwal } from '../../../../lib/hooks/useSwal';
@@ -53,7 +54,7 @@ export default component$(() => {
   const skillsLoader = useSkills();
   const langConfig = useSiteLanguageConfig();
 
-  const { items: skillsState, loading } = useLocaleAwareList<Skill>(
+  const { items: skillsState, loading, refetch } = useLocaleAwareList<Skill>(
     skillsLoader,
     $((loc) => {
       const apiClient = getApiClient(undefined, loc);
@@ -73,6 +74,7 @@ export default component$(() => {
 
   const selectedItems = useSignal<string[]>([]);
   const searchQuery = useSignal('');
+  const exportImportBusy = useSignal(false);
 
   const languageLabelByCode = new Map(
     langConfig.value.site_languages.map((l) => [String(l.code).toLowerCase(), l.native_label || l.label || l.code]),
@@ -173,10 +175,22 @@ export default component$(() => {
     selectedItems.value = [];
   });
 
+  const refetchList = $((locale: string) => refetch(locale));
+
   return (
     <>
       <PageHeader title={translateApp(lang, 'skills.title')} description={translateApp(lang, 'skills.subtitle')}>
         <div class="flex flex-wrap gap-2">
+          <AdminContentImportExportButtons
+            lang={lang}
+            exportEndpoint={API_ENDPOINTS.SKILLS.EXPORT}
+            importEndpoint={API_ENDPOINTS.SKILLS.IMPORT}
+            filePrefix="skills"
+            selectedIds={selectedItems}
+            busy={exportImportBusy}
+            onRefetch$={refetchList}
+          />
+
           {selectedItems.value.length > 0 && (
             <>
               <button

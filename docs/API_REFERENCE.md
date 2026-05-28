@@ -561,11 +561,31 @@ User::create([
 
 ---
 
-## Categories export / import (authenticated)
+## Translatable content export / import (authenticated)
 
-Requires Sanctum auth, `feature.module:categories`, and a valid **`X-Content-Locale`** header (enabled site language). Export/import operate on **localized** `name` / `description` for that locale (same visibility rules as `GET /api/v1/categories` with the header).
+Locale-aware JSON export/import is available for admin translatable types. Each module is gated by its `feature.module:*` flag. All endpoints require Sanctum auth and a valid **`X-Content-Locale`** header (enabled site language).
 
-### GET `/api/v1/categories/export`
+| Entity key (`entity` in JSON) | Export | Import | Module |
+|------------------------------|--------|--------|--------|
+| `categories` | `GET /api/v1/categories/export` | `POST /api/v1/categories/import` | categories |
+| `skills` | `GET /api/v1/skills/export` | `POST /api/v1/skills/import` | skills |
+| `projects` | `GET /api/v1/projects/export` | `POST /api/v1/projects/import` | projects |
+| `services` | `GET /api/v1/services/export` | `POST /api/v1/services/import` | services |
+| `blog_posts` | `GET /api/v1/blog-posts/export` | `POST /api/v1/blog-posts/import` | blog |
+| `testimonials` | `GET /api/v1/testimonials/export` | `POST /api/v1/testimonials/import` | testimonials |
+
+**Taxonomies** (`categories`, `skills`): localized `name`, `description`, plus `slug` and `id`. Categories include `is_featured`; skills include `icon_hint`.
+
+**Content types:**
+
+- **projects:** `title`, `summary`, `description`, `featured`, `slug`, `id`
+- **services:** `name`, `short_description`, `description`, `process[]`, `deliverables[]`, `slug`, `id`
+- **blog_posts:** `title`, `excerpt`, `content`, `featured`, `slug`, `id`
+- **testimonials:** `content`, `client_role`, `company`, `client_name` (primary only), `project_id`, `id` — no `slug`; match by **`id`** on import
+
+Export uses the same locale visibility rules as each type’s admin list (`scopeQueryForPresentationLocale` + presenter overlay). Import modes: `upsert` (default) or `translation_only` (query/body `mode`).
+
+### GET `/api/v1/categories/export` (example)
 
 **Query (optional):**
 
