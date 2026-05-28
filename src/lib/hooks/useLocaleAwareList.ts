@@ -1,11 +1,13 @@
 import { $, useSignal, useTask$, useVisibleTask$, type QRL, type Signal } from '@builder.io/qwik';
 import { isServer } from '@builder.io/qwik/build';
+import { useLocation } from '@builder.io/qwik-city';
 import { useSpeakLocale } from 'qwik-speak';
+import { uiLangFromUrlPathname, uiLangPrefixFromPathname } from '../i18n/ui-locale-path';
 
 interface UseLocaleAwareListResult<T> {
   items: Signal<T[]>;
   loading: Signal<boolean>;
-  refetch: QRL<() => Promise<void>>;
+  refetch: QRL<(locale: string) => Promise<void>>;
 }
 
 /** Route loader (or any reactive source) exposing `.value` for the initial list payload */
@@ -19,24 +21,23 @@ export type LocaleAwareListLoader<T> = {
  * Pass the route loader object (not `.value`) so when the loader resolves after SPA navigation,
  * the list updates — `useSignal(initial)` alone only captures the first render.
  *
- * On the **client**, do not copy the route loader into `items`: the loader uses `preferred-locale`
- * from the request cookie for `X-Content-Locale`, while `useSpeakLocale()` can match `localStorage`
- * after `root.tsx` runs — they can disagree (e.g. English UI with Arabic list). The visible-task
- * refetch always sends an explicit locale and owns list data on the browser.
+ * Presentation locale for API calls prefers the `/en`/`/ar` URL segment (stable during SPA
+ * navigation). `useSpeakLocale()` can disagree briefly with the path while cookies sync.
  */
 export function useLocaleAwareList<T>(
   initialLoader: LocaleAwareListLoader<T>,
   fetchForLocale$: QRL<(locale: string) => Promise<T[]>>,
 ): UseLocaleAwareListResult<T> {
   const locale = useSpeakLocale();
+  const location = useLocation();
   const initialSnapshot = initialLoader.value;
   const items = useSignal<T[]>(Array.isArray(initialSnapshot) ? [...initialSnapshot] : []);
   const loading = useSignal(false);
-  /** `null` until first client refetch so we always align with `useSpeakLocale()` once. */
-  const lastLocale = useSignal<string | null>(null);
+  const lastFetchedLocale = useSignal<string | null>(null);
+  const lastPathname = useSignal<string | null>(null);
+  const fetchGeneration = useSignal(0);
 
-  // Server only: hydrate from the route loader. On the client, avoid overwriting refetched rows
-  // with loader data that may use a different locale source than `useSpeakLocale()`.
+  // Server only: hydrate from the route loader.
   useTask$(({ track }) => {
     if (!isServer) {
       return;
@@ -48,28 +49,44 @@ export function useLocaleAwareList<T>(
     items.value = Array.isArray(next) ? [...next] : [];
   });
 
-  const refetch = $(async () => {
-    const loc = String(locale.lang || 'en').toLowerCase();
+  const refetch = $(async (explicitLocale: string) => {
+    const loc = String(explicitLocale || 'en').toLowerCase();
+    const generation = ++fetchGeneration.value;
     loading.value = true;
     items.value = [];
     try {
       const next = await fetchForLocale$(loc);
+      if (generation !== fetchGeneration.value) {
+        return;
+      }
       items.value = next;
+      lastFetchedLocale.value = loc;
     } finally {
-      loading.value = false;
+      if (generation === fetchGeneration.value) {
+        loading.value = false;
+      }
     }
   });
 
   // eslint-disable-next-line qwik/no-use-visible-task
   useVisibleTask$(({ track }) => {
-    const current = String(track(() => locale.lang) || 'en').toLowerCase();
-    if (lastLocale.value !== null && current === lastLocale.value) {
+    const pathname = track(() => location.url.pathname);
+    track(() => locale.lang);
+
+    const urlLocale = uiLangPrefixFromPathname(pathname) != null
+      ? uiLangFromUrlPathname(pathname)
+      : String(locale.lang || 'en').toLowerCase();
+
+    const pathnameChanged = lastPathname.value !== pathname;
+    const localeChanged = lastFetchedLocale.value !== urlLocale;
+
+    if (!pathnameChanged && !localeChanged && lastFetchedLocale.value !== null) {
       return;
     }
-    lastLocale.value = current;
-    refetch();
+
+    lastPathname.value = pathname;
+    void refetch(urlLocale);
   });
 
   return { items, loading, refetch };
 }
-

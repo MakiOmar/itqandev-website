@@ -1,6 +1,6 @@
 import { component$, useSignal, $, useComputed$ } from '@builder.io/qwik';
 import type { DocumentHead } from '@builder.io/qwik-city';
-import { routeLoader$, routeAction$, zod$, z } from '@builder.io/qwik-city';
+import { routeLoader$, routeAction$, useLocation, zod$, z } from '@builder.io/qwik-city';
 import { LoadingSpinner } from '../../../../components/common/LoadingSpinner';
 import { useTranslate, translateApp } from '../../../../lib/i18n/useTranslate';
 import { useSwal } from '../../../../lib/hooks/useSwal';
@@ -11,6 +11,7 @@ import type { ContentSeoMetaRow } from '../../../../types/content-seo';
 import { useSiteLanguageConfig } from '../layout';
 import { normalizeEditingLocale, primaryLocaleForContent } from '../../../../lib/content-display-locale';
 import { useLocaleAwareList } from '../../../../lib/hooks/useLocaleAwareList';
+import { uiLangFromUrlPathname } from '../../../../lib/i18n/ui-locale-path';
 import { useContentSlugAutosuggestForm } from '../../../../lib/slug/content-slug-auto';
 import { AdminPublicPageLink } from '../../../../components/admin/AdminPublicPageLink';
 
@@ -167,6 +168,7 @@ export const useDeleteBlogPost = routeAction$(async (data, { fail }) => {
  */
 export default component$(() => {
   const { lang } = useTranslate();
+  const location = useLocation();
   const { confirm, success, error: showError } = useSwal();
   const postsLoader = useBlogPosts();
   const langConfig = useSiteLanguageConfig();
@@ -262,7 +264,7 @@ export default component$(() => {
 
   const loadPosts = $(async () => {
     try {
-      await refetch();
+      await refetch(uiLangFromUrlPathname(location.url.pathname));
     } catch (error: any) {
       await showError(error?.message || 'Failed to load posts');
     }
