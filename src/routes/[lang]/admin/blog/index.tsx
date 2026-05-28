@@ -4,7 +4,8 @@ import { routeLoader$, routeAction$, useLocation, zod$, z } from '@builder.io/qw
 import { LoadingSpinner } from '../../../../components/common/LoadingSpinner';
 import { useTranslate, translateApp } from '../../../../lib/i18n/useTranslate';
 import { useSwal } from '../../../../lib/hooks/useSwal';
-import { getApiClient, extractCookieHeader } from '../../../../lib/api/client';
+import { getApiClient } from '../../../../lib/api/client';
+import { adminApiClient } from '../../../../lib/admin/admin-api-client';
 import { API_ENDPOINTS } from '../../../../lib/api/endpoints';
 import type { BlogPost } from '../../../../types/blog';
 import type { ContentSeoMetaRow } from '../../../../types/content-seo';
@@ -45,10 +46,9 @@ function countBlogLocalesWithSeoData(post: BlogPost): number {
 /**
  * Load blog posts
  */
-export const useBlogPosts = routeLoader$(async ({ cookie, request }) => {
+export const useBlogPosts = routeLoader$(async ({ cookie, request, params }) => {
   try {
-    const cookieHeader = extractCookieHeader(cookie, request);
-    const apiClient = getApiClient(cookieHeader);
+    const apiClient = adminApiClient(cookie, request, params.lang);
     const response = await apiClient.get<BlogPost[]>(API_ENDPOINTS.BLOG.LIST);
     
     // Handle paginated response

@@ -1,6 +1,6 @@
 import { component$, useSignal, useStore, $, useVisibleTask$ } from '@builder.io/qwik';
 import type { DocumentHead } from '@builder.io/qwik-city';
-import { routeLoader$ } from '@builder.io/qwik-city';
+import { routeLoader$, useLocation } from '@builder.io/qwik-city';
 import { PageHeader } from '../../../../components/common/PageHeader';
 import { LoadingSpinner } from '../../../../components/common/LoadingSpinner';
 import { useTranslate, translateApp } from '../../../../lib/i18n/useTranslate';
@@ -10,6 +10,7 @@ import { API_ENDPOINTS } from '../../../../lib/api/endpoints';
 import { auth } from '../../../../lib/auth';
 import type { AuthSession } from '../../../../lib/auth/types';
 import { routesFromPreferredCookie } from '../../../../lib/constants/routes';
+import { uiLangFromUrlPathname } from '../../../../lib/i18n/ui-locale-path';
 
 interface MenuRow {
   id: number;
@@ -204,6 +205,7 @@ export const useMenusAdminPage = routeLoader$(async ({ cookie, request, redirect
 
 export default component$(() => {
   const pageData = useMenusAdminPage();
+  const location = useLocation();
   const { lang } = useTranslate();
   const { confirm, success, error: showError } = useSwal();
 
@@ -650,8 +652,10 @@ export default component$(() => {
   });
 
   // eslint-disable-next-line qwik/no-use-visible-task
-  useVisibleTask$(async () => {
-    const api = getApiClient();
+  useVisibleTask$(async ({ track }) => {
+    const pathname = track(() => location.url.pathname);
+    const presentationLocale = uiLangFromUrlPathname(pathname);
+    const api = getApiClient(undefined, presentationLocale);
     try {
       const [pr, br, sr, cr, skr] = await Promise.all([
         api.get(API_ENDPOINTS.PROJECTS.LIST).catch(() => ({ data: [] })),

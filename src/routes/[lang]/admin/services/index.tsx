@@ -6,7 +6,8 @@ import { PageHeader } from '../../../../components/common/PageHeader';
 import { EmptyState } from '../../../../components/common/EmptyState';
 import { useTranslate, translateApp } from '../../../../lib/i18n/useTranslate';
 import { useSwal } from '../../../../lib/hooks/useSwal';
-import { getApiClient, extractCookieHeader } from '../../../../lib/api/client';
+import { getApiClient } from '../../../../lib/api/client';
+import { adminApiClient } from '../../../../lib/admin/admin-api-client';
 import { API_ENDPOINTS } from '../../../../lib/api/endpoints';
 import { adminServiceEditHref, useAppRoutes } from '../../../../lib/constants/routes';
 import type { AdminService } from '../../../../types/service';
@@ -39,10 +40,9 @@ function mapServiceFromApi(raw: Record<string, unknown>): AdminService {
   };
 }
 
-export const useServices = routeLoader$(async ({ cookie, request }) => {
+export const useServices = routeLoader$(async ({ cookie, request, params }) => {
   try {
-    const cookieHeader = extractCookieHeader(cookie, request);
-    const apiClient = getApiClient(cookieHeader);
+    const apiClient = adminApiClient(cookie, request, params.lang);
     const response = await apiClient.get<AdminService[]>(API_ENDPOINTS.SERVICES.LIST);
     let body: unknown = (response as any)?.data ?? response;
     if (typeof body === 'string') {

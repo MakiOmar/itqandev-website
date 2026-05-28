@@ -5,7 +5,8 @@ import { PageHeader } from '../../../../components/common/PageHeader';
 import { LoadingSpinner } from '../../../../components/common/LoadingSpinner';
 import { useTranslate, translateApp } from '../../../../lib/i18n/useTranslate';
 import { useSwal } from '../../../../lib/hooks/useSwal';
-import { getApiClient, extractCookieHeader } from '../../../../lib/api/client';
+import { getApiClient } from '../../../../lib/api/client';
+import { adminApiClient } from '../../../../lib/admin/admin-api-client';
 import { API_ENDPOINTS } from '../../../../lib/api/endpoints';
 import { adminProjectEditHref, useAppRoutes } from '../../../../lib/constants/routes';
 import type { Project } from '../../../../types/project';
@@ -16,12 +17,9 @@ import { useLocaleAwareList } from '../../../../lib/hooks/useLocaleAwareList';
 /**
  * Load projects data
  */
-export const useProjects = routeLoader$(async ({ cookie, request }) => {
+export const useProjects = routeLoader$(async ({ cookie, request, params }) => {
   try {
-    // Get cookies from request headers for server-side authentication
-    // The token is stored in auth_session cookie and will be extracted by the API client
-    const cookieHeader = extractCookieHeader(cookie, request);
-    const apiClient = getApiClient(cookieHeader);
+    const apiClient = adminApiClient(cookie, request, params.lang);
     const response = await apiClient.get<any>(API_ENDPOINTS.PROJECTS.LIST);
     
     // Handle Laravel paginated response structure

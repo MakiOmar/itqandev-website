@@ -1,9 +1,10 @@
 import { component$, useSignal, useVisibleTask$ } from '@builder.io/qwik';
 import type { DocumentHead } from '@builder.io/qwik-city';
-import { routeLoader$ } from '@builder.io/qwik-city';
+import { routeLoader$, useLocation } from '@builder.io/qwik-city';
 import { Link } from '@builder.io/qwik-city';
 import { useTranslate, translateApp } from '../../../lib/i18n/useTranslate';
-import { extractCookieHeader } from '../../../lib/api/client';
+import { uiLangFromUrlPathname } from '../../../lib/i18n/ui-locale-path';
+import { presentationLocaleFromAdminRoute } from '../../../lib/admin/taxonomy-list-options';
 import { getConfig } from '../../../lib/config';
 import { useAppRoutes } from '../../../lib/constants/routes';
 import { auth } from '../../../lib/auth';
@@ -16,10 +17,10 @@ import {
 /**
  * Dashboard metrics route loader - loads real data from API
  */
-export const useDashboardMetrics = routeLoader$(async ({ cookie, request }) => {
+export const useDashboardMetrics = routeLoader$(async ({ cookie, request, params }) => {
   try {
-    const cookieHeader = extractCookieHeader(cookie, request);
-    return await fetchDashboardMetrics(cookieHeader);
+    const presentationLocale = presentationLocaleFromAdminRoute(cookie, request, params.lang);
+    return await fetchDashboardMetrics(request.headers.get('cookie'), presentationLocale);
   } catch (error: unknown) {
     console.error('Failed to load dashboard metrics:', error);
     return EMPTY_DASHBOARD_METRICS;
@@ -43,6 +44,7 @@ export const useUserSession = routeLoader$(async ({ cookie }) => {
  */
 export default component$(() => {
   const { lang } = useTranslate();
+  const location = useLocation();
   const R = useAppRoutes();
   const metricsLoader = useDashboardMetrics();
   const metrics = useSignal<DashboardMetrics>(metricsLoader.value);
@@ -50,7 +52,8 @@ export default component$(() => {
   const userName = userSession.value?.user?.name || 'User';
 
   // SSR may return zeros when Node cannot reach WAMP; hydrate from browser /api proxy.
-  useVisibleTask$(async () => {
+  useVisibleTask$(async ({ track }) => {
+    const pathname = track(() => location.url.pathname);
     const config = getConfig();
     const sessionKey = config.auth.cookieName;
     const session = userSession.value;
@@ -61,16 +64,10 @@ export default component$(() => {
       }
     }
 
-    const needsHydrate =
-      metrics.value.projects.total === 0 &&
-      metrics.value.categories.total === 0 &&
-      metrics.value.skills.total === 0;
-    if (!needsHydrate && !import.meta.env.DEV) {
-      return;
-    }
+    const presentationLocale = uiLangFromUrlPathname(pathname);
 
     try {
-      const next = await fetchDashboardMetrics();
+      const next = await fetchDashboardMetrics(undefined, presentationLocale);
       metrics.value = next;
     } catch (error) {
       console.warn('[dashboard] client metrics refresh failed', error);

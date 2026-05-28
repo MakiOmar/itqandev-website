@@ -77,14 +77,19 @@ function extractTotalCount(result: PromiseSettledResult<unknown>): number {
  * Load dashboard stat cards from authenticated admin API endpoints.
  * Works server-side (routeLoader$ + cookies) and client-side (localStorage token + /api proxy).
  */
-export async function fetchDashboardMetrics(cookieHeader?: string | null): Promise<DashboardMetrics> {
+export async function fetchDashboardMetrics(
+  cookieHeader?: string | null,
+  presentationLocale?: string,
+): Promise<DashboardMetrics> {
   // Dev SSR cannot reach WAMP reliably; hydrate from browser via useVisibleTask$ on dashboard.
   if (typeof window === 'undefined' && shouldSkipSsrMarketingApi()) {
     return EMPTY_DASHBOARD_METRICS;
   }
 
-  // Omit X-Content-Locale: dashboard totals should reflect all records, not locale-filtered lists.
-  const apiClient = getApiClient(cookieHeader ?? undefined, false);
+  const apiClient = getApiClient(
+    cookieHeader ?? undefined,
+    presentationLocale && presentationLocale.trim() !== '' ? presentationLocale.trim() : undefined,
+  );
 
   let features: Record<string, boolean> | undefined;
   try {

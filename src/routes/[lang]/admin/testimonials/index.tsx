@@ -6,8 +6,9 @@ import { PageHeader } from '../../../../components/common/PageHeader';
 import { EmptyState } from '../../../../components/common/EmptyState';
 import { useTranslate, translateApp } from '../../../../lib/i18n/useTranslate';
 import { useSwal } from '../../../../lib/hooks/useSwal';
-import { getApiClient, extractCookieHeader } from '../../../../lib/api/client';
+import { getApiClient } from '../../../../lib/api/client';
 import { API_ENDPOINTS } from '../../../../lib/api/endpoints';
+import { adminApiClient } from '../../../../lib/admin/admin-api-client';
 import { adminTestimonialEditHref, useAppRoutes } from '../../../../lib/constants/routes';
 import type { Testimonial } from '../../../../types';
 import {
@@ -15,29 +16,27 @@ import {
   useDeleteTestimonial,
   useBulkDeleteTestimonials,
 } from '../../../../lib/admin/testimonial-actions';
+import { useLocaleAwareList } from '../../../../lib/hooks/useLocaleAwareList';
+
+function extractTestimonialRows(response: unknown): Record<string, unknown>[] {
+  const body = (response as { data?: unknown })?.data ?? response;
+  if (Array.isArray(body)) {
+    return body as Record<string, unknown>[];
+  }
+  if (body && typeof body === 'object' && 'data' in (body as object) && Array.isArray((body as { data: unknown }).data)) {
+    return (body as { data: Record<string, unknown>[] }).data;
+  }
+  return [];
+}
 
 /**
  * Load testimonials list (admin)
  */
-export const useTestimonialsList = routeLoader$(async ({ cookie, request }) => {
+export const useTestimonialsList = routeLoader$(async ({ cookie, request, params }) => {
   try {
-    const cookieHeader = extractCookieHeader(cookie, request);
-    const apiClient = getApiClient(cookieHeader);
+    const apiClient = adminApiClient(cookie, request, params.lang);
     const testimonialsRes = await apiClient.get(API_ENDPOINTS.TESTIMONIALS.LIST).catch(() => ({ data: [] }));
-
-    const extractRows = (): Record<string, unknown>[] => {
-      const response: unknown = testimonialsRes;
-      const body = (response as { data?: unknown })?.data ?? response;
-      if (Array.isArray(body)) {
-        return body as Record<string, unknown>[];
-      }
-      if (body && typeof body === 'object' && 'data' in (body as object) && Array.isArray((body as { data: unknown }).data)) {
-        return (body as { data: Record<string, unknown>[] }).data;
-      }
-      return [];
-    };
-
-    return extractRows().map((row) => mapTestimonialFromApi(row));
+    return extractTestimonialRows(testimonialsRes).map((row) => mapTestimonialFromApi(row));
   } catch (error: unknown) {
     console.error('Failed to load testimonials:', error);
     return [] as Testimonial[];
@@ -49,17 +48,27 @@ export default component$(() => {
   const R = useAppRoutes();
   const { confirm, success, error: showError } = useSwal();
   const navigate = useNavigate();
-  const data = useTestimonialsList();
+  const testimonialsLoader = useTestimonialsList();
   const deleteAction = useDeleteTestimonial();
   const bulkDeleteAction = useBulkDeleteTestimonials();
+
+  const { items: testimonials, loading } = useLocaleAwareList<Testimonial>(
+    testimonialsLoader,
+    $((loc) => {
+      const apiClient = getApiClient(undefined, loc);
+      return apiClient.get(API_ENDPOINTS.TESTIMONIALS.LIST).then((res) => {
+        return extractTestimonialRows(res).map((row) => mapTestimonialFromApi(row));
+      });
+    }),
+  );
 
   const selectedItems = useSignal<string[]>([]);
   const searchQuery = useSignal('');
 
-  const filteredTestimonials = useSignal<Testimonial[]>(data.value);
+  const filteredTestimonials = useSignal<Testimonial[]>(testimonials.value);
 
   useTask$(({ track }) => {
-    const rows = track(() => data.value);
+    const rows = track(() => testimonials.value);
     const q = track(() => searchQuery.value);
     if (!q.trim()) {
       filteredTestimonials.value = rows;
@@ -190,7 +199,9 @@ export default component$(() => {
           />
         </div>
 
-        {filteredTestimonials.value.length === 0 ? (
+        {loading.value ? (
+          <p class="py-8 text-center text-sm text-gray-500 dark:text-gray-400">{translateApp(lang, 'common.loading')}</p>
+        ) : filteredTestimonials.value.length === 0 ? (
           <EmptyState title={translateApp(lang, 'testimonials.noTestimonials')} />
         ) : (
           <ul class="space-y-4">
