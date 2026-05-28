@@ -29,6 +29,7 @@ export function getLocalizedRoutes(lang: string) {
       CATEGORIES: L(`${p}/categories`),
       CATEGORIES_NEW: L(`${p}/categories/new`),
       SKILLS: L(`${p}/skills`),
+      SKILLS_NEW: L(`${p}/skills/new`),
       SERVICES: L(`${p}/services`),
       SERVICES_NEW: L(`${p}/services/new`),
       TESTIMONIALS: L(`${p}/testimonials`),
@@ -65,6 +66,12 @@ export function adminCategoryEditHref(lang: string, id: string | number): string
   const config = getConfig();
   const p = config.routes.admin.prefix;
   return withUiLocale(lang, `${p}/categories/${id}`);
+}
+
+export function adminSkillEditHref(lang: string, id: string | number): string {
+  const config = getConfig();
+  const p = config.routes.admin.prefix;
+  return withUiLocale(lang, `${p}/skills/${id}`);
 }
 
 export function adminServiceEditHref(lang: string, id: string | number): string {

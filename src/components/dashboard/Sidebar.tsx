@@ -133,6 +133,7 @@ export const Sidebar = component$<SidebarProps>((props) => {
       label: translateApp(lang, 'sidebar.skills'),
       href: R.ADMIN.SKILLS,
       icon: SkillsIcon,
+      activeOnChildPaths: true,
       permission: 'manage skills',
       featureModule: 'skills',
     },
