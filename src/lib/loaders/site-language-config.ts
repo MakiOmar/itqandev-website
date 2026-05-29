@@ -4,7 +4,7 @@ import type { SiteLanguageRow } from '../../types/site-language';
 import { secondaryLocales } from '../content-translations';
 import { MARKETING_ENDPOINTS } from '../marketing/endpoints';
 import { marketingGet } from '../marketing/api-client';
-import { shouldSkipSsrMarketingApi } from '../marketing/ssr-api-reachability';
+import { shouldSkipSsrMarketingApi, isDevSsrMarketingFetchFailure } from '../marketing/ssr-api-reachability';
 import { readPreferredLocaleFromCookieHeader } from '../i18n/dashboard-locale';
 import { resolvePublicSiteLanguages } from '../i18n/public-site-languages';
 
@@ -71,8 +71,7 @@ export const useSiteLanguageConfig = routeLoader$(async ({ cookie, request }): P
       content_editing_locale,
     };
   } catch (e) {
-    const isDevSkip =
-      e instanceof Error && e.message.includes('DEV_SSR_SKIP_MARKETING_API');
+    const isDevSkip = isDevSsrMarketingFetchFailure(e);
     if (import.meta.env.DEV && !isDevSkip) {
       console.warn(
         'useSiteLanguageConfig: site-meta request failed; using qwik-speak locale fallback. ' +

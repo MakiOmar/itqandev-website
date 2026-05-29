@@ -8,6 +8,7 @@ import type { CaseStudy, BlogPost, Testimonial, SiteContent, Service } from './t
 import { mapMarketingSeoMetaFromApi } from './seo-snippet';
 import { getMarketingApiBaseUrl, marketingGet, type MarketingFetchContext } from './api-client';
 import { MARKETING_ENDPOINTS } from './endpoints';
+import { isDevSsrMarketingFetchFailure } from './ssr-api-reachability';
 
 export type { MarketingFetchContext } from './api-client';
 
@@ -17,10 +18,6 @@ import siteData from '../../content/site.json';
 import blogData from '../../content/blog.json';
 
 const contentSource = (import.meta.env?.VITE_MARKETING_CONTENT_SOURCE ?? 'local') as string;
-
-function isDevSsrMarketingSkip(e: unknown): boolean {
-  return e instanceof Error && e.message.includes('DEV_SSR_SKIP_MARKETING_API');
-}
 
 const caseStudies = caseStudiesData as CaseStudy[];
 const testimonials = testimonialsData as Testimonial[];
@@ -100,7 +97,7 @@ async function fetchTestimonialsFromApi(
       .map((raw) => mapPublicTestimonialRecord(raw))
       .filter((t) => t.quote.length > 0 && t.approved !== false);
   } catch (e) {
-    if (!isDevSsrMarketingSkip(e)) {
+    if (!isDevSsrMarketingFetchFailure(e)) {
       console.warn('[marketing] fetch public testimonials failed', e);
     }
     return [];
@@ -190,7 +187,7 @@ async function fetchPublishedProjectsFromApi(
       .filter((c) => c.slug.length > 0);
     return mapped;
   } catch (e) {
-    if (!isDevSsrMarketingSkip(e)) {
+    if (!isDevSsrMarketingFetchFailure(e)) {
       console.warn('[marketing] fetch public projects failed', e);
     }
     return [];
@@ -418,7 +415,7 @@ export async function getSiteContent(
         };
       }
     } catch (e) {
-      if (!isDevSsrMarketingSkip(e)) {
+      if (!isDevSsrMarketingFetchFailure(e)) {
         console.warn('[marketing] fetch public services failed', e);
       }
     }
