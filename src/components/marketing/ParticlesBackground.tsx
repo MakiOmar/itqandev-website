@@ -47,10 +47,15 @@ export const ParticlesBackground = component$(() => {
       }
     };
 
+    let viewW = 0;
+    let viewH = 0;
+
     const resize = () => {
       const dpr = Math.min(window.devicePixelRatio || 1, 2);
       const w = window.innerWidth;
       const h = window.innerHeight;
+      viewW = w;
+      viewH = h;
       canvas.width = Math.floor(w * dpr);
       canvas.height = Math.floor(h * dpr);
       canvas.style.width = `${w}px`;
@@ -59,11 +64,28 @@ export const ParticlesBackground = component$(() => {
       initParticles(w, h);
     };
 
+    let resizeRaf = 0;
+    const scheduleResize = () => {
+      if (resizeRaf) {
+        return;
+      }
+      resizeRaf = requestAnimationFrame(() => {
+        resizeRaf = 0;
+        resize();
+      });
+    };
+
     const linkDistance = 118;
 
     const tick = () => {
-      const w = window.innerWidth;
-      const h = window.innerHeight;
+      const w = viewW;
+      const h = viewH;
+      if (!w || !h) {
+        if (!reducedMotion) {
+          rafId = requestAnimationFrame(tick);
+        }
+        return;
+      }
       const dark = isDark();
       // Light: darker slate + stronger alpha so lines read on white/blue-50 gradients
       const lineRgb = dark ? '148, 163, 184' : '71, 85, 105';
@@ -115,12 +137,15 @@ export const ParticlesBackground = component$(() => {
     };
 
     resize();
-    window.addEventListener('resize', resize);
+    window.addEventListener('resize', scheduleResize);
     tick();
 
     cleanup(() => {
       cancelAnimationFrame(rafId);
-      window.removeEventListener('resize', resize);
+      if (resizeRaf) {
+        cancelAnimationFrame(resizeRaf);
+      }
+      window.removeEventListener('resize', scheduleResize);
     });
   });
 
