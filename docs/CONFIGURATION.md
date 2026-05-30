@@ -288,6 +288,10 @@ Shared tokens and reset live in **`src/styles/foundation.css`**. Critical first 
 
 Configs: `tailwind.site.config.js`, `tailwind.admin.config.js` (theme in `tailwind.shared.js`).
 
+### Static asset browser cache (Apache)
+
+Production static deploys use **`public/.htaccess`** (copied into `dist/` on build). Fingerprinted `/build/*` and `/assets/*` get `Cache-Control: public, max-age=31536000, immutable`; root images (hero, icons) get 7-day cache with `stale-while-revalidate`. HTML document caching for SSR is set in `src/routes/layout.tsx` (`onGet` → `cacheControl()`). Full stack table: **[docs/CONFIGURATION.md](../../docs/CONFIGURATION.md)** (HTTP browser caching).
+
 ---
 
 ## Accessing Configuration

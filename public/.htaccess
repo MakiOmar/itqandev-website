@@ -1,19 +1,75 @@
-# Performance optimizations
+# Browser caching and compression for Qwik marketing static deploy (Apache / XAMPP).
+# Copied to dist/ on `npm run build`. HTML document caching is also set in website/src/routes/layout.tsx (onGet).
+
+# ---------------------------------------------------------------------------
+# Long-lived cache: fingerprinted build output (safe to cache immutably)
+# ---------------------------------------------------------------------------
 <IfModule mod_headers.c>
-  # Cache static assets
-  <FilesMatch "\.(css|js|jpg|jpeg|png|gif|ico|svg|woff|woff2|ttf|eot)$">
+  <LocationMatch "^/(build|assets)/">
+    Header set Cache-Control "public, max-age=31536000, immutable"
+  </LocationMatch>
+</IfModule>
+
+<IfModule mod_expires.c>
+  ExpiresActive On
+  ExpiresByType text/css "access plus 1 year"
+  ExpiresByType application/javascript "access plus 1 year"
+  ExpiresByType application/json "access plus 1 year"
+</IfModule>
+
+# ---------------------------------------------------------------------------
+# Static assets by extension (public/ root: heroes, icons, fonts, …)
+# ---------------------------------------------------------------------------
+<IfModule mod_headers.c>
+  <FilesMatch "\.(css|js|mjs|json|woff2?|ttf|eot|otf|ico|svg)$">
     Header set Cache-Control "public, max-age=31536000, immutable"
   </FilesMatch>
-  
-  # Don't cache HTML
+
+  <FilesMatch "\.(webp|avif|png|jpe?g|gif)$">
+    Header set Cache-Control "public, max-age=604800, stale-while-revalidate=86400"
+  </FilesMatch>
+
+  # HTML shells and documents — always revalidate
   <FilesMatch "\.(html|htm)$">
-    Header set Cache-Control "no-cache, no-store, must-revalidate"
+    Header set Cache-Control "no-cache, must-revalidate"
     Header set Pragma "no-cache"
-    Header set Expires 0
+    Header set Expires "0"
   </FilesMatch>
 </IfModule>
 
-# Enable compression
-<IfModule mod_deflate.c>
-  AddOutputFilterByType DEFLATE text/html text/plain text/xml text/css text/javascript application/javascript application/json
+<IfModule mod_expires.c>
+  ExpiresByType image/webp "access plus 7 days"
+  ExpiresByType image/avif "access plus 7 days"
+  ExpiresByType image/png "access plus 7 days"
+  ExpiresByType image/jpeg "access plus 7 days"
+  ExpiresByType image/gif "access plus 7 days"
+  ExpiresByType image/svg+xml "access plus 7 days"
+  ExpiresByType image/x-icon "access plus 7 days"
 </IfModule>
+
+# ---------------------------------------------------------------------------
+# Compression (text only — do not deflate images)
+# ---------------------------------------------------------------------------
+<IfModule mod_deflate.c>
+  AddOutputFilterByType DEFLATE text/html text/plain text/xml text/css text/javascript application/javascript application/json image/svg+xml
+</IfModule>
+
+# ---------------------------------------------------------------------------
+# MIME types
+# ---------------------------------------------------------------------------
+<IfModule mod_mime.c>
+  AddType image/webp .webp
+  AddType image/avif .avif
+  AddType font/woff2 .woff2
+</IfModule>
+
+# ---------------------------------------------------------------------------
+# Optional SPA fallback (uncomment when serving client-only dist without Node SSR)
+# ---------------------------------------------------------------------------
+# <IfModule mod_rewrite.c>
+#   RewriteEngine On
+#   RewriteBase /
+#   RewriteCond %{REQUEST_FILENAME} !-f
+#   RewriteCond %{REQUEST_FILENAME} !-d
+#   RewriteRule . /index.html [L]
+# </IfModule>
