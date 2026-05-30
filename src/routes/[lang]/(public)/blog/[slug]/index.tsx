@@ -73,7 +73,7 @@ export default component$(() => {
                   </div>
                 )}
                 <div
-                  class="prose prose-slate mt-8 dark:prose-invert max-w-none [&_img]:rounded-xl [&_img]:shadow-sm"
+                  class="article-content mt-8 max-w-none [&_img]:rounded-xl [&_img]:shadow-sm"
                   dangerouslySetInnerHTML={post.body}
                 />
               </MarketingImageLightbox>

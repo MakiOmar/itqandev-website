@@ -226,7 +226,7 @@ export default component$(() => {
                 <p class="mt-4 text-lg text-slate-600 dark:text-slate-400">{caseStudy.summary}</p>
                 {caseStudy.description && (
                   <div
-                    class="prose prose-slate mt-8 dark:prose-invert max-w-none text-slate-700 dark:text-slate-300 [&_img]:rounded-xl [&_img]:shadow-sm"
+                    class="article-content mt-8 max-w-none [&_img]:rounded-xl [&_img]:shadow-sm"
                     dangerouslySetInnerHTML={caseStudy.description}
                   />
                 )}

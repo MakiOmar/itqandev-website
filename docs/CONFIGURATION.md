@@ -280,9 +280,9 @@ Configuration is merged in this order (highest to lowest priority):
 
 ## Stylesheets (marketing vs admin)
 
-Public pages load **`src/styles/site.css`** from `src/routes/[lang]/(public)/layout.tsx` (Tailwind scan: `(public)/`, marketing components only). It is not imported from `root.tsx`, so admin routes do not download the marketing bundle.
+Public pages load **`src/styles/site.css`** from `src/routes/[lang]/(public)/layout.tsx` (marketing Tailwind scan only; no typography/forms plugins). Long-form content uses the `.article-content` class in `site.css`, not `@tailwindcss/typography`.
 
-Admin routes load **`src/styles/admin.css`** from `src/routes/[lang]/admin/layout.tsx` (scan: `admin/`, dashboard/admin components; includes `@tailwindcss/forms`).
+Admin routes load **`src/styles/admin.css`** from `src/routes/[lang]/admin/layout.tsx` — a **delta** that `@reference`s `site.css` (no second copy of foundation/Tailwind base) and adds `@tailwindcss/forms` + typography for dashboard.
 
 Shared tokens and reset live in **`src/styles/foundation.css`**. Critical first paint CSS remains inline in `RouterHead` (`lib/perf/critical-css.ts`).
 

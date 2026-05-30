@@ -1,13 +1,13 @@
 /**
- * Public marketing CSS — imported from root.tsx only.
- * Smaller than the old monolithic global.css (no admin scan paths, no @tailwindcss/forms).
+ * Public marketing CSS — (public)/layout.tsx only.
  */
 @import './foundation.css';
 @import 'tailwindcss';
 @config '../../tailwind.site.config.js';
-@plugin '@tailwindcss/typography';
+@source not '../routes/[lang]/(public)/blog/[slug]';
+@source not '../routes/[lang]/(public)/work/[slug]';
 
-/* Marketing page chrome (public layout gradient) */
+/* Marketing page chrome */
 body {
   background: linear-gradient(135deg, #fafbfc 0%, #f5f7fa 100%);
   color: #0f172a;
@@ -18,7 +18,6 @@ body {
   color: #f1f5f9;
 }
 
-/* Lighter transition scope than global * { transition: everything } */
 a,
 button,
 [role='button'],
@@ -28,4 +27,40 @@ textarea {
   transition-property: color, background-color, border-color, opacity, transform, box-shadow;
   transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
   transition-duration: 200ms;
+}
+
+/* Blog / case study body (replaces @tailwindcss/typography on marketing) */
+.article-content {
+  max-width: 65ch;
+  color: #334155;
+  line-height: 1.75;
+}
+
+.dark .article-content {
+  color: #cbd5e1;
+}
+
+.article-content :where(h2, h3) {
+  margin-top: 2rem;
+  margin-bottom: 0.75rem;
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.dark .article-content :where(h2, h3) {
+  color: #f8fafc;
+}
+
+.article-content :where(p, ul, ol) {
+  margin-bottom: 1.25rem;
+}
+
+.article-content :where(a) {
+  color: #0284c7;
+  text-decoration: underline;
+}
+
+.article-content :where(img) {
+  border-radius: 0.75rem;
+  box-shadow: 0 1px 2px rgb(15 23 42 / 0.08);
 }
