@@ -9,7 +9,7 @@ import { isUiLocaleRtl } from "./lib/i18n/ui-locale-segments";
 import { stripUiLocaleFromPathname, uiLangPrefixFromPathname } from "./lib/i18n/ui-locale-path";
 import { persistPreferredLocale } from "./lib/i18n/preferred-locale-persist";
 
-import "./global.css";
+import './styles/site.css';
 
 /** Body lang/dir signals updated from inside QwikCityProvider (useLocation is invalid on the root component). */
 const rootBodyLocaleContext = createContextId<{

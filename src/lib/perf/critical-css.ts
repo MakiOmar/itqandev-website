@@ -2,7 +2,7 @@
  * Inline critical CSS — parsed before external stylesheets (see RouterHead).
  *
  * Keep small (&lt; ~2KB). Scope: FOUC/render gate, system font fallbacks, public shell.
- * Full Tailwind + components stay in global.css (Vite bundle, cssCodeSplit per route).
+ * Full Tailwind stays in styles/site.css (marketing) or styles/admin.css (dashboard).
  *
  * Do not duplicate large utility sets here; update this file when changing body visibility
  * or public first-paint layout in global.css.

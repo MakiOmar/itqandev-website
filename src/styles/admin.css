@@ -1,0 +1,32 @@
+/**
+ * Admin dashboard CSS — imported from [lang]/admin/layout.tsx only (route chunk).
+ * Forms + typography plugins and admin sidebar rules stay off the marketing bundle.
+ */
+@import './foundation.css';
+@import 'tailwindcss';
+@config '../../tailwind.admin.config.js';
+@plugin '@tailwindcss/forms';
+@plugin '@tailwindcss/typography';
+
+/* Dashboard shell: neutral surface (not marketing gradient) */
+body {
+  background: #f8fafc;
+  color: #0f172a;
+}
+
+.dark body {
+  background: #0f172a;
+  color: #f1f5f9;
+}
+
+html[dir='rtl'] aside.fixed.z-50,
+html[dir='rtl'] aside[class*='fixed'][class*='z-50'] {
+  right: 0 !important;
+  left: auto !important;
+}
+
+html[dir='ltr'] aside.fixed.z-50,
+html[dir='ltr'] aside[class*='fixed'][class*='z-50'] {
+  left: 0 !important;
+  right: auto !important;
+}
