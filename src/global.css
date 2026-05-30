@@ -1,5 +1,4 @@
 /**
- * @deprecated Import styles/site.css (marketing) or styles/admin.css (dashboard) instead.
- * Kept so older imports do not break during migration.
+ * @deprecated Use styles/site.css on public layout or styles/admin.css on admin layout.
  */
 @import './styles/site.css';

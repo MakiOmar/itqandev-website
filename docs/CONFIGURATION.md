@@ -280,7 +280,7 @@ Configuration is merged in this order (highest to lowest priority):
 
 ## Stylesheets (marketing vs admin)
 
-Public pages load **`src/styles/site.css`** from `root.tsx` (Tailwind scan: `(public)/`, marketing components only).
+Public pages load **`src/styles/site.css`** from `src/routes/[lang]/(public)/layout.tsx` (Tailwind scan: `(public)/`, marketing components only). It is not imported from `root.tsx`, so admin routes do not download the marketing bundle.
 
 Admin routes load **`src/styles/admin.css`** from `src/routes/[lang]/admin/layout.tsx` (scan: `admin/`, dashboard/admin components; includes `@tailwindcss/forms`).
 

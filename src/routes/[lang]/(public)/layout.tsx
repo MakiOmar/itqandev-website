@@ -1,3 +1,4 @@
+import '~/styles/site.css';
 import { component$, Slot, useSignal } from '@builder.io/qwik';
 import { routeLoader$, useLocation } from '@builder.io/qwik-city';
 import { uiLocaleFromPublicRoute } from '~/lib/i18n/ui-locale-path';
