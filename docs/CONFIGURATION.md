@@ -292,6 +292,10 @@ Configs: `tailwind.site.config.js`, `tailwind.admin.config.js` (theme in `tailwi
 
 Production static deploys use **`public/.htaccess`** (copied into `dist/` on build). Fingerprinted `/build/*` and `/assets/*` get `Cache-Control: public, max-age=31536000, immutable`; root images (hero, icons) get 7-day cache with `stale-while-revalidate`. HTML document caching for SSR is set in `src/routes/layout.tsx` (`onGet` → `cacheControl()`). Full stack table: **[docs/CONFIGURATION.md](../../docs/CONFIGURATION.md)** (HTTP browser caching).
 
+### Resource hints (`preconnect`)
+
+`RouterHead` emits `<link rel="preconnect">` from **`src/lib/perf/resource-hints.ts`**: **Google Fonts** (`fonts.googleapis.com`, `fonts.gstatic.com`), absolute **`VITE_API_BASE_URL`**, and **`VITE_API_PROXY_TARGET` / `VITE_SITE_URL`** (Laravel API + `/storage` media when the Qwik dev/preview origin differs). Font CSS still loads non-blocking via the inline bootstrap in `router-head.tsx` (`media=print` → `all`).
+
 ---
 
 ## Accessing Configuration

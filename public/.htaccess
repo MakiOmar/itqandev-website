@@ -1,20 +1,17 @@
-# Browser caching and compression for Qwik marketing static deploy (Apache / XAMPP).
-# Copied to dist/ on `npm run build`. HTML document caching is also set in website/src/routes/layout.tsx (onGet).
+# Browser caching for Qwik static deploy (Apache / XAMPP).
+# Copied to dist/ on `npm run build`. HTML SSR cache: website/src/routes/layout.tsx (onGet).
+# Requires mod_headers (and optionally mod_expires). Do not use mod_deflate here unless mod_filter is enabled.
 
 # ---------------------------------------------------------------------------
-# Long-lived cache: fingerprinted build output (safe to cache immutably)
+# Long-lived cache: fingerprinted build output (/build/*, /assets/*)
+# LocationMatch is not allowed in .htaccess — use SetEnvIf + Header env= instead.
 # ---------------------------------------------------------------------------
-<IfModule mod_headers.c>
-  <LocationMatch "^/(build|assets)/">
-    Header set Cache-Control "public, max-age=31536000, immutable"
-  </LocationMatch>
+<IfModule mod_setenvif.c>
+  SetEnvIf Request_URI "^/(build|assets)/" LONG_CACHE=1
 </IfModule>
 
-<IfModule mod_expires.c>
-  ExpiresActive On
-  ExpiresByType text/css "access plus 1 year"
-  ExpiresByType application/javascript "access plus 1 year"
-  ExpiresByType application/json "access plus 1 year"
+<IfModule mod_headers.c>
+  Header set Cache-Control "public, max-age=31536000, immutable" env=LONG_CACHE
 </IfModule>
 
 # ---------------------------------------------------------------------------
@@ -29,7 +26,6 @@
     Header set Cache-Control "public, max-age=604800, stale-while-revalidate=86400"
   </FilesMatch>
 
-  # HTML shells and documents — always revalidate
   <FilesMatch "\.(html|htm)$">
     Header set Cache-Control "no-cache, must-revalidate"
     Header set Pragma "no-cache"
@@ -38,6 +34,10 @@
 </IfModule>
 
 <IfModule mod_expires.c>
+  ExpiresActive On
+  ExpiresByType text/css "access plus 1 year"
+  ExpiresByType application/javascript "access plus 1 year"
+  ExpiresByType application/json "access plus 1 year"
   ExpiresByType image/webp "access plus 7 days"
   ExpiresByType image/avif "access plus 7 days"
   ExpiresByType image/png "access plus 7 days"
@@ -45,13 +45,6 @@
   ExpiresByType image/gif "access plus 7 days"
   ExpiresByType image/svg+xml "access plus 7 days"
   ExpiresByType image/x-icon "access plus 7 days"
-</IfModule>
-
-# ---------------------------------------------------------------------------
-# Compression (text only — do not deflate images)
-# ---------------------------------------------------------------------------
-<IfModule mod_deflate.c>
-  AddOutputFilterByType DEFLATE text/html text/plain text/xml text/css text/javascript application/javascript application/json image/svg+xml
 </IfModule>
 
 # ---------------------------------------------------------------------------
@@ -63,9 +56,7 @@
   AddType font/woff2 .woff2
 </IfModule>
 
-# ---------------------------------------------------------------------------
-# Optional SPA fallback (uncomment when serving client-only dist without Node SSR)
-# ---------------------------------------------------------------------------
+# Optional SPA fallback (uncomment for client-only dist without Node SSR)
 # <IfModule mod_rewrite.c>
 #   RewriteEngine On
 #   RewriteBase /
