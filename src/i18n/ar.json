@@ -431,6 +431,8 @@
     "sitePhone": "الهاتف",
     "siteAddress": "العنوان",
     "uploadMaxSize": "حجم التحميل الأقصى (MB)",
+    "mediaConvertToWebp": "تحويل الملفات المرفوعة إلى WebP",
+    "mediaConvertToWebpHelp": "يتم حفظ ملفات JPEG وPNG وAVIF وBMP كـ WebP مع إزالة البيانات الوصفية. تبقى SVG وGIF دون تغيير.",
     "socialMedia": "وسائل التواصل الاجتماعي",
     "facebook": "Facebook",
     "twitter": "Twitter",
@@ -514,7 +516,8 @@
   },
   "header": {
     "logout": "تسجيل خروج",
-    "profile": "إعدادات الملف الشخصي"
+    "profile": "إعدادات الملف الشخصي",
+    "dashboard": "لوحة التحكم"
   },
   "profile": {
     "title": "إعدادات الملف الشخصي",

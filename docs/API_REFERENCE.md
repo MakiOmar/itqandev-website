@@ -464,6 +464,7 @@ Unauthenticated server check for local dev, Vite proxy, and deployment smoke tes
     "status": "ok",
     "message": "Laravel API is reachable",
     "timestamp": "2026-05-24T12:00:00+00:00",
+    "server_ms": 12,
     "app_env": "local",
     "app_url": "http://localhost",
     "laravel_version": "11.x",
@@ -478,6 +479,8 @@ Unauthenticated server check for local dev, Vite proxy, and deployment smoke tes
 ```
 
 When the database is unreachable, `data.status` is `degraded` and `database.status` is `error` (error message only when `APP_DEBUG=true`).
+
+`data.server_ms` is Laravel processing time in milliseconds (DB ping included). Compare with browser round-trip time on **`/{lang}/api-check`** (e.g. `/en/api-check`) to tell slow PHP/DB from slow proxy or WAMP.
 
 Also available: `GET /api/health` (minimal `{ "status": "ok" }`) and Laravel’s `GET /up`.
 

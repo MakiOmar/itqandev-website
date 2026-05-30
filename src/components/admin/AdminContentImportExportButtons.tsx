@@ -1,6 +1,6 @@
 import { component$, useSignal, $, useComputed$, type QRL, type Signal } from '@builder.io/qwik';
-import Swal from 'sweetalert2';
 import { translateApp } from '../../lib/i18n/useTranslate';
+import { getSwal } from '../../lib/utils/swal-fire';
 import { uiLangFromUrlPathname } from '../../lib/i18n/ui-locale-path';
 import {
   exportContentJson,
@@ -47,6 +47,7 @@ export const AdminContentImportExportButtons = component$<AdminContentImportExpo
       busy.value = true;
       try {
         const loc = await getContentLocale();
+        const Swal = await getSwal();
         await exportContentJson(exportEndpoint, filePrefix, loc);
         await Swal.fire({
           icon: 'success',
@@ -55,6 +56,7 @@ export const AdminContentImportExportButtons = component$<AdminContentImportExpo
           confirmButtonColor: '#10b981',
         });
       } catch (err: unknown) {
+        const Swal = await getSwal();
         await Swal.fire({
           icon: 'error',
           title: translateApp(lang, 'common.error'),
@@ -74,6 +76,7 @@ export const AdminContentImportExportButtons = component$<AdminContentImportExpo
       busy.value = true;
       try {
         const loc = await getContentLocale();
+        const Swal = await getSwal();
         await exportContentJson(exportEndpoint, filePrefix, loc, ids);
         await Swal.fire({
           icon: 'success',
@@ -82,6 +85,7 @@ export const AdminContentImportExportButtons = component$<AdminContentImportExpo
           confirmButtonColor: '#10b981',
         });
       } catch (err: unknown) {
+        const Swal = await getSwal();
         await Swal.fire({
           icon: 'error',
           title: translateApp(lang, 'common.error'),
@@ -108,6 +112,7 @@ export const AdminContentImportExportButtons = component$<AdminContentImportExpo
       const upsertLabel = translateApp(lang, 'contentExport.importModeUpsert');
       const translationLabel = translateApp(lang, 'contentExport.importModeTranslationOnly');
 
+      const Swal = await getSwal();
       const modeResult = await Swal.fire({
         title: translateApp(lang, 'contentExport.importTitle'),
         html: `
@@ -178,6 +183,7 @@ export const AdminContentImportExportButtons = component$<AdminContentImportExpo
           summary += ` ${translateApp(lang, 'contentExport.importErrors', { details })}`;
         }
 
+        const Swal = await getSwal();
         await Swal.fire({
           icon: 'success',
           title: translateApp(lang, 'common.success'),
@@ -187,6 +193,7 @@ export const AdminContentImportExportButtons = component$<AdminContentImportExpo
 
         await onRefetch$(loc);
       } catch (err: unknown) {
+        const Swal = await getSwal();
         await Swal.fire({
           icon: 'error',
           title: translateApp(lang, 'common.error'),

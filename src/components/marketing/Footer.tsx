@@ -4,6 +4,7 @@ import { getConfig } from '~/lib/config';
 import { marketingRoutes } from '~/lib/marketing/constants';
 import { uiLangFromUrlPathname } from '~/lib/i18n/ui-locale-path';
 import { Container } from '~/components/marketing/Container';
+import { resolveLaravelMediaUrl } from '~/lib/marketing/resolve-laravel-media-url';
 
 export interface FooterProps {
   contact?: {
@@ -33,9 +34,9 @@ export const Footer = component$<FooterProps>(({ contact, branding }) => {
   ];
   const year = new Date().getFullYear();
   const brandName = branding?.name || config.branding.name;
-  const defaultLogo = branding?.logo || '';
-  const lightLogo = branding?.logoLight || defaultLogo;
-  const darkLogo = branding?.logoDark || defaultLogo;
+  const defaultLogo = resolveLaravelMediaUrl(branding?.logo || '');
+  const lightLogo = resolveLaravelMediaUrl(branding?.logoLight || defaultLogo);
+  const darkLogo = resolveLaravelMediaUrl(branding?.logoDark || defaultLogo);
   const activeLogo = isDarkMode.value
     ? (darkLogo || lightLogo || defaultLogo)
     : (lightLogo || darkLogo || defaultLogo);
@@ -75,7 +76,7 @@ export const Footer = component$<FooterProps>(({ contact, branding }) => {
                   height={32}
                   loading="lazy"
                   decoding="async"
-                  class="h-7 w-auto object-contain"
+                  class="h-7 max-w-logo object-contain"
                 />
               )}
               <span>{brandName}</span>

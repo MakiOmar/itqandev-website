@@ -2,6 +2,15 @@
  * Admin SEO form + API row shape (per locale) for morph `seo_metas`.
  */
 
+/** JSON value safe for Qwik serialization in $ / useTask$ / useVisibleTask$ closures. */
+export type JsonValue =
+  | string
+  | number
+  | boolean
+  | null
+  | JsonValue[]
+  | { [key: string]: JsonValue };
+
 export interface ContentSeoMetaRow {
   id?: number;
   locale: string;
@@ -12,8 +21,8 @@ export interface ContentSeoMetaRow {
   og_description?: string | null;
   og_image?: string | null;
   twitter_card?: string | null;
-  /** Laravel JSON column; object or array */
-  schema?: unknown;
+  /** Laravel JSON column; JSON-LD object or array */
+  schema?: JsonValue;
 }
 
 /** Form state for PUT /v1/seo/{type}/{id} */
@@ -150,7 +159,7 @@ export function parseContentSeoDraftFromJson(raw: string): ContentSeoDraft | nul
   }
 }
 
-function schemaToJsonString(schema: unknown): string {
+function schemaToJsonString(schema: JsonValue | undefined): string {
   if (schema === null || schema === undefined) {
     return '';
   }
@@ -179,10 +188,10 @@ export function contentSeoDraftFromRow(row: Partial<ContentSeoMetaRow> | null | 
 
 /** Parse JSON-LD / schema array for API; returns undefined when empty/invalid. */
 export function seoDraftToMetaRow(locale: string, draft: ContentSeoDraft): ContentSeoMetaRow {
-  let schema: unknown;
+  let schema: JsonValue | undefined;
   try {
     if (draft.schema_json.trim()) {
-      schema = JSON.parse(draft.schema_json);
+      schema = JSON.parse(draft.schema_json) as JsonValue;
     }
   } catch {
     schema = undefined;
@@ -200,17 +209,17 @@ export function seoDraftToMetaRow(locale: string, draft: ContentSeoDraft): Conte
   };
 }
 
-export function parseSchemaJsonField(raw: string): Record<string, unknown> | unknown[] | undefined {
+export function parseSchemaJsonField(raw: string): JsonValue | undefined {
   const t = raw.trim();
   if (!t) {
     return undefined;
   }
-  const parsed = JSON.parse(t) as unknown;
+  const parsed = JSON.parse(t) as JsonValue;
   if (parsed === null) {
     return undefined;
   }
   if (typeof parsed === 'object') {
-    return parsed as Record<string, unknown> | unknown[];
+    return parsed;
   }
   throw new Error('Schema JSON must be an object or array');
 }

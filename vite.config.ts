@@ -17,13 +17,64 @@ const { dependencies = {}, devDependencies = {} } = pkg as any as {
 errorOnDuplicatesPkgDeps(devDependencies, dependencies);
 
 /**
+ * Rollup manual chunk names for node_modules (client build only).
+ * Keeps TinyMCE (~1.4MB) off the default route chunks.
+ */
+function manualVendorChunk(id: string): string | undefined {
+  if (!id.includes("node_modules")) {
+    return undefined;
+  }
+  if (id.includes("tinymce")) {
+    return "tinymce";
+  }
+  if (id.includes("sweetalert2")) {
+    return "sweetalert2";
+  }
+  if (id.includes("@qwik-ui")) {
+    return "qwik-ui";
+  }
+  if (id.includes("qwik-speak")) {
+    return "qwik-speak";
+  }
+  if (id.includes("@qwikest/icons")) {
+    return "icons";
+  }
+  if (id.includes("zod")) {
+    return "zod";
+  }
+  if (id.includes("@builder.io/qwik-city")) {
+    return "qwik-city";
+  }
+  if (id.includes("@builder.io/qwik")) {
+    return "qwik-core";
+  }
+  return "vendor";
+}
+
+/**
  * Note that Vite normally starts from `index.html` but the qwikCity plugin makes start at `src/entry.ssr.tsx` instead.
  */
 export default defineConfig(({ command, mode }): UserConfig => {
   const env = loadEnv(mode, process.cwd(), "");
   const apiProxyTarget = (env.VITE_API_PROXY_TARGET || "http://127.0.0.1").replace(/\/$/, "");
-
-  // Determine if this is a client-only build (not SSR/preview)
+  /** Shared proxy for dev server and preview — browser /api and /storage → Laravel. */
+  const laravelDevProxy = {
+    "/api": {
+      target: apiProxyTarget,
+      changeOrigin: true,
+      secure: false,
+    },
+    "/sanctum": {
+      target: apiProxyTarget,
+      changeOrigin: true,
+      secure: false,
+    },
+    "/storage": {
+      target: apiProxyTarget,
+      changeOrigin: true,
+      secure: false,
+    },
+  };
   // SSR builds use --ssr flag or have entry.preview/entry.ssr, so we check mode and command
   const isClientBuild = command === 'build' && mode === 'production' && !process.argv.includes('--ssr');
   
@@ -52,19 +103,7 @@ export default defineConfig(({ command, mode }): UserConfig => {
       // For SSR builds, use inlineDynamicImports to avoid circular dependencies
       rollupOptions: isClientBuild ? {
         output: {
-          manualChunks: (id) => {
-            // Split vendor chunks for better caching (only for client builds)
-            if (id.includes('node_modules')) {
-              if (id.includes('sweetalert2')) {
-                return 'sweetalert2';
-              }
-              if (id.includes('@qwik-ui')) {
-                return 'qwik-ui';
-              }
-              return 'vendor';
-            }
-            return undefined;
-          },
+          manualChunks: manualVendorChunk,
         },
       } : {
         // For SSR/preview builds, use inlineDynamicImports to prevent circular dependencies
@@ -72,8 +111,8 @@ export default defineConfig(({ command, mode }): UserConfig => {
           inlineDynamicImports: true,
         },
       },
-      // Optimize chunk size
-      chunkSizeWarningLimit: 1000,
+      // TinyMCE (~1.3MB) is a single lazy chunk (q-*); only fetched when rich-text editor mounts.
+      chunkSizeWarningLimit: 1400,
     },
 
     /**
@@ -101,21 +140,9 @@ export default defineConfig(({ command, mode }): UserConfig => {
         "Cache-Control": "public, max-age=0",
       },
       /**
-       * Proxy /api and /sanctum to Laravel during dev when VITE_API_BASE_URL=/api.
-       * SSR routeAction$ (login) calls the Vite dev server origin so requests use this proxy.
+       * Proxy /api, /sanctum, and /storage to Laravel during dev when VITE_API_BASE_URL=/api.
        */
-      proxy: {
-        "/api": {
-          target: apiProxyTarget,
-          changeOrigin: true,
-          secure: false,
-        },
-        "/sanctum": {
-          target: apiProxyTarget,
-          changeOrigin: true,
-          secure: false,
-        },
-      },
+      proxy: laravelDevProxy,
     },
     preview: {
       headers: {
@@ -123,6 +150,8 @@ export default defineConfig(({ command, mode }): UserConfig => {
         // Route handlers can still override this for HTML/doc responses.
         "Cache-Control": "public, max-age=31536000, immutable",
       },
+      /** Same as dev — preview (:4173) has no Laravel static files without this. */
+      proxy: laravelDevProxy,
     },
   };
 });

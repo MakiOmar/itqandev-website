@@ -3,6 +3,8 @@
  * Backend-agnostic interfaces so we can switch between local content and API.
  */
 
+import type { JsonValue } from '../../types/content-seo';
+
 /** Public API `seo_meta` snippet (camelCase). */
 export interface MarketingPublicSeoMeta {
   locale?: string;
@@ -13,7 +15,7 @@ export interface MarketingPublicSeoMeta {
   ogDescription?: string;
   ogImage?: string;
   twitterCard?: string;
-  schema?: unknown;
+  schema?: JsonValue;
 }
 
 export interface CaseStudy {

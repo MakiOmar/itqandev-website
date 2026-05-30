@@ -1,4 +1,4 @@
-import type { ContentSeoDraft } from '../../types/content-seo';
+import type { ContentSeoDraft, JsonValue } from '../../types/content-seo';
 import { parseSchemaJsonField } from '../../types/content-seo';
 
 export type ContentSeoApiType = 'project' | 'blog-post' | 'category' | 'service' | 'skill';
@@ -10,7 +10,7 @@ type SeoPutClient = {
 
 /** Body for `PUT /v1/seo/{type}/{id}` (shared by client + server route actions). */
 export function buildSeoMorphPutBody(locale: string, draft: ContentSeoDraft): Record<string, unknown> {
-  let schema: Record<string, unknown> | unknown[] | undefined;
+  let schema: JsonValue | undefined;
   if (draft.schema_json.trim()) {
     schema = parseSchemaJsonField(draft.schema_json);
   }

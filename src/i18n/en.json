@@ -431,6 +431,8 @@
     "sitePhone": "Phone",
     "siteAddress": "Address",
     "uploadMaxSize": "Max Upload Size (MB)",
+    "mediaConvertToWebp": "Convert uploads to WebP",
+    "mediaConvertToWebpHelp": "JPEG, PNG, AVIF, and BMP files are saved as WebP with metadata removed. SVG and GIF are kept unchanged.",
     "socialMedia": "Social Media",
     "facebook": "Facebook",
     "twitter": "Twitter",
@@ -514,7 +516,8 @@
   },
   "header": {
     "logout": "Logout",
-    "profile": "Profile Settings"
+    "profile": "Profile Settings",
+    "dashboard": "Dashboard"
   },
   "profile": {
     "title": "Profile Settings",

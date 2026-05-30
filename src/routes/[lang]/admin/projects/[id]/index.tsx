@@ -21,7 +21,7 @@ import {
   EditingLocaleFieldsShell,
   TranslationsFormRoot,
 } from '../../../../../components/admin/PerFieldContentTranslations';
-import { RichTextEditorField } from '../../../../../components/admin/RichTextEditorField';
+import { LazyRichTextEditorField } from '../../../../../components/admin/LazyRichTextEditorField';
 import { initialTranslationsJson, parseTranslationsJson, secondaryLocalesForContent } from '../../../../../lib/content-translations';
 import {
   mergeProjectFieldsForUiLocale,
@@ -354,6 +354,7 @@ export default component$(() => {
     close: translateApp(lang, 'common.close'),
     done: translateApp(lang, 'common.done'),
     success: translateApp(lang, 'common.success'),
+    error: translateApp(lang, 'common.error'),
     edit: translateApp(lang, 'projects.edit'),
     subtitle: translateApp(lang, 'projects.subtitle'),
     name: translateApp(lang, 'projects.name'),
@@ -745,7 +746,7 @@ export default component$(() => {
                     >
                       {translations.description}
                     </label>
-                    <RichTextEditorField
+                    <LazyRichTextEditorField
                       id="description"
                       name="description"
                       value={descriptionField.value}

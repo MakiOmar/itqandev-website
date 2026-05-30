@@ -14,6 +14,7 @@ import type { PublicNavItem } from '~/lib/marketing/public-menu';
 import type { SiteLanguageRow } from '~/types/site-language';
 import { isFeatureModuleEnabled, type FeatureModuleKey } from '~/lib/api/project-settings';
 import { getFeatureModuleForPublicHref } from '~/lib/admin/feature-module-routes';
+import { resolveLaravelMediaUrl } from '~/lib/marketing/resolve-laravel-media-url';
 
 interface HeaderBranding {
   name: string;
@@ -44,9 +45,9 @@ export const Header = component$<HeaderProps>((props) => {
   const loginHref = appRoutes.ADMIN.LOGIN;
   const user = props.session?.user;
   const brandName = props.branding?.name || config.branding.name;
-  const defaultLogo = props.branding?.logo || '';
-  const lightLogo = props.branding?.logoLight || defaultLogo;
-  const darkLogo = props.branding?.logoDark || defaultLogo;
+  const defaultLogo = resolveLaravelMediaUrl(props.branding?.logo || '');
+  const lightLogo = resolveLaravelMediaUrl(props.branding?.logoLight || defaultLogo);
+  const darkLogo = resolveLaravelMediaUrl(props.branding?.logoDark || defaultLogo);
   const activeLogo = isDarkMode.value
     ? (darkLogo || lightLogo || defaultLogo)
     : (lightLogo || darkLogo || defaultLogo);
@@ -124,7 +125,7 @@ export const Header = component$<HeaderProps>((props) => {
               loading="eager"
               fetchPriority="high"
               decoding="async"
-              class="h-8 w-auto object-contain"
+              class="h-8 max-w-logo object-contain"
             />
           )}
           {activeLogo ? <span class="sr-only">{brandName}</span> : <span>{brandName}</span>}

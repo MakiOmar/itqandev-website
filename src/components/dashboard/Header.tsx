@@ -77,7 +77,7 @@ export const Header = component$<HeaderProps>((props) => {
                 alt=""
                 width="48"
                 height="48"
-                class="h-8 md:h-10 lg:h-12 w-auto shrink-0 object-contain"
+                class="h-8 max-w-logo md:h-10 lg:h-12 shrink-0 object-contain"
               />
             ) : null}
             <h1 class="truncate text-xl sm:text-2xl md:text-3xl font-bold bg-gradient-to-r from-slate-900 to-slate-700 dark:from-slate-100 dark:to-slate-300 bg-clip-text text-transparent tracking-tight">

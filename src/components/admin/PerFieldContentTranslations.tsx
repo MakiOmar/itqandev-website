@@ -18,7 +18,7 @@ import {
 } from '../../lib/content-translations';
 import { directionForSiteLocale, langAttributeForLocale } from '../../lib/i18n/editing-locale-direction';
 import { readPreferredLocaleFromBrowser } from '../../lib/i18n/preferred-locale-persist';
-import { RichTextEditorField } from './RichTextEditorField';
+import { LazyRichTextEditorField } from './LazyRichTextEditorField';
 
 type TranslationKind = 'project' | 'blog';
 
@@ -233,13 +233,13 @@ export const FieldTranslationGlobe = component$<{
                   class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-primary-500 focus:outline-none focus:ring focus:ring-primary-200 dark:border-gray-600 dark:bg-gray-950 dark:text-gray-100"
                 />
               ) : props.richText ? (
-                <RichTextEditorField
+                <LazyRichTextEditorField
                   id={`translation-${props.fieldKey}-${loc.code.replace(/[^a-zA-Z0-9_-]/g, '-')}`}
                   value={ctx.store[loc.code]?.[props.fieldKey] ?? ''}
                   placeholder={hintBase ? `${hintBase} — ${hintSuffix}` : hintSuffix}
                   dir={loc.rtl ? 'rtl' : 'ltr'}
                   lang={loc.code}
-                  onValueChange$={(value) => {
+                  onValueChange$={(value: string) => {
                     if (!ctx.store[loc.code]) {
                       ctx.store[loc.code] = {};
                     }

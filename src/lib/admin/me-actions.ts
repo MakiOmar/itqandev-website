@@ -35,8 +35,9 @@ function formatApiError(err: unknown): string {
 export async function runMeUpdateFromBrowser(payload: MeUpdatePayload) {
   const client = getApiClient(null);
   try {
-    const res = await client.patch<{ success?: boolean; user?: unknown }>('/me', payload);
-    return { success: true as const, user: res?.user ?? res?.data };
+    const res = await client.patch<{ user?: unknown }>('/me', payload);
+    const body = res.data as { user?: unknown };
+    return { success: true as const, user: body?.user };
   } catch (err) {
     return { success: false as const, error: formatApiError(err) };
   }

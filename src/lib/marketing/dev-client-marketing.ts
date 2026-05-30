@@ -15,6 +15,7 @@ import {
 import type { BlogPost, CaseStudy, SiteContent, Testimonial } from './types';
 import { resolvePublicSiteLanguages } from '../i18n/public-site-languages';
 import { getConfig } from '../config';
+import { mapPublicBrandingFromApi } from './resolve-laravel-media-url';
 
 export type PublicBrandingState = {
   name: string;
@@ -31,32 +32,16 @@ export async function fetchPublicBrandingClient(): Promise<PublicBrandingState> 
     const settings = await marketingGet<Record<string, unknown>>(MARKETING_ENDPOINTS.siteMeta, null, {
       forwardDocumentUrl: typeof window !== 'undefined' ? window.location.href : null,
     });
-    const name =
-      (typeof settings?.site_name === 'string' && settings.site_name) ||
-      (typeof settings?.name === 'string' && settings.name) ||
-      fallbackName;
-    const logo = (settings?.logo as string) || (settings?.site_logo as string) || '';
-    const logoDark =
-      (settings?.logoDark as string) ||
-      (settings?.logo_dark as string) ||
-      (settings?.dark_logo as string) ||
-      (settings?.site_logo_dark as string) ||
-      '';
-    const logoLight =
-      (settings?.logoLight as string) ||
-      (settings?.logo_light as string) ||
-      (settings?.light_logo as string) ||
-      (settings?.site_logo_light as string) ||
-      '';
+    const branding = mapPublicBrandingFromApi(settings, fallbackName);
     const features =
       settings?.features && typeof settings.features === 'object'
         ? (settings.features as Record<string, boolean>)
         : undefined;
     return {
-      name,
-      logo,
-      logoDark,
-      logoLight,
+      name: branding.name,
+      logo: branding.logo,
+      logoDark: branding.logoDark,
+      logoLight: branding.logoLight,
       site_languages: resolvePublicSiteLanguages(settings?.site_languages),
       features,
     };

@@ -1,5 +1,13 @@
 import { $ } from '@builder.io/qwik';
-import Swal from 'sweetalert2';
+import type { SweetAlertIcon } from 'sweetalert2';
+import { getSwal } from '../utils/swal-fire';
+
+function swalIcon(value: unknown, fallback: SweetAlertIcon): SweetAlertIcon {
+  const icons: SweetAlertIcon[] = ['success', 'error', 'warning', 'info', 'question'];
+  return typeof value === 'string' && icons.includes(value as SweetAlertIcon)
+    ? (value as SweetAlertIcon)
+    : fallback;
+}
 
 /**
  * Translation strings interface for useSwal
@@ -16,19 +24,9 @@ export interface SwalTranslations {
 }
 
 /**
- * SweetAlert2 wrapper hook for Qwik
- * Provides confirmation dialogs, alerts, success/error messages
- * Must be used inside a Qwik component
- * 
- * IMPORTANT: To avoid serialization issues, pass pre-computed translation strings.
- * Do NOT call useTranslate() inside this hook - it will cause SSR serialization errors.
- * 
- * @param translations - Optional pre-computed translation strings to avoid serialization issues
+ * SweetAlert2 wrapper hook for Qwik (dynamic import — non-blocking bundle).
  */
 export function useSwal(translations?: SwalTranslations) {
-  // Use provided translations or fallback to English defaults
-  // This ensures no functions are captured in the closure
-  // IMPORTANT: We do NOT call useTranslate() here to avoid serialization issues
   const confirmTitle = translations?.confirmTitle || 'Confirm';
   const yes = translations?.yes || 'Yes';
   const no = translations?.no || 'No';
@@ -38,59 +36,64 @@ export function useSwal(translations?: SwalTranslations) {
   const errorTitle = translations?.errorTitle || 'Error';
   const warningTitle = translations?.warningTitle || 'Warning';
 
-  const confirm = $((message: string, options: any = {}) => {
+  const confirm = $(async (message: string, options: Record<string, unknown> = {}) => {
+    const Swal = await getSwal();
     return Swal.fire({
-      title: options.title || confirmTitle,
+      title: (options.title as string) || confirmTitle,
       text: message,
-      icon: options.icon || 'question',
+      icon: swalIcon(options.icon, 'question'),
       showCancelButton: true,
-      confirmButtonText: options.confirmText || yes,
-      cancelButtonText: options.cancelText || no,
+      confirmButtonText: (options.confirmText as string) || yes,
+      cancelButtonText: (options.cancelText as string) || no,
       confirmButtonColor: '#2563eb',
       cancelButtonColor: '#6b7280',
       ...options,
     });
   });
 
-  const alert = $((message: string, options: any = {}) => {
+  const alert = $(async (message: string, options: Record<string, unknown> = {}) => {
+    const Swal = await getSwal();
     return Swal.fire({
-      title: options.title || alertTitle,
+      title: (options.title as string) || alertTitle,
       text: message,
-      icon: options.icon || 'info',
-      confirmButtonText: options.confirmText || ok,
+      icon: swalIcon(options.icon, 'info'),
+      confirmButtonText: (options.confirmText as string) || ok,
       confirmButtonColor: '#2563eb',
       ...options,
     });
   });
 
-  const success = $((message: string, options: any = {}) => {
+  const success = $(async (message: string, options: Record<string, unknown> = {}) => {
+    const Swal = await getSwal();
     return Swal.fire({
-      title: options.title || successTitle,
+      title: (options.title as string) || successTitle,
       text: message,
       icon: 'success',
-      confirmButtonText: options.confirmText || ok,
+      confirmButtonText: (options.confirmText as string) || ok,
       confirmButtonColor: '#10b981',
       ...options,
     });
   });
 
-  const error = $((message: string, options: any = {}) => {
+  const error = $(async (message: string, options: Record<string, unknown> = {}) => {
+    const Swal = await getSwal();
     return Swal.fire({
-      title: options.title || errorTitle,
+      title: (options.title as string) || errorTitle,
       text: message,
       icon: 'error',
-      confirmButtonText: options.confirmText || ok,
+      confirmButtonText: (options.confirmText as string) || ok,
       confirmButtonColor: '#ef4444',
       ...options,
     });
   });
 
-  const warning = $((message: string, options: any = {}) => {
+  const warning = $(async (message: string, options: Record<string, unknown> = {}) => {
+    const Swal = await getSwal();
     return Swal.fire({
-      title: options.title || warningTitle,
+      title: (options.title as string) || warningTitle,
       text: message,
       icon: 'warning',
-      confirmButtonText: options.confirmText || ok,
+      confirmButtonText: (options.confirmText as string) || ok,
       confirmButtonColor: '#f59e0b',
       ...options,
     });

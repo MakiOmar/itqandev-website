@@ -6,50 +6,9 @@
 
 /* Fonts are loaded asynchronously in router-head.tsx based on current locale. */
 
-/* Prevent flash of unstyled content (FOUC) for direction */
-/* Hide body by default - only show when BOTH html and body have dir attribute AND data-render-complete is set */
-/* This ensures both language and direction are applied simultaneously */
-body {
-  visibility: hidden !important;
-  opacity: 0 !important;
-}
+/* FOUC / render gate + public shell first paint: inlined in RouterHead (lib/perf/critical-css.ts). */
 
-/* Only show body when all conditions are met */
-html[dir] body[dir][data-render-complete] {
-  visibility: visible !important;
-  opacity: 1 !important;
-  /* No transition - instant show to prevent visual shift */
-}
-
-/* Public marketing pages: show body immediately (no RTL/locale flash concern) */
-body:has([data-public-page]) {
-  visibility: visible !important;
-  opacity: 1 !important;
-}
-
-/* Prevent transitions on elements until body is fully rendered */
-/* This prevents sidebar and other elements from flashing during language switch */
-/* Allow transitions on interactive elements for better UX */
-body:not([data-render-complete]) * {
-  transition: none !important;
-  animation: none !important;
-}
-
-/* Allow transitions on interactive elements even before render complete */
-body:not([data-render-complete]) button,
-body:not([data-render-complete]) [role="button"],
-body:not([data-render-complete]) [role="menu"],
-body:not([data-render-complete]) [role="menuitem"],
-body:not([data-render-complete]) a,
-body:not([data-render-complete]) input,
-body:not([data-render-complete]) select,
-body:not([data-render-complete]) textarea {
-  transition: color 0.2s ease, background-color 0.2s ease, border-color 0.2s ease, opacity 0.2s ease, transform 0.2s ease !important;
-}
-
-/* Sidebar positioning based on direction attribute - ensures simultaneous change */
-/* Position sidebar on the right for RTL, left for LTR */
-/* This ensures sidebar position changes at the same time as direction, preventing flash */
+/* Sidebar positioning — RTL/LTR (admin); not needed in critical CSS */
 html[dir="rtl"] aside.fixed.z-50,
 html[dir="rtl"] aside[class*="fixed"][class*="z-50"] {
   right: 0 !important;

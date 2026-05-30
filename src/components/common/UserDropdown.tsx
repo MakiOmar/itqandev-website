@@ -1,6 +1,7 @@
 import { component$, useSignal, $ } from '@builder.io/qwik';
 import { Link, useNavigate } from '@builder.io/qwik-city';
 import type { User } from '../../lib/auth/types';
+import { userHasDashboardMenu } from '../../lib/auth/dashboard-user';
 import { getLocalizedRoutes, useAppRoutes } from '../../lib/constants/routes';
 import { useTranslate, translateApp } from '../../lib/i18n/useTranslate';
 import { getConfig } from '../../lib/config';
@@ -19,7 +20,13 @@ export const UserDropdown = component$<UserDropdownProps>((props) => {
   const { lang } = useTranslate();
   const navigate = useNavigate();
   const R = useAppRoutes();
-  
+  const showDashboard = userHasDashboardMenu(props.user);
+  const accountHref = showDashboard ? R.ADMIN.HOME : R.PROFILE;
+  const accountLabel = translateApp(
+    lang,
+    showDashboard ? 'header.dashboard' : 'header.profile',
+  );
+
   // Handle logout
   // According to QWIK_AUTH_LOGIN_LOGOUT.md:
   // - Call POST /api/auth/logout (best effort, ignore errors)
@@ -90,10 +97,10 @@ export const UserDropdown = component$<UserDropdownProps>((props) => {
             </div>
             <div class="p-2">
               <Link
-                href={R.PROFILE}
+                href={accountHref}
                 class="block rounded-lg px-4 py-3 text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors mb-1"
               >
-                {translateApp(lang, 'header.profile')}
+                {accountLabel}
               </Link>
               <button
                 onClick$={handleLogout}

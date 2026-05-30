@@ -16,6 +16,7 @@ import {
   useDevClientMarketingHydration,
   type PublicBrandingState,
 } from '~/lib/marketing/dev-client-marketing';
+import { mapPublicBrandingFromApi } from '~/lib/marketing/resolve-laravel-media-url';
 import { uiLangFromUrlPathname } from '~/lib/i18n/ui-locale-path';
 
 /**
@@ -73,23 +74,7 @@ export const usePublicBranding = routeLoader$(async ({ cookie, request }) => {
       forwardDocumentUrl: request.url,
     });
 
-    const name =
-      (typeof settings?.site_name === 'string' && settings.site_name) ||
-      (typeof settings?.name === 'string' && settings.name) ||
-      fallbackName;
-    const logo = (settings?.logo as string) || (settings?.site_logo as string) || '';
-    const logoDark =
-      (settings?.logoDark as string) ||
-      (settings?.logo_dark as string) ||
-      (settings?.dark_logo as string) ||
-      (settings?.site_logo_dark as string) ||
-      '';
-    const logoLight =
-      (settings?.logoLight as string) ||
-      (settings?.logo_light as string) ||
-      (settings?.light_logo as string) ||
-      (settings?.site_logo_light as string) ||
-      '';
+    const branding = mapPublicBrandingFromApi(settings, fallbackName);
 
     const site_languages = resolvePublicSiteLanguages(settings?.site_languages);
 
@@ -99,10 +84,10 @@ export const usePublicBranding = routeLoader$(async ({ cookie, request }) => {
         : undefined;
 
     return {
-      name,
-      logo,
-      logoDark,
-      logoLight,
+      name: branding.name,
+      logo: branding.logo,
+      logoDark: branding.logoDark,
+      logoLight: branding.logoLight,
       site_languages,
       features,
     };

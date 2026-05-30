@@ -1,6 +1,7 @@
 /**
  * Normalizes Laravel public `seo_meta` / admin `seoMetas[]` payload for marketing `<head>` and JSON-LD.
  */
+import type { JsonValue } from '../../types/content-seo';
 import type { MarketingPublicSeoMeta } from './types';
 
 /** Map snake_case API `seo_meta` object to camelCase snippet for frontend. */
@@ -12,8 +13,12 @@ export function mapMarketingSeoMetaFromApi(seoRaw: unknown): MarketingPublicSeoM
   const nonempty = (v: unknown): string | undefined =>
     typeof v === 'string' && v.trim() !== '' ? v : undefined;
 
-  const schema =
+  const schemaRaw =
     'schema' in o && o.schema !== null && o.schema !== undefined ? o.schema : undefined;
+  const schema =
+    schemaRaw !== undefined && typeof schemaRaw === 'object'
+      ? (schemaRaw as JsonValue)
+      : undefined;
 
   return {
     locale: nonempty(o.locale),

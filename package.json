@@ -43,7 +43,9 @@
     "fmt": "prettier --write .",
     "fmt.check": "prettier --check .",
     "lint": "eslint \"src/**/*.ts*\"",
-    "preview": "qwik build preview && vite preview --open",
+    "preview": "npm run build.client && npm run build.preview && vite preview --host --port 4173",
+    "preview:open": "npm run preview -- --open",
+    "preview:ci": "qwik build preview && vite preview --host --port 4173",
     "start": "vite --open --mode ssr",
     "qwik": "qwik"
   },

@@ -39,18 +39,43 @@ export default component$(() => {
     <div class="rounded-lg border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-800 dark:bg-gray-800">
       <h2 class="mb-4 text-lg font-semibold">{translateApp(lang, 'media.title')}</h2>
       <Form action={updateAction} class="space-y-4">
-        <div class="max-w-md">
-          <label class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-200">
-            {translateApp(lang, 'settings.uploadMaxSize')}
-          </label>
-          <input
-            name="upload_max_size"
-            type="number"
-            min="1"
-            max="1000"
-            value={settings.value.upload_max_size}
-            class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-primary-500 focus:outline-none focus:ring focus:ring-primary-200 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:focus:ring-primary-700/40"
-          />
+        <div class="max-w-md space-y-4">
+          <div>
+            <label class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-200">
+              {translateApp(lang, 'settings.uploadMaxSize')}
+            </label>
+            <input
+              name="upload_max_size"
+              type="number"
+              min="1"
+              max="1000"
+              value={settings.value.upload_max_size}
+              class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-primary-500 focus:outline-none focus:ring focus:ring-primary-200 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:focus:ring-primary-700/40"
+            />
+          </div>
+
+          <div class="flex items-start gap-3">
+            <input type="hidden" name="media_convert_to_webp" value="0" />
+            <input
+              id="media_convert_to_webp"
+              name="media_convert_to_webp"
+              type="checkbox"
+              value="1"
+              checked={settings.value.media_convert_to_webp}
+              class="mt-1 h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500 dark:border-gray-600 dark:bg-gray-900"
+            />
+            <div>
+              <label
+                for="media_convert_to_webp"
+                class="block text-sm font-medium text-gray-700 dark:text-gray-200"
+              >
+                {translateApp(lang, 'settings.mediaConvertToWebp')}
+              </label>
+              <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                {translateApp(lang, 'settings.mediaConvertToWebpHelp')}
+              </p>
+            </div>
+          </div>
         </div>
 
         <div class="flex justify-end">

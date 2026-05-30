@@ -3,7 +3,6 @@ import type { RequestHandler } from '@builder.io/qwik-city';
 import { routeLoader$ } from '@builder.io/qwik-city';
 import { auth } from '../lib/auth';
 import { getConfig } from '../lib/config';
-import { speakConfig } from '../lib/i18n/config';
 import { NavigationIndicator } from '../components/navigation-indicator/navigation-indicator';
 import { pathnameHasUiLocale, stripUiLocaleFromPathname, uiLangFromPreferredCookie, uiLangPrefixFromPathname, withUiLocale } from '../lib/i18n/ui-locale-path';
 import { getLocalizedRoutes } from '../lib/constants/routes';

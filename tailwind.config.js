@@ -120,6 +120,7 @@ export default {
       maxWidth: {
         '8xl': '88rem',
         '9xl': '96rem',
+        'logo': '120px',
       },
       animation: {
         'fade-in': 'fadeIn 0.5s ease-in-out',

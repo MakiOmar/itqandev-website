@@ -18,7 +18,7 @@ export type ContentSeoFieldsProps = {
  */
 export const ContentSeoFields = component$<ContentSeoFieldsProps>(({ lang, idPrefix, draft }) => {
   const settings = useContext(ProjectSettingsContext);
-  if (!isFeatureModuleEnabled(settings.features, 'seo')) {
+  if (!isFeatureModuleEnabled(settings.settings?.features, 'seo')) {
     return <></>;
   }
 

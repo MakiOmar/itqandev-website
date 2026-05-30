@@ -2,10 +2,10 @@
  * Resolve Laravel API root for marketingFetch and SSR loaders.
  *
  * Dev pattern (recommended):
- * - VITE_API_BASE_URL=/api  (browser + SSR via Vite proxy)
- * - VITE_API_PROXY_TARGET=http://your-vhost/credocode/backend/public  (vite.config proxy)
+ * - VITE_API_BASE_URL=/api  (browser via Vite proxy on the page origin)
+ * - VITE_API_PROXY_TARGET=http://your-vhost/...  (vite.config proxy + Node SSR direct)
  *
- * Optional: VITE_SSR_API_BASE_URL when Node must call Laravel directly (no Vite proxy).
+ * Optional: VITE_SSR_API_BASE_URL overrides SSR when Node must use a different API root.
  */
 
 function trimSlash(url: string): string {
@@ -62,21 +62,37 @@ function isViteDevServerOrigin(origin: string): boolean {
   }
 }
 
-/** Node SSR cannot fetch relative URLs; resolve /api to Laravel or the Vite dev proxy. */
+/** Node SSR cannot fetch relative URLs; resolve /api to an absolute origin. */
+function resolveDevSsrAbsoluteApiBase(normalizedPath: string): string {
+  const ssrOverride = envString('VITE_SSR_API_BASE_URL');
+  if (ssrOverride) {
+    return trimSlash(ssrOverride);
+  }
+  const proxyTarget = envString('VITE_API_PROXY_TARGET');
+  if (proxyTarget && /^https?:\/\//i.test(proxyTarget)) {
+    return trimSlash(`${trimSlash(proxyTarget)}${normalizedPath}`);
+  }
+  return trimSlash(`${trimSlash(devServerOrigin())}${normalizedPath}`);
+}
+
 function resolveSsrAbsoluteApiBase(normalizedPath: string): string {
   if (import.meta.env.DEV) {
-    const ssrOverride = envString('VITE_SSR_API_BASE_URL');
-    if (ssrOverride) {
-      return trimSlash(ssrOverride);
-    }
-    // Same path as the browser: Vite dev server proxies /api → WAMP (loopback/vhost direct fetch often times out).
-    return trimSlash(`${trimSlash(devServerOrigin())}${normalizedPath}`);
+    return resolveDevSsrAbsoluteApiBase(normalizedPath);
   }
   const proxyTarget = envString('VITE_API_PROXY_TARGET');
   if (proxyTarget) {
     return trimSlash(`${trimSlash(proxyTarget)}${normalizedPath}`);
   }
   return trimSlash(`http://127.0.0.1:5173${normalizedPath}`);
+}
+
+/** Resolved API root for dev SSR (for diagnostics — same logic Node uses at runtime). */
+export function resolveDevSsrMarketingApiBase(forwardDocumentUrl?: string | null): string {
+  void forwardDocumentUrl;
+  const explicit = envString('VITE_MARKETING_API_URL') || envString('VITE_API_BASE_URL') || '/api';
+  const apiPath = explicit.startsWith('/') ? explicit : '/api';
+  const normalizedPath = apiPath.startsWith('/api') ? apiPath : `/api${apiPath}`;
+  return resolveDevSsrAbsoluteApiBase(normalizedPath);
 }
 
 /**
@@ -105,6 +121,11 @@ export function resolveMarketingApiBaseUrl(forwardDocumentUrl?: string | null): 
 
   if (!isSsr && typeof window !== 'undefined') {
     return trimSlash(`${window.location.origin}${normalizedPath}`);
+  }
+
+  // Dev SSR must not call the Vite dev server (/api on :5173) — it stalls Node even when the browser proxy works.
+  if (isSsr && import.meta.env.DEV) {
+    return resolveDevSsrAbsoluteApiBase(normalizedPath);
   }
 
   if (forwardDocumentUrl) {
@@ -146,6 +167,10 @@ export function resolveApiBaseUrlForConfig(): string {
 
   const apiPath = explicit.startsWith('/') ? explicit : '/api';
   const normalizedPath = apiPath.startsWith('/api') ? apiPath : `/api${apiPath}`;
+
+  if (import.meta.env.DEV) {
+    return resolveDevSsrAbsoluteApiBase(normalizedPath);
+  }
 
   return resolveSsrAbsoluteApiBase(normalizedPath);
 }

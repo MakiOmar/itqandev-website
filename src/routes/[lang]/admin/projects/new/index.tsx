@@ -6,7 +6,7 @@ import { PageHeader } from '../../../../../components/common/PageHeader';
 import { TagInput } from '../../../../../components/common/TagInput';
 import { useTranslate, translateApp } from '../../../../../lib/i18n/useTranslate';
 import { useSwal } from '../../../../../lib/hooks/useSwal';
-import { getApiClient, extractCookieHeader } from '../../../../../lib/api/client';
+import { getApiClient } from '../../../../../lib/api/client';
 import { API_ENDPOINTS } from '../../../../../lib/api/endpoints';
 import {
   fetchTaxonomyListOptions,
@@ -21,7 +21,7 @@ import {
   FieldTranslationGlobe,
   TranslationsFormRoot,
 } from '../../../../../components/admin/PerFieldContentTranslations';
-import { RichTextEditorField } from '../../../../../components/admin/RichTextEditorField';
+import { LazyRichTextEditorField } from '../../../../../components/admin/LazyRichTextEditorField';
 import { initialTranslationsJson, parseTranslationsJson, secondaryLocalesForContent } from '../../../../../lib/content-translations';
 import {
   mergeSecondaryProjectTranslations,
@@ -30,7 +30,7 @@ import {
   shouldWritePrimaryColumns,
 } from '../../../../../lib/content-display-locale';
 import { useSiteLanguageConfig } from '../../layout';
-import type { ProjectCreateInput, Project, Category, Skill } from '../../../../../types';
+import type { ProjectCreateInput, Project } from '../../../../../types';
 import { useContentSlugAutosuggestDom } from '../../../../../lib/slug/content-slug-auto';
 import { AdminPublicPageLink } from '../../../../../components/admin/AdminPublicPageLink';
 
@@ -583,7 +583,7 @@ export default component$(() => {
                   >
                     {translateApp(lang, 'projects.description')}
                   </label>
-                  <RichTextEditorField
+                  <LazyRichTextEditorField
                     id="description"
                     name="description"
                   />

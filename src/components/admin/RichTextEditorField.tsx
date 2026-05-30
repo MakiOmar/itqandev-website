@@ -1,48 +1,21 @@
 import { $, component$, useSignal, useTask$, useVisibleTask$ } from '@builder.io/qwik';
 import type { QRL } from '@builder.io/qwik';
-import 'tinymce/skins/ui/oxide/skin.min.css';
-import 'tinymce/skins/ui/oxide/content.min.css';
+import { loadTinyMce, TINYMCE_PLUGIN_LIST } from '../../lib/admin/tinymce-loader';
 
-const tinymcePlugins = [
-  'lists',
-  'link',
-  'table',
-  'image',
-  'media',
-  'code',
-  'fullscreen',
-  'wordcount',
-];
+type TinyMceEditor = {
+  getContent: () => string;
+  setContent: (html: string) => void;
+  remove: () => void;
+};
 
 type TinyMceApi = {
-  get: (id: string) => any;
+  get: (id: string) => TinyMceEditor | undefined;
   init: (options: Record<string, unknown>) => Promise<unknown>;
 };
 
-const getGlobalTinyMce = (): TinyMceApi | undefined =>
-  (globalThis as unknown as { tinymce?: TinyMceApi }).tinymce;
-
-const loadTinyMce = async (): Promise<TinyMceApi | undefined> => {
-  await import('tinymce/tinymce');
-  const tinymce = getGlobalTinyMce();
-  if (!tinymce) {
-    return undefined;
-  }
-
-  await import('tinymce/icons/default');
-  await import('tinymce/themes/silver');
-  await import('tinymce/models/dom');
-  await import('tinymce/plugins/lists');
-  await import('tinymce/plugins/link');
-  await import('tinymce/plugins/table');
-  await import('tinymce/plugins/image');
-  await import('tinymce/plugins/media');
-  await import('tinymce/plugins/code');
-  await import('tinymce/plugins/fullscreen');
-  await import('tinymce/plugins/wordcount');
-
-  return tinymce;
-};
+function getGlobalTinyMce(): TinyMceApi | undefined {
+  return (globalThis as unknown as { tinymce?: TinyMceApi }).tinymce;
+}
 
 export const RichTextEditorField = component$<{
   id: string;
@@ -80,10 +53,6 @@ export const RichTextEditorField = component$<{
     let tinymce: TinyMceApi | undefined;
     try {
       tinymce = await loadTinyMce();
-      if (!tinymce) {
-        return;
-      }
-
       tinymce.get(editorId)?.remove();
 
       await tinymce.init({
@@ -95,7 +64,7 @@ export const RichTextEditorField = component$<{
         branding: false,
         promotion: false,
         height: 360,
-        plugins: tinymcePlugins.join(' '),
+        plugins: TINYMCE_PLUGIN_LIST,
         toolbar_mode: 'wrap',
         toolbar:
           'blocks | bold italic underline strikethrough | bullist numlist blockquote | alignleft aligncenter alignright | link unlink | table image media | code fullscreen',
@@ -104,7 +73,7 @@ export const RichTextEditorField = component$<{
         placeholder: props.placeholder,
         content_style:
           'body { font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; font-size: 14px; line-height: 1.7; }',
-        setup: (editor: any) => {
+        setup: (editor: TinyMceEditor & { on: (ev: string, fn: () => void) => void }) => {
           const syncFromEditor = () => {
             const hiddenInput = document.getElementById(hiddenInputId) as HTMLInputElement | null;
             if (hiddenInput) {
@@ -159,7 +128,9 @@ export const RichTextEditorField = component$<{
 
   return (
     <div class="overflow-hidden rounded-lg border border-gray-300 bg-white shadow-sm focus-within:border-primary-500 focus-within:ring focus-within:ring-primary-200 dark:border-gray-700 dark:bg-gray-900 dark:focus-within:ring-primary-700/40">
-      {props.name ? <input id={hiddenInputId} type="hidden" name={props.name} value={html.value} required={props.required} /> : null}
+      {props.name ? (
+        <input id={hiddenInputId} type="hidden" name={props.name} value={html.value} required={props.required} />
+      ) : null}
 
       <div class="flex flex-wrap items-center justify-end gap-2 border-b border-gray-200 bg-gray-50 px-3 py-2 dark:border-gray-700 dark:bg-gray-950/70">
         <div class="flex rounded-md border border-gray-200 bg-white p-0.5 text-xs font-medium dark:border-gray-700 dark:bg-gray-950">
