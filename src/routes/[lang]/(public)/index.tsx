@@ -4,7 +4,7 @@ import { Link, useLocation } from '@builder.io/qwik-city';
 import { routeLoader$ } from '@builder.io/qwik-city';
 import { getConfig } from '~/lib/config';
 import { isFeatureModuleEnabled } from '~/lib/api/project-settings';
-import { getFeaturedCaseStudies, getTestimonials, getSiteContent, getBlogPosts } from '~/lib/marketing/content-layer';
+import { getFeaturedCaseStudies, getTestimonials, getBlogPosts } from '~/lib/marketing/content-layer';
 import { uiLocaleFromPublicRoute } from '~/lib/i18n/ui-locale-path';
 import { marketingRoutes } from '~/lib/marketing/constants';
 import { uiLangFromUrlPathname } from '~/lib/i18n/ui-locale-path';
@@ -16,19 +16,18 @@ import { AnimatedReveal } from '~/components/marketing/AnimatedReveal';
 import { CaseStudyCard } from '~/components/marketing/CaseStudyCard';
 import { TestimonialGrid } from '~/components/marketing/TestimonialGrid';
 import { BlogCard } from '~/components/marketing/BlogCard';
-import { usePublicBranding } from './layout';
+import { usePublicShell } from './layout';
 
 export const useHomeData = routeLoader$(async ({ request, params }) => {
   const cookie = request.headers.get('cookie') || '';
   const uiLocale = uiLocaleFromPublicRoute(cookie, params.lang, request.url);
   const fetchContext = { forwardDocumentUrl: request.url };
-  const [caseStudies, testimonials, siteContent, blogPosts] = await Promise.all([
+  const [caseStudies, testimonials, blogPosts] = await Promise.all([
     getFeaturedCaseStudies(3, uiLocale, fetchContext),
     getTestimonials(uiLocale, fetchContext),
-    getSiteContent(uiLocale, fetchContext),
     getBlogPosts(),
   ]);
-  return { caseStudies, testimonials, siteContent, blogPosts: blogPosts.slice(0, 3) };
+  return { caseStudies, testimonials, blogPosts: blogPosts.slice(0, 3) };
 });
 
 export default component$(() => {
@@ -36,13 +35,15 @@ export default component$(() => {
   const uiLocale = uiLangFromUrlPathname(loc.url.pathname);
   const MR = marketingRoutes(uiLocale);
   const data = useHomeData();
-  const branding = usePublicBranding();
+  const shell = usePublicShell();
   const config = getConfig();
-  const { caseStudies, testimonials, siteContent, blogPosts } = data.value;
+  const { caseStudies, testimonials, blogPosts } = data.value;
+  const siteContent = shell.value.siteContent;
   const services = siteContent?.services ?? [];
   const techStack = siteContent?.techStack ?? [];
+  const branding = shell.value.branding;
   const showTestimonials =
-    isFeatureModuleEnabled(branding.value.features, 'testimonials') && testimonials.length > 0;
+    isFeatureModuleEnabled(branding.features, 'testimonials') && testimonials.length > 0;
 
   return (
     <>

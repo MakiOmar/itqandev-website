@@ -1,23 +1,15 @@
 import { component$ } from '@builder.io/qwik';
 import type { DocumentHead } from '@builder.io/qwik-city';
-import { routeLoader$ } from '@builder.io/qwik-city';
 import { getConfig } from '~/lib/config';
-import { getSiteContent } from '~/lib/marketing/content-layer';
-import { uiLocaleFromPublicRoute } from '~/lib/i18n/ui-locale-path';
+import { usePublicShell } from '../layout';
 import { Container } from '~/components/marketing/Container';
 import { Section } from '~/components/marketing/Section';
 import { AnimatedReveal } from '~/components/marketing/AnimatedReveal';
 import { AnimatedCounter } from '~/components/marketing/AnimatedCounter';
 
-export const useAboutData = routeLoader$(async ({ request, params }) => {
-  const cookie = request.headers.get('cookie') || '';
-  const uiLocale = uiLocaleFromPublicRoute(cookie, params.lang, request.url);
-  return getSiteContent(uiLocale, { forwardDocumentUrl: request.url });
-});
-
 export default component$(() => {
-  const data = useAboutData();
-  const about = data.value?.about;
+  const shell = usePublicShell();
+  const about = shell.value.siteContent?.about;
   const tagline = about?.tagline ?? 'We build digital products that scale.';
   const mission = about?.mission ?? '';
   const values = about?.values ?? [];

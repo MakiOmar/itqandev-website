@@ -1,21 +1,13 @@
 import { component$, useSignal, $ } from '@builder.io/qwik';
 import type { DocumentHead } from '@builder.io/qwik-city';
-import { routeLoader$ } from '@builder.io/qwik-city';
 import { getConfig } from '~/lib/config';
-import { getSiteContent } from '~/lib/marketing/content-layer';
-import { uiLocaleFromPublicRoute } from '~/lib/i18n/ui-locale-path';
+import { usePublicShell } from '../layout';
 import { MARKETING_ENDPOINTS } from '~/lib/marketing/endpoints';
 import { marketingPost } from '~/lib/marketing/api-client';
 import { Container } from '~/components/marketing/Container';
 import { Section } from '~/components/marketing/Section';
 import { AnimatedReveal } from '~/components/marketing/AnimatedReveal';
 import { Button } from '~/components/marketing/Button';
-
-export const useContactData = routeLoader$(async ({ request, params }) => {
-  const cookie = request.headers.get('cookie') || '';
-  const uiLocale = uiLocaleFromPublicRoute(cookie, params.lang, request.url);
-  return getSiteContent(uiLocale, { forwardDocumentUrl: request.url });
-});
 
 function getContactUrl(): string {
   const base = (import.meta.env?.VITE_API_BASE_URL as string) || '';
@@ -25,8 +17,8 @@ function getContactUrl(): string {
 }
 
 export default component$(() => {
-  const data = useContactData();
-  const contact = data.value?.contact;
+  const shell = usePublicShell();
+  const contact = shell.value.siteContent?.contact;
   const submitting = useSignal(false);
   const submitted = useSignal(false);
   const error = useSignal<string | null>(null);

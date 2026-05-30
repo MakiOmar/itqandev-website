@@ -1,32 +1,30 @@
 import { component$, Slot, useSignal } from '@builder.io/qwik';
 import { routeLoader$, useLocation } from '@builder.io/qwik-city';
-import { getSiteContent } from '~/lib/marketing/content-layer';
 import { uiLocaleFromPublicRoute } from '~/lib/i18n/ui-locale-path';
 import { Header } from '~/components/marketing/Header';
 import { Footer } from '~/components/marketing/Footer';
 import { ParticlesBackground } from '~/components/marketing/ParticlesBackground';
 import { auth } from '~/lib/auth';
-import { extractCookieHeader, getApiClient } from '~/lib/api/client';
-import { marketingGet } from '~/lib/marketing/api-client';
-import { MARKETING_ENDPOINTS } from '~/lib/marketing/endpoints';
-import { resolvePublicSiteLanguages } from '~/lib/i18n/public-site-languages';
-import type { PublicNavItem } from '~/lib/marketing/public-menu';
-import { getConfig } from '~/lib/config';
+import { useDevClientMarketingHydration } from '~/lib/marketing/dev-client-marketing';
 import {
-  useDevClientMarketingHydration,
+  fetchPublicShell,
   type PublicBrandingState,
-} from '~/lib/marketing/dev-client-marketing';
-import { mapPublicBrandingFromApi } from '~/lib/marketing/resolve-laravel-media-url';
+  type PublicShellState,
+} from '~/lib/marketing/public-shell';
 import { uiLangFromUrlPathname } from '~/lib/i18n/ui-locale-path';
+import type { PublicNavItem } from '~/lib/marketing/public-menu';
+import type { SiteContent } from '~/lib/marketing/types';
 
 /**
- * Load site content once for layout (footer contact/socials).
+ * One Laravel round-trip for branding, primary menu, and services merged into site content.
  */
-export const useSiteContent = routeLoader$(async ({ request, params }) => {
+export const usePublicShell = routeLoader$(async ({ request, params }) => {
   const cookie = request.headers.get('cookie') || '';
   const uiLocale = uiLocaleFromPublicRoute(cookie, params.lang, request.url);
-  return getSiteContent(uiLocale, { forwardDocumentUrl: request.url });
+  return fetchPublicShell(uiLocale, { forwardDocumentUrl: request.url });
 });
+
+export type { PublicBrandingState, PublicShellState, SiteContent };
 
 /**
  * Load authenticated user session for public header UI.
@@ -41,82 +39,17 @@ export const usePublicAuth = routeLoader$(async ({ cookie, request }) => {
 });
 
 /**
- * Load public branding from unauthenticated GET /api/public/site-meta (logos + site_languages).
- * Authenticated GET /settings is not available to guests, so the header used to hide the language switcher until login.
- */
-/**
- * Primary header menu from Laravel (`menus` table, slug `primary`). Empty → Header uses built-in links.
- */
-export const usePublicPrimaryMenu = routeLoader$(async ({ cookie, request, params }) => {
-  const cookieHeader = extractCookieHeader(cookie, request);
-  const apiClient = getApiClient(cookieHeader);
-  const cookieStr = request.headers.get('cookie') || '';
-  const uiLocale = uiLocaleFromPublicRoute(cookieStr, params.lang, request.url) ?? 'en';
-
-  try {
-    const path = `${MARKETING_ENDPOINTS.menuBySlug('primary')}?locale=${encodeURIComponent(uiLocale)}`;
-    const response = await apiClient.get<{ items?: PublicNavItem[] }>(path);
-    const payload = response?.data as { items?: PublicNavItem[] } | undefined;
-    const items = payload?.items;
-    return Array.isArray(items) ? items : [];
-  } catch {
-    return [] as PublicNavItem[];
-  }
-});
-
-export const usePublicBranding = routeLoader$(async ({ cookie, request }) => {
-  const fallbackName = getConfig().branding.name;
-  const cookieHeader = extractCookieHeader(cookie, request);
-
-  try {
-    const settings = await marketingGet<Record<string, unknown>>(MARKETING_ENDPOINTS.siteMeta, null, {
-      forwardCookies: cookieHeader,
-      forwardDocumentUrl: request.url,
-    });
-
-    const branding = mapPublicBrandingFromApi(settings, fallbackName);
-
-    const site_languages = resolvePublicSiteLanguages(settings?.site_languages);
-
-    const features =
-      settings?.features && typeof settings.features === 'object'
-        ? (settings.features as Record<string, boolean>)
-        : undefined;
-
-    return {
-      name: branding.name,
-      logo: branding.logo,
-      logoDark: branding.logoDark,
-      logoLight: branding.logoLight,
-      site_languages,
-      features,
-    };
-  } catch {
-    return {
-      name: fallbackName,
-      logo: '',
-      logoDark: '',
-      logoLight: '',
-      site_languages: resolvePublicSiteLanguages(null),
-      features: undefined as Record<string, boolean> | undefined,
-    };
-  }
-});
-
-/**
  * Public marketing layout: Header + main + Footer.
  */
 export default component$(() => {
   const loc = useLocation();
   const uiLocale = uiLangFromUrlPathname(loc.url.pathname);
-  const siteContent = useSiteContent();
+  const shellLoader = usePublicShell();
   const authSession = usePublicAuth();
-  const brandingLoader = usePublicBranding();
-  const branding = useSignal<PublicBrandingState>(brandingLoader.value);
-  const primaryMenuLoader = usePublicPrimaryMenu();
-  const primaryMenu = useSignal<PublicNavItem[]>(primaryMenuLoader.value);
+  const branding = useSignal<PublicBrandingState>(shellLoader.value.branding);
+  const primaryMenu = useSignal<PublicNavItem[]>(shellLoader.value.primaryMenu);
   useDevClientMarketingHydration(branding, primaryMenu, uiLocale);
-  const contact = siteContent.value?.contact;
+  const contact = shellLoader.value.siteContent?.contact;
 
   return (
     <div

@@ -27,6 +27,8 @@ export const MARKETING_ENDPOINTS = {
   services: '/public/services',
   /** GET branding + enabled UI locales for public header (no auth) */
   siteMeta: '/public/site-meta',
+  /** GET layout shell: site-meta + primary menu + services (preferred for SSR) */
+  shell: '/public/shell',
   /** GET resolved menu tree for header/footer (`?locale=` matches UI locale) */
   menuBySlug: (slug: string) => `/public/menus/${encodeURIComponent(slug)}`,
 } as const;
