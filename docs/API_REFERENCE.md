@@ -488,6 +488,40 @@ Also available: `GET /api/health` (minimal `{ "status": "ok" }`) and Laravel’s
 
 Returns branding and `site_languages` for the marketing shell (see `SettingsController::publicMeta`).
 
+### GET `/api/public/shell`
+
+**Preferred for marketing SSR** — one response for layout chrome instead of separate `site-meta`, `menus/primary`, and `services` calls.
+
+**Query:** `locale` — UI locale (e.g. `en`, `ar`). Sends `X-Content-Locale` when the Qwik client passes a presentation locale.
+
+**Success (200):**
+
+```json
+{
+  "success": true,
+  "data": {
+    "site_meta": {
+      "name": "…",
+      "site_languages": [],
+      "default_locale": "en",
+      "features": { "projects": true, "services": true }
+    },
+    "menu": {
+      "slug": "primary",
+      "locale": "en",
+      "items": []
+    },
+    "services": []
+  }
+}
+```
+
+- `site_meta` — same shape as `GET /api/public/site-meta` `data`.
+- `menu` — same shape as `GET /api/public/menus/primary` `data`.
+- `services` — published services array (empty when the `services` feature module is disabled). Same records as `GET /api/public/services`.
+
+Cached server-side (~300s). Legacy endpoints remain available for tools and gradual migration.
+
 ### Locale behavior for public listings
 
 When a locale is provided (for example via `X-Content-Locale` header or the menus `locale` query), listing responses are strict by locale:
