@@ -278,6 +278,18 @@ Configuration is merged in this order (highest to lowest priority):
 
 ---
 
+## Stylesheets (marketing vs admin)
+
+Public pages load **`src/styles/site.css`** from `root.tsx` (Tailwind scan: `(public)/`, marketing components only).
+
+Admin routes load **`src/styles/admin.css`** from `src/routes/[lang]/admin/layout.tsx` (scan: `admin/`, dashboard/admin components; includes `@tailwindcss/forms`).
+
+Shared tokens and reset live in **`src/styles/foundation.css`**. Critical first paint CSS remains inline in `RouterHead` (`lib/perf/critical-css.ts`).
+
+Configs: `tailwind.site.config.js`, `tailwind.admin.config.js` (theme in `tailwind.shared.js`).
+
+---
+
 ## Accessing Configuration
 
 ```typescript
