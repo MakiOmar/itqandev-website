@@ -1,15 +1,13 @@
 import { component$, useContext, useSignal, $ } from '@builder.io/qwik';
 import { useLocation, useNavigate } from '@builder.io/qwik-city';
 import { useSpeakLocale } from 'qwik-speak';
-import { speakConfig } from '~/lib/i18n/config';
 import { persistPreferredLocale } from '~/lib/i18n/preferred-locale-persist';
 import { getLanguageFlagEmoji } from '~/lib/i18n/language-flags';
 import { isUiLocaleRtl } from '~/lib/i18n/ui-locale-segments';
 import { beginLocaleTransition, LocaleTransitionContext } from '~/lib/i18n/locale-transition';
+import { publicHeaderLanguageOptions } from '~/lib/i18n/public-site-languages';
 import { swapUiLocaleInPathname } from '~/lib/i18n/ui-locale-path';
 import type { SiteLanguageRow } from '~/types/site-language';
-
-const supportedSpeakCodes = new Set(speakConfig.supportedLocales.map((l) => l.lang.toLowerCase()));
 
 /**
  * Language switcher driven by site settings (Settings → languages).
@@ -23,9 +21,7 @@ export const SiteLanguageSwitcher = component$<{ languages: SiteLanguageRow[] | 
   const localeTransition = useContext(LocaleTransitionContext);
   const isOpen = useSignal(false);
 
-  const options = (props.languages || []).filter(
-    (row) => row?.code && supportedSpeakCodes.has(String(row.code).toLowerCase()),
-  );
+  const options = publicHeaderLanguageOptions(props.languages);
 
   if (options.length < 2) {
     return null;

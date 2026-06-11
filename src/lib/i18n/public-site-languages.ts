@@ -28,13 +28,8 @@ export function speakUiLanguageRows(): SiteLanguageRow[] {
 
 const supportedSpeakCodes = new Set(speakConfig.supportedLocales.map((l) => l.lang.toLowerCase()));
 
-/**
- * Normalize API `site_languages` for the public header switcher.
- * When the API is unreachable (common on SSR) or returns nothing, fall back to qwik-speak locales
- * so guests see the same EN/AR switcher as authenticated users on the dashboard.
- */
-export function resolvePublicSiteLanguages(raw: unknown): SiteLanguageRow[] {
-  const fromApi = (Array.isArray(raw) ? raw : [])
+function normalizeConfiguredSiteLanguages(raw: unknown): SiteLanguageRow[] {
+  return (Array.isArray(raw) ? raw : [])
     .filter(
       (row): row is SiteLanguageRow =>
         !!row &&
@@ -48,15 +43,43 @@ export function resolvePublicSiteLanguages(raw: unknown): SiteLanguageRow[] {
       native_label: row.native_label ?? row.label ?? row.code,
       rtl: !!row.rtl,
     }));
+}
+
+/**
+ * Normalize API `site_languages` for content locale resolution and shell branding.
+ * When the API is unreachable (common on SSR) or returns nothing, fall back to qwik-speak locales.
+ */
+export function resolvePublicSiteLanguages(raw: unknown): SiteLanguageRow[] {
+  const fromApi = normalizeConfiguredSiteLanguages(raw);
 
   if (fromApi.length >= 2) {
     return fromApi;
   }
 
-  // Site intentionally configured with a single language — do not invent a second locale.
+  // Site intentionally configured with a single content language.
   if (fromApi.length === 1) {
     return fromApi;
   }
 
   return speakUiLanguageRows();
+}
+
+/**
+ * Options for the public header UI language switcher.
+ * Content may be single-locale (backend default is English-only) while qwik-speak still
+ * ships EN/AR UI bundles — keep the switcher visible whenever multiple UI locales exist.
+ */
+export function publicHeaderLanguageOptions(raw: unknown): SiteLanguageRow[] {
+  const configured = normalizeConfiguredSiteLanguages(raw);
+  const speakRows = speakUiLanguageRows();
+
+  if (configured.length >= 2) {
+    return configured;
+  }
+
+  if (speakRows.length >= 2) {
+    return speakRows;
+  }
+
+  return configured.length > 0 ? configured : speakRows;
 }

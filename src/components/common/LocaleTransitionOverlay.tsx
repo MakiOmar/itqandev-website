@@ -1,5 +1,6 @@
 import {
   component$,
+  Slot,
   useContextProvider,
   useSignal,
   useVisibleTask$,
@@ -19,7 +20,6 @@ const SWITCHING_MESSAGE: Record<string, string> = {
 
 const LocaleTransitionOverlayView = component$<{ state: LocaleTransitionState }>((props) => {
   const loc = useLocation();
-  const mounted = useSignal(false);
   const fadingOut = useSignal(false);
   const { state } = props;
 
@@ -30,12 +30,9 @@ const LocaleTransitionOverlayView = component$<{ state: LocaleTransitionState }>
     track(() => loc.url.pathname);
 
     if (!state.active.value) {
-      mounted.value = false;
       fadingOut.value = false;
       return;
     }
-
-    mounted.value = true;
 
     const startPath = state.startPath.value;
     const pathChanged = startPath != null && loc.url.pathname !== startPath;
@@ -46,7 +43,6 @@ const LocaleTransitionOverlayView = component$<{ state: LocaleTransitionState }>
     fadingOut.value = true;
     const timeoutId = window.setTimeout(() => {
       endLocaleTransition(state);
-      mounted.value = false;
       fadingOut.value = false;
     }, 300);
 
@@ -57,8 +53,9 @@ const LocaleTransitionOverlayView = component$<{ state: LocaleTransitionState }>
 
   const targetLang = (state.target.value ?? '').toLowerCase();
   const message = SWITCHING_MESSAGE[targetLang] ?? SWITCHING_MESSAGE.en;
+  const visible = state.active.value || fadingOut.value;
 
-  return mounted.value ? (
+  return visible ? (
     <div
       class={[
         'locale-transition-overlay',
@@ -92,5 +89,10 @@ export const LocaleTransitionProvider = component$(() => {
 
   useContextProvider(LocaleTransitionContext, state);
 
-  return <LocaleTransitionOverlayView state={state} />;
+  return (
+    <>
+      <LocaleTransitionOverlayView state={state} />
+      <Slot />
+    </>
+  );
 });

@@ -4,6 +4,7 @@
 
 import { useVisibleTask$, type Signal } from '@builder.io/qwik';
 import type { PublicNavItem } from './public-menu';
+import { publicHeaderLanguageOptions } from '../i18n/public-site-languages';
 import {
   getBlogPosts,
   getFeaturedCaseStudies,
@@ -27,7 +28,10 @@ export function useDevClientMarketingHydration(
     const shell = await fetchPublicShell(uiLocale, {
       forwardDocumentUrl: typeof window !== 'undefined' ? window.location.href : null,
     });
-    branding.value = shell.branding;
+    branding.value = {
+      ...shell.branding,
+      site_languages: publicHeaderLanguageOptions(shell.branding.site_languages),
+    };
     primaryMenu.value = shell.primaryMenu;
   });
 }
