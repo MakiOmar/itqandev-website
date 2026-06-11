@@ -6,24 +6,18 @@ import { DarkModeToggle } from "./components/common/DarkModeToggle";
 import { speakConfig } from "./lib/i18n/config";
 import { translationFn } from "./lib/i18n/translation-fn";
 import { isUiLocaleRtl } from "./lib/i18n/ui-locale-segments";
-import { stripUiLocaleFromPathname, uiLangPrefixFromPathname } from "./lib/i18n/ui-locale-path";
+import { uiLangPrefixFromPathname } from "./lib/i18n/ui-locale-path";
 import { persistPreferredLocale } from "./lib/i18n/preferred-locale-persist";
+import {
+  isPublicMarketingPath,
+  shouldDisableGoogleFontsForPath,
+} from "./lib/perf/google-fonts-policy";
 
 /** Body lang/dir signals updated from inside QwikCityProvider (useLocation is invalid on the root component). */
 const rootBodyLocaleContext = createContextId<{
   bodyLang: ReturnType<typeof useSignal<string>>;
   bodyDir: ReturnType<typeof useSignal<"rtl" | "ltr">>;
 }>("root-body-locale");
-
-/** Paths that are public marketing pages (body should stay visible, do not strip data-render-complete). */
-const PUBLIC_PATH_PREFIXES = ["/", "/services", "/work", "/about", "/pricing", "/contact", "/blog"];
-
-function isPublicRoute(pathname: string): boolean {
-  const normalized = pathname.replace(/\/+$/, "") || "/";
-  const logical = stripUiLocaleFromPathname(normalized).replace(/\/+$/, "") || "/";
-  if (logical === "/" || logical === "") return true;
-  return PUBLIC_PATH_PREFIXES.some((p) => p !== "/" && logical.startsWith(p));
-}
 
 /**
  * Runs inside QwikCityProvider; keeps data-render-complete in sync so routes
@@ -41,7 +35,7 @@ const BodyRenderCompleteGuard = component$(() => {
 
     // Keep public pages visible and ensure admin/login/dashboard routes are never stuck hidden.
     // Some non-public transitions can drop the attribute; explicitly restore it.
-    if (!body.hasAttribute("data-render-complete") || !isPublicRoute(pathname)) {
+    if (!body.hasAttribute("data-render-complete") || !isPublicMarketingPath(pathname)) {
       body.setAttribute("data-render-complete", "true");
     }
   });
@@ -60,9 +54,22 @@ function normalizeLocale(lang: string | undefined): string {
   return supported.has(code) ? code : speakConfig.defaultLocale.lang;
 }
 
-function ensureLocaleFont(locale: string) {
+function ensureLocaleFont(locale: string, pathname: string) {
   if (typeof document === "undefined") {
     return;
+  }
+
+  // VITE_DISABLE_GOOGLE_FONTS applies to public marketing pages only (not admin).
+  if (shouldDisableGoogleFontsForPath(pathname)) {
+    return;
+  }
+  // Stop trying after a previous failure to avoid console spam.
+  try {
+    if (sessionStorage.getItem("external-fonts-disabled") === "1") {
+      return;
+    }
+  } catch {
+    // ignore
   }
 
   const href = isUiLocaleRtl(locale) ? CAIRO_FONT_HREF : INTER_FONT_HREF;
@@ -86,6 +93,18 @@ function ensureLocaleFont(locale: string) {
   activeLink.onload = () => {
     activeLink.media = "all";
   };
+  activeLink.onerror = () => {
+    try {
+      sessionStorage.setItem("external-fonts-disabled", "1");
+    } catch {
+      // ignore
+    }
+    try {
+      activeLink.remove();
+    } catch {
+      // ignore
+    }
+  };
 
   if (!activeLink.parentNode) {
     document.head.appendChild(activeLink);
@@ -100,7 +119,7 @@ const LocaleFontSync = component$(() => {
   useVisibleTask$(({ track }) => {
     track(() => locale.lang);
     track(() => location.url.href);
-    ensureLocaleFont(normalizeLocale(locale.lang));
+    ensureLocaleFont(normalizeLocale(locale.lang), location.url.pathname);
   });
 
   return null;
@@ -128,7 +147,7 @@ const UrlLocaleBodySync = component$(() => {
       bodyLang.value = urlLang;
       bodyDir.value = isRtl ? "rtl" : "ltr";
       persistPreferredLocale(urlLang, isRtl);
-      ensureLocaleFont(normalizeLocale(urlLang));
+      ensureLocaleFont(normalizeLocale(urlLang), location.url.pathname);
       if (typeof document !== "undefined") {
         if (document.body) {
           document.body.setAttribute("lang", urlLang);
@@ -150,7 +169,7 @@ const UrlLocaleBodySync = component$(() => {
         bodyLang.value = normalized;
         bodyDir.value = isRtl ? "rtl" : "ltr";
       }
-      ensureLocaleFont(normalizeLocale(savedLocale ?? locale.lang));
+      ensureLocaleFont(normalizeLocale(savedLocale ?? locale.lang), location.url.pathname);
     }
 
     const currentLang = normalizeLocale(locale.lang);
@@ -164,7 +183,7 @@ const UrlLocaleBodySync = component$(() => {
       document.documentElement.setAttribute("lang", currentLang);
       document.documentElement.setAttribute("dir", bodyDir.value);
     }
-    ensureLocaleFont(currentLang);
+    ensureLocaleFont(currentLang, location.url.pathname);
   });
 
   return null;

@@ -1,5 +1,6 @@
 import { getConfig } from '~/lib/config';
 import { laravelPublicOrigin } from '~/lib/marketing/resolve-laravel-media-url';
+import { shouldDisableGoogleFontsForPath } from '~/lib/perf/google-fonts-policy';
 
 export type ResourceHintLink = {
   href: string;
@@ -29,9 +30,14 @@ function envOrigin(key: string): string | null {
  *
  * @param documentOrigin - Current page origin; skips preconnect to self (same-origin /api).
  */
-export function collectPreconnectHints(documentOrigin?: string | null): ResourceHintLink[] {
+export function collectPreconnectHints(
+  documentOrigin?: string | null,
+  pathname?: string | null,
+): ResourceHintLink[] {
   const seen = new Set<string>();
   const hints: ResourceHintLink[] = [];
+  const disableGoogleFonts =
+    pathname != null ? shouldDisableGoogleFontsForPath(pathname) : false;
 
   const add = (href: string, crossOrigin = false) => {
     if (!href) {
@@ -49,8 +55,10 @@ export function collectPreconnectHints(documentOrigin?: string | null): Resource
   };
 
   // Google Fonts (CSS on googleapis.com, files on gstatic.com)
-  add('https://fonts.googleapis.com');
-  add('https://fonts.gstatic.com', true);
+  if (!disableGoogleFonts) {
+    add('https://fonts.googleapis.com');
+    add('https://fonts.gstatic.com', true);
+  }
 
   const apiOrigin = tryOrigin(getConfig().api.baseUrl?.trim());
   if (apiOrigin) {
@@ -62,7 +70,7 @@ export function collectPreconnectHints(documentOrigin?: string | null): Resource
     add(laravel, true);
   }
 
-  for (const key of ['VITE_API_PROXY_TARGET', 'VITE_SITE_URL', 'VITE_SSR_API_BASE_URL'] as const) {
+  for (const key of ['VITE_API_PROXY_TARGET', 'VITE_SSR_API_BASE_URL'] as const) {
     const origin = envOrigin(key);
     if (origin) {
       add(origin, true);

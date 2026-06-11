@@ -55,7 +55,7 @@ If the HTML URL and API URL differ by **hostname or scheme** (**localhost** vs a
 
 **Dev server:** Qwik **`vite.config.ts`** sets **`server.host: true`** so you can open **`http://your-vhost.example:5173`** (hosts-file name) instead of loopback-only.
 
-**`www` vs apex:** if the hostname in the browser does not match an entry in **`SANCTUM_STATEFUL_DOMAINS`**, set **`VITE_SITE_URL`** to an origin **that is** listed, or add apex + **`www`** (or a pattern Laravel **`Str::is`** accepts, e.g. **`*.example.com`**) there. **`VITE_SITE_URL`** controls optional SSR **`Origin` / `Referer`** normalization while preserving the path from `request.url`.
+**`www` vs apex:** if the hostname in the browser does not match an entry in **`SANCTUM_STATEFUL_DOMAINS`**, set **`VITE_API_PROXY_TARGET`** to an origin **that is** listed (hostname is used for canonical/OG and optional SSR **`Origin` / `Referer`** normalization while preserving the path from `request.url`), or add apex + **`www`** (or a pattern Laravel **`Str::is`** accepts, e.g. **`*.example.com`**) to **`SANCTUM_STATEFUL_DOMAINS`**.
 
 **Marketing API behavior in dev:** use `VITE_API_PROXY_TARGET` as the single proxy origin for `/api` and `/sanctum`. The **browser** uses the page origin + `/api` (Vite proxy). **Node SSR** calls `VITE_API_PROXY_TARGET` + `/api` directly (not the Vite dev server — fetching `:5173/api` from SSR stalls). Optional `VITE_SSR_API_BASE_URL` overrides the SSR base. Diagnostics: `/{lang}/api-check` and `GET /api/public/ping` (`server_ms`). `VITE_API_PROXY_HOST` and `VITE_DEV_SSR_SKIP_MARKETING_API` are not used.
 
@@ -294,7 +294,9 @@ Production static deploys use **`public/.htaccess`** (copied into `dist/` on bui
 
 ### Resource hints (`preconnect`)
 
-`RouterHead` emits `<link rel="preconnect">` from **`src/lib/perf/resource-hints.ts`**: **Google Fonts** (`fonts.googleapis.com`, `fonts.gstatic.com`), absolute **`VITE_API_BASE_URL`**, and **`VITE_API_PROXY_TARGET` / `VITE_SITE_URL`** (Laravel API + `/storage` media when the Qwik dev/preview origin differs). Font CSS still loads non-blocking via the inline bootstrap in `router-head.tsx` (`media=print` → `all`).
+`RouterHead` emits `<link rel="preconnect">` from **`src/lib/perf/resource-hints.ts`**: **Google Fonts** (`fonts.googleapis.com`, `fonts.gstatic.com`), absolute **`VITE_API_BASE_URL`**, and **`VITE_API_PROXY_TARGET`** (Laravel API + `/storage` media when the Qwik dev/preview origin differs). Font CSS still loads non-blocking via the inline bootstrap in `router-head.tsx` (`media=print` → `all`).
+
+Set **`VITE_DISABLE_GOOGLE_FONTS=true`** to skip Google Fonts preconnect and stylesheet injection on **public marketing routes only** (`/`, `/services`, `/work`, `/about`, `/pricing`, `/contact`, `/blog`). Admin/dashboard routes (`/…/admin/…`) always load fonts regardless of this flag.
 
 ---
 
