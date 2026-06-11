@@ -3,6 +3,7 @@ import type { DocumentHead } from '@builder.io/qwik-city';
 import { routeLoader$ } from '@builder.io/qwik-city';
 import { Link, useLocation } from '@builder.io/qwik-city';
 import { getConfig } from '~/lib/config';
+import { buildCanonicalHref, getPublicSiteBaseUrl } from '~/lib/seo/canonical-url';
 import { getBlogPostBySlug } from '~/lib/marketing/content-layer';
 import { marketingRoutes } from '~/lib/marketing/constants';
 import { uiLangFromUrlPathname } from '~/lib/i18n/ui-locale-path';
@@ -25,7 +26,7 @@ export default component$(() => {
   const loc = useLocation();
   const MR = marketingRoutes(uiLangFromUrlPathname(loc.url.pathname));
   const post = useBlogPost().value;
-  const baseUrl = (import.meta.env?.VITE_SITE_URL as string) || '';
+  const baseUrl = getPublicSiteBaseUrl();
   const dateStr = post.date ? new Date(post.date).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) : '';
 
   return (
@@ -112,9 +113,9 @@ export default component$(() => {
   );
 });
 
-export const head: DocumentHead = ({ resolveValue }) => {
+export const head: DocumentHead = ({ resolveValue, url }) => {
   const config = getConfig();
-  const baseUrl = (import.meta.env?.VITE_SITE_URL as string) || 'https://example.com';
+  const canonical = buildCanonicalHref(url.pathname, url.origin);
   try {
     const post = resolveValue(useBlogPost);
     const title = post.seoMeta?.title || post.title;
@@ -126,9 +127,9 @@ export const head: DocumentHead = ({ resolveValue }) => {
         { property: 'og:title', content: title },
         { property: 'og:description', content: description },
         { property: 'og:type', content: 'article' },
-        { property: 'og:url', content: `${baseUrl}/blog/${post.slug}` },
+        { property: 'og:url', content: canonical },
       ],
-      links: [{ rel: 'canonical', href: `${baseUrl}/blog/${post.slug}` }],
+      links: [{ rel: 'canonical', href: canonical }],
     };
   } catch {
     return {

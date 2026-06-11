@@ -18,7 +18,7 @@ export const ThemeToggle = component$(() => {
     <button
       type="button"
       onClick$={toggleTheme}
-      class="rounded-lg p-2 text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500"
+      class="rounded-lg p-2 light:text-slate-700 light:hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500"
       aria-label="Toggle dark mode"
     >
       <span class="sr-only">Toggle dark mode</span>

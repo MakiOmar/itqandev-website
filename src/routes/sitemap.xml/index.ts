@@ -1,8 +1,9 @@
 import type { RequestHandler } from '@builder.io/qwik-city';
 import { getCaseStudies } from '../../lib/marketing/content-layer';
 import { getBlogPosts } from '../../lib/marketing/content-layer';
+import { getPublicSiteBaseUrl } from '../../lib/seo/canonical-url';
 
-const baseUrl = (import.meta.env?.VITE_SITE_URL as string) || 'https://example.com';
+const baseUrl = getPublicSiteBaseUrl();
 
 function escapeXml(s: string): string {
   return s

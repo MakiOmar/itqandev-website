@@ -2,6 +2,7 @@ import { component$, useComputed$, useSignal, useVisibleTask$ } from '@builder.i
 import type { DocumentHead } from '@builder.io/qwik-city';
 import { routeLoader$ } from '@builder.io/qwik-city';
 import { getConfig } from '~/lib/config';
+import { getPublicSiteBaseUrl } from '~/lib/seo/canonical-url';
 import { marketingApiPageOriginMismatch } from '~/lib/marketing/api-client';
 import { getCaseStudyBySlug } from '~/lib/marketing/content-layer';
 import type { CaseStudy as MarketingCaseStudy } from '~/lib/marketing/types';
@@ -165,7 +166,7 @@ export default component$(() => {
 
   const caseStudy = state.study;
 
-  const baseUrl = (import.meta.env?.VITE_SITE_URL as string) || '';
+  const baseUrl = getPublicSiteBaseUrl();
 
   return (
     <>
@@ -299,9 +300,9 @@ export default component$(() => {
   );
 });
 
-export const head: DocumentHead = ({ resolveValue }) => {
+export const head: DocumentHead = ({ resolveValue, url }) => {
   const config = getConfig();
-  const baseUrl = (import.meta.env?.VITE_SITE_URL as string) || 'https://example.com';
+  const baseUrl = getPublicSiteBaseUrl(url.origin).replace(/\/$/, '');
   try {
     const caseStudyResolved = resolveValue(useCaseStudy) as MarketingCaseStudy | DeferredCrossOriginPayload;
     if (isDeferredCrossOriginPayload(caseStudyResolved)) {

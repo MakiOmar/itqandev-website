@@ -1,6 +1,7 @@
 import { component$, useSignal, $ } from '@builder.io/qwik';
 import type { DocumentHead } from '@builder.io/qwik-city';
 import { getConfig } from '~/lib/config';
+import { buildCanonicalHref } from '~/lib/seo/canonical-url';
 import { usePublicShell } from '../layout';
 import { MARKETING_ENDPOINTS } from '~/lib/marketing/endpoints';
 import { marketingPost } from '~/lib/marketing/api-client';
@@ -206,16 +207,16 @@ export default component$(() => {
   );
 });
 
-export const head: DocumentHead = () => {
+export const head: DocumentHead = ({ url }) => {
   const config = getConfig();
-  const baseUrl = (import.meta.env?.VITE_SITE_URL as string) || 'https://example.com';
+  const canonical = buildCanonicalHref(url.pathname, url.origin);
   return {
     title: `Contact | ${config.branding.name}`,
     meta: [
       { name: 'description', content: 'Get in touch for your next web or mobile project.' },
       { property: 'og:title', content: `Contact | ${config.branding.name}` },
-      { property: 'og:url', content: `${baseUrl}/contact` },
+      { property: 'og:url', content: canonical },
     ],
-    links: [{ rel: 'canonical', href: `${baseUrl}/contact` }],
+    links: [{ rel: 'canonical', href: canonical }],
   };
 };

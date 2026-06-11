@@ -5,6 +5,7 @@
  */
 
 import { getConfig } from '~/lib/config';
+import { parsePublicSiteOriginFromEnv } from '~/lib/seo/canonical-url';
 import { resolveMarketingApiBaseUrl } from './resolve-api-base';
 import { ensureSsrIpv4First } from './ssr-dns';
 import { shouldSkipSsrMarketingApi } from './ssr-api-reachability';
@@ -33,7 +34,7 @@ function tryParseMarketingApiRoot(): URL | null {
 
 /**
  * Sanctum matches Referer/Origin against SANCTUM_STATEFUL_DOMAINS.
- * - Prefer **VITE_SITE_URL** when set (apex vs `www` when you list only one hostname).
+ * - Prefer **`VITE_API_PROXY_TARGET`** origin when set (apex vs `www` when you list only one hostname).
  * - When the HTML host equals the configured API hostname, use **`doc.origin`** so Vite (**`:5173`**) stays
  *   aligned with Laravel’s default port — **SANCTUM_STATEFUL_DOMAINS** must include that port (see docs).
  */
@@ -41,10 +42,9 @@ function sanctumSsrOriginAndReferer(forwardDocumentUrl: string): { origin: strin
   try {
     const doc = new URL(forwardDocumentUrl);
     const pathPart = `${doc.pathname}${doc.search}`;
-    const envSiteRaw = String(import.meta.env?.VITE_SITE_URL ?? '').trim().replace(/\/$/, '');
-    if (envSiteRaw) {
-      const site = new URL(envSiteRaw.startsWith('http') ? envSiteRaw : `https://${envSiteRaw}`);
-      return { origin: site.origin, referer: `${site.origin}${pathPart}` };
+    const envOrigin = parsePublicSiteOriginFromEnv();
+    if (envOrigin) {
+      return { origin: envOrigin, referer: `${envOrigin}${pathPart}` };
     }
     const api = tryParseMarketingApiRoot();
     if (api && doc.hostname === api.hostname) {

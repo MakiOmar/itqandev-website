@@ -3,6 +3,7 @@ import { Link, useLocation } from '@builder.io/qwik-city';
 import { getConfig } from '~/lib/config';
 import { marketingRoutes } from '~/lib/marketing/constants';
 import { uiLangFromUrlPathname } from '~/lib/i18n/ui-locale-path';
+import { Button } from '~/components/marketing/Button';
 import { Container } from '~/components/marketing/Container';
 import { resolveLaravelMediaUrl } from '~/lib/marketing/resolve-laravel-media-url';
 
@@ -62,12 +63,12 @@ export const Footer = component$<FooterProps>(({ contact, branding }) => {
   });
 
   return (
-    <footer class="border-t border-slate-200 bg-slate-50/55 backdrop-blur-md dark:border-slate-700 dark:bg-slate-900/50 dark:backdrop-blur-none" role="contentinfo">
+    <footer class="border-t border-slate-200 bg-slate-50/55 text-slate-900 backdrop-blur-md light:border-slate-200 light:bg-slate-50/55 light:text-slate-900 dark:border-slate-700 dark:bg-slate-900/50 dark:text-slate-100 dark:backdrop-blur-none" role="contentinfo">
       <Container class="py-12 md:py-16">
         <div class="grid gap-8 md:grid-cols-2 lg:grid-cols-4">
           {/* Brand */}
           <div>
-            <Link href={MR.home} class="inline-flex items-center gap-2 text-lg font-bold text-slate-900 dark:text-white">
+            <Link href={MR.home} class="inline-flex items-center gap-2 text-lg font-bold light:text-slate-900 dark:text-white">
               {activeLogo && (
                 <img
                   src={activeLogo}
@@ -88,13 +89,13 @@ export const Footer = component$<FooterProps>(({ contact, branding }) => {
 
           {/* Links */}
           <div>
-            <h3 class="text-sm font-semibold uppercase tracking-wider text-slate-900 dark:text-white">Quick links</h3>
+            <h3 class="text-sm font-semibold uppercase tracking-wider light:text-slate-900 dark:text-white">Quick links</h3>
             <ul class="mt-4 space-y-2" role="list">
               {footerLinks.map((item) => (
                 <li key={item.href}>
                   <Link
                     href={item.href}
-                    class="text-sm text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"
+                    class="text-sm light:text-slate-700 light:hover:text-slate-900 dark:text-slate-300 dark:hover:text-white"
                   >
                     {item.label}
                   </Link>
@@ -106,13 +107,13 @@ export const Footer = component$<FooterProps>(({ contact, branding }) => {
           {/* Contact */}
           {(contact?.email || (contact?.socials && contact.socials.length > 0)) && (
             <div>
-              <h3 class="text-sm font-semibold uppercase tracking-wider text-slate-900 dark:text-white">Contact</h3>
+              <h3 class="text-sm font-semibold uppercase tracking-wider light:text-slate-900 dark:text-white">Contact</h3>
               <ul class="mt-4 space-y-2" role="list">
                 {contact.email && (
                   <li>
                     <a
                       href={`mailto:${contact.email}`}
-                      class="text-sm text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"
+                      class="text-sm light:text-slate-700 light:hover:text-slate-900 dark:text-slate-300 dark:hover:text-white"
                     >
                       {contact.email}
                     </a>
@@ -124,7 +125,7 @@ export const Footer = component$<FooterProps>(({ contact, branding }) => {
                       href={s.url}
                       target="_blank"
                       rel="noopener noreferrer"
-                      class="text-sm text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"
+                      class="text-sm light:text-slate-700 light:hover:text-slate-900 dark:text-slate-300 dark:hover:text-white"
                     >
                       {s.name}
                     </a>
@@ -136,12 +137,9 @@ export const Footer = component$<FooterProps>(({ contact, branding }) => {
 
           {/* CTA */}
           <div>
-            <Link
-              href={MR.contact}
-              class="inline-flex items-center rounded-lg bg-primary-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-primary-700 dark:bg-primary-500 dark:hover:bg-primary-600"
-            >
+            <Button href={MR.contact} variant="primary">
               Get in touch
-            </Link>
+            </Button>
           </div>
         </div>
 

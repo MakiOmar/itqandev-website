@@ -29,7 +29,26 @@ img,picture{max-width:100%;display:block;height:auto}
 [data-public-page] header[role="banner"]{
   position:sticky;top:0;z-index:40;width:100%;
   border-bottom:1px solid rgb(226 232 240 / .8);
-  background:rgb(255 255 255 / .8);backdrop-filter:blur(12px)}
+  background:rgb(255 255 255 / .8);backdrop-filter:blur(12px);color:#0f172a}
+html.light [data-public-page] header[role="banner"],
+html:not(.dark) [data-public-page] header[role="banner"]{
+  color:#0f172a}
+html.light [data-public-page] header[role="banner"] a:not([class*="bg-primary"]),
+html.light [data-public-page] header[role="banner"] button:not([class*="bg-primary"]),
+html:not(.dark) [data-public-page] header[role="banner"] a:not([class*="bg-primary"]),
+html:not(.dark) [data-public-page] header[role="banner"] button:not([class*="bg-primary"]){
+  color:#334155}
+html.light [data-public-page] header[role="banner"] a[class*="bg-primary-100"],
+html.light [data-public-page] header[role="banner"] button[class*="bg-primary-100"],
+html:not(.dark) [data-public-page] header[role="banner"] a[class*="bg-primary-100"],
+html:not(.dark) [data-public-page] header[role="banner"] button[class*="bg-primary-100"]{
+  color:#0c4a6e}
 .dark [data-public-page] header[role="banner"]{
-  border-bottom-color:rgb(51 65 85 / .8);background:rgb(15 23 42 / .8)}
+  border-bottom-color:rgb(51 65 85 / .8);background:rgb(15 23 42 / .8);color:#f1f5f9}
+.dark [data-public-page] header[role="banner"] a:not([class*="bg-primary"]),
+.dark [data-public-page] header[role="banner"] button:not([class*="bg-primary"]){
+  color:#e2e8f0}
+.dark [data-public-page] header[role="banner"] a[class*="bg-primary-100"],
+.dark [data-public-page] header[role="banner"] button[class*="bg-primary-100"]{
+  color:#0c4a6e}
 `.trim();

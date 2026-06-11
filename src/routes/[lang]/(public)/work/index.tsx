@@ -2,6 +2,7 @@ import { component$, useSignal, useVisibleTask$ } from '@builder.io/qwik';
 import type { DocumentHead } from '@builder.io/qwik-city';
 import { routeLoader$, useLocation } from '@builder.io/qwik-city';
 import { getConfig } from '~/lib/config';
+import { buildCanonicalHref, getPublicSiteBaseUrl } from '~/lib/seo/canonical-url';
 import { getCaseStudies } from '~/lib/marketing/content-layer';
 import { uiLangFromUrlPathname, uiLocaleFromPublicRoute } from '~/lib/i18n/ui-locale-path';
 import { Container } from '~/components/marketing/Container';
@@ -82,7 +83,7 @@ export default component$(() => {
           '@context': 'https://schema.org',
           '@type': 'BreadcrumbList',
           itemListElement: [
-            { '@type': 'ListItem', position: 1, name: 'Home', item: (import.meta.env?.VITE_SITE_URL as string) || '' },
+            { '@type': 'ListItem', position: 1, name: 'Home', item: getPublicSiteBaseUrl() },
             { '@type': 'ListItem', position: 2, name: 'Work' },
           ],
         })}
@@ -91,16 +92,16 @@ export default component$(() => {
   );
 });
 
-export const head: DocumentHead = () => {
+export const head: DocumentHead = ({ url }) => {
   const config = getConfig();
-  const baseUrl = (import.meta.env?.VITE_SITE_URL as string) || 'https://example.com';
+  const canonical = buildCanonicalHref(url.pathname, url.origin);
   return {
     title: `Work | ${config.branding.name}`,
     meta: [
       { name: 'description', content: 'Portfolio and case studies of our web and mobile projects.' },
       { property: 'og:title', content: `Work | ${config.branding.name}` },
-      { property: 'og:url', content: `${baseUrl}/work` },
+      { property: 'og:url', content: canonical },
     ],
-    links: [{ rel: 'canonical', href: `${baseUrl}/work` }],
+    links: [{ rel: 'canonical', href: canonical }],
   };
 };

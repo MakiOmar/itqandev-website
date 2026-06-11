@@ -1,10 +1,11 @@
-import { component$, useSignal, $ } from '@builder.io/qwik';
+import { component$, useContext, useSignal, $ } from '@builder.io/qwik';
 import { useLocation, useNavigate } from '@builder.io/qwik-city';
 import { useSpeakLocale } from 'qwik-speak';
 import { speakConfig } from '~/lib/i18n/config';
 import { persistPreferredLocale } from '~/lib/i18n/preferred-locale-persist';
 import { getLanguageFlagEmoji } from '~/lib/i18n/language-flags';
 import { isUiLocaleRtl } from '~/lib/i18n/ui-locale-segments';
+import { beginLocaleTransition, LocaleTransitionContext } from '~/lib/i18n/locale-transition';
 import { swapUiLocaleInPathname } from '~/lib/i18n/ui-locale-path';
 import type { SiteLanguageRow } from '~/types/site-language';
 
@@ -19,6 +20,7 @@ export const SiteLanguageSwitcher = component$<{ languages: SiteLanguageRow[] | 
   const locale = useSpeakLocale();
   const loc = useLocation();
   const nav = useNavigate();
+  const localeTransition = useContext(LocaleTransitionContext);
   const isOpen = useSignal(false);
 
   const options = (props.languages || []).filter(
@@ -41,6 +43,12 @@ export const SiteLanguageSwitcher = component$<{ languages: SiteLanguageRow[] | 
   });
 
   const changeLanguage = $((nextLang: string, rtl: boolean) => {
+    if (nextLang.toLowerCase() === locale.lang.toLowerCase()) {
+      isOpen.value = false;
+      return;
+    }
+
+    beginLocaleTransition(localeTransition, nextLang, loc.url.pathname);
     persistPreferredLocale(nextLang, rtl);
     locale.lang = nextLang;
     isOpen.value = false;
@@ -55,7 +63,7 @@ export const SiteLanguageSwitcher = component$<{ languages: SiteLanguageRow[] | 
       <button
         onClick$={toggleDropdown}
         type="button"
-        class="flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
+        class="flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium light:text-slate-900 light:hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800 transition-colors"
         aria-label="Change language"
       >
         <span class="text-lg leading-none" aria-hidden="true">
@@ -78,7 +86,7 @@ export const SiteLanguageSwitcher = component$<{ languages: SiteLanguageRow[] | 
         <>
           <div class="fixed inset-0 z-40" onClick$={closeDropdown} />
           <div
-            class={`absolute z-50 mt-2 w-52 overflow-hidden rounded-lg border border-slate-200 bg-white shadow-lg dark:border-slate-700 dark:bg-slate-900 ${
+            class={`absolute z-50 mt-2 w-52 overflow-hidden rounded-lg border border-slate-200 bg-white text-slate-900 shadow-lg light:bg-white light:text-slate-900 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 ${
               isRTL ? 'left-0' : 'right-0'
             }`}
           >
@@ -94,7 +102,7 @@ export const SiteLanguageSwitcher = component$<{ languages: SiteLanguageRow[] | 
                   } ${
                     active
                       ? 'bg-blue-50 font-medium text-blue-700 dark:bg-blue-900/30 dark:text-blue-300'
-                      : 'text-slate-700 hover:bg-slate-50 dark:text-slate-300 dark:hover:bg-slate-800'
+                      : 'light:text-slate-800 light:hover:bg-slate-50 dark:text-slate-200 dark:hover:bg-slate-800'
                   }`}
                 >
                   <span class="text-xl leading-none" aria-hidden="true">

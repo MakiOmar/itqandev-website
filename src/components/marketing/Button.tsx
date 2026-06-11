@@ -10,13 +10,13 @@ export interface ButtonProps extends Omit<QwikIntrinsicElements['button'], 'clas
 
 const variantClasses: Record<ButtonVariant, string> = {
   primary:
-    'bg-primary-600 text-white hover:bg-primary-700 focus-visible:ring-primary-500 dark:bg-primary-500 dark:hover:bg-primary-600',
+    'border border-primary-300 bg-primary-100 text-primary-900 hover:bg-primary-200 focus-visible:ring-primary-500 dark:border-primary-400 dark:bg-primary-100 dark:text-primary-900 dark:hover:bg-primary-200',
   secondary:
     'bg-slate-700 text-white hover:bg-slate-800 focus-visible:ring-slate-500 dark:bg-slate-600 dark:hover:bg-slate-700',
   outline:
-    'border-2 border-primary-600 text-primary-600 hover:bg-primary-50 dark:border-primary-500 dark:text-primary-400 dark:hover:bg-primary-900/20',
+    'border-2 border-primary-600 text-primary-800 hover:bg-primary-50 light:border-primary-600 light:text-primary-800 light:hover:bg-primary-50 dark:border-primary-300 dark:text-primary-100 dark:hover:bg-primary-950/40',
   ghost:
-    'text-slate-700 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800',
+    'light:text-slate-900 light:hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800',
 };
 
 export const Button = component$<ButtonProps>(({ variant = 'primary', href, class: className = '', ...props }) => {

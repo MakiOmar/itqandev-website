@@ -14,12 +14,8 @@ function trimSlash(url: string): string {
   return url.replace(/\/+$/, '');
 }
 
-/** Public Laravel origin (no /api suffix). */
+/** Public Laravel origin (no /api suffix). Uses `VITE_API_PROXY_TARGET` (may include subfolder path). */
 export function laravelPublicOrigin(): string {
-  const site = envString('VITE_SITE_URL');
-  if (site && /^https?:\/\//i.test(site)) {
-    return trimSlash(site);
-  }
   const proxy = envString('VITE_API_PROXY_TARGET');
   if (proxy && /^https?:\/\//i.test(proxy)) {
     return trimSlash(proxy);

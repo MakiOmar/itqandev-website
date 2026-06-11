@@ -1,3 +1,4 @@
+import { resolveAbsoluteCanonicalUrl } from '~/lib/seo/canonical-url';
 import type { MarketingPublicSeoMeta } from './types';
 
 /** Meta/link entries shared by marketing case study / service detail `<head>` (SSR). */
@@ -19,7 +20,10 @@ export function marketingEntityDetailHead(fields: {
   const ogTitle = (seo?.ogTitle?.trim() || docTitle).trim();
   const ogDesc = (seo?.ogDescription?.trim() || docDesc).trim();
   const defaultPath = `${fields.baseUrl.replace(/\/$/, '')}/${fields.sectionPath}/${fields.slug}`;
-  const canonical = (seo?.canonicalUrl?.trim() || defaultPath).trim();
+  const canonical = resolveAbsoluteCanonicalUrl(
+    (seo?.canonicalUrl?.trim() || defaultPath).trim(),
+    fields.baseUrl,
+  );
   const ogUrl = defaultPath;
 
   const meta: { name?: string; property?: string; content: string }[] = [

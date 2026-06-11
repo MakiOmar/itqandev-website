@@ -3,6 +3,7 @@ import type { DocumentHead } from '@builder.io/qwik-city';
 import { routeLoader$ } from '@builder.io/qwik-city';
 import { Link, useLocation } from '@builder.io/qwik-city';
 import { getConfig } from '~/lib/config';
+import { getPublicSiteBaseUrl } from '~/lib/seo/canonical-url';
 import { getServiceBySlug } from '~/lib/marketing/content-layer';
 import type { Service as MarketingService } from '~/lib/marketing/types';
 import { uiLocaleFromPublicRoute } from '~/lib/i18n/ui-locale-path';
@@ -38,7 +39,7 @@ export default component$(() => {
     return null;
   }
   const s = raw as MarketingService;
-  const baseUrl = (import.meta.env?.VITE_SITE_URL as string) || '';
+  const baseUrl = getPublicSiteBaseUrl();
 
   return (
     <>
@@ -128,9 +129,9 @@ export default component$(() => {
   );
 });
 
-export const head: DocumentHead = ({ resolveValue }) => {
+export const head: DocumentHead = ({ resolveValue, url }) => {
   const config = getConfig();
-  const baseUrl = ((import.meta.env?.VITE_SITE_URL as string) || 'https://example.com').replace(/\/$/, '');
+  const baseUrl = getPublicSiteBaseUrl(url.origin).replace(/\/$/, '');
   try {
     const s = resolveValue(useServiceDetail) as MarketingService;
     if (!s?.slug || typeof s.name !== 'string') {

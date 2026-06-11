@@ -76,7 +76,7 @@ export const Header = component$<HeaderProps>((props) => {
   );
 
   const linkClass =
-    'rounded-lg px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white';
+    'rounded-lg px-3 py-2 text-sm font-medium light:text-slate-900 light:hover:bg-slate-100 light:hover:text-slate-950 dark:text-slate-200 dark:hover:bg-slate-800 dark:hover:text-white';
 
   const isExternal = (href: string) => /^https?:\/\//i.test(href);
 
@@ -106,14 +106,14 @@ export const Header = component$<HeaderProps>((props) => {
 
   return (
     <header
-      class="sticky top-0 z-40 w-full border-b border-slate-200/80 bg-white/80 backdrop-blur-md dark:border-slate-700/80 dark:bg-slate-900/80"
+      class="sticky top-0 z-40 w-full border-b border-slate-200/80 bg-white/80 text-slate-900 backdrop-blur-md light:border-slate-200/80 light:bg-white/80 light:text-slate-900 dark:border-slate-700/80 dark:bg-slate-900/80 dark:text-slate-100"
       role="banner"
     >
       <Container class="flex h-16 w-full items-center justify-between gap-3 md:justify-start sm:h-18">
         {/* Logo — keep away from main nav cluster */}
         <Link
           href={MR.home}
-          class="inline-flex shrink-0 items-center gap-2 text-xl font-bold text-slate-900 dark:text-white"
+          class="inline-flex shrink-0 items-center gap-2 text-xl font-bold light:text-slate-900 dark:text-white"
           aria-label="Home"
         >
           {activeLogo && (
@@ -175,7 +175,7 @@ export const Header = component$<HeaderProps>((props) => {
           {/* Mobile menu button */}
           <button
             type="button"
-            class="rounded-lg p-2 text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-700 md:hidden"
+            class="rounded-lg p-2 light:text-slate-700 light:hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-700 md:hidden"
             aria-label="Open menu"
             aria-expanded={menuOpen.value}
             onClick$={() => (menuOpen.value = !menuOpen.value)}
@@ -194,7 +194,7 @@ export const Header = component$<HeaderProps>((props) => {
       {/* Mobile menu */}
       {menuOpen.value && (
         <div
-          class="border-t border-slate-200 bg-white/90 backdrop-blur-md dark:border-slate-700 dark:bg-slate-900 dark:backdrop-blur-none md:hidden"
+          class="border-t border-slate-200 bg-white/90 backdrop-blur-md light:border-slate-200 light:bg-white/90 light:text-slate-900 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:backdrop-blur-none md:hidden"
           role="dialog"
           aria-label="Mobile menu"
         >
@@ -204,7 +204,7 @@ export const Header = component$<HeaderProps>((props) => {
                 {isExternal(item.href) ? (
                   <a
                     href={item.href}
-                    class="rounded-lg px-3 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
+                    class="rounded-lg px-3 py-2.5 text-sm font-medium light:text-slate-900 light:hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800"
                     target={item.open_in_new_tab ? '_blank' : undefined}
                     rel={item.open_in_new_tab ? 'noopener noreferrer' : undefined}
                     onClick$={closeMenu}
@@ -214,7 +214,7 @@ export const Header = component$<HeaderProps>((props) => {
                 ) : (
                   <Link
                     href={item.href}
-                    class="rounded-lg px-3 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
+                    class="rounded-lg px-3 py-2.5 text-sm font-medium light:text-slate-900 light:hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800"
                     onClick$={closeMenu}
                   >
                     {item.label}
@@ -227,7 +227,7 @@ export const Header = component$<HeaderProps>((props) => {
                         {isExternal(child.href) ? (
                           <a
                             href={child.href}
-                            class="block rounded-lg px-3 py-2 text-sm text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800"
+                            class="block rounded-lg px-3 py-2 text-sm light:text-slate-700 light:hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
                             target={child.open_in_new_tab ? '_blank' : undefined}
                             rel={child.open_in_new_tab ? 'noopener noreferrer' : undefined}
                             onClick$={closeMenu}
@@ -237,7 +237,7 @@ export const Header = component$<HeaderProps>((props) => {
                         ) : (
                           <Link
                             href={child.href}
-                            class="block rounded-lg px-3 py-2 text-sm text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800"
+                            class="block rounded-lg px-3 py-2 text-sm light:text-slate-700 light:hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
                             onClick$={closeMenu}
                           >
                             {child.label}

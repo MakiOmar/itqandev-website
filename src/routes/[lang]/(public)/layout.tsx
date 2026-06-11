@@ -2,6 +2,7 @@ import '~/styles/site.css';
 import { component$, Slot, useSignal } from '@builder.io/qwik';
 import { routeLoader$, useLocation } from '@builder.io/qwik-city';
 import { uiLocaleFromPublicRoute } from '~/lib/i18n/ui-locale-path';
+import { LocaleTransitionProvider } from '~/components/common/LocaleTransitionOverlay';
 import { Header } from '~/components/marketing/Header';
 import { Footer } from '~/components/marketing/Footer';
 import { ParticlesBackground } from '~/components/marketing/ParticlesBackground';
@@ -59,18 +60,20 @@ export default component$(() => {
     >
       {/* Full-viewport particles behind page chrome + content */}
       <ParticlesBackground />
-      <div class="relative z-10 flex min-h-screen flex-1 flex-col">
-        <Header
-          session={authSession.value}
-          branding={branding.value}
-          navItems={primaryMenu.value}
-          features={branding.value?.features}
-        />
-        <main class="flex-1 overflow-y-auto">
-          <Slot />
-        </main>
-        <Footer contact={contact} branding={branding.value} />
-      </div>
+      <LocaleTransitionProvider>
+        <div class="relative z-10 flex min-h-screen flex-1 flex-col">
+          <Header
+            session={authSession.value}
+            branding={branding.value}
+            navItems={primaryMenu.value}
+            features={branding.value?.features}
+          />
+          <main class="flex-1 overflow-y-auto">
+            <Slot />
+          </main>
+          <Footer contact={contact} branding={branding.value} />
+        </div>
+      </LocaleTransitionProvider>
     </div>
   );
 });

@@ -1,9 +1,7 @@
 import { supportedUiLocaleCodes } from '../i18n/ui-locale-segments';
+import { getPublicSiteBaseUrl } from './canonical-url';
 
-const siteBaseUrl = (): string => {
-  const raw = (import.meta.env?.VITE_SITE_URL as string | undefined)?.trim() || 'https://example.com';
-  return raw.replace(/\/$/, '');
-};
+const siteBaseUrl = (): string => getPublicSiteBaseUrl().replace(/\/$/, '');
 
 /**
  * robots.txt body: Allow public site; disallow dashboard for every configured UI locale.

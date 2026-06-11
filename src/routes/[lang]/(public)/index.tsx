@@ -3,6 +3,7 @@ import type { DocumentHead } from '@builder.io/qwik-city';
 import { Link, useLocation } from '@builder.io/qwik-city';
 import { routeLoader$ } from '@builder.io/qwik-city';
 import { getConfig } from '~/lib/config';
+import { buildCanonicalHref, getPublicSiteBaseUrl } from '~/lib/seo/canonical-url';
 import { isFeatureModuleEnabled } from '~/lib/api/project-settings';
 import { getFeaturedCaseStudies, getTestimonials, getBlogPosts } from '~/lib/marketing/content-layer';
 import { uiLocaleFromPublicRoute } from '~/lib/i18n/ui-locale-path';
@@ -348,7 +349,7 @@ export default component$(() => {
           '@context': 'https://schema.org',
           '@type': 'Organization',
           name: config.branding.name,
-          url: (import.meta.env?.VITE_SITE_URL as string) || '',
+          url: getPublicSiteBaseUrl(),
           description: 'Web, Android & iOS development agency.',
         })}
       />
@@ -356,9 +357,9 @@ export default component$(() => {
   );
 });
 
-export const head: DocumentHead = () => {
+export const head: DocumentHead = ({ url }) => {
   const config = getConfig();
-  const baseUrl = (import.meta.env?.VITE_SITE_URL as string) || 'https://example.com';
+  const canonical = buildCanonicalHref(url.pathname, url.origin);
   return {
     title: `${config.branding.name} | Web, Android & iOS Development`,
     meta: [
@@ -369,8 +370,8 @@ export const head: DocumentHead = () => {
       { property: 'og:title', content: `${config.branding.name} | Web, Android & iOS Development` },
       { property: 'og:description', content: 'We build web, Android and iOS apps that scale.' },
       { property: 'og:type', content: 'website' },
-      { property: 'og:url', content: baseUrl + '/' },
+      { property: 'og:url', content: canonical },
     ],
-    links: [{ rel: 'canonical', href: baseUrl + '/' }],
+    links: [{ rel: 'canonical', href: canonical }],
   };
 };

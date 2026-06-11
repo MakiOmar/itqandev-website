@@ -2,6 +2,7 @@ import { component$ } from '@builder.io/qwik';
 import type { DocumentHead } from '@builder.io/qwik-city';
 import { routeLoader$ } from '@builder.io/qwik-city';
 import { getConfig } from '~/lib/config';
+import { buildCanonicalHref, getPublicSiteBaseUrl } from '~/lib/seo/canonical-url';
 import { getBlogPosts } from '~/lib/marketing/content-layer';
 import { Container } from '~/components/marketing/Container';
 import { Section } from '~/components/marketing/Section';
@@ -48,7 +49,7 @@ export default component$(() => {
           '@context': 'https://schema.org',
           '@type': 'BreadcrumbList',
           itemListElement: [
-            { '@type': 'ListItem', position: 1, name: 'Home', item: (import.meta.env?.VITE_SITE_URL as string) || '' },
+            { '@type': 'ListItem', position: 1, name: 'Home', item: getPublicSiteBaseUrl() },
             { '@type': 'ListItem', position: 2, name: 'Blog' },
           ],
         })}
@@ -57,16 +58,16 @@ export default component$(() => {
   );
 });
 
-export const head: DocumentHead = () => {
+export const head: DocumentHead = ({ url }) => {
   const config = getConfig();
-  const baseUrl = (import.meta.env?.VITE_SITE_URL as string) || 'https://example.com';
+  const canonical = buildCanonicalHref(url.pathname, url.origin);
   return {
     title: `Blog | ${config.branding.name}`,
     meta: [
       { name: 'description', content: 'Blog posts and updates from our development team.' },
       { property: 'og:title', content: `Blog | ${config.branding.name}` },
-      { property: 'og:url', content: `${baseUrl}/blog` },
+      { property: 'og:url', content: canonical },
     ],
-    links: [{ rel: 'canonical', href: `${baseUrl}/blog` }],
+    links: [{ rel: 'canonical', href: canonical }],
   };
 };

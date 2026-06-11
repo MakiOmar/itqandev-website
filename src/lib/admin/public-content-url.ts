@@ -2,6 +2,8 @@
  * Builds paths to public-facing single-resource pages used in admin previews.
  */
 
+import { parsePublicSiteOriginFromEnv } from '~/lib/seo/canonical-url';
+
 export type AdminPublicDetailKind = 'blog' | 'services' | 'projects';
 
 /** URL-encode slug segment safely (hyphenated latin slugs pass through cleanly). */
@@ -36,13 +38,13 @@ export function adminPublicDetailPath(lang: string, kind: AdminPublicDetailKind,
 }
 
 /**
- * Full URL when VITE_SITE_URL is set, otherwise `${origin}${path}` in the browser,
+ * Full URL when `VITE_API_PROXY_TARGET` is set, otherwise `${origin}${path}` in the browser,
  * otherwise the path alone (still works for same-origin admin).
  */
 export function adminPublicAbsoluteUrl(path: string): string {
-  const envBase = String(import.meta.env?.VITE_SITE_URL ?? '').trim().replace(/\/$/, '');
-  if (envBase) {
-    return `${envBase}${path}`;
+  const envOrigin = parsePublicSiteOriginFromEnv();
+  if (envOrigin) {
+    return `${envOrigin}${path}`;
   }
   if (typeof window !== 'undefined') {
     return `${window.location.origin}${path}`;
