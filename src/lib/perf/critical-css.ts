@@ -20,10 +20,10 @@ body:not([data-render-complete]) select,body:not([data-render-complete]) textare
 *,*::before,*::after{box-sizing:border-box}
 html{-webkit-text-size-adjust:100%;text-rendering:optimizeSpeed}
 body{margin:0;min-height:100vh;line-height:1.5;
-  font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;
+  font-family:var(--font-sans,Inter,system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif);
   background:linear-gradient(135deg,#fafbfc 0%,#f5f7fa 100%);color:#0f172a}
 html[dir="rtl"],html[lang="ar"] body{
-  font-family:Cairo,system-ui,'Segoe UI',Tahoma,Arial,sans-serif}
+  font-family:var(--font-arabic,Cairo,system-ui,'Segoe UI',Tahoma,Arial,sans-serif)}
 .dark body{background:linear-gradient(135deg,#0f172a 0%,#1e293b 100%);color:#f1f5f9}
 img,picture{max-width:100%;display:block;height:auto}
 [data-public-page] header[role="banner"]{

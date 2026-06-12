@@ -3,7 +3,6 @@
  * Kept as a string builder so router-head stays small and we avoid read→write layout thrash.
  */
 export function buildDocumentBootstrapScript(uiLocaleBootstrapJson: string): string {
-  const disableExternalFonts = import.meta.env?.VITE_DISABLE_GOOGLE_FONTS === 'true';
   return `
 (function() {
   function setTheme(theme) {
@@ -23,6 +22,7 @@ export function buildDocumentBootstrapScript(uiLocaleBootstrapJson: string): str
   }
 
   var __uiLocales = ${uiLocaleBootstrapJson};
+  window.__uiLocales = __uiLocales;
   function __escapeRe(s) {
     return String(s).replace(/[.*+?^\\$\{\}()|[\\]\\\\]/g, '\\\\$&');
   }
@@ -123,38 +123,7 @@ export function buildDocumentBootstrapScript(uiLocaleBootstrapJson: string): str
     }
   }
 
-  function loadFontStylesheet(href) {
-    // VITE_DISABLE_GOOGLE_FONTS applies to public marketing pages only (not admin).
-    if (${disableExternalFonts ? 'true' : 'false'} && isPublicRoute) return;
-    // Stop trying after a previous failure to avoid console spam.
-    try {
-      if (sessionStorage.getItem('external-fonts-disabled') === '1') return;
-    } catch (e) {}
-
-    var fontLinkId = 'app-locale-font';
-    var link = document.getElementById(fontLinkId);
-    if (link && link.getAttribute('href') === href) return;
-    if (!link) {
-      link = document.createElement('link');
-      link.id = fontLinkId;
-      link.rel = 'stylesheet';
-    }
-    link.setAttribute('href', href);
-    link.media = 'print';
-    link.onload = function() { this.media = 'all'; };
-    link.onerror = function() {
-      try { sessionStorage.setItem('external-fonts-disabled', '1'); } catch (e) {}
-      try { this.remove(); } catch (e) {}
-    };
-    if (!link.parentNode) document.head.appendChild(link);
-  }
-
-  var fontHref = __uiLocales.rtl[locale]
-    ? 'https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800;900&display=swap'
-    : 'https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap';
-  requestAnimationFrame(function() {
-    loadFontStylesheet(fontHref);
-  });
+  // Font loading: see SiteTypographyHead (typography bootstrap) after settings resolve.
 })();
 `.trim();
 }

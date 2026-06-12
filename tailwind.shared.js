@@ -104,8 +104,8 @@ export const sharedTailwindTheme = {
         ring: 'hsl(var(--ring))',
       },
       fontFamily: {
-        sans: ['Inter', 'system-ui', 'sans-serif'],
-        arabic: ['Cairo', 'Arial', 'sans-serif'],
+        sans: ['var(--font-sans)', 'Inter', 'system-ui', 'sans-serif'],
+        arabic: ['var(--font-arabic)', 'Cairo', 'Arial', 'sans-serif'],
       },
       spacing: {
         18: '4.5rem',

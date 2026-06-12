@@ -1,6 +1,7 @@
 import { getConfig } from '~/lib/config';
 import { laravelPublicOrigin } from '~/lib/marketing/resolve-laravel-media-url';
 import { shouldDisableGoogleFontsForPath } from '~/lib/perf/google-fonts-policy';
+import type { SiteTypography } from '~/types/typography';
 
 export type ResourceHintLink = {
   href: string;
@@ -33,11 +34,13 @@ function envOrigin(key: string): string | null {
 export function collectPreconnectHints(
   documentOrigin?: string | null,
   pathname?: string | null,
+  typography?: SiteTypography | null,
 ): ResourceHintLink[] {
   const seen = new Set<string>();
   const hints: ResourceHintLink[] = [];
   const disableGoogleFonts =
-    pathname != null ? shouldDisableGoogleFontsForPath(pathname) : false;
+    typography?.mode === 'custom' ||
+    (pathname != null ? shouldDisableGoogleFontsForPath(pathname) : false);
 
   const add = (href: string, crossOrigin = false) => {
     if (!href) {

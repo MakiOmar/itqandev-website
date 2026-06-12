@@ -8,10 +8,13 @@ import { translationFn } from "./lib/i18n/translation-fn";
 import { isUiLocaleRtl } from "./lib/i18n/ui-locale-segments";
 import { uiLangPrefixFromPathname } from "./lib/i18n/ui-locale-path";
 import { persistPreferredLocale } from "./lib/i18n/preferred-locale-persist";
+import { isPublicMarketingPath } from "./lib/perf/google-fonts-policy";
 import {
-  isPublicMarketingPath,
-  shouldDisableGoogleFontsForPath,
-} from "./lib/perf/google-fonts-policy";
+  ensureGoogleFontStylesheet,
+  readClientTypography,
+  resolveLocaleFontHref,
+  shouldLoadGoogleFonts,
+} from "./lib/perf/typography";
 
 /** Body lang/dir signals updated from inside QwikCityProvider (useLocation is invalid on the root component). */
 const rootBodyLocaleContext = createContextId<{
@@ -43,10 +46,6 @@ const BodyRenderCompleteGuard = component$(() => {
 });
 
 const LOCALE_FONT_LINK_ID = "app-locale-font";
-const INTER_FONT_HREF =
-  "https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap";
-const CAIRO_FONT_HREF =
-  "https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800;900&display=swap";
 
 function normalizeLocale(lang: string | undefined): string {
   const code = String(lang ?? speakConfig.defaultLocale.lang).toLowerCase();
@@ -59,56 +58,13 @@ function ensureLocaleFont(locale: string, pathname: string) {
     return;
   }
 
-  // VITE_DISABLE_GOOGLE_FONTS applies to public marketing pages only (not admin).
-  if (shouldDisableGoogleFontsForPath(pathname)) {
-    return;
-  }
-  // Stop trying after a previous failure to avoid console spam.
-  try {
-    if (sessionStorage.getItem("external-fonts-disabled") === "1") {
-      return;
-    }
-  } catch {
-    // ignore
-  }
-
-  const href = isUiLocaleRtl(locale) ? CAIRO_FONT_HREF : INTER_FONT_HREF;
-  let fontLink = document.getElementById(
-    LOCALE_FONT_LINK_ID,
-  ) as HTMLLinkElement | null;
-
-  if (fontLink?.getAttribute("href") === href) {
+  const typography = readClientTypography();
+  if (!shouldLoadGoogleFonts(typography, pathname)) {
     return;
   }
 
-  if (!fontLink) {
-    fontLink = document.createElement("link");
-    fontLink.id = LOCALE_FONT_LINK_ID;
-    fontLink.rel = "stylesheet";
-  }
-
-  fontLink.setAttribute("href", href);
-  fontLink.media = "print";
-  const activeLink = fontLink;
-  activeLink.onload = () => {
-    activeLink.media = "all";
-  };
-  activeLink.onerror = () => {
-    try {
-      sessionStorage.setItem("external-fonts-disabled", "1");
-    } catch {
-      // ignore
-    }
-    try {
-      activeLink.remove();
-    } catch {
-      // ignore
-    }
-  };
-
-  if (!activeLink.parentNode) {
-    document.head.appendChild(activeLink);
-  }
+  const href = resolveLocaleFontHref(typography, locale);
+  ensureGoogleFontStylesheet(href, LOCALE_FONT_LINK_ID);
 }
 
 const LocaleFontSync = component$(() => {

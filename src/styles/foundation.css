@@ -75,8 +75,8 @@ select {
 }
 
 html {
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial,
-    sans-serif;
+  font-family: var(--font-sans, 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial,
+    sans-serif);
   font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
   letter-spacing: -0.011em;
   -webkit-font-smoothing: antialiased;
@@ -85,7 +85,7 @@ html {
 
 html[dir='rtl'],
 html[lang='ar'] {
-  font-family: 'Cairo', 'Segoe UI', Tahoma, Arial, sans-serif;
+  font-family: var(--font-arabic, 'Cairo', 'Segoe UI', Tahoma, Arial, sans-serif);
   letter-spacing: 0;
 }
 
@@ -170,7 +170,7 @@ body {
 
 [dir='rtl'] {
   text-align: right;
-  font-family: 'Cairo', 'Segoe UI', Tahoma, Arial, sans-serif;
+  font-family: var(--font-arabic, 'Cairo', 'Segoe UI', Tahoma, Arial, sans-serif);
 }
 
 [dir='rtl'] select {
@@ -179,8 +179,8 @@ body {
 
 [dir='ltr'] {
   text-align: left;
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial,
-    sans-serif;
+  font-family: var(--font-sans, 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial,
+    sans-serif);
 }
 
 .nav-indicator {
