@@ -8,6 +8,7 @@ import { presentationLocaleFromAdminRoute } from '../../../lib/admin/admin-api-c
 import { getConfig } from '../../../lib/config';
 import { useAppRoutes } from '../../../lib/constants/routes';
 import { auth } from '../../../lib/auth';
+import { adminPageTitle } from '../../../lib/admin/page-title';
 import {
   EMPTY_DASHBOARD_METRICS,
   fetchDashboardMetrics,
@@ -189,7 +190,7 @@ export default component$(() => {
 });
 
 export const head: DocumentHead = {
-  title: 'Dashboard - Home',
+  title: adminPageTitle('Home'),
   meta: [
     {
       name: 'description',

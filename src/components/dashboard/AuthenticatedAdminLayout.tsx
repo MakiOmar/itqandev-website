@@ -4,7 +4,7 @@ import { isUiLocaleRtl } from '../../lib/i18n/ui-locale-segments';
 import { Sidebar } from './Sidebar';
 import { Header } from './Header';
 import { getConfig } from '../../lib/config';
-import { defaultProjectSettings, getProjectSettings, type ProjectSettings } from '../../lib/api/project-settings';
+import { defaultProjectSettings, type ProjectSettings } from '../../lib/api/project-settings';
 import { getApiClient } from '../../lib/api/client';
 import { ProjectSettingsContext } from '../../stores/project-settings-store';
 import { getLocalizedRoutes } from '../../lib/constants/routes';
@@ -14,7 +14,7 @@ import { useAdminAuth } from '../../lib/loaders/admin-auth';
  * Dashboard chrome (sidebar, header, settings, auth sync).
  * Kept separate from admin layout so /admin/login does not load useVisibleTask QRL chunks.
  */
-export const AuthenticatedAdminLayout = component$(() => {
+export const AuthenticatedAdminLayout = component$((props: { settings?: ProjectSettings }) => {
   const config = getConfig();
   const locale = useSpeakLocale();
   const localized = getLocalizedRoutes(locale.lang);
@@ -52,25 +52,9 @@ export const AuthenticatedAdminLayout = component$(() => {
     isLoading: boolean;
     error: string | null;
   }>({
-    settings: defaultProjectSettings,
-    isLoading: true,
+    settings: props.settings ?? defaultProjectSettings,
+    isLoading: false,
     error: null,
-  });
-
-  // eslint-disable-next-line qwik/no-use-visible-task
-  useVisibleTask$(async () => {
-    try {
-      const settings = await getProjectSettings();
-      settingsStore.settings = settings;
-      settingsStore.error = null;
-    } catch (error: unknown) {
-      console.warn('Failed to load project settings:', error);
-      settingsStore.settings = defaultProjectSettings;
-      settingsStore.error =
-        error instanceof Error ? error.message : 'Failed to load settings';
-    } finally {
-      settingsStore.isLoading = false;
-    }
   });
 
   useContextProvider(ProjectSettingsContext, settingsStore);

@@ -2,18 +2,22 @@ import '~/styles/admin.css';
 import { component$, Slot } from '@builder.io/qwik';
 import type { DocumentHead, RequestHandler } from '@builder.io/qwik-city';
 import { routeLoader$, useLocation } from '@builder.io/qwik-city';
+import { AdminSiteTypographyHead } from '../../../components/perf/AdminSiteTypographyHead';
 import { AuthenticatedAdminLayout } from '../../../components/dashboard/AuthenticatedAdminLayout';
 import { getConfig } from '../../../lib/config';
 import { stripUiLocaleFromPathname } from '../../../lib/i18n/ui-locale-path';
 import { getFeatureModuleForAdminPath } from '../../../lib/admin/feature-module-routes';
 import { isFeatureModuleEnabled } from '../../../lib/api/project-settings';
-import { API_ENDPOINTS } from '../../../lib/api/endpoints';
 import { extractCookieHeader } from '../../../lib/api/client';
-import { getApiClient } from '../../../lib/api/client';
 import { routesFromPreferredCookie } from '../../../lib/constants/routes';
 import { useAdminAuth } from '../../../lib/loaders/admin-auth';
+import { loadAdminSettings, useAdminSettings } from '../../../lib/loaders/admin-settings';
 
 export { useAdminAuth };
+export { usePublicSiteMeta } from '../../../lib/loaders/public-site-meta';
+/** @deprecated Use usePublicSiteMeta — kept for admin CRUD routes importing from layout. */
+export { usePublicSiteMeta as useSiteLanguageConfig } from '../../../lib/loaders/public-site-meta';
+export { useAdminSettings };
 
 /** Prevent search engines from indexing any dashboard HTML (all child admin routes). */
 export const onRequest: RequestHandler = ({ headers }) => {
@@ -23,11 +27,6 @@ export const onRequest: RequestHandler = ({ headers }) => {
 export const head: DocumentHead = {
   meta: [{ name: 'robots', content: 'noindex, nofollow' }],
 };
-
-/**
- * Site languages for admin content forms (must be re-exported from a route file — see Qwik routeLoader$ rules).
- */
-export { useSiteLanguageConfig } from '../../../lib/loaders/site-language-config';
 
 /**
  * Redirect when visiting a disabled feature module admin route directly.
@@ -47,11 +46,8 @@ export const useAdminFeatureModuleGuard = routeLoader$(async ({ cookie, request,
 
   try {
     const cookieHeader = extractCookieHeader(cookie, request);
-    const apiClient = getApiClient(cookieHeader);
-    const response = await apiClient.get<{ features?: Record<string, boolean> }>(API_ENDPOINTS.SETTINGS.GET);
-    const features =
-      (response?.data as { features?: Record<string, boolean> } | undefined)?.features ??
-      (response as { features?: Record<string, boolean> }).features;
+    const settings = await loadAdminSettings(cookieHeader);
+    const features = settings?.features;
     if (!isFeatureModuleEnabled(features, module)) {
       throw redirectFn(302, R.ADMIN.HOME);
     }
@@ -77,6 +73,8 @@ export default component$(() => {
   const isLoginPage =
     logicalPath === config.routes.admin.login || logicalPath === '/admin/login';
 
+  const adminSettings = useAdminSettings();
+
   useAdminAuth();
   useAdminFeatureModuleGuard();
 
@@ -85,8 +83,11 @@ export default component$(() => {
   }
 
   return (
-    <AuthenticatedAdminLayout>
-      <Slot />
-    </AuthenticatedAdminLayout>
+    <>
+      <AdminSiteTypographyHead />
+      <AuthenticatedAdminLayout settings={adminSettings.value}>
+        <Slot />
+      </AuthenticatedAdminLayout>
+    </>
   );
 });

@@ -1,11 +1,8 @@
 import { component$, Slot } from '@builder.io/qwik';
 import type { RequestHandler } from '@builder.io/qwik-city';
-import { SiteTypographyHead } from '../../components/perf/SiteTypographyHead';
 import { speakConfig } from '../../lib/i18n/config';
 import { isUiLocaleRtl } from '../../lib/i18n/ui-locale-segments';
 import { UI_LOCALE_SEGMENTS, stripUiLocaleFromPathname, withUiLocale } from '../../lib/i18n/ui-locale-path';
-
-export { useSiteTypography } from '../../lib/loaders/site-typography';
 
 /**
  * URL segment is the source of truth for UI locale (`/en/...`, `/ar/...`).
@@ -38,10 +35,5 @@ export const onRequest: RequestHandler = ({ params, locale, url, cookie, redirec
 };
 
 export default component$(() => {
-  return (
-    <>
-      <SiteTypographyHead />
-      <Slot />
-    </>
-  );
+  return <Slot />;
 });
