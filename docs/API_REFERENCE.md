@@ -601,6 +601,12 @@ Requires `Authorization: Bearer` and the **`manage fonts`** permission.
 
 **Settings typography** (`PUT /api/settings`): `font_mode` (`system` \| `custom`), `font_ltr_id`, `font_rtl_id`. When `font_mode` is `custom`, both font IDs are required.
 
+**Settings authorization:** `GET` and `PUT /api/settings` require the `manageSettings` gate (`admin` or `super_admin` roles). Other authenticated roles receive `403`.
+
+| Method | Path | Purpose |
+|--------|------|---------|
+| GET | `/api/v1/dashboard/metrics` | Aggregate dashboard stat cards (projects, categories, skills, testimonials, blog, services, media) respecting `features.*` module toggles |
+
 ## Authenticated menus (Vue admin / Sanctum token)
 
 Requires `Authorization: Bearer` and the **`manage menus`** permission (or a role that includes it).
