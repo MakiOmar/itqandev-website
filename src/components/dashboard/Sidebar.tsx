@@ -25,6 +25,7 @@ import {
   BlogIcon,
   MediaIcon,
   MenusIcon,
+  FontsIcon,
 } from './icons';
 
 interface NavItem {
@@ -178,6 +179,16 @@ export const Sidebar = component$<SidebarProps>((props) => {
       menuManagementRoles: ['super_admin', 'admin', 'company', 'editor'],
     },
     {
+      label: translateApp(lang, 'sidebar.fonts'),
+      href: R.ADMIN.FONTS,
+      icon: FontsIcon,
+      activeOnChildPaths: true,
+      permission: 'manage fonts',
+      // Match FontPolicy::viewAny — role is enough when /me permissions are stale.
+      menuManagementAccess: true,
+      menuManagementRoles: ['super_admin', 'admin', 'company', 'editor'],
+    },
+    {
       label: translateApp(lang, 'sidebar.profile'),
       href: R.ADMIN.PROFILE,
       icon: ProfileIcon,
@@ -197,6 +208,9 @@ export const Sidebar = component$<SidebarProps>((props) => {
         { label: translateApp(lang, 'settings.socialMedia'), href: R.ADMIN.SETTINGS_SOCIAL },
         { label: translateApp(lang, 'media.title'), href: R.ADMIN.SETTINGS_MEDIA, featureModule: 'media' },
         { label: translateApp(lang, 'settings.branding'), href: R.ADMIN.SETTINGS_BRANDING },
+        { label: translateApp(lang, 'settings.languagesNav'), href: R.ADMIN.SETTINGS_LANGUAGES },
+        { label: translateApp(lang, 'settings.typographyNav'), href: R.ADMIN.SETTINGS_TYPOGRAPHY },
+        { label: translateApp(lang, 'sidebar.fonts'), href: R.ADMIN.FONTS },
       ],
       roles: ['admin', 'super_admin'],
     },
@@ -317,12 +331,14 @@ export const Sidebar = component$<SidebarProps>((props) => {
                 const IconComponent = item.icon;
                 const hasChildren = !!item.children?.length;
                 const sectionActive = hasChildren
-                  ? item.children!.some((child) => isActive(child.href))
+                  ? item.children!.some((child) => isInSection(child.href))
                   : item.href
                     ? isActive(item.href)
                     : false;
                 const sectionOpen = hasChildren
-                  ? settingsMenuOpen.value || isInSection(R.ADMIN.SETTINGS)
+                  ? settingsMenuOpen.value ||
+                    isInSection(R.ADMIN.SETTINGS) ||
+                    isInSection(R.ADMIN.FONTS)
                   : false;
 
                 if (hasChildren) {

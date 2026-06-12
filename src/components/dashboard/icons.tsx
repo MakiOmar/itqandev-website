@@ -462,6 +462,24 @@ export const MediaIcon = component$(() => (
   </svg>
 ));
 
+/** Sidebar: self-hosted fonts library. */
+export const FontsIcon = component$(() => (
+  <svg
+    class="h-6 w-6"
+    fill="none"
+    stroke="currentColor"
+    viewBox="0 0 24 24"
+    xmlns="http://www.w3.org/2000/svg"
+    stroke-width="2"
+  >
+    <path
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      d="M4 6h16M4 12h8m-8 6h16"
+    />
+  </svg>
+));
+
 /** Sidebar: navigation menus (header/footer links). */
 export const MenusIcon = component$(() => (
   <svg

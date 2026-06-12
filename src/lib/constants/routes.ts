@@ -21,6 +21,10 @@ export function getLocalizedRoutes(lang: string) {
       SETTINGS_MEDIA: L(`${p}/settings/media`),
       SETTINGS_BRANDING: L(`${p}/settings/branding`),
       SETTINGS_LANGUAGES: L(`${p}/settings/languages`),
+      SETTINGS_TYPOGRAPHY: L(`${p}/settings/typography`),
+      SETTINGS_MARKETING: L(`${p}/settings/marketing`),
+      FONTS: L(`${p}/fonts`),
+      FONTS_NEW: L(`${p}/fonts/new`),
       ACTIVITY: L(`${p}/activity`),
       NOTIFICATIONS: L(`${p}/notifications`),
       SYSTEM: L(`${p}/system`),
@@ -72,6 +76,12 @@ export function adminSkillEditHref(lang: string, id: string | number): string {
   const config = getConfig();
   const p = config.routes.admin.prefix;
   return withUiLocale(lang, `${p}/skills/${id}`);
+}
+
+export function adminFontEditHref(lang: string, id: string | number): string {
+  const config = getConfig();
+  const p = config.routes.admin.prefix;
+  return withUiLocale(lang, `${p}/fonts/${id}`);
 }
 
 export function adminServiceEditHref(lang: string, id: string | number): string {

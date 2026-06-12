@@ -23,6 +23,15 @@ export const API_ENDPOINTS = {
     GET: '/settings',
     UPDATE: '/settings',
   },
+  // Fonts (self-hosted typography library)
+  FONTS: {
+    LIST: '/v1/fonts',
+    GET: (id: string | number) => `/v1/fonts/${id}`,
+    CREATE: '/v1/fonts',
+    UPDATE: (id: string | number) => `/v1/fonts/${id}`,
+    DELETE: (id: string | number) => `/v1/fonts/${id}`,
+    UPLOAD: '/v1/fonts/upload',
+  },
   // Activity
   ACTIVITY: {
     LIST: '/v1/activity',

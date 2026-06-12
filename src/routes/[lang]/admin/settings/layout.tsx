@@ -5,6 +5,14 @@ import { getApiClient, extractCookieHeader } from '../../../../lib/api/client';
 import { API_ENDPOINTS } from '../../../../lib/api/endpoints';
 import { useAppRoutes } from '../../../../lib/constants/routes';
 import { clearProjectSettingsCache } from '../../../../lib/api/project-settings';
+import {
+  parseMarketingSiteContent,
+  type MarketingSiteContentSettings,
+} from '../../../../lib/admin/marketing-site-content';
+import {
+  parseSettingsTranslations,
+  type SettingsTranslationsMap,
+} from '../../../../lib/admin/settings-translations';
 import type { SiteLanguageRow } from '../../../../types/site-language';
 
 export interface SettingsFormData {
@@ -27,6 +35,11 @@ export interface SettingsFormData {
   secondaryColor: string;
   site_languages: SiteLanguageRow[];
   default_locale: string;
+  font_mode: 'system' | 'custom';
+  font_ltr_id: number | null;
+  font_rtl_id: number | null;
+  settings_translations: SettingsTranslationsMap;
+  marketing_site_content: MarketingSiteContentSettings;
 }
 
 export const defaultSettings: SettingsFormData = {
@@ -51,6 +64,11 @@ export const defaultSettings: SettingsFormData = {
     { code: 'en', label: 'English', native_label: 'English', rtl: false },
   ],
   default_locale: 'en',
+  font_mode: 'system',
+  font_ltr_id: null,
+  font_rtl_id: null,
+  settings_translations: {},
+  marketing_site_content: parseMarketingSiteContent(null),
 };
 
 function normalizeSettings(input: Partial<SettingsFormData> | undefined | null): SettingsFormData {
@@ -108,7 +126,17 @@ function normalizeSettings(input: Partial<SettingsFormData> | undefined | null):
       (input as any)?.secondaryColor || (input as any)?.secondary_color || defaultSettings.secondaryColor,
     site_languages: normalizeSiteLanguages((input as any)?.site_languages),
     default_locale: normalizeDefaultLocale((input as any)?.default_locale, (input as any)?.site_languages),
+    font_mode: (input as any)?.font_mode === 'custom' ? 'custom' : 'system',
+    font_ltr_id: normalizeFontId((input as any)?.font_ltr_id),
+    font_rtl_id: normalizeFontId((input as any)?.font_rtl_id),
+    settings_translations: parseSettingsTranslations((input as any)?.settings_translations),
+    marketing_site_content: parseMarketingSiteContent((input as any)?.marketing_site_content),
   };
+}
+
+function normalizeFontId(raw: unknown): number | null {
+  const n = Number(raw);
+  return Number.isFinite(n) && n > 0 ? Math.floor(n) : null;
 }
 
 function normalizeSiteLanguages(raw: unknown): SiteLanguageRow[] {
@@ -273,6 +301,40 @@ export const useUpdateSettings = routeAction$(
         }
       }
 
+      if (has('font_mode')) {
+        payload.font_mode = String((data as any).font_mode) === 'custom' ? 'custom' : 'system';
+      }
+      if (has('font_ltr_id')) {
+        const id = normalizeFontId((data as any).font_ltr_id);
+        payload.font_ltr_id = id;
+      }
+      if (has('font_rtl_id')) {
+        const id = normalizeFontId((data as any).font_rtl_id);
+        payload.font_rtl_id = id;
+      }
+
+      if (has('settings_translations_json')) {
+        try {
+          const parsed = JSON.parse(String((data as any).settings_translations_json));
+          if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+            payload.settings_translations = parsed;
+          }
+        } catch {
+          /* ignore invalid JSON */
+        }
+      }
+
+      if (has('marketing_site_content_json')) {
+        try {
+          const parsed = JSON.parse(String((data as any).marketing_site_content_json));
+          if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+            payload.marketing_site_content = parsed;
+          }
+        } catch {
+          /* ignore invalid JSON */
+        }
+      }
+
       await apiClient.put(API_ENDPOINTS.SETTINGS.UPDATE, payload);
       clearProjectSettingsCache();
 
@@ -315,6 +377,11 @@ export const useUpdateSettings = routeAction$(
       .or(z.literal('')),
     site_languages_json: z.string().optional(),
     default_locale: z.string().optional(),
+    font_mode: z.enum(['system', 'custom']).optional(),
+    font_ltr_id: z.union([z.string(), z.number()]).optional(),
+    font_rtl_id: z.union([z.string(), z.number()]).optional(),
+    settings_translations_json: z.string().optional(),
+    marketing_site_content_json: z.string().optional(),
   }),
 );
 
@@ -394,6 +461,8 @@ export default component$(() => {
     { label: translateApp(lang, 'media.title'), href: R.ADMIN.SETTINGS_MEDIA },
     { label: translateApp(lang, 'settings.branding'), href: R.ADMIN.SETTINGS_BRANDING },
     { label: translateApp(lang, 'settings.languagesNav'), href: R.ADMIN.SETTINGS_LANGUAGES },
+    { label: translateApp(lang, 'settings.typographyNav'), href: R.ADMIN.SETTINGS_TYPOGRAPHY },
+    { label: translateApp(lang, 'settings.marketingNav'), href: R.ADMIN.SETTINGS_MARKETING },
   ];
 
   return (
