@@ -296,7 +296,9 @@ Production static deploys use **`public/.htaccess`** (copied into `dist/` on bui
 
 `RouterHead` emits `<link rel="preconnect">` from **`src/lib/perf/resource-hints.ts`**: **Google Fonts** (`fonts.googleapis.com`, `fonts.gstatic.com`), absolute **`VITE_API_BASE_URL`**, and **`VITE_API_PROXY_TARGET`** (Laravel API + `/storage` media when the Qwik dev/preview origin differs). Font CSS still loads non-blocking via the inline bootstrap in `router-head.tsx` (`media=print` → `all`).
 
-Set **`VITE_DISABLE_GOOGLE_FONTS=true`** to skip Google Fonts preconnect and stylesheet injection on **public marketing routes only** (`/`, `/services`, `/work`, `/about`, `/pricing`, `/contact`, `/blog`). Admin/dashboard routes (`/…/admin/…`) always load fonts regardless of this flag.
+Set **`VITE_DISABLE_GOOGLE_FONTS=true`** to skip Google Fonts preconnect and stylesheet injection on **public marketing routes only** (`/`, `/services`, `/work`, `/about`, `/pricing`, `/contact`, `/blog`) when typography mode is **system**. Admin/dashboard routes (`/…/admin/…`) always load fonts regardless of this flag.
+
+**Typography settings** (Admin → Settings → Typography): **System** uses Inter (LTR) and Cairo (RTL) from Google Fonts; **Custom** uses self-hosted fonts from the **Fonts** library (`@font-face` + CSS variables from `GET /api/public/site-meta` → `typography`). Custom mode never requests Google Fonts.
 
 ---
 

@@ -486,7 +486,31 @@ Also available: `GET /api/health` (minimal `{ "status": "ok" }`) and Laravel’s
 
 ### GET `/api/public/site-meta`
 
-Returns branding and `site_languages` for the marketing shell (see `SettingsController::publicMeta`).
+Returns **locale-resolved** branding, `site_languages`, and resolved **`typography`** for the marketing shell (see `SettingsController::publicMeta`, `SiteSettingsPresenter`, and `TypographyResolver`).
+
+**Locale:** optional `locale` query and/or `X-Content-Locale` header. When set to a non-default site language, `site_name`, `site_description`, and `site_address` are overlaid from `settings_translations` (fallback to primary when a field is missing). Raw `settings_translations` is never returned on public endpoints.
+
+**`data.typography` shape:**
+
+```json
+{
+  "mode": "system",
+  "ltr": {
+    "css_family": "Inter",
+    "fallback_stack": "Inter, system-ui, …",
+    "google_css_href": "https://fonts.googleapis.com/css2?family=Inter…",
+    "sources": {}
+  },
+  "rtl": {
+    "css_family": "Cairo",
+    "fallback_stack": "Cairo, …",
+    "google_css_href": "https://fonts.googleapis.com/css2?family=Cairo…",
+    "sources": {}
+  }
+}
+```
+
+When `mode` is `custom`, `google_css_href` is omitted and `sources` maps format keys (`woff2`, `woff`, …) to public URLs.
 
 ### GET `/api/public/shell`
 
@@ -516,11 +540,17 @@ Returns branding and `site_languages` for the marketing shell (see `SettingsCont
 }
 ```
 
-- `site_meta` — same shape as `GET /api/public/site-meta` `data`.
+- `site_meta` — same shape as `GET /api/public/site-meta` `data` (localized for the shell’s presentation locale).
 - `menu` — same shape as `GET /api/public/menus/primary` `data`.
 - `services` — published services array (empty when the `services` feature module is disabled). Same records as `GET /api/public/services`.
 
-Cached server-side (~300s). Legacy endpoints remain available for tools and gradual migration.
+Cached server-side (~300s) per `locale` + presentation locale key. Legacy endpoints remain available for tools and gradual migration.
+
+### GET `/api/public/site-content`
+
+Returns localized marketing blocks from `marketing_site_content` in project settings: `pricingTiers`, `faq`, `contact`, `about`, `techStack`.
+
+**Locale:** `locale` query and/or `X-Content-Locale`. Merges `settings_translations.{locale}.marketing_site_content` onto primary content with primary fallback for missing fields. Cached per locale (~300s).
 
 ### Locale behavior for public listings
 
@@ -555,6 +585,21 @@ When a locale is provided (for example via `X-Content-Locale` header or the menu
 ```
 
 When the menu is missing or has no resolvable items, `items` is an empty array (the Qwik header falls back to built-in links).
+
+## Authenticated fonts (Qwik admin / Sanctum token)
+
+Requires `Authorization: Bearer` and the **`manage fonts`** permission.
+
+| Method | Path | Purpose |
+|--------|------|---------|
+| GET | `/api/v1/fonts` | Paginated list (`search`, `per_page`) |
+| POST | `/api/v1/fonts` | Create (`name`, `css_family`, at least one `file_*` URL) |
+| GET | `/api/v1/fonts/{id}` | Show font |
+| PUT | `/api/v1/fonts/{id}` | Update font |
+| DELETE | `/api/v1/fonts/{id}` | Delete (422 if assigned in typography settings) |
+| POST | `/api/v1/fonts/upload` | Multipart `file` + `format` (`woff2`, `woff`, `ttf`, `eot`, `svg`) → `{ url }` |
+
+**Settings typography** (`PUT /api/settings`): `font_mode` (`system` \| `custom`), `font_ltr_id`, `font_rtl_id`. When `font_mode` is `custom`, both font IDs are required.
 
 ## Authenticated menus (Vue admin / Sanctum token)
 
