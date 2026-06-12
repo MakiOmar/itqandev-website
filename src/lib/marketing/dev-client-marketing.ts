@@ -11,6 +11,7 @@ import {
   getTestimonials,
 } from './content-layer';
 import type { BlogPost, CaseStudy, Testimonial } from './types';
+import { publicHomeTitle } from './public-page-head';
 import { fetchPublicShell, type PublicBrandingState } from './public-shell';
 
 export type { PublicBrandingState } from './public-shell';
@@ -33,6 +34,14 @@ export function useDevClientMarketingHydration(
       site_languages: publicHeaderLanguageOptions(shell.branding.site_languages),
     };
     primaryMenu.value = shell.primaryMenu;
+
+    if (typeof document !== 'undefined') {
+      const path = window.location.pathname.replace(/\/+$/, '') || '/';
+      const isHome = /^\/(en|ar)\/?$/.test(path) || path === '/';
+      if (isHome) {
+        document.title = publicHomeTitle(branding.value);
+      }
+    }
   });
 }
 

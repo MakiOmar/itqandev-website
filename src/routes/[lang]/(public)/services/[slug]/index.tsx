@@ -6,6 +6,7 @@ import { getPublicSiteBaseUrl } from '~/lib/seo/canonical-url';
 import { publicSiteName } from '~/lib/marketing/public-page-head';
 import { usePublicShell } from '../../layout';
 import { getServiceBySlug } from '~/lib/marketing/content-layer';
+import { fetchPublicShell, resolveServiceFromShell } from '~/lib/marketing/public-shell';
 import type { Service as MarketingService } from '~/lib/marketing/types';
 import { uiLocaleFromPublicRoute } from '~/lib/i18n/ui-locale-path';
 import { marketingRoutes } from '~/lib/marketing/constants';
@@ -20,6 +21,14 @@ export const useServiceDetail = routeLoader$(async ({ params, request, fail }) =
   const slug = decodeURIComponent(String(params.slug ?? '').trim());
   const cookie = request.headers.get('cookie') || '';
   const uiLocale = uiLocaleFromPublicRoute(cookie, params.lang, request.url);
+  const shell = await fetchPublicShell(uiLocale, {
+    forwardCookies: cookie,
+    forwardDocumentUrl: request.url,
+  });
+  const fromShell = resolveServiceFromShell(shell, slug);
+  if (fromShell) {
+    return fromShell;
+  }
   const service = await getServiceBySlug(slug, uiLocale);
   if (!service) {
     return fail(404, { message: 'Service not found' });

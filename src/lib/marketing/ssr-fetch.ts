@@ -102,16 +102,22 @@ export function ssrFetch(input: RequestInfo | URL, init?: RequestInit): Promise<
   }
 
   const run = () => fetchWithTimeout(input, init);
-  const prev = getQueue();
-  const queued = prev.then(run, run);
-  setQueue(
-    queued.then(
-      () => undefined,
-      () => undefined,
-    ),
-  );
 
-  const result = queued.finally(() => {
+  const execute = import.meta.env.PROD
+    ? run()
+    : (() => {
+        const prev = getQueue();
+        const queued = prev.then(run, run);
+        setQueue(
+          queued.then(
+            () => undefined,
+            () => undefined,
+          ),
+        );
+        return queued;
+      })();
+
+  const result = execute.finally(() => {
     inflight.delete(key);
   });
   inflight.set(key, result);

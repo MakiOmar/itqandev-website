@@ -61,7 +61,13 @@ export const onGet: RequestHandler = async ({ cacheControl, url }) => {
       sMaxAge: 0,
       staleWhileRevalidate: 0,
     });
-  } else if (logical.startsWith(config.routes.admin.prefix) || logical === config.routes.public.home) {
+  } else if (logical.startsWith(config.routes.admin.prefix)) {
+    cacheControl({
+      maxAge: 0,
+      sMaxAge: 0,
+      staleWhileRevalidate: 0,
+    });
+  } else if (logical === config.routes.public.home) {
     cacheControl({
       maxAge: 60,
       sMaxAge: 300,

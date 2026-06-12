@@ -5,8 +5,8 @@ import { uiLocaleFromPublicRoute } from '~/lib/i18n/ui-locale-path';
 import { LocaleTransitionProvider } from '~/components/common/LocaleTransitionOverlay';
 import { Header } from '~/components/marketing/Header';
 import { Footer } from '~/components/marketing/Footer';
-import { PublicHomeTitleSync } from '~/components/marketing/PublicHomeTitleSync';
-import { ParticlesBackground } from '~/components/marketing/ParticlesBackground';
+import { LazyParticlesBackground } from '~/components/marketing/LazyParticlesBackground';
+import { PublicShellTypographyHead } from '~/components/perf/PublicShellTypographyHead';
 import { auth } from '~/lib/auth';
 import { useDevClientMarketingHydration } from '~/lib/marketing/dev-client-marketing';
 import {
@@ -60,8 +60,8 @@ export default component$(() => {
       class="relative isolate min-h-screen flex flex-col bg-gradient-to-br from-slate-50 via-blue-50/30 to-indigo-50/20 dark:from-slate-900 dark:via-slate-800/30 dark:to-slate-900/20 transition-colors duration-300"
     >
       {/* Full-viewport particles behind page chrome + content */}
-      <ParticlesBackground />
-      <PublicHomeTitleSync branding={branding} />
+      <PublicShellTypographyHead />
+      <LazyParticlesBackground />
       <LocaleTransitionProvider>
         <div class="relative z-10 flex min-h-screen flex-1 flex-col">
           <Header

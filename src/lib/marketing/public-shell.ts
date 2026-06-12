@@ -134,6 +134,16 @@ function mapShellApiPayload(data: PublicShellApiData, fallbackName: string): Pub
 /**
  * Fetch layout shell from Laravel (or local fallback when API base is unset).
  */
+/** Resolve a published service from an already-loaded shell (avoids duplicate API round-trip). */
+export function resolveServiceFromShell(shell: PublicShellState, slug: string): Service | null {
+  const normalized = decodeURIComponent(String(slug ?? '').trim());
+  if (!normalized) {
+    return null;
+  }
+  const services = shell.siteContent?.services ?? [];
+  return services.find((s) => s.slug === normalized) ?? null;
+}
+
 export async function fetchPublicShell(
   locale: string | null | undefined,
   fetchContext?: MarketingFetchContext,

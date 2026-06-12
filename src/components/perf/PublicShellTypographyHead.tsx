@@ -1,18 +1,16 @@
 import { component$ } from '@builder.io/qwik';
-import { useSiteTypography } from '~/lib/loaders/site-typography';
+import { usePublicShell } from '~/routes/[lang]/(public)/layout';
+import { defaultSystemTypography } from '~/lib/perf/typography';
 import {
   buildFontFaceCss,
   buildTypographyBootstrapScript,
   buildTypographyCssVariables,
 } from '~/lib/perf/typography';
 
-/**
- * Injects self-hosted @font-face rules, CSS variables, and async Google Font loading policy.
- * Mounted from `[lang]/layout.tsx` so all localized public and admin routes share typography.
- */
-export const SiteTypographyHead = component$(() => {
-  const typography = useSiteTypography();
-  const typo = typography.value;
+/** Public marketing typography from shell payload (no extra site-meta fetch). */
+export const PublicShellTypographyHead = component$(() => {
+  const shell = usePublicShell();
+  const typo = shell.value.branding?.typography ?? defaultSystemTypography();
   const fontFaceCss = buildFontFaceCss(typo);
   const cssVars = buildTypographyCssVariables(typo);
   const bootstrapScript = buildTypographyBootstrapScript(JSON.stringify(typo));
