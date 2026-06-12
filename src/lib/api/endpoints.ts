@@ -32,6 +32,9 @@ export const API_ENDPOINTS = {
     DELETE: (id: string | number) => `/v1/fonts/${id}`,
     UPLOAD: '/v1/fonts/upload',
   },
+  DASHBOARD: {
+    METRICS: '/v1/dashboard/metrics',
+  },
   // Activity
   ACTIVITY: {
     LIST: '/v1/activity',

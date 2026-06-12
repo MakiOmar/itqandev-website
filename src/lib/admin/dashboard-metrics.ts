@@ -1,11 +1,6 @@
 import { getApiClient } from '../api/client';
 import { API_ENDPOINTS } from '../api/endpoints';
-import { isFeatureModuleEnabled } from '../api/project-settings';
 import { shouldSkipSsrMarketingApi } from '../marketing/ssr-api-reachability';
-import type { Project } from '../../types/project';
-import type { Category } from '../../types/category';
-import type { Skill } from '../../types/skill';
-import type { Testimonial } from '../../types/testimonial';
 
 export interface DashboardMetrics {
   projects: {
@@ -44,114 +39,45 @@ export const EMPTY_DASHBOARD_METRICS: DashboardMetrics = {
   media: { total: 0 },
 };
 
-function extractListData<T>(result: PromiseSettledResult<unknown>): T[] {
-  if (result.status !== 'fulfilled' || !result.value || typeof result.value !== 'object') {
-    return [];
-  }
-  const payload = (result.value as { data?: unknown }).data;
-  if (Array.isArray(payload)) {
-    return payload as T[];
-  }
-  if (payload && typeof payload === 'object' && 'data' in payload && Array.isArray((payload as { data: unknown }).data)) {
-    return (payload as { data: T[] }).data;
-  }
-  return [];
-}
-
-function extractTotalCount(result: PromiseSettledResult<unknown>): number {
-  const items = extractListData(result);
-  if (result.status !== 'fulfilled' || !result.value || typeof result.value !== 'object') {
-    return items.length;
-  }
-  const payload = (result.value as { data?: unknown }).data;
-  if (payload && typeof payload === 'object' && !Array.isArray(payload)) {
-    const meta = (payload as { meta?: { total?: number } }).meta;
-    if (meta && typeof meta.total === 'number') {
-      return meta.total;
-    }
-  }
-  return items.length;
-}
-
 /**
- * Load dashboard stat cards from authenticated admin API endpoints.
- * Works server-side (routeLoader$ + cookies) and client-side (localStorage token + /api proxy).
+ * Load dashboard stat cards from GET /api/v1/dashboard/metrics (single round-trip).
  */
 export async function fetchDashboardMetrics(
   cookieHeader?: string | null,
-  presentationLocale?: string,
+  _presentationLocale?: string,
 ): Promise<DashboardMetrics> {
-  // Dev SSR cannot reach WAMP reliably; hydrate from browser via useVisibleTask$ on dashboard.
   if (typeof window === 'undefined' && shouldSkipSsrMarketingApi()) {
     return EMPTY_DASHBOARD_METRICS;
   }
 
-  const apiClient = getApiClient(
-    cookieHeader ?? undefined,
-    presentationLocale && presentationLocale.trim() !== '' ? presentationLocale.trim() : undefined,
-  );
-
-  let features: Record<string, boolean> | undefined;
   try {
-    const settingsRes = await apiClient.get<{ features?: Record<string, boolean> }>(API_ENDPOINTS.SETTINGS.GET);
-    features = (settingsRes?.data as { features?: Record<string, boolean> } | undefined)?.features ?? undefined;
-  } catch {
-    features = undefined;
-  }
-
-  const fetches = await Promise.allSettled([
-    isFeatureModuleEnabled(features, 'projects')
-      ? apiClient.get<Project[]>(API_ENDPOINTS.PROJECTS.LIST)
-      : Promise.resolve({ data: [] }),
-    isFeatureModuleEnabled(features, 'categories')
-      ? apiClient.get<Category[]>(API_ENDPOINTS.CATEGORIES.LIST)
-      : Promise.resolve({ data: [] }),
-    isFeatureModuleEnabled(features, 'skills')
-      ? apiClient.get<Skill[]>(API_ENDPOINTS.SKILLS.LIST)
-      : Promise.resolve({ data: [] }),
-    isFeatureModuleEnabled(features, 'testimonials')
-      ? apiClient.get<Testimonial[]>(API_ENDPOINTS.TESTIMONIALS.LIST)
-      : Promise.resolve({ data: [] }),
-    isFeatureModuleEnabled(features, 'blog')
-      ? apiClient.get<unknown[]>(API_ENDPOINTS.BLOG.LIST)
-      : Promise.resolve({ data: [] }),
-    isFeatureModuleEnabled(features, 'services')
-      ? apiClient.get<unknown[]>(API_ENDPOINTS.SERVICES.LIST)
-      : Promise.resolve({ data: [] }),
-    isFeatureModuleEnabled(features, 'media')
-      ? apiClient.get<unknown>(`${API_ENDPOINTS.MEDIA.LIST}?per_page=1`)
-      : Promise.resolve({ data: { total: 0 } }),
-  ]);
-
-  const [projectsRes, categoriesRes, skillsRes, testimonialsRes, blogRes, servicesRes, mediaRes] = fetches;
-
-  const projects = extractListData<Project>(projectsRes);
-  const blogList = extractListData<{ status?: string }>(blogRes);
-
-  let mediaTotal = 0;
-  if (mediaRes.status === 'fulfilled' && mediaRes.value) {
-    const md = (mediaRes.value as { data?: { total?: number } }).data;
-    if (md && typeof md === 'object' && 'total' in md && typeof md.total === 'number') {
-      mediaTotal = md.total;
-    } else {
-      mediaTotal = extractListData(mediaRes).length;
+    const apiClient = getApiClient(cookieHeader ?? undefined);
+    const response = await apiClient.get<{ data?: DashboardMetrics } | DashboardMetrics>(
+      API_ENDPOINTS.DASHBOARD.METRICS,
+    );
+    const payload = (response?.data as { data?: DashboardMetrics } | DashboardMetrics | undefined) ?? response;
+    let metrics: DashboardMetrics | null = null;
+    if (payload && typeof payload === 'object' && 'data' in payload) {
+      const wrapped = (payload as { data?: DashboardMetrics }).data;
+      if (wrapped) {
+        metrics = wrapped;
+      }
+    } else if (payload && typeof payload === 'object' && 'projects' in payload) {
+      metrics = payload as DashboardMetrics;
     }
+    if (!metrics) {
+      return EMPTY_DASHBOARD_METRICS;
+    }
+    return {
+      projects: metrics.projects ?? EMPTY_DASHBOARD_METRICS.projects,
+      categories: metrics.categories ?? EMPTY_DASHBOARD_METRICS.categories,
+      skills: metrics.skills ?? EMPTY_DASHBOARD_METRICS.skills,
+      testimonials: metrics.testimonials ?? EMPTY_DASHBOARD_METRICS.testimonials,
+      blog: metrics.blog ?? EMPTY_DASHBOARD_METRICS.blog,
+      services: metrics.services ?? EMPTY_DASHBOARD_METRICS.services,
+      media: metrics.media ?? EMPTY_DASHBOARD_METRICS.media,
+    };
+  } catch {
+    return EMPTY_DASHBOARD_METRICS;
   }
-
-  return {
-    projects: {
-      total: extractTotalCount(projectsRes),
-      published: projects.filter((p) => p.status === 'published').length,
-      draft: projects.filter((p) => p.status === 'draft').length,
-    },
-    categories: { total: extractTotalCount(categoriesRes) },
-    skills: { total: extractTotalCount(skillsRes) },
-    testimonials: { total: extractTotalCount(testimonialsRes) },
-    blog: {
-      total: extractTotalCount(blogRes),
-      published: blogList.filter((b) => b.status === 'published').length,
-    },
-    services: { total: extractTotalCount(servicesRes) },
-    media: { total: mediaTotal },
-  };
 }

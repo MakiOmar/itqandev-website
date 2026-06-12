@@ -1,3 +1,5 @@
+import type { DocumentHeadProps, DocumentHeadValue } from '@builder.io/qwik-city';
+import { buildCanonicalHref } from '~/lib/seo/canonical-url';
 import { getConfig } from '~/lib/config';
 import type { PublicBrandingState } from '~/lib/marketing/public-shell';
 
@@ -48,4 +50,35 @@ export function publicPageTitle(page: string, branding?: PublicBrandingState | n
 /** Homepage `<title>` — site name first, then positioning line. */
 export function publicHomeTitle(branding?: PublicBrandingState | null): string {
   return `${publicSiteName(branding)} | Web, Android & iOS Development`;
+}
+
+export interface PublicListPageHeadInput {
+  page: string;
+  description: string;
+  resolveValue: DocumentHeadProps['resolveValue'];
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  usePublicShell: any;
+  url: URL;
+}
+
+/** Shared document head for public marketing list pages. */
+export function publicListPageHead({
+  page,
+  description,
+  resolveValue,
+  usePublicShell,
+  url,
+}: PublicListPageHeadInput): DocumentHeadValue {
+  const shell = resolveValue(usePublicShell) as { branding?: PublicBrandingState | null };
+  const pageTitle = publicPageTitle(page, shell.branding);
+  const canonical = buildCanonicalHref(url.pathname, url.origin);
+  return {
+    title: pageTitle,
+    meta: [
+      { name: 'description', content: description },
+      { property: 'og:title', content: pageTitle },
+      { property: 'og:url', content: canonical },
+    ],
+    links: [{ rel: 'canonical', href: canonical }],
+  };
 }
