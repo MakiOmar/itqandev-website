@@ -1,8 +1,8 @@
 import { component$ } from '@builder.io/qwik';
 import type { DocumentHead } from '@builder.io/qwik-city';
 import { Link, useLocation } from '@builder.io/qwik-city';
-import { getConfig } from '~/lib/config';
 import { buildCanonicalHref } from '~/lib/seo/canonical-url';
+import { publicPageTitle } from '~/lib/marketing/public-page-head';
 import { usePublicShell } from '../layout';
 import { marketingRoutes } from '~/lib/marketing/constants';
 import { uiLangFromUrlPathname } from '~/lib/i18n/ui-locale-path';
@@ -110,14 +110,15 @@ export default component$(() => {
   );
 });
 
-export const head: DocumentHead = ({ url }) => {
-  const config = getConfig();
+export const head: DocumentHead = ({ resolveValue, url }) => {
+  const shell = resolveValue(usePublicShell);
+  const pageTitle = publicPageTitle('Pricing', shell.branding);
   const canonical = buildCanonicalHref(url.pathname, url.origin);
   return {
-    title: `Pricing | ${config.branding.name}`,
+    title: pageTitle,
     meta: [
       { name: 'description', content: 'Transparent pricing for web and mobile development. Custom quotes available.' },
-      { property: 'og:title', content: `Pricing | ${config.branding.name}` },
+      { property: 'og:title', content: pageTitle },
       { property: 'og:url', content: canonical },
     ],
     links: [{ rel: 'canonical', href: canonical }],

@@ -10,6 +10,8 @@ import { MARKETING_ENDPOINTS } from './endpoints';
 import { mapPublicBrandingFromApi } from './resolve-laravel-media-url';
 import type { PublicNavItem } from './public-menu';
 import type { Service, SiteContent } from './types';
+import { parseSiteTypography } from '~/lib/perf/typography';
+import type { SiteTypography } from '~/types/typography';
 import { mapMarketingSeoMetaFromApi } from './seo-snippet';
 import { isDevSsrMarketingFetchFailure } from './ssr-api-reachability';
 
@@ -17,11 +19,13 @@ const localBase = siteData as SiteContent;
 
 export type PublicBrandingState = {
   name: string;
+  site_description?: string;
   logo: string;
   logoDark: string;
   logoLight: string;
   site_languages: ReturnType<typeof resolvePublicSiteLanguages>;
   features?: Record<string, boolean>;
+  typography?: SiteTypography;
 };
 
 export type PublicShellState = {
@@ -60,13 +64,20 @@ function brandingFromSiteMeta(
       ? (settings.features as Record<string, boolean>)
       : undefined;
 
+  const siteDescription =
+    (typeof settings?.site_description === 'string' && settings.site_description.trim()) ||
+    (typeof settings?.description === 'string' && settings.description.trim()) ||
+    undefined;
+
   return {
     name: branding.name,
+    site_description: siteDescription,
     logo: branding.logo,
     logoDark: branding.logoDark,
     logoLight: branding.logoLight,
     site_languages: resolvePublicSiteLanguages(settings?.site_languages),
     features,
+    typography: parseSiteTypography(settings?.typography),
   };
 }
 

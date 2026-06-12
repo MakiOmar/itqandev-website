@@ -1,8 +1,9 @@
 import { component$ } from '@builder.io/qwik';
 import type { DocumentHead } from '@builder.io/qwik-city';
 import { routeLoader$ } from '@builder.io/qwik-city';
-import { getConfig } from '~/lib/config';
 import { buildCanonicalHref, getPublicSiteBaseUrl } from '~/lib/seo/canonical-url';
+import { publicPageTitle } from '~/lib/marketing/public-page-head';
+import { usePublicShell } from '../layout';
 import { getBlogPosts } from '~/lib/marketing/content-layer';
 import { Container } from '~/components/marketing/Container';
 import { Section } from '~/components/marketing/Section';
@@ -58,14 +59,15 @@ export default component$(() => {
   );
 });
 
-export const head: DocumentHead = ({ url }) => {
-  const config = getConfig();
+export const head: DocumentHead = ({ resolveValue, url }) => {
+  const shell = resolveValue(usePublicShell);
+  const pageTitle = publicPageTitle('Blog', shell.branding);
   const canonical = buildCanonicalHref(url.pathname, url.origin);
   return {
-    title: `Blog | ${config.branding.name}`,
+    title: pageTitle,
     meta: [
       { name: 'description', content: 'Blog posts and updates from our development team.' },
-      { property: 'og:title', content: `Blog | ${config.branding.name}` },
+      { property: 'og:title', content: pageTitle },
       { property: 'og:url', content: canonical },
     ],
     links: [{ rel: 'canonical', href: canonical }],

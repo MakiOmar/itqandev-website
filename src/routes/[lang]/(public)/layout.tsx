@@ -5,6 +5,7 @@ import { uiLocaleFromPublicRoute } from '~/lib/i18n/ui-locale-path';
 import { LocaleTransitionProvider } from '~/components/common/LocaleTransitionOverlay';
 import { Header } from '~/components/marketing/Header';
 import { Footer } from '~/components/marketing/Footer';
+import { PublicHomeTitleSync } from '~/components/marketing/PublicHomeTitleSync';
 import { ParticlesBackground } from '~/components/marketing/ParticlesBackground';
 import { auth } from '~/lib/auth';
 import { useDevClientMarketingHydration } from '~/lib/marketing/dev-client-marketing';
@@ -60,6 +61,7 @@ export default component$(() => {
     >
       {/* Full-viewport particles behind page chrome + content */}
       <ParticlesBackground />
+      <PublicHomeTitleSync branding={branding} />
       <LocaleTransitionProvider>
         <div class="relative z-10 flex min-h-screen flex-1 flex-col">
           <Header

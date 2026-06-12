@@ -2,8 +2,9 @@ import { component$ } from '@builder.io/qwik';
 import type { DocumentHead } from '@builder.io/qwik-city';
 import { routeLoader$ } from '@builder.io/qwik-city';
 import { Link, useLocation } from '@builder.io/qwik-city';
-import { getConfig } from '~/lib/config';
 import { getPublicSiteBaseUrl } from '~/lib/seo/canonical-url';
+import { publicSiteName } from '~/lib/marketing/public-page-head';
+import { usePublicShell } from '../../layout';
 import { getServiceBySlug } from '~/lib/marketing/content-layer';
 import type { Service as MarketingService } from '~/lib/marketing/types';
 import { uiLocaleFromPublicRoute } from '~/lib/i18n/ui-locale-path';
@@ -130,7 +131,8 @@ export default component$(() => {
 });
 
 export const head: DocumentHead = ({ resolveValue, url }) => {
-  const config = getConfig();
+  const shell = resolveValue(usePublicShell);
+  const brandName = publicSiteName(shell.branding);
   const baseUrl = getPublicSiteBaseUrl(url.origin).replace(/\/$/, '');
   try {
     const s = resolveValue(useServiceDetail) as MarketingService;
@@ -139,7 +141,7 @@ export const head: DocumentHead = ({ resolveValue, url }) => {
     }
     const description = s.shortDescription || s.description || '';
     return marketingEntityDetailHead({
-      brandName: config.branding.name,
+      brandName,
       baseUrl,
       sectionLabel: 'Services',
       sectionPath: 'services',
@@ -150,7 +152,7 @@ export const head: DocumentHead = ({ resolveValue, url }) => {
     });
   } catch {
     return {
-      title: `404 | ${config.branding.name}`,
+      title: `404 | ${brandName}`,
       meta: [{ name: 'robots', content: 'noindex, nofollow' }],
     };
   }

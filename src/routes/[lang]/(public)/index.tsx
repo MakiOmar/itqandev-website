@@ -4,6 +4,7 @@ import { Link, useLocation } from '@builder.io/qwik-city';
 import { routeLoader$ } from '@builder.io/qwik-city';
 import { getConfig } from '~/lib/config';
 import { buildCanonicalHref, getPublicSiteBaseUrl } from '~/lib/seo/canonical-url';
+import { publicHomeTitle, publicSiteDescription } from '~/lib/marketing/public-page-head';
 import { isFeatureModuleEnabled } from '~/lib/api/project-settings';
 import { getFeaturedCaseStudies, getTestimonials, getBlogPosts } from '~/lib/marketing/content-layer';
 import { uiLocaleFromPublicRoute } from '~/lib/i18n/ui-locale-path';
@@ -357,21 +358,38 @@ export default component$(() => {
   );
 });
 
-export const head: DocumentHead = ({ url }) => {
-  const config = getConfig();
+export const head: DocumentHead = ({ resolveValue, url }) => {
   const canonical = buildCanonicalHref(url.pathname, url.origin);
-  return {
-    title: `${config.branding.name} | Web, Android & iOS Development`,
-    meta: [
-      {
-        name: 'description',
-        content: `We build web, Android and iOS apps that scale. From MVPs to enterprise products. Modern stack, clear process, and long-term support.`,
-      },
-      { property: 'og:title', content: `${config.branding.name} | Web, Android & iOS Development` },
-      { property: 'og:description', content: 'We build web, Android and iOS apps that scale.' },
-      { property: 'og:type', content: 'website' },
-      { property: 'og:url', content: canonical },
-    ],
-    links: [{ rel: 'canonical', href: canonical }],
-  };
+  const metaFallback =
+    'We build web, Android and iOS apps that scale. From MVPs to enterprise products. Modern stack, clear process, and long-term support.';
+
+  try {
+    const shell = resolveValue(usePublicShell);
+    const titleTag = publicHomeTitle(shell.branding);
+    const metaDescription = publicSiteDescription(shell.branding, metaFallback);
+    return {
+      title: titleTag,
+      meta: [
+        { name: 'description', content: metaDescription },
+        { property: 'og:title', content: titleTag },
+        { property: 'og:description', content: metaDescription },
+        { property: 'og:type', content: 'website' },
+        { property: 'og:url', content: canonical },
+      ],
+      links: [{ rel: 'canonical', href: canonical }],
+    };
+  } catch {
+    const titleTag = publicHomeTitle();
+    return {
+      title: titleTag,
+      meta: [
+        { name: 'description', content: metaFallback },
+        { property: 'og:title', content: titleTag },
+        { property: 'og:description', content: metaFallback },
+        { property: 'og:type', content: 'website' },
+        { property: 'og:url', content: canonical },
+      ],
+      links: [{ rel: 'canonical', href: canonical }],
+    };
+  }
 };

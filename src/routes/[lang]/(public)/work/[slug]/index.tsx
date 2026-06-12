@@ -1,8 +1,9 @@
 import { component$, useComputed$, useSignal, useVisibleTask$ } from '@builder.io/qwik';
 import type { DocumentHead } from '@builder.io/qwik-city';
 import { routeLoader$ } from '@builder.io/qwik-city';
-import { getConfig } from '~/lib/config';
 import { getPublicSiteBaseUrl } from '~/lib/seo/canonical-url';
+import { publicSiteName } from '~/lib/marketing/public-page-head';
+import { usePublicShell } from '../../layout';
 import { marketingApiPageOriginMismatch } from '~/lib/marketing/api-client';
 import { getCaseStudyBySlug } from '~/lib/marketing/content-layer';
 import type { CaseStudy as MarketingCaseStudy } from '~/lib/marketing/types';
@@ -301,19 +302,20 @@ export default component$(() => {
 });
 
 export const head: DocumentHead = ({ resolveValue, url }) => {
-  const config = getConfig();
+  const shell = resolveValue(usePublicShell);
+  const brandName = publicSiteName(shell.branding);
   const baseUrl = getPublicSiteBaseUrl(url.origin).replace(/\/$/, '');
   try {
     const caseStudyResolved = resolveValue(useCaseStudy) as MarketingCaseStudy | DeferredCrossOriginPayload;
     if (isDeferredCrossOriginPayload(caseStudyResolved)) {
       return {
-        title: `Work | ${config.branding.name}`,
+        title: `Work | ${brandName}`,
         meta: [{ name: 'robots', content: 'noindex, nofollow' }],
       };
     }
     const caseStudy = caseStudyResolved;
     return marketingEntityDetailHead({
-      brandName: config.branding.name,
+      brandName,
       baseUrl: baseUrl.replace(/\/$/, ''),
       sectionLabel: 'Work',
       sectionPath: 'work',
@@ -324,7 +326,7 @@ export const head: DocumentHead = ({ resolveValue, url }) => {
     });
   } catch {
     return {
-      title: `404 | ${config.branding.name}`,
+      title: `404 | ${brandName}`,
       meta: [{ name: 'robots', content: 'noindex, nofollow' }],
     };
   }

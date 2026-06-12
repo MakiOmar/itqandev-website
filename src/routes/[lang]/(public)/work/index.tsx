@@ -3,6 +3,8 @@ import type { DocumentHead } from '@builder.io/qwik-city';
 import { routeLoader$, useLocation } from '@builder.io/qwik-city';
 import { getConfig } from '~/lib/config';
 import { buildCanonicalHref, getPublicSiteBaseUrl } from '~/lib/seo/canonical-url';
+import { publicPageTitle } from '~/lib/marketing/public-page-head';
+import { usePublicShell } from '../layout';
 import { getCaseStudies } from '~/lib/marketing/content-layer';
 import { uiLangFromUrlPathname, uiLocaleFromPublicRoute } from '~/lib/i18n/ui-locale-path';
 import { Container } from '~/components/marketing/Container';
@@ -92,14 +94,15 @@ export default component$(() => {
   );
 });
 
-export const head: DocumentHead = ({ url }) => {
-  const config = getConfig();
+export const head: DocumentHead = ({ resolveValue, url }) => {
+  const shell = resolveValue(usePublicShell);
+  const pageTitle = publicPageTitle('Work', shell.branding);
   const canonical = buildCanonicalHref(url.pathname, url.origin);
   return {
-    title: `Work | ${config.branding.name}`,
+    title: pageTitle,
     meta: [
       { name: 'description', content: 'Portfolio and case studies of our web and mobile projects.' },
-      { property: 'og:title', content: `Work | ${config.branding.name}` },
+      { property: 'og:title', content: pageTitle },
       { property: 'og:url', content: canonical },
     ],
     links: [{ rel: 'canonical', href: canonical }],

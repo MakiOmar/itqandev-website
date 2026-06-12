@@ -2,7 +2,8 @@ import { component$ } from '@builder.io/qwik';
 import type { DocumentHead } from '@builder.io/qwik-city';
 import { routeLoader$ } from '@builder.io/qwik-city';
 import { Link, useLocation } from '@builder.io/qwik-city';
-import { getConfig } from '~/lib/config';
+import { publicSiteName } from '~/lib/marketing/public-page-head';
+import { usePublicShell } from '../../layout';
 import { buildCanonicalHref, getPublicSiteBaseUrl } from '~/lib/seo/canonical-url';
 import { getBlogPostBySlug } from '~/lib/marketing/content-layer';
 import { marketingRoutes } from '~/lib/marketing/constants';
@@ -114,14 +115,15 @@ export default component$(() => {
 });
 
 export const head: DocumentHead = ({ resolveValue, url }) => {
-  const config = getConfig();
+  const shell = resolveValue(usePublicShell);
+  const brandName = publicSiteName(shell.branding);
   const canonical = buildCanonicalHref(url.pathname, url.origin);
   try {
     const post = resolveValue(useBlogPost);
     const title = post.seoMeta?.title || post.title;
     const description = post.seoMeta?.description || post.excerpt;
     return {
-      title: `${title} | Blog | ${config.branding.name}`,
+      title: `${title} | Blog | ${brandName}`,
       meta: [
         { name: 'description', content: description },
         { property: 'og:title', content: title },
@@ -133,7 +135,7 @@ export const head: DocumentHead = ({ resolveValue, url }) => {
     };
   } catch {
     return {
-      title: `404 | ${config.branding.name}`,
+      title: `404 | ${brandName}`,
       meta: [{ name: 'robots', content: 'noindex, nofollow' }],
     };
   }
