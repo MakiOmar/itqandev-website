@@ -1,7 +1,6 @@
 import { component$, useSignal, $ } from '@builder.io/qwik';
 import type { DocumentHead } from '@builder.io/qwik-city';
-import { buildCanonicalHref } from '~/lib/seo/canonical-url';
-import { publicPageTitle } from '~/lib/marketing/public-page-head';
+import { publicListPageHead } from '~/lib/marketing/public-page-head';
 import { usePublicShell } from '../layout';
 import { MARKETING_ENDPOINTS } from '~/lib/marketing/endpoints';
 import { marketingPost } from '~/lib/marketing/api-client';
@@ -207,17 +206,11 @@ export default component$(() => {
   );
 });
 
-export const head: DocumentHead = ({ resolveValue, url }) => {
-  const shell = resolveValue(usePublicShell);
-  const pageTitle = publicPageTitle('Contact', shell.branding);
-  const canonical = buildCanonicalHref(url.pathname, url.origin);
-  return {
-    title: pageTitle,
-    meta: [
-      { name: 'description', content: 'Get in touch for your next web or mobile project.' },
-      { property: 'og:title', content: pageTitle },
-      { property: 'og:url', content: canonical },
-    ],
-    links: [{ rel: 'canonical', href: canonical }],
-  };
-};
+export const head: DocumentHead = ({ resolveValue, url }) =>
+  publicListPageHead({
+    page: 'Contact',
+    description: 'Get in touch for your next web or mobile project.',
+    resolveValue,
+    usePublicShell,
+    url,
+  });

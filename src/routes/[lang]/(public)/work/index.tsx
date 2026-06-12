@@ -1,9 +1,8 @@
 import { component$, useSignal, useVisibleTask$ } from '@builder.io/qwik';
 import type { DocumentHead } from '@builder.io/qwik-city';
 import { routeLoader$, useLocation } from '@builder.io/qwik-city';
-import { getConfig } from '~/lib/config';
-import { buildCanonicalHref, getPublicSiteBaseUrl } from '~/lib/seo/canonical-url';
-import { publicPageTitle } from '~/lib/marketing/public-page-head';
+import { getPublicSiteBaseUrl } from '~/lib/seo/canonical-url';
+import { publicListPageHead } from '~/lib/marketing/public-page-head';
 import { usePublicShell } from '../layout';
 import { getCaseStudies } from '~/lib/marketing/content-layer';
 import { uiLangFromUrlPathname, uiLocaleFromPublicRoute } from '~/lib/i18n/ui-locale-path';
@@ -94,17 +93,11 @@ export default component$(() => {
   );
 });
 
-export const head: DocumentHead = ({ resolveValue, url }) => {
-  const shell = resolveValue(usePublicShell);
-  const pageTitle = publicPageTitle('Work', shell.branding);
-  const canonical = buildCanonicalHref(url.pathname, url.origin);
-  return {
-    title: pageTitle,
-    meta: [
-      { name: 'description', content: 'Portfolio and case studies of our web and mobile projects.' },
-      { property: 'og:title', content: pageTitle },
-      { property: 'og:url', content: canonical },
-    ],
-    links: [{ rel: 'canonical', href: canonical }],
-  };
-};
+export const head: DocumentHead = ({ resolveValue, url }) =>
+  publicListPageHead({
+    page: 'Work',
+    description: 'Portfolio and case studies of our web and mobile projects.',
+    resolveValue,
+    usePublicShell,
+    url,
+  });
