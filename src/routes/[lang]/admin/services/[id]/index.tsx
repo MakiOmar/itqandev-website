@@ -7,7 +7,7 @@ import { useSwal } from '../../../../../lib/hooks/useSwal';
 import { getApiClient, extractCookieHeader } from '../../../../../lib/api/client';
 import { API_ENDPOINTS } from '../../../../../lib/api/endpoints';
 import { useAppRoutes } from '../../../../../lib/constants/routes';
-import { useSiteLanguageConfig } from '../../layout';
+import { usePublicSiteMeta } from '../../layout';
 import {
   ContentEditingLanguageSelect,
   ContentPrimaryLanguageSelect,
@@ -89,7 +89,7 @@ export default component$(() => {
   const { lang } = useTranslate();
   const R = useAppRoutes();
   const { success, error: showError } = useSwal();
-  const langConfig = useSiteLanguageConfig();
+  const langConfig = usePublicSiteMeta();
   const serviceLoader = useService();
   const liveService = useSignal<AdminService | null>(null);
 

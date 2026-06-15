@@ -1,14 +1,20 @@
-import { routeLoader$ } from '@builder.io/qwik-city';
+import type { Cookie } from '@builder.io/qwik-city';
+import type { AuthSession } from '../auth/types';
 import { auth } from '../auth';
 import { getConfig } from '../config';
 import { routesFromPreferredCookie } from '../constants/routes';
 import { stripUiLocaleFromPathname } from '../i18n/ui-locale-path';
 
+type AdminAuthRedirect = (status: 301 | 302 | 303 | 307 | 308, url: string) => unknown;
+
 /**
- * Admin dashboard auth loader - ensures user is authenticated.
- * Redirects to login if not authenticated (except on login page).
+ * Admin dashboard auth — plain loader logic (routeLoader$ lives in admin layout only).
  */
-export const useAdminAuth = routeLoader$(async ({ cookie, url, redirect: redirectFn }) => {
+export async function loadAdminAuthSession(
+  cookie: Cookie,
+  url: URL,
+  redirectFn: AdminAuthRedirect,
+): Promise<AuthSession | null> {
   const config = getConfig();
   const pathname = url.pathname;
   const normalizedPath = pathname.replace(/\/+$/, '') || '/';
@@ -40,4 +46,4 @@ export const useAdminAuth = routeLoader$(async ({ cookie, url, redirect: redirec
     }
     return null;
   }
-});
+}

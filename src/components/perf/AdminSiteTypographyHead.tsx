@@ -1,15 +1,14 @@
 import { component$ } from '@builder.io/qwik';
-import { usePublicSiteMeta } from '~/lib/loaders/public-site-meta';
 import {
   buildFontFaceCss,
   buildTypographyBootstrapScript,
   buildTypographyCssVariables,
 } from '~/lib/perf/typography';
+import type { SiteTypography } from '~/types/typography';
 
-/** Admin-only typography injection from unified public site-meta loader. */
-export const AdminSiteTypographyHead = component$(() => {
-  const meta = usePublicSiteMeta();
-  const typo = meta.value.typography;
+/** Admin-only typography injection (props from layout loader — no route import cycle). */
+export const AdminSiteTypographyHead = component$((props: { typography: SiteTypography }) => {
+  const typo = props.typography;
   const fontFaceCss = buildFontFaceCss(typo);
   const cssVars = buildTypographyCssVariables(typo);
   const bootstrapScript = buildTypographyBootstrapScript(JSON.stringify(typo));

@@ -2,7 +2,7 @@ import { component$, type QRL, type Component, useContext, useSignal, useVisible
 import { Link, useLocation } from '@builder.io/qwik-city';
 import { useSpeakLocale } from 'qwik-speak';
 import { useAppRoutes } from '../../lib/constants/routes';
-import { useAdminAuth } from '../../lib/loaders/admin-auth';
+import { AdminSessionContext } from '../../stores/admin-session-context';
 import { ProjectSettingsContext } from '../../stores/project-settings-store';
 import { isFeatureModuleEnabled, type FeatureModuleKey } from '../../lib/api/project-settings';
 import { getConfig } from '../../lib/config';
@@ -62,7 +62,7 @@ interface SidebarProps {
  */
 export const Sidebar = component$<SidebarProps>((props) => {
   const location = useLocation();
-  const auth = useAdminAuth();
+  const auth = useContext(AdminSessionContext);
   const projectSettings = useContext(ProjectSettingsContext);
   const { lang } = useTranslate();
   const locale = useSpeakLocale();

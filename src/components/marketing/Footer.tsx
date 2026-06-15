@@ -1,5 +1,6 @@
 import { component$, useSignal, useVisibleTask$ } from '@builder.io/qwik';
-import { Link, useLocation } from '@builder.io/qwik-city';
+import { useLocation } from '@builder.io/qwik-city';
+import { MarketingLink } from '~/components/marketing/MarketingLink';
 import { getConfig } from '~/lib/config';
 import { marketingRoutes } from '~/lib/marketing/constants';
 import { uiLangFromUrlPathname } from '~/lib/i18n/ui-locale-path';
@@ -68,7 +69,7 @@ export const Footer = component$<FooterProps>(({ contact, branding }) => {
         <div class="grid gap-8 md:grid-cols-2 lg:grid-cols-4">
           {/* Brand */}
           <div>
-            <Link href={MR.home} class="inline-flex items-center gap-2 text-lg font-bold light:text-slate-900 dark:text-white">
+            <MarketingLink href={MR.home} class="inline-flex items-center gap-2 text-lg font-bold light:text-slate-900 dark:text-white">
               {activeLogo && (
                 <img
                   src={activeLogo}
@@ -81,7 +82,7 @@ export const Footer = component$<FooterProps>(({ contact, branding }) => {
                 />
               )}
               <span>{brandName}</span>
-            </Link>
+            </MarketingLink>
             <p class="mt-2 text-sm text-slate-600 dark:text-slate-400">
               Web, Android & iOS development. We build digital products that scale.
             </p>
@@ -93,12 +94,12 @@ export const Footer = component$<FooterProps>(({ contact, branding }) => {
             <ul class="mt-4 space-y-2" role="list">
               {footerLinks.map((item) => (
                 <li key={item.href}>
-                  <Link
+                  <MarketingLink
                     href={item.href}
                     class="text-sm light:text-slate-700 light:hover:text-slate-900 dark:text-slate-300 dark:hover:text-white"
                   >
                     {item.label}
-                  </Link>
+                  </MarketingLink>
                 </li>
               ))}
             </ul>

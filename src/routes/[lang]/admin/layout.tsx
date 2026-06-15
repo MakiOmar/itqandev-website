@@ -1,23 +1,35 @@
 import '~/styles/admin.css';
-import { component$, Slot } from '@builder.io/qwik';
+import { component$, Slot, useContextProvider } from '@builder.io/qwik';
 import type { DocumentHead, RequestHandler } from '@builder.io/qwik-city';
 import { routeLoader$, useLocation } from '@builder.io/qwik-city';
+import { AdminSessionContext } from '../../../stores/admin-session-context';
 import { AdminSiteTypographyHead } from '../../../components/perf/AdminSiteTypographyHead';
 import { AuthenticatedAdminLayout } from '../../../components/dashboard/AuthenticatedAdminLayout';
 import { getConfig } from '../../../lib/config';
 import { stripUiLocaleFromPathname } from '../../../lib/i18n/ui-locale-path';
 import { getFeatureModuleForAdminPath } from '../../../lib/admin/feature-module-routes';
-import { isFeatureModuleEnabled } from '../../../lib/api/project-settings';
+import { defaultProjectSettings, isFeatureModuleEnabled } from '../../../lib/api/project-settings';
 import { extractCookieHeader } from '../../../lib/api/client';
 import { routesFromPreferredCookie } from '../../../lib/constants/routes';
-import { useAdminAuth } from '../../../lib/loaders/admin-auth';
-import { loadAdminSettings, useAdminSettings } from '../../../lib/loaders/admin-settings';
+import { loadAdminAuthSession } from '../../../lib/loaders/admin-auth';
+import { isAdminLoginPath, loadAdminSettings } from '../../../lib/loaders/admin-settings';
+import { loadPublicSiteMeta } from '../../../lib/loaders/public-site-meta';
 
-export { useAdminAuth };
-export { usePublicSiteMeta } from '../../../lib/loaders/public-site-meta';
-/** @deprecated Use usePublicSiteMeta — kept for admin CRUD routes importing from layout. */
-export { usePublicSiteMeta as useSiteLanguageConfig } from '../../../lib/loaders/public-site-meta';
-export { useAdminSettings };
+/** Route loaders must be declared in this layout module (not lib/) so client chunks never call routeLoader$. */
+export const useAdminAuth = routeLoader$(async ({ cookie, url, redirect: redirectFn }) =>
+  loadAdminAuthSession(cookie, url, redirectFn),
+);
+
+export const useAdminSettings = routeLoader$(async ({ cookie, request, url }) => {
+  if (isAdminLoginPath(url.pathname)) {
+    return defaultProjectSettings;
+  }
+  return loadAdminSettings(extractCookieHeader(cookie, request));
+});
+
+export const usePublicSiteMeta = routeLoader$(async ({ cookie, request }) =>
+  loadPublicSiteMeta(cookie, request),
+);
 
 /** Prevent search engines from indexing any dashboard HTML (all child admin routes). */
 export const onRequest: RequestHandler = ({ headers }) => {
@@ -74,17 +86,25 @@ export default component$(() => {
     logicalPath === config.routes.admin.login || logicalPath === '/admin/login';
 
   const adminSettings = useAdminSettings();
+  const adminSession = useAdminAuth();
+  const siteMeta = usePublicSiteMeta();
 
-  useAdminAuth();
+  useContextProvider(AdminSessionContext, adminSession);
+
   useAdminFeatureModuleGuard();
 
   if (isLoginPage) {
-    return <Slot />;
+    return (
+      <>
+        <AdminSiteTypographyHead typography={siteMeta.value.typography} />
+        <Slot />
+      </>
+    );
   }
 
   return (
     <>
-      <AdminSiteTypographyHead />
+      <AdminSiteTypographyHead typography={siteMeta.value.typography} />
       <AuthenticatedAdminLayout settings={adminSettings.value}>
         <Slot />
       </AuthenticatedAdminLayout>

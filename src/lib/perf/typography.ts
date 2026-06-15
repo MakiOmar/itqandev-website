@@ -84,6 +84,19 @@ function escapeCssString(value: string): string {
   return value.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
 }
 
+function effectiveFontStack(face: TypographyFace): string {
+  const family = face.css_family?.trim();
+  const hasHostedSources = Object.keys(face.sources ?? {}).length > 0;
+  if (hasHostedSources && family) {
+    const stack = face.fallback_stack?.trim() ?? '';
+    if (stack.toLowerCase().startsWith(`'${family.toLowerCase()}'`) || stack.toLowerCase().startsWith(family.toLowerCase())) {
+      return stack;
+    }
+    return `'${escapeCssString(family)}', ${stack}`;
+  }
+  return face.fallback_stack;
+}
+
 export function buildFontFaceCss(typography: SiteTypography): string {
   const seenFamilies = new Set<string>();
   const blocks: string[] = [];
@@ -102,7 +115,8 @@ export function buildFontFaceCss(typography: SiteTypography): string {
         continue;
       }
       if (fmt === 'eot') {
-        srcParts.push(`url('${url}');src:url('${url}?#iefix') format('embedded-opentype')`);
+        // Single src entry — the legacy `;src:` hack breaks when comma-joined in one declaration.
+        srcParts.push(`url('${url}?#iefix') format('embedded-opentype')`);
       } else if (fmt === 'svg') {
         srcParts.push(`url('${url}') format('svg')`);
       } else {
@@ -116,7 +130,7 @@ export function buildFontFaceCss(typography: SiteTypography): string {
 
     seenFamilies.add(family);
     blocks.push(
-      `@font-face{font-family:'${escapeCssString(family)}';font-style:normal;font-weight:400;font-display:swap;src:${srcParts.join(',')};}`,
+      `@font-face{font-family:'${escapeCssString(family)}';font-style:normal;font-weight:100 900;font-display:swap;src:${srcParts.join(',')};}`,
     );
   }
 
@@ -124,27 +138,41 @@ export function buildFontFaceCss(typography: SiteTypography): string {
 }
 
 export function buildTypographyCssVariables(typography: SiteTypography): string {
-  return `:root{--font-sans:${typography.ltr.fallback_stack};--font-arabic:${typography.rtl.fallback_stack};}html{font-family:var(--font-sans);}html[dir="rtl"],html[lang="ar"]{font-family:var(--font-arabic);}[dir="rtl"]{font-family:var(--font-arabic);}[dir="ltr"]{font-family:var(--font-sans);}`;
+  const ltrStack = effectiveFontStack(typography.ltr);
+  const rtlStack = effectiveFontStack(typography.rtl);
+  return `:root{--font-sans:${ltrStack};--font-arabic:${rtlStack};}html{font-family:var(--font-sans);}html[dir="rtl"],html[lang="ar"]{font-family:var(--font-arabic);}[dir="rtl"]{font-family:var(--font-arabic);}[dir="ltr"]{font-family:var(--font-sans);}`;
 }
 
 export function resolveActiveFace(typography: SiteTypography, isRtl: boolean): TypographyFace {
   return isRtl ? typography.rtl : typography.ltr;
 }
 
+function faceHasHostedSources(face: TypographyFace): boolean {
+  return Object.keys(face.sources).length > 0;
+}
+
+function faceNeedsGoogleFont(face: TypographyFace): boolean {
+  return !faceHasHostedSources(face) && Boolean(face.google_css_href?.trim());
+}
+
 export function resolveGoogleCssHref(typography: SiteTypography, isRtl: boolean): string | null {
-  if (typography.mode !== 'system') {
+  const face = resolveActiveFace(typography, isRtl);
+  if (faceHasHostedSources(face)) {
     return null;
   }
-  const href = resolveActiveFace(typography, isRtl).google_css_href;
+  const href = face.google_css_href;
   return href && href.trim() ? href.trim() : null;
 }
 
-/** System mode on public pages respects `VITE_DISABLE_GOOGLE_FONTS`; admin always loads. */
+/** System mode, or custom mode with a direction still on the default Inter/Cairo stack. */
 export function shouldLoadGoogleFonts(typography: SiteTypography, pathname: string): boolean {
-  if (typography.mode !== 'system') {
+  if (shouldDisableGoogleFontsForPath(pathname)) {
     return false;
   }
-  return !shouldDisableGoogleFontsForPath(pathname);
+  if (typography.mode === 'system') {
+    return true;
+  }
+  return faceNeedsGoogleFont(typography.ltr) || faceNeedsGoogleFont(typography.rtl);
 }
 
 export function readClientTypography(): SiteTypography {
@@ -232,12 +260,14 @@ export function buildTypographyBootstrapScript(typographyJson: string): string {
   }
   if (logical.charAt(0) !== '/') logical = '/' + logical;
   var isPublic = isPublicRoute(logical);
-  if (__typography.mode !== 'system') return;
   if (${disableExternalFonts ? 'true' : 'false'} && isPublic) return;
   var locale = (document.documentElement.getAttribute('lang') || (__uiLocales && __uiLocales.default) || 'en').toLowerCase();
   var isRtl = __uiLocales && __uiLocales.rtl && __uiLocales.rtl[locale];
   var face = isRtl ? __typography.rtl : __typography.ltr;
-  var href = face && face.google_css_href;
+  if (!face) return;
+  var sources = face.sources && typeof face.sources === 'object' ? face.sources : {};
+  if (Object.keys(sources).length > 0) return;
+  var href = face.google_css_href;
   if (!href) return;
   requestAnimationFrame(function() {
     var fontLinkId = 'app-locale-font';

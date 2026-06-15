@@ -30,7 +30,7 @@ import {
   primaryLocaleForContent,
   shouldWritePrimaryColumns,
 } from '../../../../../lib/content-display-locale';
-import { useSiteLanguageConfig } from '../../layout';
+import { usePublicSiteMeta } from '../../layout';
 import type { Project, ProjectUpdateInput, Category, Skill, Media, ProjectSeoMeta } from '../../../../../types';
 import { useContentSlugAutosuggestTitleSlugSignals } from '../../../../../lib/slug/content-slug-auto';
 import { AdminPublicPageLink } from '../../../../../components/admin/AdminPublicPageLink';
@@ -406,7 +406,7 @@ export default component$(() => {
   
   const location = useLocation();
   const project = useProject();
-  const langConfig = useSiteLanguageConfig();
+  const langConfig = usePublicSiteMeta();
   const categoriesAndSkillsLoader = useCategoriesAndSkills();
   const { options: categoriesAndSkills } = useLocaleAwareTaxonomyOptions(
     categoriesAndSkillsLoader,

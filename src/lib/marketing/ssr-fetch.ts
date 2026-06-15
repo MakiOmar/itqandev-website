@@ -3,6 +3,8 @@
  * Uses globalThis so all Vite SSR chunks share one queue (module-level `let` does not).
  */
 
+import { devSsrFetchTlsInit } from './ssr-dev-tls';
+
 const QUEUE_KEY = '__credocode_ssr_fetch_queue__';
 const INFLIGHT_KEY = '__credocode_ssr_inflight__';
 
@@ -41,6 +43,16 @@ function requestKey(input: RequestInfo | URL, init?: RequestInit): string {
   return `${(init?.method ?? 'GET').toUpperCase()} ${url} locale:${locale} ${auth} ${cookie}`;
 }
 
+function requestHref(input: RequestInfo | URL): string {
+  if (typeof input === 'string') {
+    return input;
+  }
+  if (input instanceof URL) {
+    return input.href;
+  }
+  return input.url;
+}
+
 function ssrFetchTimeoutMs(): number {
   const envMs = Number(import.meta.env?.VITE_API_TIMEOUT ?? 0);
   if (import.meta.env.DEV) {
@@ -58,8 +70,14 @@ async function fetchWithTimeout(
   const timeoutMs = ssrFetchTimeoutMs();
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+  const href = requestHref(input);
+  const tlsInit = await devSsrFetchTlsInit(href);
   try {
-    return await fetch(input, { ...init, signal: controller.signal });
+    return await fetch(input, {
+      ...init,
+      ...tlsInit,
+      signal: controller.signal,
+    });
   } catch (e) {
     if (e instanceof Error && e.name === 'AbortError') {
       throw new Error(`SSR API request timed out after ${timeoutMs}ms`);

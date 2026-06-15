@@ -12,7 +12,7 @@ import { adminApiClient } from '../../../../lib/admin/admin-api-client';
 import { API_ENDPOINTS } from '../../../../lib/api/endpoints';
 import { adminSkillEditHref, useAppRoutes } from '../../../../lib/constants/routes';
 import type { Skill } from '../../../../types';
-import { useSiteLanguageConfig } from '../layout';
+import { usePublicSiteMeta } from '../layout';
 import { useLocaleAwareList } from '../../../../lib/hooks/useLocaleAwareList';
 import { primaryLocaleForContent } from '../../../../lib/content-display-locale';
 import { useDeleteSkill, useBulkDeleteSkills } from '../../../../lib/admin/skill-actions';
@@ -52,7 +52,7 @@ export default component$(() => {
   const { confirm, success, error: showError } = useSwal();
 
   const skillsLoader = useSkills();
-  const langConfig = useSiteLanguageConfig();
+  const langConfig = usePublicSiteMeta();
 
   const { items: skillsState, loading, refetch } = useLocaleAwareList<Skill>(
     skillsLoader,

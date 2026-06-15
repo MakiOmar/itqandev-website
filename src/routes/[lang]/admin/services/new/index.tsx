@@ -4,7 +4,7 @@ import { useNavigate, Link } from '@builder.io/qwik-city';
 import { PageHeader } from '../../../../../components/common/PageHeader';
 import { useTranslate, translateApp } from '../../../../../lib/i18n/useTranslate';
 import { useSwal } from '../../../../../lib/hooks/useSwal';
-import { useSiteLanguageConfig } from '../../layout';
+import { usePublicSiteMeta } from '../../layout';
 import {
   ContentEditingLanguageSelect,
   ContentPrimaryLanguageSelect,
@@ -29,7 +29,7 @@ export default component$(() => {
   const R = useAppRoutes();
   const { success, error: showError } = useSwal();
   const navigate = useNavigate();
-  const langConfig = useSiteLanguageConfig();
+  const langConfig = usePublicSiteMeta();
   const createAction = useCreateService();
 
   const saveTranslations = {

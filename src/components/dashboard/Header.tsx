@@ -3,7 +3,7 @@ import { Link } from '@builder.io/qwik-city';
 import { UserDropdown } from '../common/UserDropdown';
 import { LanguageSwitcher } from '../common/LanguageSwitcher';
 import { useAppRoutes } from '../../lib/constants/routes';
-import { useAdminAuth } from '../../lib/loaders/admin-auth';
+import { AdminSessionContext } from '../../stores/admin-session-context';
 import { MenuIcon } from './icons';
 import { ProjectSettingsContext } from '../../stores/project-settings-store';
 
@@ -16,7 +16,7 @@ interface HeaderProps {
  * Uses project settings (logo, name) from Laravel API
  */
 export const Header = component$<HeaderProps>((props) => {
-  const auth = useAdminAuth();
+  const auth = useContext(AdminSessionContext);
   const R = useAppRoutes();
   const projectSettings = useContext(ProjectSettingsContext);
   const isDarkMode = useSignal(false);

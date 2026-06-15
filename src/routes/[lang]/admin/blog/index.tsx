@@ -9,7 +9,7 @@ import { adminApiClient } from '../../../../lib/admin/admin-api-client';
 import { API_ENDPOINTS } from '../../../../lib/api/endpoints';
 import type { BlogPost } from '../../../../types/blog';
 import type { ContentSeoMetaRow } from '../../../../types/content-seo';
-import { useSiteLanguageConfig } from '../layout';
+import { usePublicSiteMeta } from '../layout';
 import { normalizeEditingLocale, primaryLocaleForContent } from '../../../../lib/content-display-locale';
 import { useLocaleAwareList } from '../../../../lib/hooks/useLocaleAwareList';
 import { uiLangFromUrlPathname } from '../../../../lib/i18n/ui-locale-path';
@@ -172,7 +172,7 @@ export default component$(() => {
   const location = useLocation();
   const { confirm, success, error: showError } = useSwal();
   const postsLoader = useBlogPosts();
-  const langConfig = useSiteLanguageConfig();
+  const langConfig = usePublicSiteMeta();
   const saveAction = useSaveBlogPost();
   const uploadImageAction = useUploadFeaturedImage();
   const saveSeoAction = useSaveSeo();

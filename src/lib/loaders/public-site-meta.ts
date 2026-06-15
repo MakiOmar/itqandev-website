@@ -1,4 +1,4 @@
-import { routeLoader$ } from '@builder.io/qwik-city';
+import type { Cookie, RequestEventLoader } from '@builder.io/qwik-city';
 import { extractCookieHeader } from '../api/client';
 import type { SiteLanguageRow } from '../../types/site-language';
 import { secondaryLocales } from '../content-translations';
@@ -43,10 +43,11 @@ function siteMetaFallback(cookieHeader: string | null): PublicSiteMetaState {
   };
 }
 
-/**
- * Single GET /api/public/site-meta for admin typography + language config (replaces duplicate loaders).
- */
-export const usePublicSiteMeta = routeLoader$(async ({ cookie, request }): Promise<PublicSiteMetaState> => {
+/** Single GET /api/public/site-meta for admin typography + language config. */
+export async function loadPublicSiteMeta(
+  cookie: Cookie,
+  request: RequestEventLoader['request'],
+): Promise<PublicSiteMetaState> {
   const cookieHeader = extractCookieHeader(cookie, request);
   if (typeof window === 'undefined' && shouldSkipSsrMarketingApi()) {
     return siteMetaFallback(cookieHeader);
@@ -72,8 +73,8 @@ export const usePublicSiteMeta = routeLoader$(async ({ cookie, request }): Promi
     };
   } catch (e) {
     if (import.meta.env.DEV && !isDevSsrMarketingFetchFailure(e)) {
-      console.warn('usePublicSiteMeta: site-meta request failed; using defaults.', e);
+      console.warn('loadPublicSiteMeta: site-meta request failed; using defaults.', e);
     }
     return siteMetaFallback(cookieHeader);
   }
-});
+}

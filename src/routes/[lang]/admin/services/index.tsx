@@ -12,7 +12,7 @@ import { adminApiClient } from '../../../../lib/admin/admin-api-client';
 import { API_ENDPOINTS } from '../../../../lib/api/endpoints';
 import { adminServiceEditHref, useAppRoutes } from '../../../../lib/constants/routes';
 import type { AdminService } from '../../../../types/service';
-import { useSiteLanguageConfig } from '../layout';
+import { usePublicSiteMeta } from '../layout';
 import { useLocaleAwareList } from '../../../../lib/hooks/useLocaleAwareList';
 import { primaryLocaleForContent } from '../../../../lib/content-display-locale';
 import { useDeleteService, useBulkDeleteServices } from '../../../../lib/admin/service-actions';
@@ -71,7 +71,7 @@ export default component$(() => {
   const R = useAppRoutes();
   const { confirm, success, error: showError } = useSwal();
   const services = useServices();
-  const langConfig = useSiteLanguageConfig();
+  const langConfig = usePublicSiteMeta();
 
   const { items: servicesState, loading, refetch } = useLocaleAwareList<AdminService>(
     services,

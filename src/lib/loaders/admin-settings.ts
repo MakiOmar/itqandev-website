@@ -1,8 +1,8 @@
-import { routeLoader$ } from '@builder.io/qwik-city';
 import { extractCookieHeader } from '../api/client';
 import { getApiClient } from '../api/client';
 import { API_ENDPOINTS } from '../api/endpoints';
 import { defaultProjectSettings, type ProjectSettings } from '../api/project-settings';
+import { stripUiLocaleFromPathname } from '../i18n/ui-locale-path';
 import { shouldSkipSsrMarketingApi } from '../marketing/ssr-api-reachability';
 
 export async function loadAdminSettings(cookieHeader: string | null): Promise<ProjectSettings> {
@@ -24,9 +24,8 @@ export async function loadAdminSettings(cookieHeader: string | null): Promise<Pr
   }
 }
 
-/**
- * One authenticated GET /api/settings for admin layout, feature guard, and settings context.
- */
-export const useAdminSettings = routeLoader$(async ({ cookie, request }): Promise<ProjectSettings> => {
-  return loadAdminSettings(extractCookieHeader(cookie, request));
-});
+/** Skip settings API on login route (no session yet). */
+export function isAdminLoginPath(pathname: string): boolean {
+  const logicalPath = stripUiLocaleFromPathname(pathname.replace(/\/+$/, '') || '/');
+  return logicalPath === '/admin/login' || logicalPath.endsWith('/admin/login');
+}

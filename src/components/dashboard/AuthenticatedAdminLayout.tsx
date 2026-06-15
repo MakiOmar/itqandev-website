@@ -1,4 +1,4 @@
-import { component$, Slot, useSignal, $, useStore, useContextProvider, useVisibleTask$ } from '@builder.io/qwik';
+import { component$, Slot, useSignal, $, useStore, useContext, useContextProvider, useVisibleTask$ } from '@builder.io/qwik';
 import { useSpeakLocale } from 'qwik-speak';
 import { isUiLocaleRtl } from '../../lib/i18n/ui-locale-segments';
 import { Sidebar } from './Sidebar';
@@ -8,7 +8,7 @@ import { defaultProjectSettings, type ProjectSettings } from '../../lib/api/proj
 import { getApiClient } from '../../lib/api/client';
 import { ProjectSettingsContext } from '../../stores/project-settings-store';
 import { getLocalizedRoutes } from '../../lib/constants/routes';
-import { useAdminAuth } from '../../lib/loaders/admin-auth';
+import { AdminSessionContext } from '../../stores/admin-session-context';
 
 /**
  * Dashboard chrome (sidebar, header, settings, auth sync).
@@ -19,7 +19,7 @@ export const AuthenticatedAdminLayout = component$((props: { settings?: ProjectS
   const locale = useSpeakLocale();
   const localized = getLocalizedRoutes(locale.lang);
   const loginHrefClient = localized.ADMIN.LOGIN.replace(/\/+$/, '');
-  const adminAuth = useAdminAuth();
+  const adminAuth = useContext(AdminSessionContext);
 
   const isRTL = useSignal(isUiLocaleRtl(locale.lang));
 

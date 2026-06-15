@@ -12,7 +12,7 @@ import { adminApiClient } from '../../../../lib/admin/admin-api-client';
 import { API_ENDPOINTS } from '../../../../lib/api/endpoints';
 import { adminCategoryEditHref, useAppRoutes } from '../../../../lib/constants/routes';
 import type { Category } from '../../../../types';
-import { useSiteLanguageConfig } from '../layout';
+import { usePublicSiteMeta } from '../layout';
 import { useLocaleAwareList } from '../../../../lib/hooks/useLocaleAwareList';
 import { primaryLocaleForContent } from '../../../../lib/content-display-locale';
 import { useDeleteCategory, useBulkDeleteCategories } from '../../../../lib/admin/category-actions';
@@ -69,7 +69,7 @@ export default component$(() => {
   const { confirm, success, error: showError } = useSwal();
 
   const categories = useCategories();
-  const langConfig = useSiteLanguageConfig();
+  const langConfig = usePublicSiteMeta();
 
   const { items: categoriesState, loading, refetch } = useLocaleAwareList<Category>(
     categories,

@@ -1,7 +1,7 @@
 import { component$, useSignal, useVisibleTask$ } from '@builder.io/qwik';
 import { ParticlesBackground } from './ParticlesBackground';
 
-/** Defers particles chunk until after first paint. */
+/** Mount particles after first client paint (keeps canvas out of SSR HTML). */
 export const LazyParticlesBackground = component$(() => {
   const ready = useSignal(false);
 

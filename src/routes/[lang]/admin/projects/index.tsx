@@ -11,7 +11,7 @@ import { adminApiClient } from '../../../../lib/admin/admin-api-client';
 import { API_ENDPOINTS } from '../../../../lib/api/endpoints';
 import { adminProjectEditHref, useAppRoutes } from '../../../../lib/constants/routes';
 import type { Project } from '../../../../types/project';
-import { useSiteLanguageConfig } from '../layout';
+import { usePublicSiteMeta } from '../layout';
 import { primaryLocaleForContent } from '../../../../lib/content-display-locale';
 import { useLocaleAwareList } from '../../../../lib/hooks/useLocaleAwareList';
 
@@ -87,7 +87,7 @@ export default component$(() => {
   const { confirm, success, error: showError } = useSwal();
   const navigate = useNavigate();
   const projectsLoader = useProjects();
-  const langConfig = useSiteLanguageConfig();
+  const langConfig = usePublicSiteMeta();
   const deleteAction = useDeleteProject();
   const bulkDeleteAction = useBulkDeleteProjects();
 

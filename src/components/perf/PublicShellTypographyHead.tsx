@@ -1,16 +1,14 @@
 import { component$ } from '@builder.io/qwik';
-import { usePublicShell } from '~/routes/[lang]/(public)/layout';
-import { defaultSystemTypography } from '~/lib/perf/typography';
 import {
   buildFontFaceCss,
   buildTypographyBootstrapScript,
   buildTypographyCssVariables,
 } from '~/lib/perf/typography';
+import type { SiteTypography } from '~/types/typography';
 
-/** Public marketing typography from shell payload (no extra site-meta fetch). */
-export const PublicShellTypographyHead = component$(() => {
-  const shell = usePublicShell();
-  const typo = shell.value.branding?.typography ?? defaultSystemTypography();
+/** Public marketing typography (props from layout loader — do not import route layout modules here). */
+export const PublicShellTypographyHead = component$((props: { typography: SiteTypography }) => {
+  const typo = props.typography;
   const fontFaceCss = buildFontFaceCss(typo);
   const cssVars = buildTypographyCssVariables(typo);
   const bootstrapScript = buildTypographyBootstrapScript(JSON.stringify(typo));

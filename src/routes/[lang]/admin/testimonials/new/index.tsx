@@ -5,7 +5,7 @@ import { PageHeader } from '../../../../../components/common/PageHeader';
 import { useTranslate, translateApp } from '../../../../../lib/i18n/useTranslate';
 import { useSwal } from '../../../../../lib/hooks/useSwal';
 import { adminTestimonialEditHref, getLocalizedRoutes, useAppRoutes } from '../../../../../lib/constants/routes';
-import { useSiteLanguageConfig } from '../../layout';
+import { usePublicSiteMeta } from '../../layout';
 import {
   ContentEditingLanguageSelect,
   ContentPrimaryLanguageSelect,
@@ -35,7 +35,7 @@ export default component$(() => {
   const R = useAppRoutes();
   const { success, error: showError } = useSwal();
   const navigate = useNavigate();
-  const langConfig = useSiteLanguageConfig();
+  const langConfig = usePublicSiteMeta();
   const projectsContext = useProjectsForNewTestimonialPage();
   const saveRunning = useSignal(false);
 

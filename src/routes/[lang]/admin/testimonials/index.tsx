@@ -18,7 +18,7 @@ import {
   runTestimonialDeleteFromBrowser,
 } from '../../../../lib/admin/testimonial-actions';
 import { useLocaleAwareList } from '../../../../lib/hooks/useLocaleAwareList';
-import { useSiteLanguageConfig } from '../layout';
+import { usePublicSiteMeta } from '../layout';
 import { primaryLocaleForContent } from '../../../../lib/content-display-locale';
 import { uiLangFromUrlPathname } from '../../../../lib/i18n/ui-locale-path';
 
@@ -70,7 +70,7 @@ export default component$(() => {
   const listContentLocale = uiLangFromUrlPathname(location.url.pathname);
   const { confirm, success, error: showError } = useSwal();
   const testimonialsLoader = useTestimonialsList();
-  const langConfig = useSiteLanguageConfig();
+  const langConfig = usePublicSiteMeta();
   const deleteRunning = useSignal(false);
 
   const { items: testimonials, loading, refetch } = useLocaleAwareList<Testimonial>(

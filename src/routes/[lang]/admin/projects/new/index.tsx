@@ -29,7 +29,7 @@ import {
   primaryLocaleForContent,
   shouldWritePrimaryColumns,
 } from '../../../../../lib/content-display-locale';
-import { useSiteLanguageConfig } from '../../layout';
+import { usePublicSiteMeta } from '../../layout';
 import type { ProjectCreateInput, Project } from '../../../../../types';
 import { useContentSlugAutosuggestDom } from '../../../../../lib/slug/content-slug-auto';
 import { AdminPublicPageLink } from '../../../../../components/admin/AdminPublicPageLink';
@@ -213,7 +213,7 @@ export default component$(() => {
     categoriesAndSkillsLoader,
     $((loc) => fetchTaxonomyListOptions(null, loc).catch(() => ({ categories: [], skills: [] }))),
   );
-  const langConfig = useSiteLanguageConfig();
+  const langConfig = usePublicSiteMeta();
   const createAction = useCreateProject();
 
   // Pre-compute translation strings to avoid serialization issues

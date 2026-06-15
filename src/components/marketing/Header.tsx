@@ -1,5 +1,6 @@
 import { component$, useSignal, useVisibleTask$, $ } from '@builder.io/qwik';
-import { Link, useLocation } from '@builder.io/qwik-city';
+import { useLocation } from '@builder.io/qwik-city';
+import { MarketingLink } from '~/components/marketing/MarketingLink';
 import { getConfig } from '~/lib/config';
 import { getLocalizedRoutes } from '~/lib/constants/routes';
 import { marketingRoutes } from '~/lib/marketing/constants';
@@ -111,7 +112,7 @@ export const Header = component$<HeaderProps>((props) => {
     >
       <Container class="flex h-16 w-full items-center justify-between gap-3 md:justify-start sm:h-18">
         {/* Logo — keep away from main nav cluster */}
-        <Link
+        <MarketingLink
           href={MR.home}
           class="inline-flex shrink-0 items-center gap-2 text-xl font-bold light:text-slate-900 dark:text-white"
           aria-label="Home"
@@ -129,7 +130,7 @@ export const Header = component$<HeaderProps>((props) => {
             />
           )}
           {activeLogo ? <span class="sr-only">{brandName}</span> : <span>{brandName}</span>}
-        </Link>
+        </MarketingLink>
 
         {/* Main menu — centered in the middle column on desktop only */}
         <div class="hidden min-w-0 flex-1 md:flex md:justify-center">
@@ -146,9 +147,9 @@ export const Header = component$<HeaderProps>((props) => {
                     {item.label}
                   </a>
                 ) : (
-                  <Link href={item.href} class={linkClass}>
+                  <MarketingLink href={item.href} class={linkClass}>
                     {item.label}
-                  </Link>
+                  </MarketingLink>
                 )}
               </span>
             ))}
@@ -212,13 +213,13 @@ export const Header = component$<HeaderProps>((props) => {
                     {item.label}
                   </a>
                 ) : (
-                  <Link
+                  <MarketingLink
                     href={item.href}
                     class="rounded-lg px-3 py-2.5 text-sm font-medium light:text-slate-900 light:hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800"
                     onClick$={closeMenu}
                   >
                     {item.label}
-                  </Link>
+                  </MarketingLink>
                 )}
                 {item.children && item.children.length > 0 ? (
                   <ul class="ml-3 border-l border-slate-200 py-1 pl-3 dark:border-slate-700">
@@ -235,13 +236,13 @@ export const Header = component$<HeaderProps>((props) => {
                             {child.label}
                           </a>
                         ) : (
-                          <Link
+                          <MarketingLink
                             href={child.href}
                             class="block rounded-lg px-3 py-2 text-sm light:text-slate-700 light:hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
                             onClick$={closeMenu}
                           >
                             {child.label}
-                          </Link>
+                          </MarketingLink>
                         )}
                       </li>
                     ))}

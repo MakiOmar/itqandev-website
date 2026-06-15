@@ -2,11 +2,77 @@
  * This is the base config for vite.
  * When building, the adapter config is used which loads this file and extends it.
  */
-import { defineConfig, loadEnv, type UserConfig } from "vite";
+import { defineConfig, loadEnv, type Plugin, type UserConfig } from "vite";
 import { qwikVite } from "@builder.io/qwik/optimizer";
 import { qwikCity } from "@builder.io/qwik-city/vite";
 import tsconfigPaths from "vite-tsconfig-paths";
 import pkg from "./package.json";
+
+const VITE_CLIENT_TAG = '<script type="module" src="/@vite/client"></script>';
+
+/**
+ * Qwik City dispatches `qcinit` (SPA bootstrap) before Vite's client script runs in dev SSR HTML.
+ * Moving `@vite/client` into `<head>` avoids "spaInit_event failed to load" on first paint.
+ */
+function moveViteClientToHead(html: string): string {
+  if (!html.includes(VITE_CLIENT_TAG)) {
+    return html;
+  }
+  const headEnd = html.indexOf("</head>");
+  const firstViteIdx = html.indexOf(VITE_CLIENT_TAG);
+  const viteAlreadyInHead = headEnd >= 0 && firstViteIdx >= 0 && firstViteIdx < headEnd;
+  const without = html.replaceAll(VITE_CLIENT_TAG, "");
+  if (viteAlreadyInHead) {
+    return without;
+  }
+  return without.replace("<head>", `<head>\n    ${VITE_CLIENT_TAG}`);
+}
+
+function viteClientFirstPlugin(): Plugin {
+  return {
+    name: "credocode-vite-client-first",
+    apply: "serve",
+    transformIndexHtml: {
+      order: "post",
+      handler(html) {
+        return moveViteClientToHead(html);
+      },
+    },
+    configureServer(server) {
+      server.middlewares.use((req, res, next) => {
+        const accept = req.headers.accept ?? "";
+        if (!accept.includes("text/html")) {
+          next();
+          return;
+        }
+
+        const chunks: Buffer[] = [];
+        const originalEnd = res.end.bind(res);
+
+        res.end = ((chunk?: unknown, encoding?: unknown, cb?: unknown) => {
+          if (chunk) {
+            chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(String(chunk)));
+          }
+
+          const contentType = res.getHeader("content-type");
+          if (
+            typeof contentType === "string" &&
+            contentType.includes("text/html") &&
+            chunks.length > 0
+          ) {
+            const html = moveViteClientToHead(Buffer.concat(chunks).toString("utf8"));
+            res.setHeader("content-length", Buffer.byteLength(html));
+            return originalEnd(html, encoding as BufferEncoding, cb as (() => void) | undefined);
+          }
+
+          return originalEnd(chunk, encoding as BufferEncoding, cb as (() => void) | undefined);
+        }) as typeof res.end;
+
+        next();
+      });
+    },
+  };
+}
 
 type PkgDep = Record<string, string>;
 const { dependencies = {}, devDependencies = {} } = pkg as any as {
@@ -77,9 +143,22 @@ export default defineConfig(({ command, mode }): UserConfig => {
   };
   // SSR builds use --ssr flag or have entry.preview/entry.ssr, so we check mode and command
   const isClientBuild = command === 'build' && mode === 'production' && !process.argv.includes('--ssr');
-  
+  const isDevServer = command === "serve";
+
   return {
-    plugins: [qwikCity(), qwikVite(), tsconfigPaths({ root: "." })],
+    resolve: {
+      dedupe: ["@builder.io/qwik", "@builder.io/qwik-city"],
+    },
+    plugins: [
+      qwikCity(),
+      qwikVite({
+        // Dev-only: skip Qwik City SPA bootstrap chunk (spaInit) — avoids flaky dynamic import on Windows/Vite 7.
+        // Production keeps default client navigation.
+        experimental: isDevServer ? ["noSPA"] : undefined,
+      }),
+      viteClientFirstPlugin(),
+      tsconfigPaths({ root: "." }),
+    ],
     // Optimize CSS - Static generation with Vite + Tailwind v4
     css: {
       devSourcemap: false,
@@ -89,9 +168,8 @@ export default defineConfig(({ command, mode }): UserConfig => {
     },
     // This tells Vite which dependencies to pre-build in dev mode.
     optimizeDeps: {
-      // Put problematic deps that break bundling here, mostly those with binaries.
-      // For example ['better-sqlite3'] if you use that in server functions.
-      exclude: [],
+      // Qwik plugin owns these — prebundling twice causes duplicate @builder__io_qwik.js hashes in dev.
+      exclude: ["@builder.io/qwik", "@builder.io/qwik-city"],
     },
     build: {
       // CSS is statically generated at build time by Tailwind v4 + PostCSS

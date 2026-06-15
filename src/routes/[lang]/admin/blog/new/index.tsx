@@ -15,7 +15,7 @@ import {
   primaryLocaleForContent,
   shouldWritePrimaryColumns,
 } from '../../../../../lib/content-display-locale';
-import { useSiteLanguageConfig } from '../../layout';
+import { usePublicSiteMeta } from '../../layout';
 import { getApiClient, extractCookieHeader } from '../../../../../lib/api/client';
 import { PageHeader } from '../../../../../components/common/PageHeader';
 import { useTranslate, translateApp } from '../../../../../lib/i18n/useTranslate';
@@ -115,7 +115,7 @@ export const useCreateBlogPost = routeAction$(
 export default component$(() => {
   const { lang } = useTranslate();
   const R = useAppRoutes();
-  const langConfig = useSiteLanguageConfig();
+  const langConfig = usePublicSiteMeta();
   const createAction = useCreateBlogPost();
   const contentLocaleDraft = useSignal('');
   const editingLocaleDraft = useSignal(langConfig.value.content_editing_locale);

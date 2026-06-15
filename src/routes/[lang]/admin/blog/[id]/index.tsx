@@ -20,7 +20,7 @@ import {
   primaryLocaleForContent,
   shouldWritePrimaryColumns,
 } from '../../../../../lib/content-display-locale';
-import { useSiteLanguageConfig } from '../../layout';
+import { usePublicSiteMeta } from '../../layout';
 import { getApiClient, extractCookieHeader } from '../../../../../lib/api/client';
 import { API_ENDPOINTS } from '../../../../../lib/api/endpoints';
 import { routesFromPreferredCookie, useAppRoutes } from '../../../../../lib/constants/routes';
@@ -189,7 +189,7 @@ export default component$(() => {
   const { success, error: showError } = useSwal();
   const location = useLocation();
   const post = useBlogPost();
-  const langConfig = useSiteLanguageConfig();
+  const langConfig = usePublicSiteMeta();
   const updateAction = useUpdateBlogPost();
   const uploadImageAction = useUploadFeaturedImage();
 

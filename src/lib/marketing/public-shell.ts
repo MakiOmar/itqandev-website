@@ -123,7 +123,6 @@ function mapShellApiPayload(data: PublicShellApiData, fallbackName: string): Pub
       : {};
   const menuItems = Array.isArray(data.menu?.items) ? data.menu!.items! : [];
   const base = { ...(siteData as SiteContent) } as SiteContent;
-
   return {
     branding: brandingFromSiteMeta(siteMeta, fallbackName),
     primaryMenu: menuItems,
@@ -169,7 +168,8 @@ export async function fetchPublicShell(
       return localShellFallback();
     }
 
-    return mapShellApiPayload(data, fallbackName);
+    const shell = mapShellApiPayload(data, fallbackName);
+    return shell;
   } catch (e) {
     if (!isDevSsrMarketingFetchFailure(e)) {
       console.warn('[marketing] fetch public shell failed', e);

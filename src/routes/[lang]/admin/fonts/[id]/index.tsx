@@ -29,6 +29,7 @@ export const useFontForEdit = routeLoader$(async ({ params, cookie, request, fai
   if (id === 'new') {
     throw redirectFn(302, '../new');
   }
+
   try {
     const api = adminApiClient(cookie, request, params.lang);
     const res = await api.get<Record<string, unknown>>(API_ENDPOINTS.FONTS.GET(id));
@@ -40,9 +41,19 @@ export const useFontForEdit = routeLoader$(async ({ params, cookie, request, fai
     return mapFont(raw);
   } catch (e: unknown) {
     if (e && typeof e === 'object' && 'status' in e) {
-      throw e;
+      const err = e as { status?: number; message?: string };
+      if (err.status === 401 || err.status === 403) {
+        throw fail(401, { message: err.message || 'Unauthorized' });
+      }
+      if (err.status === 404) {
+        throw fail(404, { message: 'Font not found' });
+      }
+      throw fail(err.status && err.status >= 400 ? err.status : 500, {
+        message: err.message || 'Failed to load font',
+      });
     }
-    throw fail(404, { message: 'Font not found' });
+    const message = e instanceof Error ? e.message : 'Failed to load font';
+    throw fail(503, { message });
   }
 });
 

@@ -187,7 +187,8 @@ export const useSettings = routeLoader$(async ({ cookie, request }) => {
     const apiClient = getApiClient(cookieHeader);
     const response = await apiClient.get(API_ENDPOINTS.SETTINGS.GET);
     const settings = (response?.data ?? response) as Partial<SettingsFormData>;
-    return normalizeSettings(settings);
+    const normalized = normalizeSettings(settings);
+    return normalized;
   } catch (error: any) {
     console.warn('Failed to load settings from API, using defaults:', error);
     return defaultSettings;
@@ -335,12 +336,17 @@ export const useUpdateSettings = routeAction$(
         }
       }
 
-      await apiClient.put(API_ENDPOINTS.SETTINGS.UPDATE, payload);
+      const response = await apiClient.put(API_ENDPOINTS.SETTINGS.UPDATE, payload);
       clearProjectSettingsCache();
+
+      const saved = (response?.data ?? {}) as Record<string, unknown>;
 
       return {
         success: true,
         message: 'Settings saved successfully',
+        font_mode: saved.font_mode === 'custom' ? 'custom' : 'system',
+        font_ltr_id: normalizeFontId(saved.font_ltr_id),
+        font_rtl_id: normalizeFontId(saved.font_rtl_id),
       };
     } catch (error: any) {
       return {

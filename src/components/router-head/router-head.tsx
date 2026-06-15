@@ -1,4 +1,4 @@
-import { component$ } from "@builder.io/qwik";
+import { component$, isDev } from "@builder.io/qwik";
 import { useDocumentHead, useLocation } from "@builder.io/qwik-city";
 import { uiLocaleBootstrapJson } from "~/lib/i18n/ui-locale-segments";
 import { isAdminDashboardPath } from "~/lib/i18n/ui-locale-path";
@@ -29,6 +29,8 @@ export const RouterHead = component$(() => {
 
   return (
     <>
+      {/* Dev: Vite client must run before Qwik hydration / spaInit dynamic imports */}
+      {isDev ? <script type="module" src="/@vite/client" /> : null}
       <title>{head.title}</title>
 
       {isAdmin ? (
