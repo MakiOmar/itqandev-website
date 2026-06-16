@@ -26,6 +26,17 @@ VITE_CSRF_TOKEN_ENABLED=true
 VITE_API_TIMEOUT=30000
 ```
 
+**Split API + site domains (production):** set the API vars to the Laravel host and the public site origin separately:
+
+```env
+VITE_PUBLIC_SITE_URL=https://itq.gamesspoteg.com
+VITE_API_BASE_URL=https://api.gamesspoteg.com/api
+VITE_API_PROXY_TARGET=https://api.gamesspoteg.com
+VITE_SSR_API_BASE_URL=https://api.gamesspoteg.com/api
+```
+
+`VITE_PUBLIC_SITE_URL` drives canonical URLs, Open Graph, and sitemap. `VITE_API_PROXY_TARGET` stays the API origin (media `/storage` rewrite, dev SSR).
+
 ### Route Configuration
 
 ```env

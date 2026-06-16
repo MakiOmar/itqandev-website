@@ -1,8 +1,7 @@
 import { stripUiLocaleFromPathname } from '~/lib/i18n/ui-locale-path';
 
-/** Absolute origin from `VITE_API_PROXY_TARGET` (path segment ignored), or empty when unset. */
-export function parsePublicSiteOriginFromEnv(): string {
-  const env = String(import.meta.env?.VITE_API_PROXY_TARGET ?? '').trim();
+function parseOriginFromEnvValue(raw: string): string {
+  const env = raw.trim();
   if (!env) {
     return '';
   }
@@ -15,8 +14,24 @@ export function parsePublicSiteOriginFromEnv(): string {
 }
 
 /**
+ * Absolute public site origin for SEO (canonical, OG, sitemap).
+ * When API and site are on different hosts, set `VITE_PUBLIC_SITE_URL` (e.g. https://itq.example.com).
+ * Falls back to `VITE_API_PROXY_TARGET` when site and API share one origin (local dev).
+ */
+export function parsePublicSiteOriginFromEnv(): string {
+  const siteUrl = String(import.meta.env?.VITE_PUBLIC_SITE_URL ?? '').trim();
+  if (siteUrl) {
+    const origin = parseOriginFromEnvValue(siteUrl);
+    if (origin) {
+      return origin;
+    }
+  }
+  return parseOriginFromEnvValue(String(import.meta.env?.VITE_API_PROXY_TARGET ?? ''));
+}
+
+/**
  * Public site origin for SEO (canonical, OG, sitemap).
- * Prefers `VITE_API_PROXY_TARGET` origin; falls back to the current page origin in the browser/SSR request.
+ * Prefers `VITE_PUBLIC_SITE_URL`, then `VITE_API_PROXY_TARGET`; falls back to the request/page origin.
  */
 export function getPublicSiteOrigin(pageOrigin?: string): string {
   return parsePublicSiteOriginFromEnv() || String(pageOrigin ?? '').replace(/\/$/, '');
