@@ -41,6 +41,9 @@ lerna-debug.log*
 .yarn/*
 !.yarn/releases
 
+# Local HTTrack mirror (not part of the app)
+/Qwik
+
 
 .nx/cache
 .nx/workspace-data
