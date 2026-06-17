@@ -120,7 +120,7 @@ function manualVendorChunk(id: string): string | undefined {
 /**
  * Note that Vite normally starts from `index.html` but the qwikCity plugin makes start at `src/entry.ssr.tsx` instead.
  */
-export default defineConfig(({ command, mode }): UserConfig => {
+export default defineConfig(({ command, mode, isSsrBuild }): UserConfig => {
   const env = loadEnv(mode, process.cwd(), "");
   const apiProxyTarget = (env.VITE_API_PROXY_TARGET || "http://127.0.0.1").replace(/\/$/, "");
   /** Shared proxy for dev server and preview — browser /api and /storage → Laravel. */
@@ -141,8 +141,17 @@ export default defineConfig(({ command, mode }): UserConfig => {
       secure: false,
     },
   };
-  // SSR builds use --ssr flag or have entry.preview/entry.ssr, so we check mode and command
-  const isClientBuild = command === 'build' && mode === 'production' && !process.argv.includes('--ssr');
+  // Client-only production build. Adapter server builds use `-c adapters/.../vite.config.ts`
+  // with `build.ssr: true` but do not pass `--ssr` on argv — detect both paths.
+  const isAdapterServerBuild = process.argv.some((arg) => {
+    const normalized = arg.replace(/\\/g, "/");
+    return normalized.includes("adapters/") && normalized.includes("vite.config");
+  });
+  const isClientBuild =
+    command === "build" &&
+    mode === "production" &&
+    !isSsrBuild &&
+    !isAdapterServerBuild;
   const isDevServer = command === "serve";
 
   return {
@@ -178,17 +187,20 @@ export default defineConfig(({ command, mode }): UserConfig => {
       // cssMinify: 'lightningcss', // Requires @lightningcss/cli - using default esbuild for now
       minify: 'esbuild',
       // Only apply manual chunks for client builds, not SSR/preview
-      // For SSR builds, use inlineDynamicImports to avoid circular dependencies
-      rollupOptions: isClientBuild ? {
-        output: {
-          manualChunks: manualVendorChunk,
-        },
-      } : {
-        // For SSR/preview builds, use inlineDynamicImports to prevent circular dependencies
-        output: {
-          inlineDynamicImports: true,
-        },
-      },
+      // Adapter server builds use multiple rollup inputs — omit manualChunks (not inlineDynamicImports).
+      rollupOptions: isClientBuild
+        ? {
+            output: {
+              manualChunks: manualVendorChunk,
+            },
+          }
+        : isAdapterServerBuild
+          ? {}
+          : {
+              output: {
+                inlineDynamicImports: true,
+              },
+            },
       // TinyMCE (~1.3MB) is a single lazy chunk (q-*); only fetched when rich-text editor mounts.
       chunkSizeWarningLimit: 1400,
     },

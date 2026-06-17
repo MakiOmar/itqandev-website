@@ -36,6 +36,7 @@
     "build": "qwik build",
     "build.client": "vite build",
     "build.preview": "vite build --ssr src/entry.preview.tsx",
+    "build.server": "qwik check-client src dist && vite build -c adapters/node-server/vite.config.ts",
     "build.types": "tsc --incremental --noEmit",
     "deploy": "echo 'Run \"npm run qwik add\" to install a server adapter'",
     "dev": "vite --mode ssr",
@@ -44,8 +45,9 @@
     "fmt.check": "prettier --check .",
     "lint": "eslint \"src/**/*.ts*\"",
     "preview": "npm run build.client && npm run build.preview && vite preview --host --port 4173",
-    "preview:open": "npm run preview -- --open",
     "preview:ci": "qwik build preview && vite preview --host --port 4173",
+    "preview:open": "npm run preview -- --open",
+    "serve": "node server/entry.node-server",
     "start": "vite --open --mode ssr",
     "qwik": "qwik"
   },
