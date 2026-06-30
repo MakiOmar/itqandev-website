@@ -148,3 +148,27 @@ If install fails on peer dependencies, `.npmrc` in this repo sets `legacy-peer-d
 - [ ] Start command is `npm run serve` (not static-only Apache)
 
 More context: [MULTI_REPO.md](../../docs/MULTI_REPO.md), [CONFIGURATION.md](./CONFIGURATION.md).
+
+---
+
+## Troubleshooting
+
+### `ExecaError` / exit code `3221226356` on Windows during `build.server`
+
+That code is Windows heap corruption (`0xC0000374`). It often happens during **Qwik City SSG** (`Starting Qwik City SSG...`) when `qwik build` runs `build.server` and `lint` in parallel.
+
+This project uses **SSR-only** deploy (`ssg: null` in `adapters/node-server/vite.config.ts`), so pages render at runtime — you do not need SSG for Hostinger.
+
+If it still fails locally:
+
+1. Use **Node 20 LTS** (not 22): `nvm use 20` or switch version in Hostinger.
+2. Run steps one at a time:
+   ```bash
+   npm run build.types
+   npm run build.client
+   npm run build.server
+   npm run lint
+   ```
+3. Close other heavy apps to free RAM during build.
+
+ESLint **warnings** (not errors) do not fail the build.

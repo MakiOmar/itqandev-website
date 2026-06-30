@@ -10,6 +10,12 @@ export default extendConfig(baseConfig, () => {
         input: ["src/entry.node-server.tsx", "@qwik-city-plan"],
       },
     },
-    plugins: [nodeServerAdapter({ name: "node-server" })],
+    plugins: [
+      nodeServerAdapter({
+        name: "node-server",
+        // SSR-only deploy: skip SSG worker_threads (flaky heap crash on Windows during `qwik build`).
+        ssg: null,
+      }),
+    ],
   };
 });

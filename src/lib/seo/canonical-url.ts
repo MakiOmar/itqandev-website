@@ -1,5 +1,3 @@
-import { stripUiLocaleFromPathname } from '~/lib/i18n/ui-locale-path';
-
 function parseOriginFromEnvValue(raw: string): string {
   const env = raw.trim();
   if (!env) {
@@ -44,12 +42,21 @@ export function getPublicSiteBaseUrl(pageOrigin?: string): string {
 }
 
 /**
- * Absolute canonical URL for a pathname (locale prefix stripped; no query/hash).
+ * Absolute, self-referential canonical URL for a served pathname (no query/hash).
+ *
+ * Keeps the UI locale prefix and enforces a single trailing slash so the canonical
+ * matches the 200 URL Qwik City serves (qwikCity default `trailingSlash: true`).
+ * Bare/unprefixed paths (e.g. `/`, `/services`) 302-redirect to the locale-prefixed
+ * URL, so canonicals must NOT strip the locale or the trailing slash — otherwise they
+ * point at a redirect (Lighthouse: "rel=canonical points to the root URL").
  */
 export function buildCanonicalHref(pathname: string, pageOrigin?: string): string {
   const base = getPublicSiteBaseUrl(pageOrigin).replace(/\/$/, '');
-  const path = stripUiLocaleFromPathname(pathname || '/');
-  const normalized = path === '/' || path === '' ? '/' : path.replace(/\/$/, '') || '/';
+  const raw = pathname || '/';
+  const path = raw.startsWith('/') ? raw : `/${raw}`;
+  // Collapse accidental double slashes, then enforce one trailing slash to match the served URL.
+  const collapsed = path.replace(/\/{2,}/g, '/');
+  const normalized = collapsed === '/' ? '/' : `${collapsed.replace(/\/+$/, '')}/`;
   return `${base}${normalized}`;
 }
 

@@ -1,15 +1,14 @@
-import { resolveAbsoluteCanonicalUrl } from '~/lib/seo/canonical-url';
+import { buildCanonicalHref, resolveAbsoluteCanonicalUrl } from '~/lib/seo/canonical-url';
 import type { MarketingPublicSeoMeta } from './types';
 
 /** Meta/link entries shared by marketing case study / service detail `<head>` (SSR). */
 export function marketingEntityDetailHead(fields: {
   brandName: string;
   baseUrl: string;
-  /** e.g. "Work", "Services" — appears in `<title>` and default canonical path naming. */
+  /** e.g. "Work", "Services" — appears in `<title>`. */
   sectionLabel: string;
-  /** URL segment after base, e.g. `work`, `services` — no slashes. */
-  sectionPath: string;
-  slug: string;
+  /** Current request URL — canonical / og:url are self-referential to the served 200 page. */
+  pageUrl: URL;
   defaultTitle: string;
   defaultDescription: string;
   seo?: MarketingPublicSeoMeta | undefined;
@@ -19,12 +18,13 @@ export function marketingEntityDetailHead(fields: {
   const docDesc = (seo?.metaDescription?.trim() || fields.defaultDescription).trim();
   const ogTitle = (seo?.ogTitle?.trim() || docTitle).trim();
   const ogDesc = (seo?.ogDescription?.trim() || docDesc).trim();
-  const defaultPath = `${fields.baseUrl.replace(/\/$/, '')}/${fields.sectionPath}/${fields.slug}`;
+  // Self-referential canonical pointing at the actual locale-prefixed 200 URL; CMS value overrides.
+  const selfUrl = buildCanonicalHref(fields.pageUrl.pathname, fields.pageUrl.origin);
   const canonical = resolveAbsoluteCanonicalUrl(
-    (seo?.canonicalUrl?.trim() || defaultPath).trim(),
+    (seo?.canonicalUrl?.trim() || selfUrl).trim(),
     fields.baseUrl,
   );
-  const ogUrl = defaultPath;
+  const ogUrl = selfUrl;
 
   const meta: { name?: string; property?: string; content: string }[] = [
     { name: 'description', content: docDesc },
