@@ -9,6 +9,7 @@ import {
   countByType,
   fetchAppearanceRegistriesFromBrowser,
   fetchFooterBuilderFromBrowser,
+  formatAppearanceError,
   moveItem,
   newBlockId,
   saveFooterBuilderFromBrowser,
@@ -57,7 +58,7 @@ export default component$(() => {
       if (regs.footer_blocks[0]) insertType.value = regs.footer_blocks[0].type;
     } catch (e) {
       showError(translateApp(lang, 'common.error'), {
-        text: e instanceof Error ? e.message : 'Failed to load column',
+        text: formatAppearanceError(e, 'Failed to load column'),
       });
     } finally {
       loading.value = false;

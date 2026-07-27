@@ -6,6 +6,7 @@ import { useSwal } from '~/lib/hooks/useSwal';
 import { getLocalizedRoutes } from '~/lib/constants/routes';
 import {
   fetchFooterBuilderFromBrowser,
+  formatAppearanceError,
   moveItem,
   newColumnId,
   saveFooterBuilderFromBrowser,
@@ -38,7 +39,7 @@ export default component$(() => {
       doc.value = await fetchFooterBuilderFromBrowser();
     } catch (e) {
       showError(translateApp(lang, 'common.error'), {
-        text: e instanceof Error ? e.message : 'Failed to load footer',
+        text: formatAppearanceError(e, 'Failed to load footer'),
       });
     } finally {
       loading.value = false;

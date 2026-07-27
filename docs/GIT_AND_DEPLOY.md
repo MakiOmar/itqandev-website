@@ -117,15 +117,17 @@ npm run serve
 
 ## Hostinger Node.js app settings
 
-Set environment variables **before** build (`VITE_*` are baked in at build time):
+`VITE_*` are baked in at build time. This repo’s committed **`.env.production`** already targets the live API/site; Hostinger panel vars override those when set **before** build:
 
 ```env
 VITE_AUTH_PROVIDER=laravel
-VITE_API_BASE_URL=https://api.example.com/api
-VITE_API_PROXY_TARGET=https://api.example.com
-VITE_SSR_API_BASE_URL=https://api.example.com/api
-VITE_PUBLIC_SITE_URL=https://www.example.com
+VITE_API_BASE_URL=https://api.gamesspoteg.com/api
+VITE_API_PROXY_TARGET=https://api.gamesspoteg.com
+VITE_SSR_API_BASE_URL=https://api.gamesspoteg.com/api
+VITE_PUBLIC_SITE_URL=https://itq.gamesspoteg.com
 ```
+
+Local `.env` is for `npm run dev` only and must not be the only place live URLs live (see `docs/CONFIGURATION.md`).
 
 | Setting | Value |
 |---------|--------|

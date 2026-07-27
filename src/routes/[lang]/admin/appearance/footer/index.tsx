@@ -6,6 +6,7 @@ import { useSwal } from '~/lib/hooks/useSwal';
 import { getLocalizedRoutes } from '~/lib/constants/routes';
 import {
   fetchFooterBuilderFromBrowser,
+  formatAppearanceError,
   saveFooterBuilderFromBrowser,
 } from '~/lib/admin/appearance-actions';
 import type { FooterBuilderDocument, FooterMode } from '~/lib/marketing/appearance-types';
@@ -26,7 +27,7 @@ export default component$(() => {
       doc.value = await fetchFooterBuilderFromBrowser();
     } catch (e) {
       showError(translateApp(lang, 'common.error'), {
-        text: e instanceof Error ? e.message : 'Failed to load footer builder',
+        text: formatAppearanceError(e, 'Failed to load footer builder'),
       });
     } finally {
       loading.value = false;

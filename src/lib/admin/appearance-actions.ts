@@ -6,9 +6,20 @@ import type {
   HomepageSectionInstance,
 } from '../marketing/appearance-types';
 
+/** Prefer Laravel/ApiError `.message` (plain objects), then Error, then fallback. */
+export function formatAppearanceError(err: unknown, fallback = 'Request failed'): string {
+  if (err && typeof err === 'object' && 'message' in err) {
+    const msg = String((err as { message?: unknown }).message ?? '').trim();
+    if (msg) return msg.slice(0, 600);
+  }
+  if (err instanceof Error && err.message.trim()) {
+    return err.message.slice(0, 600);
+  }
+  return fallback;
+}
+
 function formatError(err: unknown): string {
-  const e = err as { message?: string };
-  return String(e?.message ?? 'Request failed').slice(0, 600);
+  return formatAppearanceError(err);
 }
 
 export async function fetchAppearanceRegistriesFromBrowser(): Promise<{

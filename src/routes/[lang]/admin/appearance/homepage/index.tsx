@@ -7,6 +7,7 @@ import {
   countByType,
   fetchAppearanceRegistriesFromBrowser,
   fetchHomepageBuilderFromBrowser,
+  formatAppearanceError,
   moveItem,
   newSectionId,
   saveHomepageBuilderFromBrowser,
@@ -45,7 +46,7 @@ export default component$(() => {
       }
     } catch (e) {
       showError(translateApp(lang, 'common.error'), {
-        text: e instanceof Error ? e.message : 'Failed to load homepage builder',
+        text: formatAppearanceError(e, 'Failed to load homepage builder'),
       });
     } finally {
       loading.value = false;

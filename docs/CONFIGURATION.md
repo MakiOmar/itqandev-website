@@ -15,18 +15,27 @@ Complete reference for all configuration options in Qwik Dashboard.
 
 ## Environment Variables
 
-All configuration can be set via environment variables in `.env`:
+Vite loads env by **mode**:
+
+| Command | Mode | Files (later wins) |
+|---------|------|--------------------|
+| `npm run dev` | `ssr` | `.env` → `.env.ssr` (local only; gitignored `.env`) |
+| `npm run build` | `production` | `.env` → **`.env.production`** (committed live URLs) |
+
+Use **local** API values in `.env` (copy from `.env.example`). Keep **live** split-domain URLs in `.env.production` so production builds do not accidentally bake in localhost. Hostinger panel `VITE_*` vars still override at deploy build time when set.
 
 ### API Configuration
 
 ```env
-VITE_API_BASE_URL=http://localhost:8000/api
+# .env (dev) — relative /api + proxy to artisan
+VITE_API_BASE_URL=/api
+VITE_API_PROXY_TARGET=http://127.0.0.1:8000
+VITE_SSR_API_BASE_URL=http://127.0.0.1:8000/api
 VITE_LARAVEL_SANCTUM=true
-VITE_CSRF_TOKEN_ENABLED=true
-VITE_API_TIMEOUT=30000
+VITE_API_TIMEOUT=8000
 ```
 
-**Split API + site domains (production):** set the API vars to the Laravel host and the public site origin separately:
+**Split API + site domains (production):** committed in `.env.production` (and/or Hostinger):
 
 ```env
 VITE_PUBLIC_SITE_URL=https://itq.gamesspoteg.com
