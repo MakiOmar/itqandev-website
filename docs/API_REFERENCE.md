@@ -535,7 +535,18 @@ When `mode` is `custom`, `google_css_href` is omitted and `sources` maps format 
       "locale": "en",
       "items": []
     },
-    "services": []
+    "services": [],
+    "homepage_sections": [
+      {
+        "id": "sec_hero",
+        "type": "hero",
+        "layout_width": "full",
+        "settings": {}
+      }
+    ],
+    "footer": {
+      "mode": "hardcoded"
+    }
   }
 }
 ```
@@ -543,8 +554,24 @@ When `mode` is `custom`, `google_css_href` is omitted and `sources` maps format 
 - `site_meta` — same shape as `GET /api/public/site-meta` `data` (localized for the shell’s presentation locale).
 - `menu` — same shape as `GET /api/public/menus/primary` `data`.
 - `services` — published services array (empty when the `services` feature module is disabled). Same records as `GET /api/public/services`.
+- `homepage_sections` — enabled Appearance builder sections (defaults to the seven marketing homepage types when unset).
+- `footer` — `{ "mode": "hardcoded" }` or `{ "mode": "builder", "zones": { … } }` with enabled zones/columns/blocks. Menu blocks include resolved `settings.items`.
 
 Cached server-side (~300s) per `locale` + presentation locale key. Legacy endpoints remain available for tools and gradual migration.
+
+### Appearance builders (authenticated)
+
+Require `Authorization: Bearer` and the `manageSettings` gate (`admin` / `super_admin`).
+
+| Method | Path | Body / notes |
+|--------|------|----------------|
+| `GET` | `/api/appearance/registries` | Homepage section + footer block type catalogs |
+| `GET` | `/api/appearance/homepage` | Full `homepage_builder` document |
+| `PUT` | `/api/appearance/homepage` | `{ "sections": [ … ] }` |
+| `GET` | `/api/appearance/footer` | Full `footer_builder` document |
+| `PUT` | `/api/appearance/footer` | `{ "mode": "hardcoded"\|"builder", "zones": { … } }` |
+
+Persisted under `project-settings.json` keys `homepage_builder` / `footer_builder`. See `docs/CONFIGURATION.md` (Appearance builders).
 
 ### GET `/api/public/site-content`
 

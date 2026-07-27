@@ -76,7 +76,11 @@ export default component$(() => {
           <main class="flex-1 overflow-y-auto">
             <Slot />
           </main>
-          <Footer contact={contact} branding={branding.value} />
+          <Footer
+            contact={contact}
+            branding={branding.value}
+            footer={shellLoader.value.footer}
+          />
         </div>
       </LocaleTransitionProvider>
     </div>

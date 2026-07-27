@@ -201,6 +201,15 @@ export const Sidebar = component$<SidebarProps>((props) => {
       featureModule: 'users',
     },
     {
+      label: 'Appearance',
+      icon: SettingsIcon,
+      children: [
+        { label: 'Homepage', href: R.ADMIN.APPEARANCE_HOMEPAGE },
+        { label: 'Footer', href: R.ADMIN.APPEARANCE_FOOTER },
+      ],
+      roles: ['admin', 'super_admin'],
+    },
+    {
       label: translateApp(lang, 'sidebar.settings'),
       icon: SettingsIcon,
       children: [

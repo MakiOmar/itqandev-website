@@ -14,6 +14,11 @@ import { parseSiteTypography } from '~/lib/perf/typography';
 import type { SiteTypography } from '~/types/typography';
 import { mapMarketingSeoMetaFromApi } from './seo-snippet';
 import { isDevSsrMarketingFetchFailure } from './ssr-api-reachability';
+import {
+  defaultHomepageSections,
+  type FooterPublicPayload,
+  type HomepageSectionInstance,
+} from './appearance-types';
 
 const localBase = siteData as SiteContent;
 
@@ -32,12 +37,16 @@ export type PublicShellState = {
   branding: PublicBrandingState;
   primaryMenu: PublicNavItem[];
   siteContent: SiteContent;
+  homepageSections: HomepageSectionInstance[];
+  footer: FooterPublicPayload;
 };
 
 type PublicShellApiData = {
   site_meta?: Record<string, unknown>;
   menu?: { items?: PublicNavItem[] };
   services?: Record<string, unknown>[];
+  homepage_sections?: HomepageSectionInstance[];
+  footer?: FooterPublicPayload;
 };
 
 function normalizeServiceFromPublicApi(raw: Record<string, unknown>): Service {
@@ -113,6 +122,8 @@ function localShellFallback(): PublicShellState {
     },
     primaryMenu: [],
     siteContent: base,
+    homepageSections: defaultHomepageSections(),
+    footer: { mode: 'hardcoded' },
   };
 }
 
@@ -123,10 +134,20 @@ function mapShellApiPayload(data: PublicShellApiData, fallbackName: string): Pub
       : {};
   const menuItems = Array.isArray(data.menu?.items) ? data.menu!.items! : [];
   const base = { ...(siteData as SiteContent) } as SiteContent;
+  const homepageSections = Array.isArray(data.homepage_sections) && data.homepage_sections.length > 0
+    ? data.homepage_sections
+    : defaultHomepageSections();
+  const footer: FooterPublicPayload =
+    data.footer && typeof data.footer === 'object' && data.footer.mode === 'builder'
+      ? data.footer
+      : { mode: 'hardcoded' };
+
   return {
     branding: brandingFromSiteMeta(siteMeta, fallbackName),
     primaryMenu: menuItems,
     siteContent: mergeShellServicesIntoSiteContent(base, data.services),
+    homepageSections,
+    footer,
   };
 }
 

@@ -23,6 +23,11 @@ export const API_ENDPOINTS = {
     GET: '/settings',
     UPDATE: '/settings',
   },
+  APPEARANCE: {
+    REGISTRIES: '/appearance/registries',
+    HOMEPAGE: '/appearance/homepage',
+    FOOTER: '/appearance/footer',
+  },
   // Fonts (self-hosted typography library)
   FONTS: {
     LIST: '/v1/fonts',

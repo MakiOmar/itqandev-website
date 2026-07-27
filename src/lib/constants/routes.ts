@@ -23,6 +23,8 @@ export function getLocalizedRoutes(lang: string) {
       SETTINGS_LANGUAGES: L(`${p}/settings/languages`),
       SETTINGS_TYPOGRAPHY: L(`${p}/settings/typography`),
       SETTINGS_MARKETING: L(`${p}/settings/marketing`),
+      APPEARANCE_HOMEPAGE: L(`${p}/appearance/homepage`),
+      APPEARANCE_FOOTER: L(`${p}/appearance/footer`),
       FONTS: L(`${p}/fonts`),
       FONTS_NEW: L(`${p}/fonts/new`),
       ACTIVITY: L(`${p}/activity`),
