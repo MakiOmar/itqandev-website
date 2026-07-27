@@ -64,10 +64,29 @@ export type FooterPublicPayload =
       zones: Partial<Record<'top' | 'main' | 'bottom', FooterZoneInstance>>;
     };
 
+export type AppearanceSettingFieldType =
+  | 'text'
+  | 'textarea'
+  | 'number'
+  | 'boolean'
+  | 'media'
+  | 'json';
+
+export type AppearanceSettingField = {
+  key: string;
+  type: AppearanceSettingFieldType;
+  label: string;
+  accept?: string;
+  min?: number;
+  max?: number;
+};
+
 export type AppearanceRegistryEntry = {
   type: string;
   label: string;
   max_instances: number | null;
+  default_settings?: Record<string, unknown>;
+  settings_fields?: AppearanceSettingField[];
 };
 
 export const DEFAULT_HOMEPAGE_SECTION_ORDER: HomepageSectionType[] = [

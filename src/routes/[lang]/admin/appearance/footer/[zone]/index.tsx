@@ -28,6 +28,8 @@ export default component$(() => {
   const loading = useSignal(true);
   const saving = useSignal(false);
   const doc = useSignal<FooterBuilderDocument | null>(null);
+  const dragFromIndex = useSignal<number | null>(null);
+  const dropOverIndex = useSignal<number | null>(null);
 
   // eslint-disable-next-line qwik/no-use-visible-task
   useVisibleTask$(async () => {
@@ -89,6 +91,7 @@ export default component$(() => {
           <h1 class="mt-2 text-2xl font-bold capitalize text-gray-900 dark:text-white">
             {zone} zone columns
           </h1>
+          <p class="mt-1 text-sm text-gray-500">Drag to reorder columns.</p>
         </div>
         <div class="flex gap-2">
           <button
@@ -121,71 +124,97 @@ export default component$(() => {
         <p class="text-sm text-gray-500">{translateApp(lang, 'common.loading')}</p>
       ) : (
         <ul class="space-y-3" role="list">
-          {zoneData().columns.map((col, index) => (
-            <li
-              key={col.id}
-              class="flex flex-wrap items-center gap-3 rounded-lg border border-gray-200 bg-white px-4 py-3 dark:border-gray-700 dark:bg-gray-800"
-            >
-              <span class="font-medium text-gray-900 dark:text-white">Column {index + 1}</span>
-              <label class="flex items-center gap-2 text-sm">
-                Span
-                <input
-                  type="number"
-                  min={1}
-                  max={12}
-                  class="w-16 rounded border px-2 py-1 text-sm dark:bg-gray-900"
-                  value={col.span}
-                  onInput$={(e) => {
-                    const span = Number((e.target as HTMLInputElement).value);
+          {zoneData().columns.map((col, index) => {
+            const isDropTarget = dropOverIndex.value === index && dragFromIndex.value !== index;
+            return (
+              <li
+                key={col.id}
+                class={[
+                  'flex flex-wrap items-center gap-3 rounded-lg border bg-white px-3 py-3 dark:bg-gray-800 sm:px-4',
+                  isDropTarget
+                    ? 'border-primary-500 ring-2 ring-primary-500/30'
+                    : 'border-gray-200 dark:border-gray-700',
+                ].join(' ')}
+                onDragOver$={(e) => {
+                  e.preventDefault();
+                  dropOverIndex.value = index;
+                }}
+                onDragLeave$={() => {
+                  if (dropOverIndex.value === index) dropOverIndex.value = null;
+                }}
+                onDrop$={(e) => {
+                  e.preventDefault();
+                  const from = dragFromIndex.value;
+                  if (from != null && from !== index) {
                     const z = zoneData();
-                    setZone({
-                      ...z,
-                      columns: z.columns.map((c, i) => (i === index ? { ...c, span } : c)),
-                    });
+                    setZone({ ...z, columns: moveItem(z.columns, from, index) });
+                  }
+                  dragFromIndex.value = null;
+                  dropOverIndex.value = null;
+                }}
+              >
+                <button
+                  type="button"
+                  class="cursor-grab touch-none rounded p-1 text-gray-400 hover:bg-gray-100 active:cursor-grabbing dark:hover:bg-gray-700"
+                  draggable={true}
+                  title="Drag to reorder"
+                  aria-label={`Drag column ${index + 1}`}
+                  onDragStart$={(e) => {
+                    dragFromIndex.value = index;
+                    const dt = e.dataTransfer;
+                    if (dt) {
+                      dt.effectAllowed = 'move';
+                      dt.setData('text/plain', String(index));
+                    }
                   }}
-                />
-              </label>
-              <span class="text-sm text-gray-500">{col.blocks.length} blocks</span>
-              <Link
-                href={`${R.ADMIN.APPEARANCE_FOOTER}/${zone}/${col.id}`}
-                class="ml-auto text-sm font-medium text-primary-600 hover:underline"
-              >
-                Edit column
-              </Link>
-              <button
-                type="button"
-                class="rounded border px-2 py-1 text-xs disabled:opacity-40"
-                disabled={index === 0}
-                onClick$={() => {
-                  const z = zoneData();
-                  setZone({ ...z, columns: moveItem(z.columns, index, index - 1) });
-                }}
-              >
-                Up
-              </button>
-              <button
-                type="button"
-                class="rounded border px-2 py-1 text-xs disabled:opacity-40"
-                disabled={index === zoneData().columns.length - 1}
-                onClick$={() => {
-                  const z = zoneData();
-                  setZone({ ...z, columns: moveItem(z.columns, index, index + 1) });
-                }}
-              >
-                Down
-              </button>
-              <button
-                type="button"
-                class="rounded border border-red-300 px-2 py-1 text-xs text-red-600"
-                onClick$={() => {
-                  const z = zoneData();
-                  setZone({ ...z, columns: z.columns.filter((_, i) => i !== index) });
-                }}
-              >
-                Remove
-              </button>
-            </li>
-          ))}
+                  onDragEnd$={() => {
+                    dragFromIndex.value = null;
+                    dropOverIndex.value = null;
+                  }}
+                >
+                  <svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                    <path d="M7 4a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0zm0 6a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0zm0 6a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0zm9-12a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0zm0 6a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0zm0 6a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0z" />
+                  </svg>
+                </button>
+                <span class="font-medium text-gray-900 dark:text-white">Column {index + 1}</span>
+                <label class="flex items-center gap-2 text-sm">
+                  Span
+                  <input
+                    type="number"
+                    min={1}
+                    max={12}
+                    class="w-16 rounded border px-2 py-1 text-sm dark:bg-gray-900"
+                    value={col.span}
+                    onInput$={(e) => {
+                      const span = Number((e.target as HTMLInputElement).value);
+                      const z = zoneData();
+                      setZone({
+                        ...z,
+                        columns: z.columns.map((c, i) => (i === index ? { ...c, span } : c)),
+                      });
+                    }}
+                  />
+                </label>
+                <span class="text-sm text-gray-500">{col.blocks.length} blocks</span>
+                <Link
+                  href={`${R.ADMIN.APPEARANCE_FOOTER}/${zone}/${col.id}`}
+                  class="ml-auto text-sm font-medium text-primary-600 hover:underline"
+                >
+                  Edit column
+                </Link>
+                <button
+                  type="button"
+                  class="rounded border border-red-300 px-2 py-1 text-xs text-red-600"
+                  onClick$={() => {
+                    const z = zoneData();
+                    setZone({ ...z, columns: z.columns.filter((_, i) => i !== index) });
+                  }}
+                >
+                  Remove
+                </button>
+              </li>
+            );
+          })}
         </ul>
       )}
     </div>

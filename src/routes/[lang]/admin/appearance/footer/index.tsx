@@ -9,6 +9,7 @@ import {
   formatAppearanceError,
   saveFooterBuilderFromBrowser,
 } from '~/lib/admin/appearance-actions';
+import { AdminSwitch } from '~/components/admin/appearance/AdminSwitch';
 import type { FooterBuilderDocument, FooterMode } from '~/lib/marketing/appearance-types';
 
 const ZONE_KEYS = ['top', 'main', 'bottom'] as const;
@@ -99,12 +100,11 @@ export default component$(() => {
                   class="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800"
                 >
                   <h2 class="text-lg font-semibold capitalize text-gray-900 dark:text-white">{zone}</h2>
-                  <label class="mt-3 flex items-center gap-2 text-sm">
-                    <input
-                      type="checkbox"
+                  <div class="mt-3">
+                    <AdminSwitch
                       checked={z.enabled}
-                      onChange$={(e) => {
-                        const checked = (e.target as HTMLInputElement).checked;
+                      label="Enabled"
+                      onChange$={(checked) => {
                         doc.value = {
                           ...doc.value!,
                           zones: {
@@ -114,8 +114,7 @@ export default component$(() => {
                         };
                       }}
                     />
-                    Enabled
-                  </label>
+                  </div>
                   <p class="mt-2 text-sm text-gray-600 dark:text-gray-400">
                     {z.columns.length} column{z.columns.length === 1 ? '' : 's'}
                   </p>

@@ -565,7 +565,7 @@ Require `Authorization: Bearer` and the `manageSettings` gate (`admin` / `super_
 
 | Method | Path | Body / notes |
 |--------|------|----------------|
-| `GET` | `/api/appearance/registries` | Homepage section + footer block type catalogs |
+| `GET` | `/api/appearance/registries` | Catalogs with `type`, `label`, `max_instances`, `default_settings`, and typed `settings_fields` (`text` \| `textarea` \| `number` \| `boolean` \| `media` \| `json`) |
 | `GET` | `/api/appearance/homepage` | Full `homepage_builder` document |
 | `PUT` | `/api/appearance/homepage` | `{ "sections": [ … ] }` |
 | `GET` | `/api/appearance/footer` | Full `footer_builder` document |

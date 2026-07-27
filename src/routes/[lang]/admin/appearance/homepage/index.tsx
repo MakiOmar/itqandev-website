@@ -2,6 +2,9 @@ import { component$, useSignal, useVisibleTask$, $ } from '@builder.io/qwik';
 import type { DocumentHead } from '@builder.io/qwik-city';
 import { useTranslate, translateApp } from '~/lib/i18n/useTranslate';
 import { useSwal } from '~/lib/hooks/useSwal';
+import { MediaSelector } from '~/components/common/MediaSelector';
+import { AdminSwitch } from '~/components/admin/appearance/AdminSwitch';
+import { AppearanceSettingsFields } from '~/components/admin/appearance/AppearanceSettingsFields';
 import {
   canInsertType,
   countByType,
@@ -16,11 +19,7 @@ import type {
   AppearanceRegistryEntry,
   HomepageSectionInstance,
 } from '~/lib/marketing/appearance-types';
-
-function settingStr(section: HomepageSectionInstance, key: string): string {
-  const v = section.settings?.[key];
-  return typeof v === 'string' ? v : '';
-}
+import type { Media } from '~/types/media';
 
 export default component$(() => {
   const { lang } = useTranslate();
@@ -31,6 +30,9 @@ export default component$(() => {
   const registry = useSignal<AppearanceRegistryEntry[]>([]);
   const insertType = useSignal('hero');
   const expandedId = useSignal<string | null>(null);
+  const dragFromIndex = useSignal<number | null>(null);
+  const dropOverIndex = useSignal<number | null>(null);
+  const mediaTarget = useSignal<{ sectionId: string; key: string; accept?: string } | null>(null);
 
   // eslint-disable-next-line qwik/no-use-visible-task
   useVisibleTask$(async () => {
@@ -53,6 +55,16 @@ export default component$(() => {
     }
   });
 
+  const patchSection = $((sectionId: string, patch: Partial<HomepageSectionInstance>) => {
+    sections.value = sections.value.map((s) => (s.id === sectionId ? { ...s, ...patch } : s));
+  });
+
+  const patchSetting = $((sectionId: string, key: string, value: unknown) => {
+    sections.value = sections.value.map((s) =>
+      s.id === sectionId ? { ...s, settings: { ...(s.settings ?? {}), [key]: value } } : s,
+    );
+  });
+
   const insertSection = $(() => {
     const type = insertType.value;
     const entry = registry.value.find((r) => r.type === type);
@@ -68,7 +80,7 @@ export default component$(() => {
       type,
       enabled: true,
       layout_width: type === 'hero' ? 'full' : 'boxed',
-      settings: {},
+      settings: { ...(entry?.default_settings ?? {}) },
     };
     sections.value = [...sections.value, next];
     expandedId.value = next.id;
@@ -98,7 +110,7 @@ export default component$(() => {
         <div>
           <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Homepage builder</h1>
           <p class="mt-1 text-sm text-gray-600 dark:text-gray-400">
-            Insert, reorder, and configure public homepage sections.
+            Drag to reorder. Expand a section to edit its settings.
           </p>
         </div>
         <button
@@ -151,148 +163,125 @@ export default component$(() => {
 
           <ul class="space-y-3" role="list">
             {sections.value.map((section, index) => {
-              const label =
-                registry.value.find((r) => r.type === section.type)?.label ?? section.type;
+              const entry = registry.value.find((r) => r.type === section.type);
+              const label = entry?.label ?? section.type;
               const open = expandedId.value === section.id;
+              const isDropTarget = dropOverIndex.value === index && dragFromIndex.value !== index;
               return (
                 <li
                   key={section.id}
-                  class="rounded-lg border border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800"
+                  class={[
+                    'rounded-lg border bg-white dark:bg-gray-800',
+                    isDropTarget
+                      ? 'border-primary-500 ring-2 ring-primary-500/30'
+                      : 'border-gray-200 dark:border-gray-700',
+                    section.enabled === false ? 'opacity-60' : '',
+                  ].join(' ')}
+                  onDragOver$={(e) => {
+                    e.preventDefault();
+                    dropOverIndex.value = index;
+                  }}
+                  onDragLeave$={() => {
+                    if (dropOverIndex.value === index) dropOverIndex.value = null;
+                  }}
+                  onDrop$={(e) => {
+                    e.preventDefault();
+                    const from = dragFromIndex.value;
+                    if (from != null && from !== index) {
+                      sections.value = moveItem(sections.value, from, index);
+                    }
+                    dragFromIndex.value = null;
+                    dropOverIndex.value = null;
+                  }}
                 >
-                  <div class="flex flex-wrap items-center gap-3 px-4 py-3">
+                  <div class="flex flex-wrap items-center gap-3 px-3 py-3 sm:px-4">
                     <button
                       type="button"
-                      class="text-sm font-semibold text-gray-900 dark:text-white"
+                      class="cursor-grab touch-none rounded p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-700 active:cursor-grabbing dark:hover:bg-gray-700 dark:hover:text-gray-200"
+                      draggable={true}
+                      title="Drag to reorder"
+                      aria-label={`Drag to reorder ${label}`}
+                      onDragStart$={(e) => {
+                        dragFromIndex.value = index;
+                        const dt = e.dataTransfer;
+                        if (dt) {
+                          dt.effectAllowed = 'move';
+                          dt.setData('text/plain', String(index));
+                        }
+                      }}
+                      onDragEnd$={() => {
+                        dragFromIndex.value = null;
+                        dropOverIndex.value = null;
+                      }}
+                    >
+                      <svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                        <path d="M7 4a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0zm0 6a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0zm0 6a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0zm9-12a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0zm0 6a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0zm0 6a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0z" />
+                      </svg>
+                    </button>
+                    <button
+                      type="button"
+                      class="text-left text-sm font-semibold text-gray-900 dark:text-white"
                       onClick$={() => {
                         expandedId.value = open ? null : section.id;
                       }}
                     >
                       {label}
+                      <span class="ml-2 text-xs font-normal text-gray-400">
+                        {open ? 'Hide settings' : 'Settings'}
+                      </span>
                     </button>
-                    <label class="ml-auto flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300">
-                      <input
-                        type="checkbox"
+                    <div class="ml-auto flex flex-wrap items-center gap-3">
+                      <AdminSwitch
                         checked={section.enabled !== false}
-                        onChange$={(e) => {
-                          const checked = (e.target as HTMLInputElement).checked;
-                          sections.value = sections.value.map((s, i) =>
-                            i === index ? { ...s, enabled: checked } : s,
-                          );
+                        label="Enabled"
+                        onChange$={async (checked) => {
+                          await patchSection(section.id, { enabled: checked });
                         }}
                       />
-                      Enabled
-                    </label>
-                    <button
-                      type="button"
-                      class="rounded border px-2 py-1 text-xs disabled:opacity-40"
-                      disabled={index === 0}
-                      onClick$={() => {
-                        sections.value = moveItem(sections.value, index, index - 1);
-                      }}
-                    >
-                      Up
-                    </button>
-                    <button
-                      type="button"
-                      class="rounded border px-2 py-1 text-xs disabled:opacity-40"
-                      disabled={index === sections.value.length - 1}
-                      onClick$={() => {
-                        sections.value = moveItem(sections.value, index, index + 1);
-                      }}
-                    >
-                      Down
-                    </button>
-                    <button
-                      type="button"
-                      class="rounded border border-red-300 px-2 py-1 text-xs text-red-600"
-                      onClick$={() => {
-                        sections.value = sections.value.filter((_, i) => i !== index);
-                      }}
-                    >
-                      Remove
-                    </button>
+                      <button
+                        type="button"
+                        class="rounded border border-red-300 px-2 py-1 text-xs text-red-600"
+                        onClick$={() => {
+                          sections.value = sections.value.filter((s) => s.id !== section.id);
+                          if (expandedId.value === section.id) expandedId.value = null;
+                        }}
+                      >
+                        Remove
+                      </button>
+                    </div>
                   </div>
                   {open ? (
-                    <div class="space-y-3 border-t border-gray-100 px-4 py-4 dark:border-gray-700">
+                    <div class="space-y-4 border-t border-gray-100 px-4 py-4 dark:border-gray-700">
                       <div>
-                        <label class="mb-1 block text-xs font-medium">Layout width</label>
+                        <label class="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-300">
+                          Layout width
+                        </label>
                         <select
                           class="rounded border px-2 py-1 text-sm dark:bg-gray-900"
                           value={section.layout_width || 'boxed'}
-                          onChange$={(e) => {
+                          onChange$={async (e) => {
                             const v = (e.target as HTMLSelectElement).value as 'boxed' | 'full';
-                            sections.value = sections.value.map((s, i) =>
-                              i === index ? { ...s, layout_width: v } : s,
-                            );
+                            await patchSection(section.id, { layout_width: v });
                           }}
                         >
                           <option value="boxed">Boxed</option>
                           <option value="full">Full</option>
                         </select>
                       </div>
-                      {['hero', 'services_teaser', 'case_studies', 'testimonials', 'blog_preview', 'cta', 'tech_stack'].includes(
-                        section.type,
-                      ) ? (
-                        <div class="grid gap-3 md:grid-cols-2">
-                          {[
-                            'headline',
-                            'subheadline',
-                            'primary_cta_label',
-                            'secondary_cta_label',
-                            'eyebrow',
-                            'title',
-                            'subtitle',
-                            'button_label',
-                          ].map((key) => (
-                            <div key={key}>
-                              <label class="mb-1 block text-xs font-medium capitalize">
-                                {key.replaceAll('_', ' ')}
-                              </label>
-                              <input
-                                type="text"
-                                class="w-full rounded border px-2 py-1 text-sm dark:bg-gray-900"
-                                value={settingStr(section, key)}
-                                onInput$={(e) => {
-                                  const value = (e.target as HTMLInputElement).value;
-                                  sections.value = sections.value.map((s, i) =>
-                                    i === index
-                                      ? {
-                                          ...s,
-                                          settings: { ...(s.settings ?? {}), [key]: value },
-                                        }
-                                      : s,
-                                  );
-                                }}
-                              />
-                            </div>
-                          ))}
-                          {['services_teaser', 'case_studies', 'testimonials', 'blog_preview'].includes(
-                            section.type,
-                          ) ? (
-                            <div>
-                              <label class="mb-1 block text-xs font-medium">Limit</label>
-                              <input
-                                type="number"
-                                min={1}
-                                max={24}
-                                class="w-full rounded border px-2 py-1 text-sm dark:bg-gray-900"
-                                value={Number(section.settings?.limit ?? 3)}
-                                onInput$={(e) => {
-                                  const value = Number((e.target as HTMLInputElement).value);
-                                  sections.value = sections.value.map((s, i) =>
-                                    i === index
-                                      ? {
-                                          ...s,
-                                          settings: { ...(s.settings ?? {}), limit: value },
-                                        }
-                                      : s,
-                                  );
-                                }}
-                              />
-                            </div>
-                          ) : null}
-                        </div>
-                      ) : null}
+                      {(entry?.settings_fields?.length ?? 0) > 0 ? (
+                        <AppearanceSettingsFields
+                          fields={entry!.settings_fields!}
+                          values={section.settings ?? {}}
+                          onFieldChange$={async (key, value) => {
+                            await patchSetting(section.id, key, value);
+                          }}
+                          onPickMedia$={async (key, accept) => {
+                            mediaTarget.value = { sectionId: section.id, key, accept };
+                          }}
+                        />
+                      ) : (
+                        <p class="text-sm text-gray-500">No configurable settings for this section.</p>
+                      )}
                     </div>
                   ) : null}
                 </li>
@@ -301,6 +290,27 @@ export default component$(() => {
           </ul>
         </>
       )}
+
+      {mediaTarget.value ? (
+        <MediaSelector
+          title="Select image"
+          accept={mediaTarget.value.accept || 'image/*'}
+          onSelect={$((media: Media) => {
+            const target = mediaTarget.value;
+            if (!target) return;
+            const url = media.url || media.thumbnailUrl || '';
+            sections.value = sections.value.map((s) =>
+              s.id === target.sectionId
+                ? { ...s, settings: { ...(s.settings ?? {}), [target.key]: url } }
+                : s,
+            );
+            mediaTarget.value = null;
+          })}
+          onClose={$(() => {
+            mediaTarget.value = null;
+          })}
+        />
+      ) : null}
     </div>
   );
 });
