@@ -83,3 +83,39 @@ export function publicHeaderLanguageOptions(raw: unknown): SiteLanguageRow[] {
 
   return configured.length > 0 ? configured : speakRows;
 }
+
+/**
+ * Languages for Appearance builder text tabs.
+ * Prefer configured site_languages; if only one is set, still offer qwik-speak UI
+ * locales (en/ar) so editors can prepare translations before a second content language
+ * is enabled in Settings.
+ */
+export function appearanceEditingLanguages(
+  siteLanguages: SiteLanguageRow[] | unknown,
+): SiteLanguageRow[] {
+  const configured = Array.isArray(siteLanguages)
+    ? normalizeConfiguredSiteLanguages(siteLanguages)
+    : normalizeConfiguredSiteLanguages(null);
+  const speakRows = speakUiLanguageRows();
+
+  if (configured.length >= 2) {
+    return configured;
+  }
+
+  if (speakRows.length < 2) {
+    return configured.length > 0 ? configured : speakRows;
+  }
+
+  // Merge: keep configured row metadata, then add any missing speak UI locales.
+  const byCode = new Map<string, SiteLanguageRow>();
+  for (const row of configured) {
+    byCode.set(row.code.toLowerCase(), row);
+  }
+  for (const row of speakRows) {
+    const code = row.code.toLowerCase();
+    if (!byCode.has(code)) {
+      byCode.set(code, row);
+    }
+  }
+  return Array.from(byCode.values());
+}

@@ -7,6 +7,8 @@ import { getLocalizedRoutes } from '~/lib/constants/routes';
 import { AdminSwitch } from '~/components/admin/appearance/AdminSwitch';
 import { AppearanceSettingsFields } from '~/components/admin/appearance/AppearanceSettingsFields';
 import { MediaSelector } from '~/components/common/MediaSelector';
+import { usePublicSiteMeta } from '../../../../layout';
+import { appearanceEditingLanguages } from '~/lib/i18n/public-site-languages';
 import {
   canInsertType,
   countByType,
@@ -32,6 +34,9 @@ export default component$(() => {
   const zone = String(loc.params.zone ?? '').toLowerCase();
   const columnId = String(loc.params.columnId ?? '');
   const { lang } = useTranslate();
+  const langConfig = usePublicSiteMeta();
+  const editingLanguages = appearanceEditingLanguages(langConfig.value.site_languages);
+  const usingUiLocaleFallback = (langConfig.value.site_languages?.length ?? 0) < 2;
   const R = getLocalizedRoutes(lang);
   const { success: showSuccess, error: showError } = useSwal();
   const loading = useSignal(true);
@@ -43,6 +48,9 @@ export default component$(() => {
   const dragFromIndex = useSignal<number | null>(null);
   const dropOverIndex = useSignal<number | null>(null);
   const mediaTarget = useSignal<{ blockId: string; key: string; accept?: string } | null>(null);
+  const settingsLocale = useSignal(
+    (langConfig.value.content_editing_locale || langConfig.value.default_locale || 'en').toLowerCase(),
+  );
 
   // eslint-disable-next-line qwik/no-use-visible-task
   useVisibleTask$(async () => {
@@ -88,12 +96,10 @@ export default component$(() => {
     };
   });
 
-  const patchBlockSetting = $((blockId: string, key: string, value: unknown) => {
+  const patchBlockSettings = $((blockId: string, next: Record<string, unknown>) => {
     updateColumn((col) => ({
       ...col,
-      blocks: col.blocks.map((b) =>
-        b.id === blockId ? { ...b, settings: { ...(b.settings ?? {}), [key]: value } } : b,
-      ),
+      blocks: col.blocks.map((b) => (b.id === blockId ? { ...b, settings: next } : b)),
     }));
   });
 
@@ -302,8 +308,16 @@ export default component$(() => {
                         <AppearanceSettingsFields
                           fields={entry!.settings_fields!}
                           values={block.settings ?? {}}
-                          onFieldChange$={async (key, value) => {
-                            await patchBlockSetting(block.id, key, value);
+                          languages={editingLanguages}
+                          defaultLocale={langConfig.value.default_locale}
+                          activeLocale={settingsLocale.value}
+                          languagesSettingsHref={R.ADMIN.SETTINGS_LANGUAGES}
+                          usingUiLocaleFallback={usingUiLocaleFallback}
+                          onLocaleChange$={$((code) => {
+                            settingsLocale.value = code;
+                          })}
+                          onSettingsChange$={async (next) => {
+                            await patchBlockSettings(block.id, next);
                           }}
                           onPickMedia$={async (key, accept) => {
                             mediaTarget.value = { blockId: block.id, key, accept };

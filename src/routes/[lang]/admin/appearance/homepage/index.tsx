@@ -5,6 +5,9 @@ import { useSwal } from '~/lib/hooks/useSwal';
 import { MediaSelector } from '~/components/common/MediaSelector';
 import { AdminSwitch } from '~/components/admin/appearance/AdminSwitch';
 import { AppearanceSettingsFields } from '~/components/admin/appearance/AppearanceSettingsFields';
+import { usePublicSiteMeta } from '../../layout';
+import { appearanceEditingLanguages } from '~/lib/i18n/public-site-languages';
+import { getLocalizedRoutes } from '~/lib/constants/routes';
 import {
   canInsertType,
   countByType,
@@ -23,6 +26,10 @@ import type { Media } from '~/types/media';
 
 export default component$(() => {
   const { lang } = useTranslate();
+  const R = getLocalizedRoutes(lang);
+  const langConfig = usePublicSiteMeta();
+  const editingLanguages = appearanceEditingLanguages(langConfig.value.site_languages);
+  const usingUiLocaleFallback = (langConfig.value.site_languages?.length ?? 0) < 2;
   const { success: showSuccess, error: showError } = useSwal();
   const loading = useSignal(true);
   const saving = useSignal(false);
@@ -33,6 +40,9 @@ export default component$(() => {
   const dragFromIndex = useSignal<number | null>(null);
   const dropOverIndex = useSignal<number | null>(null);
   const mediaTarget = useSignal<{ sectionId: string; key: string; accept?: string } | null>(null);
+  const settingsLocale = useSignal(
+    (langConfig.value.content_editing_locale || langConfig.value.default_locale || 'en').toLowerCase(),
+  );
 
   // eslint-disable-next-line qwik/no-use-visible-task
   useVisibleTask$(async () => {
@@ -57,12 +67,6 @@ export default component$(() => {
 
   const patchSection = $((sectionId: string, patch: Partial<HomepageSectionInstance>) => {
     sections.value = sections.value.map((s) => (s.id === sectionId ? { ...s, ...patch } : s));
-  });
-
-  const patchSetting = $((sectionId: string, key: string, value: unknown) => {
-    sections.value = sections.value.map((s) =>
-      s.id === sectionId ? { ...s, settings: { ...(s.settings ?? {}), [key]: value } } : s,
-    );
   });
 
   const insertSection = $(() => {
@@ -272,8 +276,16 @@ export default component$(() => {
                         <AppearanceSettingsFields
                           fields={entry!.settings_fields!}
                           values={section.settings ?? {}}
-                          onFieldChange$={async (key, value) => {
-                            await patchSetting(section.id, key, value);
+                          languages={editingLanguages}
+                          defaultLocale={langConfig.value.default_locale}
+                          activeLocale={settingsLocale.value}
+                          languagesSettingsHref={R.ADMIN.SETTINGS_LANGUAGES}
+                          usingUiLocaleFallback={usingUiLocaleFallback}
+                          onLocaleChange$={$((code) => {
+                            settingsLocale.value = code;
+                          })}
+                          onSettingsChange$={async (next) => {
+                            await patchSection(section.id, { settings: next });
                           }}
                           onPickMedia$={async (key, accept) => {
                             mediaTarget.value = { sectionId: section.id, key, accept };

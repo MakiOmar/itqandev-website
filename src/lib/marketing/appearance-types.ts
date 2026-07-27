@@ -79,6 +79,8 @@ export type AppearanceSettingField = {
   accept?: string;
   min?: number;
   max?: number;
+  /** When true, edited per language tab into settings.translations.{locale}. */
+  translatable?: boolean;
 };
 
 export type AppearanceRegistryEntry = {
