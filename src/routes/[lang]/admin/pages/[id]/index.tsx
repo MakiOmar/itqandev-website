@@ -27,10 +27,12 @@ import {
   shouldWritePrimaryColumns,
 } from '../../../../../lib/content-display-locale';
 import {
-  ContentEditingLanguageSelect,
-  ContentPrimaryLanguageSelect,
   EditingLocaleFieldsShell,
 } from '../../../../../components/admin/PerFieldContentTranslations';
+import {
+  AdminContentLanguageFields,
+  ADMIN_CONTENT_FIELDS_GRID_CLASS,
+} from '../../../../../components/admin/AdminContentLanguageFields';
 import {
   ADMIN_BACK_BUTTON_CLASS,
   ADMIN_FORM_CARD_CLASS,
@@ -199,14 +201,22 @@ export default component$(() => {
         >
           <div class="space-y-6">
             <div class={ADMIN_FORM_CARD_CLASS}>
-              <div class="space-y-5">
+              <div class={ADMIN_CONTENT_FIELDS_GRID_CLASS}>
+                <AdminContentLanguageFields
+                  lang={lang}
+                  siteLanguages={langConfig.value.site_languages || []}
+                  defaultLocale={langConfig.value.default_locale || 'en'}
+                  contentLocale={contentLocaleDraft}
+                  editingLocale={editingLocaleDraft}
+                />
+
                 <div>
                   <label for="page-edit-title" class={ADMIN_FORM_LABEL_CLASS}>
                     {translateApp(lang, 'pages.fields.title')} *
                   </label>
                   <input
                     id="page-edit-title"
-                    class={`${ADMIN_FORM_INPUT_CLASS} text-lg font-semibold`}
+                    class={ADMIN_FORM_INPUT_CLASS}
                     value={formData.value.title}
                     onInput$={(e) => {
                       formData.value = { ...formData.value, title: (e.target as HTMLInputElement).value };
@@ -227,7 +237,7 @@ export default component$(() => {
                   />
                   <AdminPublicPageLink lang={lang} kind="pages" slug={formData.value.slug} />
                 </div>
-                <div>
+                <div class="md:col-span-2">
                   <label for="page-edit-excerpt" class={ADMIN_FORM_LABEL_CLASS}>
                     {translateApp(lang, 'pages.fields.excerpt')}
                   </label>
@@ -316,36 +326,6 @@ export default component$(() => {
                 </Link>
               </div>
             </div>
-          </div>
-
-          <div class="space-y-3">
-            <ContentPrimaryLanguageSelect
-              siteLanguages={langConfig.value.site_languages || []}
-              defaultLocale={langConfig.value.default_locale || 'en'}
-              value={contentLocaleDraft.value}
-              label={translateApp(lang, 'contentTranslations.contentPrimaryLanguage')}
-              hint={translateApp(lang, 'contentTranslations.contentPrimaryHint')}
-              useSiteDefaultLabel={translateApp(lang, 'contentTranslations.useSiteDefault')}
-              onChange$={$((code) => {
-                contentLocaleDraft.value = code;
-              })}
-            />
-            <ContentEditingLanguageSelect
-              siteLanguages={langConfig.value.site_languages || []}
-              value={editingLocaleDraft.value}
-              label={translateApp(lang, 'contentTranslations.editingLanguage')}
-              hintPrimary={translateApp(lang, 'contentTranslations.editingHintPrimary')}
-              hintSecondary={translateApp(lang, 'contentTranslations.editingHintSecondary')}
-              secondarySavePrefix={translateApp(lang, 'contentTranslations.secondarySavePrefix')}
-              effectivePrimaryLocale={primaryLocaleForContent(
-                langConfig.value.site_languages,
-                langConfig.value.default_locale,
-                contentLocaleDraft.value.trim() || null,
-              )}
-              onChange$={$((code) => {
-                editingLocaleDraft.value = code;
-              })}
-            />
           </div>
         </aside>
       </div>

@@ -5,11 +5,11 @@ import { PageHeader } from '../../../../../components/common/PageHeader';
 import { useTranslate, translateApp } from '../../../../../lib/i18n/useTranslate';
 import { useSwal } from '../../../../../lib/hooks/useSwal';
 import { usePublicSiteMeta } from '../../layout';
+import { EditingLocaleFieldsShell } from '../../../../../components/admin/PerFieldContentTranslations';
 import {
-  ContentEditingLanguageSelect,
-  ContentPrimaryLanguageSelect,
-  EditingLocaleFieldsShell,
-} from '../../../../../components/admin/PerFieldContentTranslations';
+  AdminContentLanguageFields,
+  ADMIN_CONTENT_FIELDS_GRID_CLASS,
+} from '../../../../../components/admin/AdminContentLanguageFields';
 import { secondaryLocalesForContent } from '../../../../../lib/content-translations';
 import {
   normalizeEditingLocale,
@@ -148,37 +148,16 @@ export default component$(() => {
       </PageHeader>
 
       <div class="mx-auto max-w-2xl rounded-lg border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-800 dark:bg-gray-800">
-        <div class="space-y-4">
-          <ContentPrimaryLanguageSelect
+        <div class={ADMIN_CONTENT_FIELDS_GRID_CLASS}>
+          <AdminContentLanguageFields
+            lang={lang}
             siteLanguages={langConfig.value.site_languages}
             defaultLocale={langConfig.value.default_locale}
-            value={contentLocaleDraft.value}
-            label={translateApp(lang, 'contentTranslations.contentPrimaryLanguage')}
-            hint={translateApp(lang, 'contentTranslations.contentPrimaryHint')}
-            useSiteDefaultLabel={translateApp(lang, 'contentTranslations.useSiteDefault')}
-            onChange$={$((code: string) => {
-              contentLocaleDraft.value = code;
-            })}
+            contentLocale={contentLocaleDraft}
+            editingLocale={editingLocaleDraft}
           />
 
-          <ContentEditingLanguageSelect
-            siteLanguages={langConfig.value.site_languages}
-            value={editingLocaleDraft.value}
-            effectivePrimaryLocale={primaryLocaleForContent(
-              langConfig.value.site_languages,
-              langConfig.value.default_locale,
-              contentLocaleDraft.value.trim() !== '' ? contentLocaleDraft.value.trim() : null,
-            )}
-            label={translateApp(lang, 'contentTranslations.sectionTitle')}
-            hintPrimary={translateApp(lang, 'contentTranslations.defaultHint')}
-            hintSecondary={translateApp(lang, 'contentTranslations.fallbackPlaceholderHint')}
-            secondarySavePrefix={translateApp(lang, 'contentTranslations.addTranslations')}
-            onChange$={$((code: string) => {
-              editingLocaleDraft.value = code;
-            })}
-          />
-
-          <EditingLocaleFieldsShell siteLanguages={langConfig.value.site_languages} editingLocale={editingLocaleDraft}>
+          <EditingLocaleFieldsShell variant="gridContents" siteLanguages={langConfig.value.site_languages} editingLocale={editingLocaleDraft}>
             <div>
               <label for="name" class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-200">
                 {translateApp(lang, 'skills.name')} *
@@ -211,7 +190,7 @@ export default component$(() => {
               />
             </div>
 
-            <div>
+            <div class="md:col-span-2">
               <label for="icon_hint" class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-200">
                 {translateApp(lang, 'skills.iconHint')}
               </label>
@@ -227,7 +206,7 @@ export default component$(() => {
               />
             </div>
 
-            <div>
+            <div class="md:col-span-2">
               <label for="description" class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-200">
                 {translateApp(lang, 'skills.description')}
               </label>
@@ -242,7 +221,7 @@ export default component$(() => {
               />
             </div>
 
-            <div class="flex gap-2">
+            <div class="md:col-span-2 flex gap-2">
               <button
                 type="button"
                 preventdefault:click

@@ -6,8 +6,9 @@ import { PageSectionsEditor } from '../../../../../components/admin/pages/PageSe
 import { MediaSelector } from '../../../../../components/common/MediaSelector';
 import { AdminPublicPageLink } from '../../../../../components/admin/AdminPublicPageLink';
 import {
-  ContentPrimaryLanguageSelect,
-} from '../../../../../components/admin/PerFieldContentTranslations';
+  AdminContentLanguageFields,
+  ADMIN_CONTENT_FIELDS_GRID_CLASS,
+} from '../../../../../components/admin/AdminContentLanguageFields';
 import { useTranslate, translateApp } from '../../../../../lib/i18n/useTranslate';
 import { useSwal } from '../../../../../lib/hooks/useSwal';
 import { usePublicSiteMeta } from '../../layout';
@@ -47,6 +48,7 @@ export default component$(() => {
     status: 'draft' as 'draft' | 'published',
   });
   const contentLocaleDraft = useSignal('');
+  const editingLocaleDraft = useSignal(langConfig.value.content_editing_locale);
   const sections = useSignal<HomepageSectionInstance[]>([]);
   const registry = useSignal<AppearanceRegistryEntry[]>([]);
   const mediaPreviewById = useSignal<Record<string, string>>({});
@@ -86,7 +88,7 @@ export default component$(() => {
         excerpt: formData.value.excerpt,
         status: formData.value.status,
         content_locale: contentLocaleDraft.value,
-        editing_locale: effectivePrimary,
+        editing_locale: editingLocaleDraft.value || effectivePrimary,
         effective_primary_locale: effectivePrimary,
         canonical_title: formData.value.title,
         canonical_excerpt: formData.value.excerpt,
@@ -119,14 +121,22 @@ export default component$(() => {
       <div class="grid gap-6 lg:grid-cols-[minmax(0,1fr)_17.5rem] lg:items-start">
         <div class="space-y-6">
           <div class={ADMIN_FORM_CARD_CLASS}>
-            <div class="space-y-5">
+            <div class={ADMIN_CONTENT_FIELDS_GRID_CLASS}>
+              <AdminContentLanguageFields
+                lang={lang}
+                siteLanguages={langConfig.value.site_languages || []}
+                defaultLocale={langConfig.value.default_locale || 'en'}
+                contentLocale={contentLocaleDraft}
+                editingLocale={editingLocaleDraft}
+              />
+
               <div>
                 <label for="page-title" class={ADMIN_FORM_LABEL_CLASS}>
                   {translateApp(lang, 'pages.fields.title')} *
                 </label>
                 <input
                   id="page-title"
-                  class={`${ADMIN_FORM_INPUT_CLASS} text-lg font-semibold`}
+                  class={ADMIN_FORM_INPUT_CLASS}
                   value={formData.value.title}
                   placeholder={translateApp(lang, 'pages.titlePlaceholder')}
                   onInput$={(e) => {
@@ -153,7 +163,7 @@ export default component$(() => {
                 <AdminPublicPageLink lang={lang} kind="pages" slug={formData.value.slug} />
               </div>
 
-              <div>
+              <div class="md:col-span-2">
                 <label for="page-excerpt" class={ADMIN_FORM_LABEL_CLASS}>
                   {translateApp(lang, 'pages.fields.excerpt')}
                 </label>
@@ -241,22 +251,6 @@ export default component$(() => {
                   {translateApp(lang, 'common.cancel')}
                 </Link>
               </div>
-            </div>
-          </div>
-
-          <div class={ADMIN_FORM_SIDEBAR_CARD_CLASS + ' !p-0 overflow-hidden'}>
-            <div class="p-1">
-              <ContentPrimaryLanguageSelect
-                siteLanguages={langConfig.value.site_languages || []}
-                defaultLocale={langConfig.value.default_locale || 'en'}
-                value={contentLocaleDraft.value}
-                label={translateApp(lang, 'contentTranslations.contentPrimaryLanguage')}
-                hint={translateApp(lang, 'contentTranslations.contentPrimaryHint')}
-                useSiteDefaultLabel={translateApp(lang, 'contentTranslations.useSiteDefault')}
-                onChange$={$((code) => {
-                  contentLocaleDraft.value = code;
-                })}
-              />
             </div>
           </div>
         </aside>

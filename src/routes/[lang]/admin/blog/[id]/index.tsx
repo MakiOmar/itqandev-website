@@ -7,11 +7,14 @@ import { LoadingSpinner } from '../../../../../components/common/LoadingSpinner'
 import { useTranslate, translateApp } from '../../../../../lib/i18n/useTranslate';
 import { useSwal } from '../../../../../lib/hooks/useSwal';
 import {
-  ContentEditingLanguageSelect,
   EditingLocaleFieldsShell,
   FieldTranslationGlobe,
   TranslationsFormRoot,
 } from '../../../../../components/admin/PerFieldContentTranslations';
+import {
+  AdminContentLanguageFields,
+  ADMIN_CONTENT_FIELDS_GRID_CLASS,
+} from '../../../../../components/admin/AdminContentLanguageFields';
 import { initialTranslationsJson, parseTranslationsJson, secondaryLocalesForContent } from '../../../../../lib/content-translations';
 import {
   mergeBlogPostFieldsForUiLocale,
@@ -37,6 +40,17 @@ import {
   type ContentSeoDraft,
   type ContentSeoMetaRow,
 } from '../../../../../types/content-seo';
+import {
+  ADMIN_BACK_BUTTON_CLASS,
+  ADMIN_FORM_CARD_CLASS,
+  ADMIN_FORM_INPUT_CLASS,
+  ADMIN_FORM_LABEL_CLASS,
+  ADMIN_FORM_SIDEBAR_CARD_CLASS,
+  ADMIN_FORM_TEXTAREA_CLASS,
+  ADMIN_NATIVE_OPTION_CLASS,
+  ADMIN_NATIVE_SELECT_CLASS,
+  ADMIN_PRIMARY_BUTTON_CLASS,
+} from '../../../../../lib/admin/native-select-classes';
 
 /**
  * Blog post update schema
@@ -383,417 +397,406 @@ export default component$(() => {
         title={`${translateApp(lang, 'blog.edit')} #${location.params.id}`}
         description={translateApp(lang, 'blog.subtitle')}
       >
-        <div class="flex gap-2">
-          <Link
-            href={R.ADMIN.BLOG}
-            class="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm transition hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 dark:hover:bg-gray-700"
-          >
-            {translateApp(lang, 'common.back')}
-          </Link>
-        </div>
+        <Link href={R.ADMIN.BLOG} class={ADMIN_BACK_BUTTON_CLASS}>
+          {translateApp(lang, 'common.back')}
+        </Link>
       </PageHeader>
 
-      <div class="rounded-lg border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-800 dark:bg-gray-800">
-        <Form action={updateAction} class="space-y-6">
-          {/* Hidden: map saves back to primary columns vs translation rows when dashboard language ≠ primary */}
-          <input
-            type="hidden"
-            name="editing_locale"
-            value={normalizeEditingLocale(
-              editingLocaleDraft.value,
-              langConfig.value.site_languages,
-              langConfig.value.default_locale,
-              contentLocaleDraft.value.trim() !== '' ? contentLocaleDraft.value.trim() : null,
-            )}
-          />
-          <input type="hidden" name="form_site_default_locale" value={langConfig.value.default_locale} />
-          <input
-            type="hidden"
-            name="effective_primary_locale"
-            value={primaryLocaleForContent(
-              langConfig.value.site_languages,
-              langConfig.value.default_locale,
-              contentLocaleDraft.value.trim() !== '' ? contentLocaleDraft.value.trim() : null,
-            )}
-          />
-          <input type="hidden" name="canonical_title" value={(post.value as BlogPost).title ?? ''} />
-          <input type="hidden" name="canonical_excerpt" value={(post.value as BlogPost).excerpt ?? ''} />
-          <input type="hidden" name="canonical_content" value={(post.value as BlogPost).content ?? ''} />
-          <input
-            type="hidden"
-            name="seo_locale"
-            value={normalizeEditingLocale(
-              editingLocaleDraft.value,
-              langConfig.value.site_languages,
-              langConfig.value.default_locale,
-              contentLocaleDraft.value.trim() !== '' ? contentLocaleDraft.value.trim() : null,
-            )}
-          />
-          <input type="hidden" name="seo_draft_json" value={JSON.stringify(seoDraft.value)} />
-          <div class="grid gap-4 md:grid-cols-2">
-            <TranslationsFormRoot
-              kind="blog"
-              locales={translationSecondaries}
-              initialJson={blogTranslationsJson}
-              rtlBadge={translateApp(lang, 'contentTranslations.rtlBadge')}
-              fallbackHintShort={translateApp(lang, 'contentTranslations.fallbackPlaceholderHint')}
-            >
-              <ContentEditingLanguageSelect
-                siteLanguages={langConfig.value.site_languages}
-                value={editingLocaleDraft.value}
-                effectivePrimaryLocale={primaryLocaleForContent(
-                  langConfig.value.site_languages,
-                  langConfig.value.default_locale,
-                  contentLocaleDraft.value.trim() !== '' ? contentLocaleDraft.value.trim() : null,
-                )}
-                label={translateApp(lang, 'contentTranslations.sectionTitle')}
-                hintPrimary={translateApp(lang, 'contentTranslations.defaultHint')}
-                hintSecondary={translateApp(lang, 'contentTranslations.fallbackPlaceholderHint')}
-                secondarySavePrefix={translateApp(lang, 'contentTranslations.addTranslations')}
-                onChange$={$((code: string) => {
-                  editingLocaleDraft.value = code;
-                })}
-              />
+      <Form action={updateAction}>
+        <input
+          type="hidden"
+          name="editing_locale"
+          value={normalizeEditingLocale(
+            editingLocaleDraft.value,
+            langConfig.value.site_languages,
+            langConfig.value.default_locale,
+            contentLocaleDraft.value.trim() !== '' ? contentLocaleDraft.value.trim() : null,
+          )}
+        />
+        <input type="hidden" name="form_site_default_locale" value={langConfig.value.default_locale} />
+        <input
+          type="hidden"
+          name="effective_primary_locale"
+          value={primaryLocaleForContent(
+            langConfig.value.site_languages,
+            langConfig.value.default_locale,
+            contentLocaleDraft.value.trim() !== '' ? contentLocaleDraft.value.trim() : null,
+          )}
+        />
+        <input type="hidden" name="canonical_title" value={(post.value as BlogPost).title ?? ''} />
+        <input type="hidden" name="canonical_excerpt" value={(post.value as BlogPost).excerpt ?? ''} />
+        <input type="hidden" name="canonical_content" value={(post.value as BlogPost).content ?? ''} />
+        <input
+          type="hidden"
+          name="seo_locale"
+          value={normalizeEditingLocale(
+            editingLocaleDraft.value,
+            langConfig.value.site_languages,
+            langConfig.value.default_locale,
+            contentLocaleDraft.value.trim() !== '' ? contentLocaleDraft.value.trim() : null,
+          )}
+        />
+        <input type="hidden" name="seo_draft_json" value={JSON.stringify(seoDraft.value)} />
 
-              <EditingLocaleFieldsShell
-                variant="gridContents"
-                siteLanguages={langConfig.value.site_languages}
-                editingLocale={editingLocaleDraft}
-              >
-              {!translationSecondaries.length ? (
-                <p class="md:col-span-2 text-sm text-gray-600 dark:text-gray-400">
-                  {translateApp(lang, 'contentTranslations.noSecondaryLanguages')}
-                </p>
-              ) : null}
-
-              <FieldTranslationGlobe
-                fieldKey="title"
-                gridSpan="one"
-                globeAriaLabel={translateApp(lang, 'contentTranslations.globeTitle')}
-                fallbackText={post.value.title ?? ''}
-              >
-                <div>
-                  <label
-                    for="title"
-                    class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-200"
-                  >
-                    {translateApp(lang, 'blog.name')} *
-                  </label>
-                  <input
-                    id="title"
-                    name="title"
-                    type="text"
-                    value={titleField.value}
-                    onInput$={(e) => {
-                      titleField.value = (e.target as HTMLInputElement).value;
-                    }}
-                    onBlur$={blogSlugAuto.onTitleBlurSuggestSlug$}
-                    required
-                    class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-primary-500 focus:outline-none focus:ring focus:ring-primary-200 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:focus:ring-primary-700/40"
+        <div class="grid gap-6 lg:grid-cols-[minmax(0,1fr)_17.5rem] lg:items-start">
+          <div class="space-y-6">
+            <div class={ADMIN_FORM_CARD_CLASS}>
+              <div class={ADMIN_CONTENT_FIELDS_GRID_CLASS}>
+                <TranslationsFormRoot
+                  kind="blog"
+                  locales={translationSecondaries}
+                  initialJson={blogTranslationsJson}
+                  rtlBadge={translateApp(lang, 'contentTranslations.rtlBadge')}
+                  fallbackHintShort={translateApp(lang, 'contentTranslations.fallbackPlaceholderHint')}
+                >
+                  <AdminContentLanguageFields
+                    lang={lang}
+                    siteLanguages={langConfig.value.site_languages}
+                    defaultLocale={langConfig.value.default_locale}
+                    contentLocale={contentLocaleDraft}
+                    editingLocale={editingLocaleDraft}
                   />
-                  {updateAction.value?.failed && updateAction.value.fieldErrors?.title && (
-                    <p class="mt-1 text-sm text-red-600 dark:text-red-400">
-                      {updateAction.value.fieldErrors.title}
-                    </p>
-                  )}
-                </div>
-              </FieldTranslationGlobe>
 
-              <div>
-                <label
-                  for="slug"
-                  class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-200"
-                >
-                  {translateApp(lang, 'blog.slug')}
-                </label>
-                <input
-                  id="slug"
-                  name="slug"
-                  type="text"
-                  value={slugField.value}
-                  onInput$={$((e) => {
-                    blogSlugAuto.slugLocked.value = true;
-                    slugField.value = (e.target as HTMLInputElement).value;
-                  })}
-                  onBlur$={blogSlugAuto.onSlugBlurEnsureUnique$}
-                  class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-primary-500 focus:outline-none focus:ring focus:ring-primary-200 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:focus:ring-primary-700/40"
-                />
-                <AdminPublicPageLink lang={lang} kind="blog" slug={slugField.value} />
-              </div>
-
-              <div>
-                <label
-                  for="status"
-                  class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-200"
-                >
-                  {translateApp(lang, 'blog.status')}
-                </label>
-                <select
-                  id="status"
-                  name="status"
-                  value={post.value.status}
-                  class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-primary-500 focus:outline-none focus:ring focus:ring-primary-200 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:focus:ring-primary-700/40"
-                >
-                  <option value="draft">{translateApp(lang, 'blog.statusDraft')}</option>
-                  <option value="published">{translateApp(lang, 'blog.statusPublished')}</option>
-                  <option value="archived">{translateApp(lang, 'blog.statusArchived')}</option>
-                </select>
-              </div>
-
-              <div class="flex items-center gap-2">
-                <input
-                  id="featured"
-                  name="featured"
-                  type="checkbox"
-                  checked={post.value.featured}
-                  value="1"
-                  class="h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
-                />
-                <label
-                  for="featured"
-                  class="text-sm font-medium text-gray-700 dark:text-gray-200"
-                >
-                  {translateApp(lang, 'blog.featured')}
-                </label>
-              </div>
-
-              <FieldTranslationGlobe
-                fieldKey="excerpt"
-                gridSpan="full"
-                globeAriaLabel={translateApp(lang, 'contentTranslations.globeExcerpt')}
-                fallbackText={post.value.excerpt || ''}
-              >
-                <div>
-                  <label
-                    for="excerpt"
-                    class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-200"
+                  <EditingLocaleFieldsShell
+                    variant="gridContents"
+                    siteLanguages={langConfig.value.site_languages}
+                    editingLocale={editingLocaleDraft}
                   >
-                    {translateApp(lang, 'blog.excerpt')}
-                  </label>
-                  <textarea
-                    id="excerpt"
-                    name="excerpt"
-                    rows={2}
-                    value={excerptField.value}
-                    onInput$={(e) => {
-                      excerptField.value = (e.target as HTMLTextAreaElement).value;
-                    }}
-                    class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-primary-500 focus:outline-none focus:ring focus:ring-primary-200 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:focus:ring-primary-700/40"
-                  />
-                </div>
-              </FieldTranslationGlobe>
+                    {!translationSecondaries.length ? (
+                      <p class="md:col-span-2 text-sm text-gray-600 dark:text-gray-400">
+                        {translateApp(lang, 'contentTranslations.noSecondaryLanguages')}
+                      </p>
+                    ) : null}
 
-              <FieldTranslationGlobe
-                fieldKey="content"
-                gridSpan="full"
-                globeAriaLabel={translateApp(lang, 'contentTranslations.globeContent')}
-                fallbackText={post.value.content || ''}
-                secondaryTextareaRows={10}
-              >
-                <div>
-                  <label
-                    for="content"
-                    class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-200"
-                  >
-                    {translateApp(lang, 'blog.content')}
-                  </label>
-                  <textarea
-                    id="content"
-                    name="content"
-                    rows={10}
-                    value={contentField.value}
-                    onInput$={(e) => {
-                      contentField.value = (e.target as HTMLTextAreaElement).value;
-                    }}
-                    class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-primary-500 focus:outline-none focus:ring focus:ring-primary-200 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:focus:ring-primary-700/40"
-                  />
-                </div>
-              </FieldTranslationGlobe>
-              </EditingLocaleFieldsShell>
-            </TranslationsFormRoot>
+                    <FieldTranslationGlobe
+                      fieldKey="title"
+                      gridSpan="one"
+                      globeAriaLabel={translateApp(lang, 'contentTranslations.globeTitle')}
+                      fallbackText={post.value.title ?? ''}
+                    >
+                      <div>
+                        <label for="title" class={ADMIN_FORM_LABEL_CLASS}>
+                          {translateApp(lang, 'blog.name')} *
+                        </label>
+                        <input
+                          id="title"
+                          name="title"
+                          type="text"
+                          value={titleField.value}
+                          onInput$={(e) => {
+                            titleField.value = (e.target as HTMLInputElement).value;
+                          }}
+                          onBlur$={blogSlugAuto.onTitleBlurSuggestSlug$}
+                          required
+                          class={ADMIN_FORM_INPUT_CLASS}
+                        />
+                        {updateAction.value?.failed && updateAction.value.fieldErrors?.title && (
+                          <p class="mt-1 text-sm text-red-600 dark:text-red-400">
+                            {updateAction.value.fieldErrors.title}
+                          </p>
+                        )}
+                      </div>
+                    </FieldTranslationGlobe>
 
-            <EditingLocaleFieldsShell
-              siteLanguages={langConfig.value.site_languages}
-              editingLocale={editingLocaleDraft}
-            >
-            <div>
-              <label
-                for="published_at"
-                class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-200"
-              >
-                {translateApp(lang, 'blog.publishedAt')}
-              </label>
-              <input
-                id="published_at"
-                name="published_at"
-                type="datetime-local"
-                value={post.value.publishedAt ? new Date(post.value.publishedAt).toISOString().slice(0, 16) : ''}
-                class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-primary-500 focus:outline-none focus:ring focus:ring-primary-200 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:focus:ring-primary-700/40"
-              />
+                    <div>
+                      <label for="slug" class={ADMIN_FORM_LABEL_CLASS}>
+                        {translateApp(lang, 'blog.slug')}
+                      </label>
+                      <input
+                        id="slug"
+                        name="slug"
+                        type="text"
+                        value={slugField.value}
+                        onInput$={$((e) => {
+                          blogSlugAuto.slugLocked.value = true;
+                          slugField.value = (e.target as HTMLInputElement).value;
+                        })}
+                        onBlur$={blogSlugAuto.onSlugBlurEnsureUnique$}
+                        class={`${ADMIN_FORM_INPUT_CLASS} font-mono text-xs`}
+                      />
+                      <AdminPublicPageLink lang={lang} kind="blog" slug={slugField.value} />
+                    </div>
+
+                    <FieldTranslationGlobe
+                      fieldKey="excerpt"
+                      gridSpan="full"
+                      globeAriaLabel={translateApp(lang, 'contentTranslations.globeExcerpt')}
+                      fallbackText={post.value.excerpt || ''}
+                    >
+                      <div>
+                        <label for="excerpt" class={ADMIN_FORM_LABEL_CLASS}>
+                          {translateApp(lang, 'blog.excerpt')}
+                        </label>
+                        <textarea
+                          id="excerpt"
+                          name="excerpt"
+                          rows={3}
+                          value={excerptField.value}
+                          onInput$={(e) => {
+                            excerptField.value = (e.target as HTMLTextAreaElement).value;
+                          }}
+                          class={ADMIN_FORM_TEXTAREA_CLASS}
+                        />
+                      </div>
+                    </FieldTranslationGlobe>
+
+                    <FieldTranslationGlobe
+                      fieldKey="content"
+                      gridSpan="full"
+                      globeAriaLabel={translateApp(lang, 'contentTranslations.globeContent')}
+                      fallbackText={post.value.content || ''}
+                      secondaryTextareaRows={12}
+                    >
+                      <div>
+                        <label for="content" class={ADMIN_FORM_LABEL_CLASS}>
+                          {translateApp(lang, 'blog.content')}
+                        </label>
+                        <textarea
+                          id="content"
+                          name="content"
+                          rows={14}
+                          value={contentField.value}
+                          onInput$={(e) => {
+                            contentField.value = (e.target as HTMLTextAreaElement).value;
+                          }}
+                          class={ADMIN_FORM_TEXTAREA_CLASS}
+                        />
+                      </div>
+                    </FieldTranslationGlobe>
+                  </EditingLocaleFieldsShell>
+                </TranslationsFormRoot>
+              </div>
             </div>
-            </EditingLocaleFieldsShell>
-          </div>
 
-          {/* Featured Image Section - Matching Blog List Page */}
-          <div class="mt-6 border-t border-gray-200 pt-6 dark:border-gray-700">
-            <h3 class="mb-3 text-lg font-semibold text-gray-900 dark:text-gray-100">
-              {translateApp(lang, 'blog.featuredImage') || 'Featured Image'}
-            </h3>
-            {featuredImage.value ? (
-              <div class="mb-3 flex items-center gap-3">
-                {featuredImage.value.url ? (
-                  <img
-                    src={featuredImage.value.url}
-                    alt={featuredImage.value.alt_text || featuredImage.value.name || ''}
-                    width="96"
-                    height="96"
-                    class="h-24 w-24 rounded-lg border border-gray-300 object-cover dark:border-gray-700"
-                  />
-                ) : featuredImage.value.file ? (
-                  <div class="flex h-24 w-24 items-center justify-center rounded-lg border border-gray-300 bg-gray-100 dark:border-gray-700 dark:bg-gray-900">
+            <div class={ADMIN_FORM_CARD_CLASS}>
+              <h3 class="mb-3 text-base font-semibold text-gray-900 dark:text-gray-100">
+                {translateApp(lang, 'blog.featuredImage') || 'Featured Image'}
+              </h3>
+              {featuredImage.value ? (
+                <div class="mb-3 flex items-center gap-3">
+                  {featuredImage.value.url ? (
                     <img
-                      src={featuredImage.value.preview || ''}
-                      alt={featuredImage.value.file?.name || ''}
+                      src={featuredImage.value.url}
+                      alt={featuredImage.value.alt_text || featuredImage.value.name || ''}
                       width="96"
                       height="96"
-                      class="h-full w-full rounded-lg object-cover"
+                      class="h-24 w-24 rounded-lg border border-gray-300 object-cover dark:border-gray-700"
                     />
+                  ) : featuredImage.value.file ? (
+                    <div class="flex h-24 w-24 items-center justify-center rounded-lg border border-gray-300 bg-gray-100 dark:border-gray-700 dark:bg-gray-900">
+                      <img
+                        src={featuredImage.value.preview || ''}
+                        alt={featuredImage.value.file?.name || ''}
+                        width="96"
+                        height="96"
+                        class="h-full w-full rounded-lg object-cover"
+                      />
+                    </div>
+                  ) : null}
+                  <div class="flex-1">
+                    <p class="text-sm font-medium text-gray-900 dark:text-gray-100">
+                      {featuredImage.value.name || featuredImage.value.file?.name || ''}
+                    </p>
+                    <p class="text-xs text-gray-500 dark:text-gray-400">
+                      {featuredImage.value.size
+                        ? `${(featuredImage.value.size / 1024).toFixed(2)} KB`
+                        : featuredImage.value.file?.size
+                          ? `${(featuredImage.value.file.size / 1024).toFixed(2)} KB`
+                          : ''}{' '}
+                      · {featuredImage.value.mime_type || featuredImage.value.file?.type || ''}
+                    </p>
                   </div>
-                ) : null}
-                <div class="flex-1">
-                  <p class="text-sm font-medium text-gray-900 dark:text-gray-100">
-                    {featuredImage.value.name || featuredImage.value.file?.name || ''}
-                  </p>
-                  <p class="text-xs text-gray-500 dark:text-gray-400">
-                    {featuredImage.value.size
-                      ? `${(featuredImage.value.size / 1024).toFixed(2)} KB`
-                      : featuredImage.value.file?.size
-                        ? `${(featuredImage.value.file.size / 1024).toFixed(2)} KB`
-                        : ''}{' '}
-                    · {featuredImage.value.mime_type || featuredImage.value.file?.type || ''}
-                  </p>
+                  <button
+                    type="button"
+                    onClick$={() => {
+                      featuredImage.value = null;
+                      featuredImageFile.value = null;
+                    }}
+                    class="rounded-lg bg-red-600 px-3 py-1 text-sm text-white hover:bg-red-700"
+                  >
+                    {translateApp(lang, 'common.delete')}
+                  </button>
                 </div>
+              ) : (
+                <div class="mb-3 text-sm text-gray-500 dark:text-gray-400">
+                  {translateApp(lang, 'blog.noFeaturedImage')}
+                </div>
+              )}
+              <div class="flex flex-wrap gap-2">
+                <input
+                  type="file"
+                  accept="image/*"
+                  id="featured-image-file-input"
+                  class="hidden"
+                  onChange$={(e: any) => {
+                    const file = e.target.files?.[0];
+                    if (!file) return;
+                    const preview = URL.createObjectURL(file);
+                    featuredImageFile.value = file;
+                    featuredImage.value = {
+                      file,
+                      preview,
+                      name: file.name,
+                      size: file.size,
+                      mime_type: file.type,
+                    };
+                    if (e.target) {
+                      e.target.value = '';
+                    }
+                  }}
+                />
                 <button
                   type="button"
                   onClick$={() => {
-                    featuredImage.value = null;
-                    featuredImageFile.value = null;
+                    document.getElementById('featured-image-file-input')?.click();
                   }}
-                  class="rounded-lg bg-red-600 px-3 py-1 text-sm text-white hover:bg-red-700"
+                  class={ADMIN_BACK_BUTTON_CLASS}
                 >
-                  Remove
+                  {translateApp(lang, 'blog.uploadFile')}
                 </button>
-              </div>
-            ) : (
-              <div class="mb-3 text-sm text-gray-500 dark:text-gray-400">No featured image selected.</div>
-            )}
-            <div class="flex gap-2">
-              <input
-                type="file"
-                accept="image/*"
-                id="featured-image-file-input"
-                class="hidden"
-                onChange$={(e: any) => {
-                  const file = e.target.files?.[0];
-                  if (!file) return;
-                  const preview = URL.createObjectURL(file);
-                  featuredImageFile.value = file;
-                  featuredImage.value = {
-                    file,
-                    preview,
-                    name: file.name,
-                    size: file.size,
-                    mime_type: file.type,
-                  };
-                  if (e.target) {
-                    e.target.value = '';
-                  }
-                }}
-              />
-              <button
-                type="button"
-                onClick$={() => {
-                  document.getElementById('featured-image-file-input')?.click();
-                }}
-                class="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm transition hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 dark:hover:bg-gray-700"
-              >
-                Upload File
-              </button>
-              {featuredImageFile.value && (
+                {featuredImageFile.value && (
+                  <button
+                    type="button"
+                    onClick$={uploadFeaturedImage}
+                    disabled={uploadImageAction.isRunning}
+                    class={ADMIN_PRIMARY_BUTTON_CLASS}
+                  >
+                    {uploadImageAction.isRunning
+                      ? translateApp(lang, 'common.loading')
+                      : translateApp(lang, 'blog.uploadImage') || 'Upload Image'}
+                  </button>
+                )}
                 <button
                   type="button"
-                  onClick$={uploadFeaturedImage}
-                  disabled={uploadImageAction.isRunning}
-                  class="rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-primary-700 disabled:opacity-60"
+                  onClick$={() => {
+                    showFeaturedImageSelector.value = true;
+                  }}
+                  class={ADMIN_PRIMARY_BUTTON_CLASS}
                 >
-                  {uploadImageAction.isRunning ? translateApp(lang, 'common.loading') : translateApp(lang, 'blog.uploadImage') || 'Upload Image'}
-                </button>
-              )}
-              <button
-                type="button"
-                onClick$={() => {
-                  showFeaturedImageSelector.value = true;
-                }}
-                class="rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-primary-700"
-              >
-                {featuredImage.value ? 'Change Image' : 'Select from Library'}
-              </button>
-            </div>
-          </div>
-
-          <div class="mt-6 border-t border-gray-200 pt-6 dark:border-gray-700">
-            <h3 class="mb-3 text-lg font-semibold text-gray-900 dark:text-gray-100">{translateApp(lang, 'seo.title')}</h3>
-            {/* <!-- SEO morph row keyed by dashboard editing locale --> */}
-            <p class="mb-3 text-xs text-gray-600 dark:text-gray-400">{translateApp(lang, 'seo.forEditingLocale')}</p>
-            <ContentSeoFields lang={lang} idPrefix="blog-post" draft={seoDraft} />
-          </div>
-
-          {updateAction.value?.failed && (updateAction.value as any).error && (
-            <div class="rounded-md bg-red-50 dark:bg-red-900/20 p-3 text-sm text-red-800 dark:text-red-300">
-              {(updateAction.value as any).error}
-            </div>
-          )}
-
-          <div class="flex justify-end gap-2">
-            <Link
-              href={R.ADMIN.BLOG}
-              class="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm transition hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 dark:hover:bg-gray-700"
-            >
-              {translateApp(lang, 'common.cancel')}
-            </Link>
-            <button
-              type="submit"
-              disabled={updateAction.isRunning}
-              class="rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-primary-700 disabled:opacity-60"
-            >
-              {updateAction.isRunning ? translateApp(lang, 'common.loading') : translateApp(lang, 'common.save')}
-            </button>
-          </div>
-        </Form>
-
-        {/* Featured Image Selector Modal */}
-        {showFeaturedImageSelector.value && (
-          <div class="fixed inset-0 z-50 bg-white dark:bg-gray-900 overflow-y-auto">
-            <div class="container mx-auto max-w-screen-2xl p-6">
-              <div class="mb-4 flex items-center justify-between">
-                <h2 class="text-xl font-semibold text-gray-900 dark:text-gray-100">
-                  {translateApp(lang, 'media.selectMedia') || 'Select Featured Image'}
-                </h2>
-                <button
-                  onClick$={() => (showFeaturedImageSelector.value = false)}
-                  class="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 dark:hover:bg-gray-700"
-                >
-                  {translateApp(lang, 'common.cancel')}
+                  {featuredImage.value
+                    ? translateApp(lang, 'blog.changeImage')
+                    : translateApp(lang, 'blog.selectFromLibrary')}
                 </button>
               </div>
-              <iframe
-                src={`${R.ADMIN.MEDIA}?select=true&accept=image/*&callback=featured_image`}
-                class="w-full h-[calc(100vh-200px)] border border-gray-200 rounded-lg dark:border-gray-700"
-              />
             </div>
+
+            <div class={ADMIN_FORM_CARD_CLASS}>
+              <h3 class="mb-3 text-base font-semibold text-gray-900 dark:text-gray-100">
+                {translateApp(lang, 'seo.title')}
+              </h3>
+              <p class="mb-3 text-xs text-gray-600 dark:text-gray-400">
+                {translateApp(lang, 'seo.forEditingLocale')}
+              </p>
+              <ContentSeoFields lang={lang} idPrefix="blog-post" draft={seoDraft} />
+            </div>
+
+            {updateAction.value?.failed && (updateAction.value as any).error && (
+              <div class="rounded-md bg-red-50 p-3 text-sm text-red-800 dark:bg-red-900/20 dark:text-red-300">
+                {(updateAction.value as any).error}
+              </div>
+            )}
           </div>
-        )}
-      </div>
+
+          <aside class="space-y-4 lg:sticky lg:top-24">
+            <div class={ADMIN_FORM_SIDEBAR_CARD_CLASS}>
+              <h3 class="mb-3 text-sm font-semibold text-gray-900 dark:text-gray-100">
+                {translateApp(lang, 'blog.publish')}
+              </h3>
+              <div class="space-y-3">
+                <div>
+                  <label for="status" class={ADMIN_FORM_LABEL_CLASS}>
+                    {translateApp(lang, 'blog.status')}
+                  </label>
+                  <select
+                    id="status"
+                    name="status"
+                    value={post.value.status}
+                    class={ADMIN_NATIVE_SELECT_CLASS}
+                  >
+                    <option class={ADMIN_NATIVE_OPTION_CLASS} value="draft">
+                      {translateApp(lang, 'blog.statusDraft')}
+                    </option>
+                    <option class={ADMIN_NATIVE_OPTION_CLASS} value="published">
+                      {translateApp(lang, 'blog.statusPublished')}
+                    </option>
+                    <option class={ADMIN_NATIVE_OPTION_CLASS} value="archived">
+                      {translateApp(lang, 'blog.statusArchived')}
+                    </option>
+                  </select>
+                </div>
+
+                <div class="flex items-center gap-2">
+                  <input
+                    id="featured"
+                    name="featured"
+                    type="checkbox"
+                    checked={post.value.featured}
+                    value="1"
+                    class="h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+                  />
+                  <label for="featured" class="text-sm font-medium text-gray-700 dark:text-gray-200">
+                    {translateApp(lang, 'blog.featured')}
+                  </label>
+                </div>
+
+                <div>
+                  <label for="published_at" class={ADMIN_FORM_LABEL_CLASS}>
+                    {translateApp(lang, 'blog.publishedAt')}
+                  </label>
+                  <input
+                    id="published_at"
+                    name="published_at"
+                    type="datetime-local"
+                    value={
+                      post.value.publishedAt
+                        ? new Date(post.value.publishedAt).toISOString().slice(0, 16)
+                        : ''
+                    }
+                    class={ADMIN_FORM_INPUT_CLASS}
+                  />
+                </div>
+
+                <div class="flex flex-col gap-2 border-t border-gray-200 pt-3 dark:border-gray-700">
+                  <button
+                    type="submit"
+                    disabled={updateAction.isRunning}
+                    class={ADMIN_PRIMARY_BUTTON_CLASS}
+                  >
+                    {updateAction.isRunning
+                      ? translateApp(lang, 'common.loading')
+                      : translateApp(lang, 'common.save')}
+                  </button>
+                  <Link href={R.ADMIN.BLOG} class={`${ADMIN_BACK_BUTTON_CLASS} text-center`}>
+                    {translateApp(lang, 'common.cancel')}
+                  </Link>
+                </div>
+              </div>
+            </div>
+          </aside>
+        </div>
+      </Form>
+
+      {showFeaturedImageSelector.value && (
+        <div class="fixed inset-0 z-50 overflow-y-auto bg-white dark:bg-gray-900">
+          <div class="container mx-auto max-w-screen-2xl p-6">
+            <div class="mb-4 flex items-center justify-between">
+              <h2 class="text-xl font-semibold text-gray-900 dark:text-gray-100">
+                {translateApp(lang, 'media.selectMedia') || 'Select Featured Image'}
+              </h2>
+              <button
+                onClick$={() => (showFeaturedImageSelector.value = false)}
+                class={ADMIN_BACK_BUTTON_CLASS}
+              >
+                {translateApp(lang, 'common.cancel')}
+              </button>
+            </div>
+            <iframe
+              src={`${R.ADMIN.MEDIA}?select=true&accept=image/*&callback=featured_image`}
+              class="h-[calc(100vh-200px)] w-full rounded-lg border border-gray-200 dark:border-gray-700"
+            />
+          </div>
+        </div>
+      )}
     </>
   );
 });

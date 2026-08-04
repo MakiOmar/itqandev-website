@@ -8,11 +8,11 @@ import { getApiClient, extractCookieHeader } from '../../../../../lib/api/client
 import { API_ENDPOINTS } from '../../../../../lib/api/endpoints';
 import { useAppRoutes } from '../../../../../lib/constants/routes';
 import { usePublicSiteMeta } from '../../layout';
+import { EditingLocaleFieldsShell } from '../../../../../components/admin/PerFieldContentTranslations';
 import {
-  ContentEditingLanguageSelect,
-  ContentPrimaryLanguageSelect,
-  EditingLocaleFieldsShell,
-} from '../../../../../components/admin/PerFieldContentTranslations';
+  AdminContentLanguageFields,
+  ADMIN_CONTENT_FIELDS_GRID_CLASS,
+} from '../../../../../components/admin/AdminContentLanguageFields';
 import { secondaryLocalesForContent } from '../../../../../lib/content-translations';
 import {
   mergeCategoryFieldsForUiLocale,
@@ -328,21 +328,19 @@ export default component$(() => {
       </PageHeader>
 
       <div class="mx-auto max-w-2xl rounded-lg border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-800 dark:bg-gray-800">
-        <div class="space-y-4">
-          <ContentPrimaryLanguageSelect
+        <div class={ADMIN_CONTENT_FIELDS_GRID_CLASS}>
+          <AdminContentLanguageFields
+            lang={lang}
             siteLanguages={langConfig.value.site_languages}
             defaultLocale={langConfig.value.default_locale}
-            value={contentLocaleDraft.value}
-            label={translateApp(lang, 'contentTranslations.contentPrimaryLanguage')}
-            hint={translateApp(lang, 'contentTranslations.contentPrimaryHint')}
-            useSiteDefaultLabel={translateApp(lang, 'contentTranslations.useSiteDefault')}
-            onChange$={$((code: string) => {
-              contentLocaleDraft.value = code;
+            contentLocale={contentLocaleDraft}
+            editingLocale={editingLocaleDraft}
+            onContentLocaleChange$={$((code: string) => {
               const c = (liveCategory.value ?? categoryLoader.value) as Category | undefined;
               const secondaries = secondaryLocalesForContent(
                 langConfig.value.site_languages,
                 langConfig.value.default_locale,
-                contentLocaleDraft.value.trim() !== '' ? contentLocaleDraft.value.trim() : null,
+                code.trim() !== '' ? code.trim() : null,
               );
               translationsJson.value = JSON.stringify(
                 secondaries.map((l) => {
@@ -355,24 +353,8 @@ export default component$(() => {
             })}
           />
 
-          <ContentEditingLanguageSelect
-            siteLanguages={langConfig.value.site_languages}
-            value={editingLocaleDraft.value}
-            effectivePrimaryLocale={primaryLocaleForContent(
-              langConfig.value.site_languages,
-              langConfig.value.default_locale,
-              contentLocaleDraft.value.trim() !== '' ? contentLocaleDraft.value.trim() : null,
-            )}
-            label={translateApp(lang, 'contentTranslations.sectionTitle')}
-            hintPrimary={translateApp(lang, 'contentTranslations.defaultHint')}
-            hintSecondary={translateApp(lang, 'contentTranslations.fallbackPlaceholderHint')}
-            secondarySavePrefix={translateApp(lang, 'contentTranslations.addTranslations')}
-            onChange$={$((code: string) => {
-              editingLocaleDraft.value = code;
-            })}
-          />
-
           <EditingLocaleFieldsShell
+            variant="gridContents"
             siteLanguages={langConfig.value.site_languages}
             editingLocale={editingLocaleDraft}
           >
@@ -410,7 +392,7 @@ export default component$(() => {
             />
           </div>
 
-          <div>
+          <div class="md:col-span-2">
             <label for="description" class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-200">
               {translateApp(lang, 'categories.description')}
             </label>
@@ -426,7 +408,7 @@ export default component$(() => {
             />
           </div>
 
-          <div class="flex items-center gap-2">
+          <div class="md:col-span-2 flex items-center gap-2">
             <input
               id="is_featured"
               name="is_featured"
@@ -443,14 +425,14 @@ export default component$(() => {
             </label>
           </div>
 
-          <div class="border-t border-gray-200 pt-4 dark:border-gray-700">
+          <div class="md:col-span-2 border-t border-gray-200 pt-4 dark:border-gray-700">
             <h3 class="mb-2 text-base font-semibold text-gray-900 dark:text-gray-100">{translateApp(lang, 'seo.title')}</h3>
             {/* <!-- SEO row per editing locale --> */}
             <p class="mb-3 text-xs text-gray-600 dark:text-gray-400">{translateApp(lang, 'seo.forEditingLocale')}</p>
             <ContentSeoFields lang={lang} idPrefix="category" draft={seoDraft} />
           </div>
 
-          <div class="flex gap-2">
+          <div class="md:col-span-2 flex gap-2">
             <button
               type="button"
               preventdefault:click

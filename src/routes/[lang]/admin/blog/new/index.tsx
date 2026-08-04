@@ -2,12 +2,14 @@ import { component$, useSignal, $ } from '@builder.io/qwik';
 import type { DocumentHead } from '@builder.io/qwik-city';
 import { routeAction$, Form, zod$, z, Link } from '@builder.io/qwik-city';
 import {
-  ContentEditingLanguageSelect,
-  ContentPrimaryLanguageSelect,
   EditingLocaleFieldsShell,
   FieldTranslationGlobe,
   TranslationsFormRoot,
 } from '../../../../../components/admin/PerFieldContentTranslations';
+import {
+  AdminContentLanguageFields,
+  ADMIN_CONTENT_FIELDS_GRID_CLASS,
+} from '../../../../../components/admin/AdminContentLanguageFields';
 import { initialTranslationsJson, parseTranslationsJson, secondaryLocalesForContent } from '../../../../../lib/content-translations';
 import {
   mergeSecondaryBlogTranslations,
@@ -25,6 +27,17 @@ import { uiLangFromPreferredCookie } from '../../../../../lib/i18n/ui-locale-pat
 import type { BlogPost, BlogPostCreateInput } from '../../../../../types';
 import { useContentSlugAutosuggestDom } from '../../../../../lib/slug/content-slug-auto';
 import { AdminPublicPageLink } from '../../../../../components/admin/AdminPublicPageLink';
+import {
+  ADMIN_BACK_BUTTON_CLASS,
+  ADMIN_FORM_CARD_CLASS,
+  ADMIN_FORM_INPUT_CLASS,
+  ADMIN_FORM_LABEL_CLASS,
+  ADMIN_FORM_SIDEBAR_CARD_CLASS,
+  ADMIN_FORM_TEXTAREA_CLASS,
+  ADMIN_NATIVE_OPTION_CLASS,
+  ADMIN_NATIVE_SELECT_CLASS,
+  ADMIN_PRIMARY_BUTTON_CLASS,
+} from '../../../../../lib/admin/native-select-classes';
 
 /**
  * Blog post creation schema
@@ -137,264 +150,228 @@ export default component$(() => {
         title={translateApp(lang, 'blog.addNew')}
         description={translateApp(lang, 'blog.subtitle')}
       >
-        <div class="flex gap-2">
-          <Link
-            href={R.ADMIN.BLOG}
-            class="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm transition hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 dark:hover:bg-gray-700"
-          >
-            {translateApp(lang, 'common.back')}
-          </Link>
-        </div>
+        <Link href={R.ADMIN.BLOG} class={ADMIN_BACK_BUTTON_CLASS}>
+          {translateApp(lang, 'common.back')}
+        </Link>
       </PageHeader>
 
-      <div class="rounded-lg border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-800 dark:bg-gray-800">
-        <Form action={createAction} class="space-y-6">
-          <input
-            type="hidden"
-            name="editing_locale"
-            value={normalizeEditingLocale(
-              editingLocaleDraft.value,
-              langConfig.value.site_languages,
-              langConfig.value.default_locale,
-              contentLocaleDraft.value.trim() !== '' ? contentLocaleDraft.value.trim() : null,
-            )}
-          />
-          <input type="hidden" name="form_site_default_locale" value={langConfig.value.default_locale} />
-          <input
-            type="hidden"
-            name="effective_primary_locale"
-            value={primaryLocaleForContent(
-              langConfig.value.site_languages,
-              langConfig.value.default_locale,
-              contentLocaleDraft.value.trim() !== '' ? contentLocaleDraft.value.trim() : null,
-            )}
-          />
-          <div class="grid gap-4 md:grid-cols-2">
-            <TranslationsFormRoot
-              kind="blog"
-              locales={translationSecondaries}
-              initialJson={blogTranslationsJson}
-              rtlBadge={translateApp(lang, 'contentTranslations.rtlBadge')}
-              fallbackHintShort={translateApp(lang, 'contentTranslations.fallbackPlaceholderHint')}
-            >
-              <ContentPrimaryLanguageSelect
-                siteLanguages={langConfig.value.site_languages}
-                defaultLocale={langConfig.value.default_locale}
-                value={contentLocaleDraft.value}
-                label={translateApp(lang, 'contentTranslations.contentPrimaryLanguage')}
-                hint={translateApp(lang, 'contentTranslations.contentPrimaryHint')}
-                useSiteDefaultLabel={translateApp(lang, 'contentTranslations.useSiteDefault')}
-                onChange$={$((code: string) => {
-                  contentLocaleDraft.value = code;
-                })}
-              />
+      <Form action={createAction}>
+        <input
+          type="hidden"
+          name="editing_locale"
+          value={normalizeEditingLocale(
+            editingLocaleDraft.value,
+            langConfig.value.site_languages,
+            langConfig.value.default_locale,
+            contentLocaleDraft.value.trim() !== '' ? contentLocaleDraft.value.trim() : null,
+          )}
+        />
+        <input type="hidden" name="form_site_default_locale" value={langConfig.value.default_locale} />
+        <input
+          type="hidden"
+          name="effective_primary_locale"
+          value={primaryLocaleForContent(
+            langConfig.value.site_languages,
+            langConfig.value.default_locale,
+            contentLocaleDraft.value.trim() !== '' ? contentLocaleDraft.value.trim() : null,
+          )}
+        />
 
-              <ContentEditingLanguageSelect
-                siteLanguages={langConfig.value.site_languages}
-                value={editingLocaleDraft.value}
-                effectivePrimaryLocale={primaryLocaleForContent(
-                  langConfig.value.site_languages,
-                  langConfig.value.default_locale,
-                  contentLocaleDraft.value.trim() !== '' ? contentLocaleDraft.value.trim() : null,
-                )}
-                label={translateApp(lang, 'contentTranslations.sectionTitle')}
-                hintPrimary={translateApp(lang, 'contentTranslations.defaultHint')}
-                hintSecondary={translateApp(lang, 'contentTranslations.fallbackPlaceholderHint')}
-                secondarySavePrefix={translateApp(lang, 'contentTranslations.addTranslations')}
-                onChange$={$((code: string) => {
-                  editingLocaleDraft.value = code;
-                })}
-              />
+        <div class="grid gap-6 lg:grid-cols-[minmax(0,1fr)_17.5rem] lg:items-start">
+          <div class="space-y-6">
+            <div class={ADMIN_FORM_CARD_CLASS}>
+              <div class={ADMIN_CONTENT_FIELDS_GRID_CLASS}>
+                <TranslationsFormRoot
+                  kind="blog"
+                  locales={translationSecondaries}
+                  initialJson={blogTranslationsJson}
+                  rtlBadge={translateApp(lang, 'contentTranslations.rtlBadge')}
+                  fallbackHintShort={translateApp(lang, 'contentTranslations.fallbackPlaceholderHint')}
+                >
+                  <AdminContentLanguageFields
+                    lang={lang}
+                    siteLanguages={langConfig.value.site_languages}
+                    defaultLocale={langConfig.value.default_locale}
+                    contentLocale={contentLocaleDraft}
+                    editingLocale={editingLocaleDraft}
+                  />
 
-              <EditingLocaleFieldsShell
-                variant="gridContents"
-                siteLanguages={langConfig.value.site_languages}
-                editingLocale={editingLocaleDraft}
-              >
-              {!translationSecondaries.length ? (
-                <p class="md:col-span-2 text-sm text-gray-600 dark:text-gray-400">
-                  {translateApp(lang, 'contentTranslations.noSecondaryLanguages')}
-                </p>
-              ) : null}
-
-              <FieldTranslationGlobe
-                fieldKey="title"
-                gridSpan="one"
-                globeAriaLabel={translateApp(lang, 'contentTranslations.globeTitle')}
-                fallbackText=""
-              >
-                <div>
-                  <label
-                    for="title"
-                    class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-200"
+                  <EditingLocaleFieldsShell
+                    variant="gridContents"
+                    siteLanguages={langConfig.value.site_languages}
+                    editingLocale={editingLocaleDraft}
                   >
-                    {translateApp(lang, 'blog.name')} *
+                    {!translationSecondaries.length ? (
+                      <p class="md:col-span-2 text-sm text-gray-600 dark:text-gray-400">
+                        {translateApp(lang, 'contentTranslations.noSecondaryLanguages')}
+                      </p>
+                    ) : null}
+
+                    <FieldTranslationGlobe
+                      fieldKey="title"
+                      gridSpan="one"
+                      globeAriaLabel={translateApp(lang, 'contentTranslations.globeTitle')}
+                      fallbackText=""
+                    >
+                      <div>
+                        <label for="title" class={ADMIN_FORM_LABEL_CLASS}>
+                          {translateApp(lang, 'blog.name')} *
+                        </label>
+                        <input
+                          id="title"
+                          name="title"
+                          type="text"
+                          required
+                          onBlur$={contentSlugDom.onTitleBlur$}
+                          class={ADMIN_FORM_INPUT_CLASS}
+                          placeholder={translateApp(lang, 'blog.name')}
+                        />
+                        {createAction.value?.failed && createAction.value.fieldErrors?.title && (
+                          <p class="mt-1 text-sm text-red-600 dark:text-red-400">
+                            {createAction.value.fieldErrors.title}
+                          </p>
+                        )}
+                      </div>
+                    </FieldTranslationGlobe>
+
+                    <div>
+                      <label for="slug" class={ADMIN_FORM_LABEL_CLASS}>
+                        {translateApp(lang, 'blog.slug')}
+                      </label>
+                      <input
+                        id="slug"
+                        name="slug"
+                        type="text"
+                        onInput$={$((ev: InputEvent) => {
+                          slugLiveForPublicLink.value = String((ev.target as HTMLInputElement).value ?? '');
+                          contentSlugDom.onSlugInput$();
+                        })}
+                        onBlur$={$(async (ev: FocusEvent) => {
+                          await contentSlugDom.onSlugBlur$(ev);
+                          slugLiveForPublicLink.value = String((ev.target as HTMLInputElement).value ?? '');
+                        })}
+                        class={`${ADMIN_FORM_INPUT_CLASS} font-mono text-xs`}
+                      />
+                      <AdminPublicPageLink lang={lang} kind="blog" slug={slugLiveForPublicLink.value} />
+                    </div>
+
+                    <FieldTranslationGlobe
+                      fieldKey="excerpt"
+                      gridSpan="full"
+                      globeAriaLabel={translateApp(lang, 'contentTranslations.globeExcerpt')}
+                      fallbackText=""
+                    >
+                      <div>
+                        <label for="excerpt" class={ADMIN_FORM_LABEL_CLASS}>
+                          {translateApp(lang, 'blog.excerpt')}
+                        </label>
+                        <textarea
+                          id="excerpt"
+                          name="excerpt"
+                          rows={3}
+                          class={ADMIN_FORM_TEXTAREA_CLASS}
+                        />
+                      </div>
+                    </FieldTranslationGlobe>
+
+                    <FieldTranslationGlobe
+                      fieldKey="content"
+                      gridSpan="full"
+                      globeAriaLabel={translateApp(lang, 'contentTranslations.globeContent')}
+                      fallbackText=""
+                      secondaryTextareaRows={12}
+                    >
+                      <div>
+                        <label for="content" class={ADMIN_FORM_LABEL_CLASS}>
+                          {translateApp(lang, 'blog.content')}
+                        </label>
+                        <textarea
+                          id="content"
+                          name="content"
+                          rows={14}
+                          class={ADMIN_FORM_TEXTAREA_CLASS}
+                        />
+                      </div>
+                    </FieldTranslationGlobe>
+                  </EditingLocaleFieldsShell>
+                </TranslationsFormRoot>
+              </div>
+            </div>
+
+            {createAction.value?.failed && (createAction.value as any).error && (
+              <div class="rounded-md bg-red-50 p-3 text-sm text-red-800 dark:bg-red-900/20 dark:text-red-300">
+                {(createAction.value as any).error}
+              </div>
+            )}
+          </div>
+
+          <aside class="space-y-4 lg:sticky lg:top-24">
+            <div class={ADMIN_FORM_SIDEBAR_CARD_CLASS}>
+              <h3 class="mb-3 text-sm font-semibold text-gray-900 dark:text-gray-100">
+                {translateApp(lang, 'blog.publish')}
+              </h3>
+              <div class="space-y-3">
+                <div>
+                  <label for="status" class={ADMIN_FORM_LABEL_CLASS}>
+                    {translateApp(lang, 'blog.status')}
+                  </label>
+                  <select id="status" name="status" class={ADMIN_NATIVE_SELECT_CLASS}>
+                    <option class={ADMIN_NATIVE_OPTION_CLASS} value="draft">
+                      {translateApp(lang, 'blog.statusDraft')}
+                    </option>
+                    <option class={ADMIN_NATIVE_OPTION_CLASS} value="published">
+                      {translateApp(lang, 'blog.statusPublished')}
+                    </option>
+                    <option class={ADMIN_NATIVE_OPTION_CLASS} value="archived">
+                      {translateApp(lang, 'blog.statusArchived')}
+                    </option>
+                  </select>
+                </div>
+
+                <div class="flex items-center gap-2">
+                  <input
+                    id="featured"
+                    name="featured"
+                    type="checkbox"
+                    value="1"
+                    class="h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+                  />
+                  <label for="featured" class="text-sm font-medium text-gray-700 dark:text-gray-200">
+                    {translateApp(lang, 'blog.featured')}
+                  </label>
+                </div>
+
+                <div>
+                  <label for="published_at" class={ADMIN_FORM_LABEL_CLASS}>
+                    {translateApp(lang, 'blog.publishedAt')}
                   </label>
                   <input
-                    id="title"
-                    name="title"
-                    type="text"
-                    required
-                    onBlur$={contentSlugDom.onTitleBlur$}
-                    class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-primary-500 focus:outline-none focus:ring focus:ring-primary-200 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:focus:ring-primary-700/40"
+                    id="published_at"
+                    name="published_at"
+                    type="datetime-local"
+                    class={ADMIN_FORM_INPUT_CLASS}
                   />
-                  {createAction.value?.failed && createAction.value.fieldErrors?.title && (
-                    <p class="mt-1 text-sm text-red-600 dark:text-red-400">
-                      {createAction.value.fieldErrors.title}
-                    </p>
-                  )}
                 </div>
-              </FieldTranslationGlobe>
 
-              <div>
-                <label
-                  for="slug"
-                  class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-200"
-                >
-                  {translateApp(lang, 'blog.slug')}
-                </label>
-                <input
-                  id="slug"
-                  name="slug"
-                  type="text"
-                  onInput$={$((ev: InputEvent) => {
-                    slugLiveForPublicLink.value = String((ev.target as HTMLInputElement).value ?? '');
-                    contentSlugDom.onSlugInput$();
-                  })}
-                  onBlur$={$(async (ev: FocusEvent) => {
-                    await contentSlugDom.onSlugBlur$(ev);
-                    slugLiveForPublicLink.value = String((ev.target as HTMLInputElement).value ?? '');
-                  })}
-                  class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-primary-500 focus:outline-none focus:ring focus:ring-primary-200 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:focus:ring-primary-700/40"
-                />
-                <AdminPublicPageLink lang={lang} kind="blog" slug={slugLiveForPublicLink.value} />
-              </div>
-
-              <div>
-                <label
-                  for="status"
-                  class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-200"
-                >
-                  {translateApp(lang, 'blog.status')}
-                </label>
-                <select
-                  id="status"
-                  name="status"
-                  class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-primary-500 focus:outline-none focus:ring focus:ring-primary-200 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:focus:ring-primary-700/40"
-                >
-                  <option value="draft">{translateApp(lang, 'blog.statusDraft')}</option>
-                  <option value="published">{translateApp(lang, 'blog.statusPublished')}</option>
-                  <option value="archived">{translateApp(lang, 'blog.statusArchived')}</option>
-                </select>
-              </div>
-
-              <div class="flex items-center gap-2">
-                <input
-                  id="featured"
-                  name="featured"
-                  type="checkbox"
-                  value="1"
-                  class="h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
-                />
-                <label
-                  for="featured"
-                  class="text-sm font-medium text-gray-700 dark:text-gray-200"
-                >
-                  {translateApp(lang, 'blog.featured')}
-                </label>
-              </div>
-
-              <FieldTranslationGlobe
-                fieldKey="excerpt"
-                gridSpan="full"
-                globeAriaLabel={translateApp(lang, 'contentTranslations.globeExcerpt')}
-                fallbackText=""
-              >
-                <div>
-                  <label
-                    for="excerpt"
-                    class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-200"
+                <div class="flex flex-col gap-2 border-t border-gray-200 pt-3 dark:border-gray-700">
+                  <button
+                    type="submit"
+                    disabled={createAction.isRunning}
+                    class={ADMIN_PRIMARY_BUTTON_CLASS}
                   >
-                    {translateApp(lang, 'blog.excerpt')}
-                  </label>
-                  <textarea
-                    id="excerpt"
-                    name="excerpt"
-                    rows={2}
-                    class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-primary-500 focus:outline-none focus:ring focus:ring-primary-200 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:focus:ring-primary-700/40"
-                  />
+                    {createAction.isRunning
+                      ? translateApp(lang, 'common.loading')
+                      : translateApp(lang, 'common.save')}
+                  </button>
+                  <Link href={R.ADMIN.BLOG} class={`${ADMIN_BACK_BUTTON_CLASS} text-center`}>
+                    {translateApp(lang, 'common.cancel')}
+                  </Link>
                 </div>
-              </FieldTranslationGlobe>
-
-              <FieldTranslationGlobe
-                fieldKey="content"
-                gridSpan="full"
-                globeAriaLabel={translateApp(lang, 'contentTranslations.globeContent')}
-                fallbackText=""
-                secondaryTextareaRows={10}
-              >
-                <div>
-                  <label
-                    for="content"
-                    class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-200"
-                  >
-                    {translateApp(lang, 'blog.content')}
-                  </label>
-                  <textarea
-                    id="content"
-                    name="content"
-                    rows={10}
-                    class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-primary-500 focus:outline-none focus:ring focus:ring-primary-200 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:focus:ring-primary-700/40"
-                  />
-                </div>
-              </FieldTranslationGlobe>
-              </EditingLocaleFieldsShell>
-            </TranslationsFormRoot>
-
-            <EditingLocaleFieldsShell
-              siteLanguages={langConfig.value.site_languages}
-              editingLocale={editingLocaleDraft}
-            >
-            <div>
-              <label
-                for="published_at"
-                class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-200"
-              >
-                {translateApp(lang, 'blog.publishedAt')}
-              </label>
-              <input
-                id="published_at"
-                name="published_at"
-                type="datetime-local"
-                class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-primary-500 focus:outline-none focus:ring focus:ring-primary-200 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:focus:ring-primary-700/40"
-              />
+              </div>
             </div>
-            </EditingLocaleFieldsShell>
-          </div>
-
-          {createAction.value?.failed && (createAction.value as any).error && (
-            <div class="rounded-md bg-red-50 dark:bg-red-900/20 p-3 text-sm text-red-800 dark:text-red-300">
-              {(createAction.value as any).error}
-            </div>
-          )}
-
-          <div class="flex justify-end gap-2">
-            <Link
-              href={R.ADMIN.BLOG}
-              class="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm transition hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 dark:hover:bg-gray-700"
-            >
-              {translateApp(lang, 'common.cancel')}
-            </Link>
-            <button
-              type="submit"
-              disabled={createAction.isRunning}
-              class="rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-primary-700 disabled:opacity-60"
-            >
-              {createAction.isRunning ? translateApp(lang, 'common.loading') : translateApp(lang, 'common.save')}
-            </button>
-          </div>
-        </Form>
-      </div>
+          </aside>
+        </div>
+      </Form>
     </>
   );
 });

@@ -15,12 +15,13 @@ import {
 import { useLocaleAwareTaxonomyOptions } from '../../../../../lib/hooks/useLocaleAwareTaxonomyOptions';
 import { adminProjectEditHref, useAppRoutes } from '../../../../../lib/constants/routes';
 import {
-  ContentEditingLanguageSelect,
-  ContentPrimaryLanguageSelect,
   EditingLocaleFieldsShell,
   FieldTranslationGlobe,
   TranslationsFormRoot,
 } from '../../../../../components/admin/PerFieldContentTranslations';
+import {
+  AdminContentLanguageFields,
+} from '../../../../../components/admin/AdminContentLanguageFields';
 import { LazyRichTextEditorField } from '../../../../../components/admin/LazyRichTextEditorField';
 import { initialTranslationsJson, parseTranslationsJson, secondaryLocalesForContent } from '../../../../../lib/content-translations';
 import {
@@ -378,33 +379,12 @@ export default component$(() => {
             fallbackHintShort={translateApp(lang, 'contentTranslations.fallbackPlaceholderHint')}
           >
             <div class="grid gap-4 md:grid-cols-2">
-              <ContentPrimaryLanguageSelect
+              <AdminContentLanguageFields
+                lang={lang}
                 siteLanguages={langConfig.value.site_languages}
                 defaultLocale={langConfig.value.default_locale}
-                value={contentLocaleDraft.value}
-                label={translateApp(lang, 'contentTranslations.contentPrimaryLanguage')}
-                hint={translateApp(lang, 'contentTranslations.contentPrimaryHint')}
-                useSiteDefaultLabel={translateApp(lang, 'contentTranslations.useSiteDefault')}
-                onChange$={$((code: string) => {
-                  contentLocaleDraft.value = code;
-                })}
-              />
-
-              <ContentEditingLanguageSelect
-                siteLanguages={langConfig.value.site_languages}
-                value={editingLocaleDraft.value}
-                effectivePrimaryLocale={primaryLocaleForContent(
-                  langConfig.value.site_languages,
-                  langConfig.value.default_locale,
-                  contentLocaleDraft.value.trim() !== '' ? contentLocaleDraft.value.trim() : null,
-                )}
-                label={translateApp(lang, 'contentTranslations.sectionTitle')}
-                hintPrimary={translateApp(lang, 'contentTranslations.defaultHint')}
-                hintSecondary={translateApp(lang, 'contentTranslations.fallbackPlaceholderHint')}
-                secondarySavePrefix={translateApp(lang, 'contentTranslations.addTranslations')}
-                onChange$={$((code: string) => {
-                  editingLocaleDraft.value = code;
-                })}
+                contentLocale={contentLocaleDraft}
+                editingLocale={editingLocaleDraft}
               />
 
               <EditingLocaleFieldsShell

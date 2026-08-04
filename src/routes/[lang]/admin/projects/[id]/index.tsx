@@ -17,10 +17,12 @@ import {
 import { useLocaleAwareTaxonomyOptions } from '../../../../../lib/hooks/useLocaleAwareTaxonomyOptions';
 import { useAppRoutes } from '../../../../../lib/constants/routes';
 import {
-  ContentEditingLanguageSelect,
   EditingLocaleFieldsShell,
   TranslationsFormRoot,
 } from '../../../../../components/admin/PerFieldContentTranslations';
+import {
+  AdminContentLanguageFields,
+} from '../../../../../components/admin/AdminContentLanguageFields';
 import { LazyRichTextEditorField } from '../../../../../components/admin/LazyRichTextEditorField';
 import { initialTranslationsJson, parseTranslationsJson, secondaryLocalesForContent } from '../../../../../lib/content-translations';
 import {
@@ -646,21 +648,13 @@ export default component$(() => {
                   rtlBadge={translations.ctRtl}
                   fallbackHintShort={translations.ctFallbackHint}
                 >
-                  <ContentEditingLanguageSelect
+                  <AdminContentLanguageFields
+                    lang={lang}
                     siteLanguages={langConfig.value.site_languages}
-                    value={editingLocaleDraft.value}
-                    effectivePrimaryLocale={primaryLocaleForContent(
-                      langConfig.value.site_languages,
-                      langConfig.value.default_locale,
-                      contentLocaleDraft.value.trim() !== '' ? contentLocaleDraft.value.trim() : null,
-                    )}
-                    label={translations.ctSection}
-                    hintPrimary={translations.ctHint}
-                    hintSecondary={translations.ctFallbackHint}
-                    secondarySavePrefix={translations.ctAdd}
-                    onChange$={$((code: string) => {
-                      editingLocaleDraft.value = code;
-                    })}
+                    defaultLocale={langConfig.value.default_locale}
+                    contentLocale={contentLocaleDraft}
+                    editingLocale={editingLocaleDraft}
+                    showPrimary={false}
                   />
 
                   <EditingLocaleFieldsShell
