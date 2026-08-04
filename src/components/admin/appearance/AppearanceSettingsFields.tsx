@@ -256,6 +256,79 @@ const AppearanceSettingFieldControl = component$<FieldControlProps>((props) => {
     );
   }
 
+  if (field.type === 'color') {
+    const hex = typeof raw === 'string' && /^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/.test(raw.trim())
+      ? raw.trim().toLowerCase()
+      : '';
+    const pickerValue = hex.length === 4
+      ? `#${hex[1]}${hex[1]}${hex[2]}${hex[2]}${hex[3]}${hex[3]}`
+      : hex || '#0389a1';
+    return (
+      <div class="md:col-span-2">
+        <label class="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-300 text-start">
+          {label}
+        </label>
+        <div class="flex flex-wrap items-center gap-2">
+          <input
+            type="color"
+            class="h-9 w-12 cursor-pointer rounded border border-gray-300 bg-white p-0.5 dark:border-gray-600 dark:bg-gray-900"
+            value={pickerValue}
+            onInput$={async (e) => {
+              await props.onSettingsChange$(
+                writeAppearanceSettingValue(
+                  props.values,
+                  field.key,
+                  (e.target as HTMLInputElement).value,
+                  props.activeLocale,
+                  props.defaultLocale,
+                  false,
+                ),
+              );
+            }}
+          />
+          <input
+            type="text"
+            placeholder="#0389a1"
+            class="min-w-[8rem] flex-1 rounded border px-2 py-1.5 text-sm dark:bg-gray-900"
+            value={hex}
+            onInput$={async (e) => {
+              await props.onSettingsChange$(
+                writeAppearanceSettingValue(
+                  props.values,
+                  field.key,
+                  (e.target as HTMLInputElement).value,
+                  props.activeLocale,
+                  props.defaultLocale,
+                  false,
+                ),
+              );
+            }}
+          />
+          {hex ? (
+            <button
+              type="button"
+              class="rounded border border-gray-300 px-2.5 py-1.5 text-xs dark:border-gray-600"
+              onClick$={async () => {
+                await props.onSettingsChange$(
+                  writeAppearanceSettingValue(
+                    props.values,
+                    field.key,
+                    '',
+                    props.activeLocale,
+                    props.defaultLocale,
+                    false,
+                  ),
+                );
+              }}
+            >
+              {translateApp(props.lang, 'appearance.clear')}
+            </button>
+          ) : null}
+        </div>
+      </div>
+    );
+  }
+
   if (field.type === 'json') {
     const text = typeof raw === 'string' ? raw : JSON.stringify(raw ?? [], null, 2);
     return (

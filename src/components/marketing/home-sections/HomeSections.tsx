@@ -11,6 +11,8 @@ import { resolveServiceIconUrl } from '~/lib/marketing/service-icons';
 import { resolveLaravelMediaUrl } from '~/lib/marketing/resolve-laravel-media-url';
 import { marketingRoutes } from '~/lib/marketing/constants';
 import { normalizeHeroFloatingIcons } from '~/lib/admin/hero-floating-icons';
+import { resolveHeroParticlesConfig } from '~/lib/marketing/hero-particles';
+import { LazyParticlesBackground } from '~/components/marketing/LazyParticlesBackground';
 import type { CaseStudy, Testimonial, BlogPost, Service } from '~/lib/marketing/types';
 import type { HeroFloatingIcon } from '~/lib/marketing/appearance-types';
 import './hero-floating-icons.css';
@@ -73,6 +75,11 @@ export const HeroHomeSection = component$<HomeSectionSharedProps>(({ settings, u
         (icon) => icon.enabled !== false && (icon.url || icon.media_id),
       )
     : [];
+  const particlesEnabled =
+    settings?.particles_enabled === undefined
+      ? true
+      : settingBool(settings, 'particles_enabled');
+  const particles = resolveHeroParticlesConfig(settings);
 
   const sectionClass = [
     // Visible so floating icons can hang past the image frame (blur orbs may spill slightly).
@@ -89,6 +96,16 @@ export const HeroHomeSection = component$<HomeSectionSharedProps>(({ settings, u
       style={fullViewport ? { paddingTop: `${navTopSpace}px` } : undefined}
       data-hero-full-viewport={fullViewport ? 'true' : undefined}
     >
+      {particlesEnabled ? (
+        <LazyParticlesBackground
+          layout="contained"
+          density={particles.density}
+          speed={particles.speed}
+          opacity={particles.opacity}
+          size={particles.size}
+          color={particles.color}
+        />
+      ) : null}
       {watermarkEnabled && watermarkText ? (
         <div
           class="pointer-events-none absolute inset-0 z-0 flex select-none items-center justify-center overflow-hidden"

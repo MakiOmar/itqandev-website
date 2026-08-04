@@ -1,4 +1,12 @@
 import { component$, useSignal, useVisibleTask$ } from '@builder.io/qwik';
+import {
+  densityToDivisor,
+  hexToRgb,
+  opacityToAlphaScale,
+  sizeToRadiusScale,
+  speedToVelocity,
+  type HeroParticlesConfig,
+} from '~/lib/marketing/hero-particles';
 
 type Particle = {
   x: number;
@@ -9,15 +17,27 @@ type Particle = {
   alpha: number;
 };
 
+export type ParticlesBackgroundProps = Partial<HeroParticlesConfig> & {
+  /** `contained` fills the hero section; `fixed` covers the viewport (legacy). */
+  layout?: 'contained' | 'fixed';
+};
+
 /**
- * Fixed viewport canvas: subtle nodes + links, theme-aware (html.dark).
- * Respects prefers-reduced-motion (static frame only).
+ * Canvas particle network. Contained layout is absolute within the hero;
+ * theme-aware colors unless `color` hex is set. Respects prefers-reduced-motion.
  */
-export const ParticlesBackground = component$(() => {
+export const ParticlesBackground = component$<ParticlesBackgroundProps>((props) => {
   const canvasRef = useSignal<HTMLCanvasElement>();
 
   // eslint-disable-next-line qwik/no-use-visible-task -- canvas animation must run in the browser
-  useVisibleTask$(({ cleanup }) => {
+  useVisibleTask$(({ cleanup, track }) => {
+    const density = track(() => props.density ?? 50);
+    const speed = track(() => props.speed ?? 40);
+    const opacity = track(() => props.opacity ?? 55);
+    const size = track(() => props.size ?? 40);
+    const color = track(() => props.color ?? '');
+    const layout = track(() => props.layout ?? 'contained');
+
     const canvas = canvasRef.value;
     if (!canvas || typeof window === 'undefined') return;
 
@@ -27,33 +47,49 @@ export const ParticlesBackground = component$(() => {
     const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     let rafId = 0;
     let particles: Particle[] = [];
+    let viewW = 0;
+    let viewH = 0;
 
     const isDark = () => document.documentElement.classList.contains('dark');
+    const velocity = speedToVelocity(speed);
+    const divisor = densityToDivisor(density);
+    const radiusScale = sizeToRadiusScale(size);
+    const alphaScale = opacityToAlphaScale(opacity);
+    const customRgb = hexToRgb(color);
 
     const initParticles = (w: number, h: number) => {
-      const density = 22000;
-      const count = Math.max(28, Math.min(96, Math.floor((w * h) / density)));
+      const count = Math.max(16, Math.min(120, Math.floor((w * h) / divisor)));
       particles = [];
       for (let i = 0; i < count; i++) {
         particles.push({
           x: Math.random() * w,
           y: Math.random() * h,
-          vx: (Math.random() - 0.5) * 0.28,
-          vy: (Math.random() - 0.5) * 0.28,
-          r: Math.random() * 1.4 + 0.5,
-          // Base opacity; light theme gets a boost when drawn (pale BG washes out low alpha)
-          alpha: Math.random() * 0.35 + 0.2,
+          vx: (Math.random() - 0.5) * velocity * 2,
+          vy: (Math.random() - 0.5) * velocity * 2,
+          r: (Math.random() * 1.4 + 0.5) * radiusScale,
+          alpha: (Math.random() * 0.35 + 0.2) * alphaScale,
         });
       }
     };
 
-    let viewW = 0;
-    let viewH = 0;
+    const measure = (): { w: number; h: number } => {
+      if (layout === 'fixed') {
+        return { w: window.innerWidth, h: window.innerHeight };
+      }
+      const parent = canvas.parentElement;
+      if (!parent) {
+        return { w: window.innerWidth, h: Math.max(320, window.innerHeight * 0.6) };
+      }
+      const rect = parent.getBoundingClientRect();
+      return {
+        w: Math.max(1, Math.floor(rect.width)),
+        h: Math.max(1, Math.floor(rect.height)),
+      };
+    };
 
     const resize = () => {
       const dpr = Math.min(window.devicePixelRatio || 1, 2);
-      const w = window.innerWidth;
-      const h = window.innerHeight;
+      const { w, h } = measure();
       viewW = w;
       viewH = h;
       canvas.width = Math.floor(w * dpr);
@@ -66,9 +102,7 @@ export const ParticlesBackground = component$(() => {
 
     let resizeRaf = 0;
     const scheduleResize = () => {
-      if (resizeRaf) {
-        return;
-      }
+      if (resizeRaf) return;
       resizeRaf = requestAnimationFrame(() => {
         resizeRaf = 0;
         resize();
@@ -87,9 +121,16 @@ export const ParticlesBackground = component$(() => {
         return;
       }
       const dark = isDark();
-      // Light: darker slate + stronger alpha so lines read on white/blue-50 gradients
-      const lineRgb = dark ? '148, 163, 184' : '71, 85, 105';
-      const nodeRgb = dark ? '56, 189, 248' : '3, 105, 161';
+      const lineRgb = customRgb
+        ? `${customRgb.r}, ${customRgb.g}, ${customRgb.b}`
+        : dark
+          ? '148, 163, 184'
+          : '71, 85, 105';
+      const nodeRgb = customRgb
+        ? `${customRgb.r}, ${customRgb.g}, ${customRgb.b}`
+        : dark
+          ? '56, 189, 248'
+          : '3, 105, 161';
 
       ctx.clearRect(0, 0, w, h);
 
@@ -112,7 +153,7 @@ export const ParticlesBackground = component$(() => {
           const dy = p.y - q.y;
           const d = Math.hypot(dx, dy);
           if (d < linkDistance) {
-            const a = (1 - d / linkDistance) * (dark ? 0.14 : 0.26);
+            const a = (1 - d / linkDistance) * (dark ? 0.14 : 0.26) * alphaScale;
             ctx.strokeStyle = `rgba(${lineRgb}, ${a})`;
             ctx.lineWidth = dark ? 0.55 : 0.65;
             ctx.beginPath();
@@ -138,22 +179,27 @@ export const ParticlesBackground = component$(() => {
 
     resize();
     window.addEventListener('resize', scheduleResize);
+
+    let ro: ResizeObserver | undefined;
+    if (layout === 'contained' && typeof ResizeObserver !== 'undefined' && canvas.parentElement) {
+      ro = new ResizeObserver(() => scheduleResize());
+      ro.observe(canvas.parentElement);
+    }
+
     tick();
 
     cleanup(() => {
       cancelAnimationFrame(rafId);
-      if (resizeRaf) {
-        cancelAnimationFrame(resizeRaf);
-      }
+      if (resizeRaf) cancelAnimationFrame(resizeRaf);
       window.removeEventListener('resize', scheduleResize);
+      ro?.disconnect();
     });
   });
 
-  return (
-    <canvas
-      ref={canvasRef}
-      class="pointer-events-none fixed inset-0 z-0 h-full w-full"
-      aria-hidden="true"
-    />
-  );
+  const layoutClass =
+    props.layout === 'fixed'
+      ? 'pointer-events-none fixed inset-0 z-0 h-full w-full'
+      : 'pointer-events-none absolute inset-0 z-0 h-full w-full';
+
+  return <canvas ref={canvasRef} class={layoutClass} aria-hidden="true" />;
 });

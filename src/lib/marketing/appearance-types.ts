@@ -71,7 +71,8 @@ export type AppearanceSettingFieldType =
   | 'boolean'
   | 'media'
   | 'json'
-  | 'floating_icons';
+  | 'floating_icons'
+  | 'color';
 
 export type AppearanceSettingField = {
   key: string;

@@ -640,6 +640,12 @@
       "nav_top_space": "Top space under nav (px)",
       "watermark_enabled": "Faded background text",
       "watermark_text": "Watermark text",
+      "particles_enabled": "Particles behind hero",
+      "particles_density": "Particles density",
+      "particles_speed": "Particles speed",
+      "particles_opacity": "Particles opacity",
+      "particles_size": "Particles size",
+      "particles_color": "Particles color (empty = theme)",
       "floating_icons_enabled": "Floating icons around image",
       "floating_icons": "Floating icons"
     },

@@ -640,6 +640,12 @@
       "nav_top_space": "مسافة علوية تحت الشريط (بكسل)",
       "watermark_enabled": "نص باهت في الخلفية",
       "watermark_text": "نص العلامة المائية",
+      "particles_enabled": "جسيمات خلف قسم البطل",
+      "particles_density": "كثافة الجسيمات",
+      "particles_speed": "سرعة الجسيمات",
+      "particles_opacity": "شفافية الجسيمات",
+      "particles_size": "حجم الجسيمات",
+      "particles_color": "لون الجسيمات (فارغ = حسب المظهر)",
       "floating_icons_enabled": "أيقونات عائمة حول الصورة",
       "floating_icons": "الأيقونات العائمة"
     },
