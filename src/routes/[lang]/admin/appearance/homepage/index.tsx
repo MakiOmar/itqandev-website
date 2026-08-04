@@ -1,12 +1,12 @@
 import { component$, useSignal, useVisibleTask$, $ } from '@builder.io/qwik';
 import type { DocumentHead } from '@builder.io/qwik-city';
 import { useTranslate, translateApp } from '~/lib/i18n/useTranslate';
+import { appearanceSectionLabel } from '~/lib/i18n/appearance-labels';
 import { useSwal } from '~/lib/hooks/useSwal';
 import { MediaSelector } from '~/components/common/MediaSelector';
 import { AdminSwitch } from '~/components/admin/appearance/AdminSwitch';
 import { AppearanceSettingsFields } from '~/components/admin/appearance/AppearanceSettingsFields';
 import { usePublicSiteMeta } from '../../layout';
-import { appearanceEditingLanguages } from '~/lib/i18n/public-site-languages';
 import { getLocalizedRoutes } from '~/lib/constants/routes';
 import {
   canInsertType,
@@ -28,8 +28,6 @@ export default component$(() => {
   const { lang } = useTranslate();
   const R = getLocalizedRoutes(lang);
   const langConfig = usePublicSiteMeta();
-  const editingLanguages = appearanceEditingLanguages(langConfig.value.site_languages);
-  const usingUiLocaleFallback = (langConfig.value.site_languages?.length ?? 0) < 2;
   const { success: showSuccess, error: showError } = useSwal();
   const loading = useSignal(true);
   const saving = useSignal(false);
@@ -58,7 +56,7 @@ export default component$(() => {
       }
     } catch (e) {
       showError(translateApp(lang, 'common.error'), {
-        text: formatAppearanceError(e, 'Failed to load homepage builder'),
+        text: formatAppearanceError(e, translateApp(lang, 'appearance.homepageLoadFailed')),
       });
     } finally {
       loading.value = false;
@@ -73,9 +71,10 @@ export default component$(() => {
     const type = insertType.value;
     const entry = registry.value.find((r) => r.type === type);
     const counts = countByType(sections.value);
+    const label = appearanceSectionLabel(lang, type, entry?.label);
     if (!canInsertType(type, counts, entry?.max_instances ?? null)) {
       showError(translateApp(lang, 'common.error'), {
-        text: `Maximum instances reached for ${entry?.label ?? type}`,
+        text: translateApp(lang, 'appearance.maxInstances', { label }),
       });
       return;
     }
@@ -99,11 +98,11 @@ export default component$(() => {
         sections.value = result.data.sections;
       }
       showSuccess(translateApp(lang, 'common.success'), {
-        text: result.message || 'Homepage layout saved.',
+        text: result.message || translateApp(lang, 'appearance.homepageSaved'),
       });
     } else {
       showError(translateApp(lang, 'common.error'), {
-        text: result.error || 'Save failed',
+        text: result.error || translateApp(lang, 'appearance.saveFailed'),
       });
     }
   });
@@ -111,10 +110,12 @@ export default component$(() => {
   return (
     <div class="space-y-6">
       <div class="flex flex-wrap items-center justify-between gap-4">
-        <div>
-          <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Homepage builder</h1>
+        <div class="min-w-0 flex-1 text-start">
+          <h1 class="text-2xl font-bold text-gray-900 dark:text-white">
+            {translateApp(lang, 'appearance.homepageTitle')}
+          </h1>
           <p class="mt-1 text-sm text-gray-600 dark:text-gray-400">
-            Drag to reorder. Expand a section to edit its settings.
+            {translateApp(lang, 'appearance.homepageSubtitle')}
           </p>
         </div>
         <button
@@ -134,7 +135,7 @@ export default component$(() => {
           <div class="flex flex-wrap items-end gap-3 rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800">
             <div>
               <label class="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-300">
-                Section type
+                {translateApp(lang, 'appearance.sectionType')}
               </label>
               <select
                 class="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-900"
@@ -146,11 +147,17 @@ export default component$(() => {
                 {registry.value.map((r) => {
                   const counts = countByType(sections.value);
                   const disabled = !canInsertType(r.type, counts, r.max_instances);
+                  const label = appearanceSectionLabel(lang, r.type, r.label);
+                  let optionText = label;
+                  if (r.max_instances != null) {
+                    optionText += ` ${translateApp(lang, 'appearance.maxSuffix', { n: r.max_instances })}`;
+                  }
+                  if (disabled) {
+                    optionText += ` ${translateApp(lang, 'appearance.fullSuffix')}`;
+                  }
                   return (
                     <option key={r.type} value={r.type} disabled={disabled}>
-                      {r.label}
-                      {r.max_instances != null ? ` (max ${r.max_instances})` : ''}
-                      {disabled ? ' — full' : ''}
+                      {optionText}
                     </option>
                   );
                 })}
@@ -161,14 +168,14 @@ export default component$(() => {
               onClick$={insertSection}
               class="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium hover:bg-gray-50 dark:border-gray-600 dark:hover:bg-gray-700"
             >
-              Insert section
+              {translateApp(lang, 'appearance.insertSection')}
             </button>
           </div>
 
           <ul class="space-y-3" role="list">
             {sections.value.map((section, index) => {
               const entry = registry.value.find((r) => r.type === section.type);
-              const label = entry?.label ?? section.type;
+              const label = appearanceSectionLabel(lang, section.type, entry?.label);
               const open = expandedId.value === section.id;
               const isDropTarget = dropOverIndex.value === index && dragFromIndex.value !== index;
               return (
@@ -203,8 +210,8 @@ export default component$(() => {
                       type="button"
                       class="cursor-grab touch-none rounded p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-700 active:cursor-grabbing dark:hover:bg-gray-700 dark:hover:text-gray-200"
                       draggable={true}
-                      title="Drag to reorder"
-                      aria-label={`Drag to reorder ${label}`}
+                      title={translateApp(lang, 'appearance.dragToReorder')}
+                      aria-label={translateApp(lang, 'appearance.dragToReorderNamed', { label })}
                       onDragStart$={(e) => {
                         dragFromIndex.value = index;
                         const dt = e.dataTransfer;
@@ -224,20 +231,22 @@ export default component$(() => {
                     </button>
                     <button
                       type="button"
-                      class="text-left text-sm font-semibold text-gray-900 dark:text-white"
+                      class="min-w-0 flex-1 text-start text-sm font-semibold text-gray-900 dark:text-white"
                       onClick$={() => {
                         expandedId.value = open ? null : section.id;
                       }}
                     >
                       {label}
-                      <span class="ml-2 text-xs font-normal text-gray-400">
-                        {open ? 'Hide settings' : 'Settings'}
+                      <span class="ms-2 text-xs font-normal text-gray-400">
+                        {open
+                          ? translateApp(lang, 'appearance.hideSettings')
+                          : translateApp(lang, 'appearance.settings')}
                       </span>
                     </button>
-                    <div class="ml-auto flex flex-wrap items-center gap-3">
+                    <div class="flex flex-wrap items-center gap-3 sm:ms-auto">
                       <AdminSwitch
                         checked={section.enabled !== false}
-                        label="Enabled"
+                        label={translateApp(lang, 'appearance.enabled')}
                         onChange$={async (checked) => {
                           await patchSection(section.id, { enabled: checked });
                         }}
@@ -250,7 +259,7 @@ export default component$(() => {
                           if (expandedId.value === section.id) expandedId.value = null;
                         }}
                       >
-                        Remove
+                        {translateApp(lang, 'appearance.remove')}
                       </button>
                     </div>
                   </div>
@@ -258,7 +267,7 @@ export default component$(() => {
                     <div class="space-y-4 border-t border-gray-100 px-4 py-4 dark:border-gray-700">
                       <div>
                         <label class="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-300">
-                          Layout width
+                          {translateApp(lang, 'appearance.layoutWidth')}
                         </label>
                         <select
                           class="rounded border px-2 py-1 text-sm dark:bg-gray-900"
@@ -268,19 +277,18 @@ export default component$(() => {
                             await patchSection(section.id, { layout_width: v });
                           }}
                         >
-                          <option value="boxed">Boxed</option>
-                          <option value="full">Full</option>
+                          <option value="boxed">{translateApp(lang, 'appearance.layoutBoxed')}</option>
+                          <option value="full">{translateApp(lang, 'appearance.layoutFull')}</option>
                         </select>
                       </div>
                       {(entry?.settings_fields?.length ?? 0) > 0 ? (
                         <AppearanceSettingsFields
                           fields={entry!.settings_fields!}
                           values={section.settings ?? {}}
-                          languages={editingLanguages}
+                          languages={langConfig.value.site_languages}
                           defaultLocale={langConfig.value.default_locale}
                           activeLocale={settingsLocale.value}
                           languagesSettingsHref={R.ADMIN.SETTINGS_LANGUAGES}
-                          usingUiLocaleFallback={usingUiLocaleFallback}
                           onLocaleChange$={$((code) => {
                             settingsLocale.value = code;
                           })}
@@ -292,7 +300,9 @@ export default component$(() => {
                           }}
                         />
                       ) : (
-                        <p class="text-sm text-gray-500">No configurable settings for this section.</p>
+                        <p class="text-sm text-gray-500">
+                          {translateApp(lang, 'appearance.noSectionSettings')}
+                        </p>
                       )}
                     </div>
                   ) : null}
@@ -305,7 +315,7 @@ export default component$(() => {
 
       {mediaTarget.value ? (
         <MediaSelector
-          title="Select image"
+          title={translateApp(lang, 'appearance.selectImage')}
           accept={mediaTarget.value.accept || 'image/*'}
           onSelect={$((media: Media) => {
             const target = mediaTarget.value;
@@ -327,6 +337,9 @@ export default component$(() => {
   );
 });
 
-export const head: DocumentHead = {
-  title: 'Homepage builder',
+export const head: DocumentHead = ({ params }) => {
+  const lang = typeof params?.lang === 'string' ? params.lang : 'en';
+  return {
+    title: translateApp(lang, 'appearance.homepageTitle'),
+  };
 };

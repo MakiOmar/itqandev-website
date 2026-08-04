@@ -97,9 +97,9 @@ export default component$(() => {
           <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
             <thead class="bg-gray-50 dark:bg-gray-900">
               <tr>
-                <th class="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">{translateApp(lang, 'fonts.name')}</th>
-                <th class="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">{translateApp(lang, 'fonts.cssFamily')}</th>
-                <th class="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">{translateApp(lang, 'fonts.formats')}</th>
+                <th class="px-4 py-3 text-start text-xs font-medium uppercase text-gray-500">{translateApp(lang, 'fonts.name')}</th>
+                <th class="px-4 py-3 text-start text-xs font-medium uppercase text-gray-500">{translateApp(lang, 'fonts.cssFamily')}</th>
+                <th class="px-4 py-3 text-start text-xs font-medium uppercase text-gray-500">{translateApp(lang, 'fonts.formats')}</th>
                 <th class="px-4 py-3 text-right text-xs font-medium uppercase text-gray-500">{translateApp(lang, 'common.actions')}</th>
               </tr>
             </thead>

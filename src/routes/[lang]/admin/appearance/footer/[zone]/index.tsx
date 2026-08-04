@@ -2,6 +2,7 @@ import { component$, useSignal, useVisibleTask$, $ } from '@builder.io/qwik';
 import type { DocumentHead } from '@builder.io/qwik-city';
 import { Link, useLocation } from '@builder.io/qwik-city';
 import { useTranslate, translateApp } from '~/lib/i18n/useTranslate';
+import { appearanceZoneLabel } from '~/lib/i18n/appearance-labels';
 import { useSwal } from '~/lib/hooks/useSwal';
 import { getLocalizedRoutes } from '~/lib/constants/routes';
 import {
@@ -86,12 +87,14 @@ export default component$(() => {
       <div class="flex flex-wrap items-center justify-between gap-4">
         <div>
           <Link href={R.ADMIN.APPEARANCE_FOOTER} class="text-sm text-primary-600 hover:underline">
-            ← Footer builder
+            {translateApp(lang, 'appearance.footerTitle')}
           </Link>
-          <h1 class="mt-2 text-2xl font-bold capitalize text-gray-900 dark:text-white">
-            {zone} zone columns
+          <h1 class="mt-2 text-2xl font-bold text-start text-gray-900 dark:text-white">
+            {appearanceZoneLabel(lang, zone)}
           </h1>
-          <p class="mt-1 text-sm text-gray-500">Drag to reorder columns.</p>
+          <p class="mt-1 text-sm text-gray-500 text-start">
+            {translateApp(lang, 'appearance.dragToReorder')}
+          </p>
         </div>
         <div class="flex gap-2">
           <button
@@ -198,9 +201,9 @@ export default component$(() => {
                 <span class="text-sm text-gray-500">{col.blocks.length} blocks</span>
                 <Link
                   href={`${R.ADMIN.APPEARANCE_FOOTER}/${zone}/${col.id}`}
-                  class="ml-auto text-sm font-medium text-primary-600 hover:underline"
+                  class="ms-auto text-sm font-medium text-primary-600 hover:underline"
                 >
-                  Edit column
+                  {translateApp(lang, 'appearance.editColumns')}
                 </Link>
                 <button
                   type="button"
@@ -210,7 +213,7 @@ export default component$(() => {
                     setZone({ ...z, columns: z.columns.filter((_, i) => i !== index) });
                   }}
                 >
-                  Remove
+                  {translateApp(lang, 'appearance.remove')}
                 </button>
               </li>
             );

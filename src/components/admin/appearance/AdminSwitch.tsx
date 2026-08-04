@@ -6,7 +6,7 @@ export type AdminSwitchProps = {
   onChange$: QRL<(checked: boolean) => void>;
 };
 
-/** Compact on/off switch for admin appearance builders. */
+/** Compact on/off switch for admin appearance builders (RTL-aware thumb). */
 export const AdminSwitch = component$<AdminSwitchProps>((props) => {
   const on = props.checked;
   return (
@@ -26,12 +26,13 @@ export const AdminSwitch = component$<AdminSwitchProps>((props) => {
       >
         <span
           class={[
-            'pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition',
-            on ? 'translate-x-5' : 'translate-x-0',
+            'pointer-events-none absolute top-0.5 start-0.5 inline-block h-5 w-5 rounded-full bg-white shadow ring-0 transition',
+            // Logical start → end travel (LTR: +x, RTL: -x)
+            on ? 'translate-x-5 rtl:-translate-x-5' : 'translate-x-0',
           ].join(' ')}
         />
       </button>
-      {props.label ? <span>{props.label}</span> : null}
+      {props.label ? <span class="whitespace-nowrap">{props.label}</span> : null}
     </div>
   );
 });

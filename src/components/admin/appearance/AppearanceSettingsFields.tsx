@@ -5,6 +5,8 @@ import {
   readAppearanceSettingValue,
   writeAppearanceSettingValue,
 } from '~/lib/admin/appearance-locale-settings';
+import { useTranslate, translateApp } from '~/lib/i18n/useTranslate';
+import { appearanceFieldLabel } from '~/lib/i18n/appearance-labels';
 import type { AppearanceSettingField } from '~/lib/marketing/appearance-types';
 import type { SiteLanguageRow } from '~/types/site-language';
 
@@ -19,8 +21,6 @@ export type AppearanceSettingsFieldsProps = {
   onLocaleChange$?: QRL<(code: string) => void>;
   /** Optional admin link when site has only one configured content language. */
   languagesSettingsHref?: string;
-  /** True when tabs include UI locales beyond Settings → Languages. */
-  usingUiLocaleFallback?: boolean;
 };
 
 type FieldControlProps = {
@@ -43,7 +43,9 @@ function localeLabel(row: SiteLanguageRow): string {
 }
 
 const AppearanceSettingFieldControl = component$<FieldControlProps>((props) => {
+  const { lang } = useTranslate();
   const field = props.field;
+  const label = appearanceFieldLabel(lang, field.key, field.label);
   const translatable = isAppearanceFieldTranslatable(field);
   const raw = readAppearanceSettingValue(
     props.values,
@@ -59,7 +61,7 @@ const AppearanceSettingFieldControl = component$<FieldControlProps>((props) => {
       <div class="flex items-center md:col-span-2">
         <AdminSwitch
           checked={checked}
-          label={field.label}
+          label={label}
           onChange$={async (next) => {
             await props.onSettingsChange$(
               writeAppearanceSettingValue(
@@ -82,7 +84,7 @@ const AppearanceSettingFieldControl = component$<FieldControlProps>((props) => {
     return (
       <div class="md:col-span-2">
         <label class="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-300">
-          {field.label}
+          {label}
         </label>
         <div class="flex flex-wrap items-start gap-3">
           {url ? (
@@ -93,7 +95,7 @@ const AppearanceSettingFieldControl = component$<FieldControlProps>((props) => {
             />
           ) : (
             <div class="flex h-20 w-32 items-center justify-center rounded border border-dashed border-gray-300 text-xs text-gray-400 dark:border-gray-600">
-              No image
+              {translateApp(lang, 'appearance.noImage')}
             </div>
           )}
           <div class="flex flex-col gap-2">
@@ -104,7 +106,7 @@ const AppearanceSettingFieldControl = component$<FieldControlProps>((props) => {
                 await props.onPickMedia$(field.key, field.accept);
               }}
             >
-              Select from library
+              {translateApp(lang, 'appearance.selectFromLibrary')}
             </button>
             {url ? (
               <button
@@ -123,13 +125,13 @@ const AppearanceSettingFieldControl = component$<FieldControlProps>((props) => {
                   );
                 }}
               >
-                Clear
+                {translateApp(lang, 'appearance.clear')}
               </button>
             ) : null}
             <input
-              type="text"
+              type="url"
               class="w-full min-w-[14rem] rounded border px-2 py-1 text-xs dark:bg-gray-900"
-              placeholder="Or paste URL"
+              placeholder={translateApp(lang, 'appearance.orPasteUrl')}
               value={url}
               onInput$={async (e) => {
                 await props.onSettingsChange$(
@@ -154,7 +156,7 @@ const AppearanceSettingFieldControl = component$<FieldControlProps>((props) => {
     return (
       <div class="md:col-span-2">
         <label class="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-300">
-          {field.label}
+          {label}
         </label>
         <textarea
           rows={3}
@@ -181,7 +183,7 @@ const AppearanceSettingFieldControl = component$<FieldControlProps>((props) => {
     return (
       <div>
         <label class="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-300">
-          {field.label}
+          {label}
         </label>
         <input
           type="number"
@@ -211,7 +213,7 @@ const AppearanceSettingFieldControl = component$<FieldControlProps>((props) => {
     return (
       <div class="md:col-span-2">
         <label class="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-300">
-          {field.label}
+          {label}
         </label>
         <textarea
           rows={6}
@@ -242,7 +244,7 @@ const AppearanceSettingFieldControl = component$<FieldControlProps>((props) => {
   return (
     <div>
       <label class="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-300">
-        {field.label}
+        {label}
       </label>
       <input
         type="text"
@@ -267,6 +269,7 @@ const AppearanceSettingFieldControl = component$<FieldControlProps>((props) => {
 
 /** Typed appearance fields with optional language tabs for translatable text. */
 export const AppearanceSettingsFields = component$<AppearanceSettingsFieldsProps>((props) => {
+  const { lang } = useTranslate();
   const languages = props.languages ?? [];
   const defaultLocale = (props.defaultLocale || 'en').toLowerCase();
   const activeLocale = (props.activeLocale || defaultLocale).toLowerCase();
@@ -279,13 +282,13 @@ export const AppearanceSettingsFields = component$<AppearanceSettingsFieldsProps
     <div class="space-y-4">
       {showTabs ? (
         <div>
-          <p class="mb-2 text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">
-            Language
+          <p class="mb-2 text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400 text-start">
+            {translateApp(lang, 'appearance.language')}
           </p>
           <div
             class="flex flex-wrap gap-1 rounded-lg border border-gray-200 bg-gray-50 p-1 dark:border-gray-700 dark:bg-gray-900/60"
             role="tablist"
-            aria-label="Section language"
+            aria-label={translateApp(lang, 'appearance.language')}
           >
             {languages.map((row) => {
               const code = String(row.code || '').toLowerCase();
@@ -310,39 +313,23 @@ export const AppearanceSettingsFields = component$<AppearanceSettingsFieldsProps
                 >
                   {localeLabel(row)}
                   {code === defaultLocale ? (
-                    <span class="ml-1 text-[10px] font-normal uppercase text-gray-400">default</span>
+                    <span class="ms-1 text-[10px] font-normal uppercase text-gray-400">default</span>
                   ) : null}
                 </button>
               );
             })}
           </div>
-          {props.usingUiLocaleFallback ? (
-            <p class="mt-2 text-xs text-amber-700 dark:text-amber-300/90">
-              Settings currently has one content language. Tabs include UI locales so you can draft
-              translations anyway.
-              {props.languagesSettingsHref ? (
-                <>
-                  {' '}
-                  <a
-                    href={props.languagesSettingsHref}
-                    class="font-medium underline hover:no-underline"
-                  >
-                    Add languages in Settings
-                  </a>
-                </>
-              ) : null}
-            </p>
-          ) : null}
           {activeLocale !== defaultLocale ? (
-            <p class="mt-2 text-xs text-gray-500 dark:text-gray-400">
-              Editing {activeLocale.toUpperCase()} copy. Empty fields fall back to the default
-              language on the public site. Layout, media, and limits stay shared.
+            <p class="mt-2 text-xs text-gray-500 dark:text-gray-400 text-start">
+              {translateApp(lang, 'appearance.editingLocaleCopy', {
+                locale: activeLocale.toUpperCase(),
+              })}
             </p>
           ) : null}
         </div>
       ) : (
-        <p class="text-xs text-gray-500 dark:text-gray-400">
-          Only one language is available.
+        <p class="text-xs text-gray-500 dark:text-gray-400 text-start">
+          {translateApp(lang, 'appearance.singleLanguageHint')}
           {props.languagesSettingsHref ? (
             <>
               {' '}
@@ -350,7 +337,7 @@ export const AppearanceSettingsFields = component$<AppearanceSettingsFieldsProps
                 href={props.languagesSettingsHref}
                 class="font-medium text-primary-600 underline hover:no-underline"
               >
-                Add another in Settings → Languages
+                {translateApp(lang, 'appearance.addLanguageLink')}
               </a>
             </>
           ) : null}
@@ -376,8 +363,8 @@ export const AppearanceSettingsFields = component$<AppearanceSettingsFieldsProps
       {sharedFields.length > 0 ? (
         <div class="space-y-2">
           {showTabs && localizedFields.length > 0 ? (
-            <p class="text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">
-              Shared settings
+            <p class="text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400 text-start">
+              {translateApp(lang, 'appearance.sharedSettings')}
             </p>
           ) : null}
           <div class="grid gap-3 md:grid-cols-2">

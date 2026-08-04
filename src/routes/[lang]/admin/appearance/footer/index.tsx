@@ -2,6 +2,7 @@ import { component$, useSignal, useVisibleTask$, $ } from '@builder.io/qwik';
 import type { DocumentHead } from '@builder.io/qwik-city';
 import { Link } from '@builder.io/qwik-city';
 import { useTranslate, translateApp } from '~/lib/i18n/useTranslate';
+import { appearanceZoneLabel } from '~/lib/i18n/appearance-labels';
 import { useSwal } from '~/lib/hooks/useSwal';
 import { getLocalizedRoutes } from '~/lib/constants/routes';
 import {
@@ -28,7 +29,7 @@ export default component$(() => {
       doc.value = await fetchFooterBuilderFromBrowser();
     } catch (e) {
       showError(translateApp(lang, 'common.error'), {
-        text: formatAppearanceError(e, 'Failed to load footer builder'),
+        text: formatAppearanceError(e, translateApp(lang, 'appearance.footerLoadFailed')),
       });
     } finally {
       loading.value = false;
@@ -43,20 +44,24 @@ export default component$(() => {
     if (result.success) {
       if (result.data) doc.value = result.data;
       showSuccess(translateApp(lang, 'common.success'), {
-        text: result.message || 'Footer layout saved.',
+        text: result.message || translateApp(lang, 'appearance.footerSaved'),
       });
     } else {
-      showError(translateApp(lang, 'common.error'), { text: result.error || 'Save failed' });
+      showError(translateApp(lang, 'common.error'), {
+        text: result.error || translateApp(lang, 'appearance.saveFailed'),
+      });
     }
   });
 
   return (
     <div class="space-y-6">
       <div class="flex flex-wrap items-center justify-between gap-4">
-        <div>
-          <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Footer builder</h1>
+        <div class="min-w-0 flex-1 text-start">
+          <h1 class="text-2xl font-bold text-gray-900 dark:text-white">
+            {translateApp(lang, 'appearance.footerTitle')}
+          </h1>
           <p class="mt-1 text-sm text-gray-600 dark:text-gray-400">
-            Switch between the default footer and a zoned builder layout.
+            {translateApp(lang, 'appearance.footerSubtitle')}
           </p>
         </div>
         <button
@@ -74,7 +79,9 @@ export default component$(() => {
       ) : (
         <>
           <div class="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800">
-            <label class="mb-2 block text-sm font-medium">Footer mode</label>
+            <label class="mb-2 block text-sm font-medium text-start">
+              {translateApp(lang, 'appearance.footerMode')}
+            </label>
             <select
               class="rounded-lg border px-3 py-2 text-sm dark:bg-gray-900"
               value={doc.value.mode}
@@ -83,27 +90,30 @@ export default component$(() => {
                 doc.value = { ...doc.value!, mode };
               }}
             >
-              <option value="hardcoded">Default hardcoded footer</option>
-              <option value="builder">Builder footer</option>
+              <option value="hardcoded">{translateApp(lang, 'appearance.footerModeHardcoded')}</option>
+              <option value="builder">{translateApp(lang, 'appearance.footerModeBuilder')}</option>
             </select>
-            <p class="mt-2 text-xs text-gray-500">
-              Hardcoded keeps the current marketing footer. Builder uses top / main / bottom zones.
+            <p class="mt-2 text-xs text-gray-500 text-start">
+              {translateApp(lang, 'appearance.footerModeHelp')}
             </p>
           </div>
 
           <div class="grid gap-4 md:grid-cols-3">
             {ZONE_KEYS.map((zone) => {
               const z = doc.value!.zones[zone] ?? { enabled: false, columns: [] };
+              const count = z.columns.length;
               return (
                 <div
                   key={zone}
                   class="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800"
                 >
-                  <h2 class="text-lg font-semibold capitalize text-gray-900 dark:text-white">{zone}</h2>
+                  <h2 class="text-lg font-semibold text-start text-gray-900 dark:text-white">
+                    {appearanceZoneLabel(lang, zone)}
+                  </h2>
                   <div class="mt-3">
                     <AdminSwitch
                       checked={z.enabled}
-                      label="Enabled"
+                      label={translateApp(lang, 'appearance.enabled')}
                       onChange$={(checked) => {
                         doc.value = {
                           ...doc.value!,
@@ -115,14 +125,16 @@ export default component$(() => {
                       }}
                     />
                   </div>
-                  <p class="mt-2 text-sm text-gray-600 dark:text-gray-400">
-                    {z.columns.length} column{z.columns.length === 1 ? '' : 's'}
+                  <p class="mt-2 text-sm text-gray-600 dark:text-gray-400 text-start">
+                    {count === 1
+                      ? translateApp(lang, 'appearance.columnCountOne')
+                      : translateApp(lang, 'appearance.columnsCount', { count })}
                   </p>
                   <Link
                     href={`${R.ADMIN.APPEARANCE_FOOTER}/${zone}`}
                     class="mt-4 inline-block text-sm font-medium text-primary-600 hover:underline"
                   >
-                    Edit columns
+                    {translateApp(lang, 'appearance.editColumns')}
                   </Link>
                 </div>
               );
@@ -134,6 +146,9 @@ export default component$(() => {
   );
 });
 
-export const head: DocumentHead = {
-  title: 'Footer builder',
+export const head: DocumentHead = ({ params }) => {
+  const lang = typeof params?.lang === 'string' ? params.lang : 'en';
+  return {
+    title: translateApp(lang, 'appearance.footerTitle'),
+  };
 };

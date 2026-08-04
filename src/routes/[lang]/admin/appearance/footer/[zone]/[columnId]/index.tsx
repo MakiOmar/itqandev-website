@@ -2,13 +2,13 @@ import { component$, useSignal, useVisibleTask$, $ } from '@builder.io/qwik';
 import type { DocumentHead } from '@builder.io/qwik-city';
 import { Link, useLocation } from '@builder.io/qwik-city';
 import { useTranslate, translateApp } from '~/lib/i18n/useTranslate';
+import { appearanceZoneLabel } from '~/lib/i18n/appearance-labels';
 import { useSwal } from '~/lib/hooks/useSwal';
 import { getLocalizedRoutes } from '~/lib/constants/routes';
 import { AdminSwitch } from '~/components/admin/appearance/AdminSwitch';
 import { AppearanceSettingsFields } from '~/components/admin/appearance/AppearanceSettingsFields';
 import { MediaSelector } from '~/components/common/MediaSelector';
 import { usePublicSiteMeta } from '../../../../layout';
-import { appearanceEditingLanguages } from '~/lib/i18n/public-site-languages';
 import {
   canInsertType,
   countByType,
@@ -35,8 +35,6 @@ export default component$(() => {
   const columnId = String(loc.params.columnId ?? '');
   const { lang } = useTranslate();
   const langConfig = usePublicSiteMeta();
-  const editingLanguages = appearanceEditingLanguages(langConfig.value.site_languages);
-  const usingUiLocaleFallback = (langConfig.value.site_languages?.length ?? 0) < 2;
   const R = getLocalizedRoutes(lang);
   const { success: showSuccess, error: showError } = useSwal();
   const loading = useSignal(true);
@@ -132,10 +130,14 @@ export default component$(() => {
             href={`${R.ADMIN.APPEARANCE_FOOTER}/${zone}`}
             class="text-sm text-primary-600 hover:underline"
           >
-            ← {zone} columns
+            {translateApp(lang, 'appearance.backToColumns', {
+              zone: appearanceZoneLabel(lang, zone),
+            })}
           </Link>
-          <h1 class="mt-2 text-2xl font-bold text-gray-900 dark:text-white">Edit column</h1>
-          <p class="mt-1 text-sm text-gray-500">Drag to reorder blocks. Expand to edit settings.</p>
+          <h1 class="mt-2 text-2xl font-bold text-gray-900 dark:text-white text-start">Edit column</h1>
+          <p class="mt-1 text-sm text-gray-500 text-start">
+            {translateApp(lang, 'appearance.homepageSubtitle')}
+          </p>
         </div>
         <button
           type="button"
@@ -166,10 +168,13 @@ export default component$(() => {
                 {registry.value.map((r) => {
                   const counts = countByType(column.blocks);
                   const disabled = !canInsertType(r.type, counts, r.max_instances);
+                  let optionText = r.label;
+                  if (disabled) {
+                    optionText += ` ${translateApp(lang, 'appearance.fullSuffix')}`;
+                  }
                   return (
                     <option key={r.type} value={r.type} disabled={disabled}>
-                      {r.label}
-                      {disabled ? ' — full' : ''}
+                      {optionText}
                     </option>
                   );
                 })}
@@ -264,20 +269,22 @@ export default component$(() => {
                     </button>
                     <button
                       type="button"
-                      class="text-left text-sm font-semibold"
+                      class="min-w-0 flex-1 text-start text-sm font-semibold"
                       onClick$={() => {
                         expandedId.value = open ? null : block.id;
                       }}
                     >
                       {label}
-                      <span class="ml-2 text-xs font-normal text-gray-400">
-                        {open ? 'Hide settings' : 'Settings'}
+                      <span class="ms-2 text-xs font-normal text-gray-400">
+                        {open
+                          ? translateApp(lang, 'appearance.hideSettings')
+                          : translateApp(lang, 'appearance.settings')}
                       </span>
                     </button>
-                    <div class="ml-auto flex flex-wrap items-center gap-3">
+                    <div class="flex flex-wrap items-center gap-3 sm:ms-auto">
                       <AdminSwitch
                         checked={block.enabled !== false}
-                        label="Enabled"
+                        label={translateApp(lang, 'appearance.enabled')}
                         onChange$={(checked) => {
                           updateColumn((col) => ({
                             ...col,
@@ -298,7 +305,7 @@ export default component$(() => {
                           if (expandedId.value === block.id) expandedId.value = null;
                         }}
                       >
-                        Remove
+                        {translateApp(lang, 'appearance.remove')}
                       </button>
                     </div>
                   </div>
@@ -308,11 +315,10 @@ export default component$(() => {
                         <AppearanceSettingsFields
                           fields={entry!.settings_fields!}
                           values={block.settings ?? {}}
-                          languages={editingLanguages}
+                          languages={langConfig.value.site_languages}
                           defaultLocale={langConfig.value.default_locale}
                           activeLocale={settingsLocale.value}
                           languagesSettingsHref={R.ADMIN.SETTINGS_LANGUAGES}
-                          usingUiLocaleFallback={usingUiLocaleFallback}
                           onLocaleChange$={$((code) => {
                             settingsLocale.value = code;
                           })}

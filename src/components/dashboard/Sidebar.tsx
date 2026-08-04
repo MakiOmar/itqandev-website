@@ -69,7 +69,8 @@ export const Sidebar = component$<SidebarProps>((props) => {
   const R = useAppRoutes();
   const userRole = auth.value?.user.role || 'user';
   const permissionSet = new Set(auth.value?.user.permissions ?? []);
-  const settingsMenuOpen = useSignal(false);
+  /** Independent open state per parent nav label (Appearance vs Settings). */
+  const openNavGroups = useSignal<Record<string, boolean>>({});
   
   // Check direction directly from document attribute (set immediately by blocking script)
   // This ensures sidebar position changes simultaneously with direction, preventing flash
@@ -201,11 +202,11 @@ export const Sidebar = component$<SidebarProps>((props) => {
       featureModule: 'users',
     },
     {
-      label: 'Appearance',
+      label: translateApp(lang, 'sidebar.appearance'),
       icon: SettingsIcon,
       children: [
-        { label: 'Homepage', href: R.ADMIN.APPEARANCE_HOMEPAGE },
-        { label: 'Footer', href: R.ADMIN.APPEARANCE_FOOTER },
+        { label: translateApp(lang, 'sidebar.appearanceHomepage'), href: R.ADMIN.APPEARANCE_HOMEPAGE },
+        { label: translateApp(lang, 'sidebar.appearanceFooter'), href: R.ADMIN.APPEARANCE_FOOTER },
       ],
       roles: ['admin', 'super_admin'],
     },
@@ -219,7 +220,6 @@ export const Sidebar = component$<SidebarProps>((props) => {
         { label: translateApp(lang, 'settings.branding'), href: R.ADMIN.SETTINGS_BRANDING },
         { label: translateApp(lang, 'settings.languagesNav'), href: R.ADMIN.SETTINGS_LANGUAGES },
         { label: translateApp(lang, 'settings.typographyNav'), href: R.ADMIN.SETTINGS_TYPOGRAPHY },
-        { label: translateApp(lang, 'sidebar.fonts'), href: R.ADMIN.FONTS },
       ],
       roles: ['admin', 'super_admin'],
     },
@@ -328,7 +328,7 @@ export const Sidebar = component$<SidebarProps>((props) => {
                 onClick$={props.onClose}
                 type="button"
                 class="text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 transition-colors p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700"
-                aria-label="Close sidebar"
+                aria-label={translateApp(lang, 'sidebar.closeSidebar')}
               >
                 <CloseIcon />
               </button>
@@ -339,15 +339,16 @@ export const Sidebar = component$<SidebarProps>((props) => {
               {filteredNavItems.map((item) => {
                 const IconComponent = item.icon;
                 const hasChildren = !!item.children?.length;
-                const sectionActive = hasChildren
+                const childPathActive = hasChildren
                   ? item.children!.some((child) => isInSection(child.href))
+                  : false;
+                const sectionActive = hasChildren
+                  ? childPathActive
                   : item.href
                     ? isActive(item.href)
                     : false;
                 const sectionOpen = hasChildren
-                  ? settingsMenuOpen.value ||
-                    isInSection(R.ADMIN.SETTINGS) ||
-                    isInSection(R.ADMIN.FONTS)
+                  ? (openNavGroups.value[item.label] ?? childPathActive)
                   : false;
 
                 if (hasChildren) {
@@ -356,7 +357,10 @@ export const Sidebar = component$<SidebarProps>((props) => {
                       <button
                         type="button"
                         onClick$={() => {
-                          settingsMenuOpen.value = !sectionOpen;
+                          openNavGroups.value = {
+                            ...openNavGroups.value,
+                            [item.label]: !sectionOpen,
+                          };
                         }}
                         class={`group flex w-full items-center gap-3 md:gap-4 rounded-lg md:rounded-xl px-3 md:px-5 py-2.5 md:py-4 text-sm md:text-base font-medium transition-all duration-300 ${
                           sectionActive
@@ -376,14 +380,14 @@ export const Sidebar = component$<SidebarProps>((props) => {
                           <IconComponent />
                         </span>
                         <span
-                          class={`flex-1 text-left font-medium ${sectionActive ? 'text-blue-700 dark:text-blue-300' : 'text-slate-700 dark:text-slate-300'}`}
+                          class={`min-w-0 flex-1 text-start font-medium ${sectionActive ? 'text-blue-700 dark:text-blue-300' : 'text-slate-700 dark:text-slate-300'}`}
                         >
                           {item.label}
                         </span>
                         <span
-                          class={`transition-transform duration-200 ${sectionOpen ? 'rotate-90' : ''} ${
-                            sectionActive ? 'text-blue-600' : 'text-slate-400'
-                          }`}
+                          class={`ms-auto shrink-0 transition-transform duration-200 ${
+                            sectionOpen ? 'rotate-90' : 'rtl:rotate-180'
+                          } ${sectionActive ? 'text-blue-600' : 'text-slate-400'}`}
                         >
                           <svg
                             class="h-4 w-4"
@@ -391,6 +395,7 @@ export const Sidebar = component$<SidebarProps>((props) => {
                             stroke="currentColor"
                             viewBox="0 0 24 24"
                             xmlns="http://www.w3.org/2000/svg"
+                            aria-hidden="true"
                           >
                             <path
                               stroke-linecap="round"
@@ -403,7 +408,7 @@ export const Sidebar = component$<SidebarProps>((props) => {
                       </button>
 
                       {sectionOpen && (
-                        <div class="space-y-1 pl-10">
+                        <div class="space-y-1 ps-10">
                           {item.children!.map((child) => {
                             const childActive = isActive(child.href);
                             return (
@@ -415,7 +420,7 @@ export const Sidebar = component$<SidebarProps>((props) => {
                                     props.onClose();
                                   }
                                 }}
-                                class={`block rounded-lg px-3 py-2 text-sm transition-colors ${
+                                class={`block rounded-lg px-3 py-2 text-sm text-start transition-colors ${
                                   childActive
                                     ? 'bg-primary-50 text-primary-700 dark:bg-primary-900/30 dark:text-primary-300'
                                     : 'text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-700'
@@ -460,7 +465,7 @@ export const Sidebar = component$<SidebarProps>((props) => {
                     }`}>
                       <IconComponent />
                     </span>
-                    <span class={`font-medium ${active ? 'text-blue-700 dark:text-blue-300' : 'text-slate-700 dark:text-slate-300'}`}>{item.label}</span>
+                    <span class={`min-w-0 font-medium text-start ${active ? 'text-blue-700 dark:text-blue-300' : 'text-slate-700 dark:text-slate-300'}`}>{item.label}</span>
                   </Link>
                 );
               })}
