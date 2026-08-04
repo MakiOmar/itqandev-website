@@ -79,7 +79,7 @@ export const UserDropdown = component$<UserDropdownProps>((props) => {
           {props.user.name.charAt(0).toUpperCase()}
         </div>
         <span class="hidden md:block font-semibold">{props.user.name}</span>
-        <span class="text-slate-400 ml-1">▼</span>
+        <span class="text-slate-400 ms-1">▼</span>
       </button>
 
       {isOpen.value && (
@@ -88,7 +88,7 @@ export const UserDropdown = component$<UserDropdownProps>((props) => {
             class="fixed inset-0 z-10"
             onClick$={() => (isOpen.value = false)}
           ></div>
-          <div class="absolute right-0 z-20 mt-3 w-56 rounded-xl border border-slate-200 dark:border-slate-700 bg-white/95 dark:bg-slate-800/95 backdrop-blur-sm shadow-xl">
+          <div class="absolute end-0 z-20 mt-3 w-56 rounded-xl border border-slate-200 dark:border-slate-700 bg-white/95 dark:bg-slate-800/95 backdrop-blur-sm shadow-xl text-start">
             <div class="border-b border-slate-200 dark:border-slate-700 p-5">
               <p class="text-base font-semibold text-slate-900 dark:text-slate-100 mb-1">
                 {props.user.name}
@@ -104,7 +104,7 @@ export const UserDropdown = component$<UserDropdownProps>((props) => {
               </Link>
               <button
                 onClick$={handleLogout}
-                class="w-full rounded-lg px-4 py-3 text-left text-sm font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+                class="w-full rounded-lg px-4 py-3 text-start text-sm font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
               >
                 {translateApp(lang, 'header.logout')}
               </button>

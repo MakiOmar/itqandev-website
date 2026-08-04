@@ -169,16 +169,17 @@ body {
 }
 
 [dir='rtl'] {
-  text-align: right;
+  text-align: start;
   font-family: var(--font-arabic, 'Cairo', 'Segoe UI', Tahoma, Arial, sans-serif);
 }
 
+/* Chevron from form plugins: pin to inline-end in both directions */
 [dir='rtl'] select {
   background-position: left 0.5rem center;
 }
 
 [dir='ltr'] {
-  text-align: left;
+  text-align: start;
   font-family: var(--font-sans, 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial,
     sans-serif);
 }

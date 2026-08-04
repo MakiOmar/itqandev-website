@@ -1,5 +1,9 @@
 import { component$, useSignal, useComputed$, $, type QRL } from '@builder.io/qwik';
 import { useTranslate, translateApp } from '../../lib/i18n/useTranslate';
+import {
+  ADMIN_SELECT_OPTION_CLS,
+  ADMIN_SELECT_PANEL_CLS,
+} from '../admin/admin-select-classes';
 
 export interface TagItem {
   id: string | number;
@@ -179,13 +183,13 @@ export const TagInput = component$<TagInputProps>((props) => {
 
         {/* Suggestions Dropdown */}
         {showSuggestions.value && filteredSuggestions.value.length > 0 && (
-          <div class="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-lg border border-gray-200 bg-white shadow-lg dark:border-gray-700 dark:bg-gray-800">
+          <div class={ADMIN_SELECT_PANEL_CLS}>
             {filteredSuggestions.value.map((item) => (
               <button
                 key={item.id}
                 onMouseDown$={(event) => handleSuggestionClick(item, event)}
                 type="button"
-                class="w-full px-4 py-2 text-left text-sm text-gray-900 hover:bg-gray-100 dark:text-gray-100 dark:hover:bg-gray-700"
+                class={ADMIN_SELECT_OPTION_CLS}
               >
                 {item.name}
               </button>
@@ -198,7 +202,7 @@ export const TagInput = component$<TagInputProps>((props) => {
           searchQuery.value &&
           filteredSuggestions.value.length === 0 &&
           !props.loading && (
-            <div class="absolute z-10 mt-1 w-full rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm text-gray-500 shadow-lg dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400">
+            <div class={`${ADMIN_SELECT_PANEL_CLS} px-4 py-2 text-sm text-gray-500 dark:text-gray-400`}>
               {props.noResultsText || 'No items found'}
             </div>
           )}

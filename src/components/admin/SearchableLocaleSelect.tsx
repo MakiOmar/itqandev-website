@@ -4,6 +4,10 @@ import {
   getLocaleOptionByCode,
   type LocaleOption,
 } from '../../lib/i18n/locale-options';
+import {
+  ADMIN_SELECT_OPTION_CLS,
+  ADMIN_SELECT_TRIGGER_CLS,
+} from './admin-select-classes';
 
 export interface SearchableLocaleSelectProps {
   /** Current locale code (lowercase BCP-47). */
@@ -75,15 +79,15 @@ export const SearchableLocaleSelect = component$<SearchableLocaleSelectProps>((p
         <button
           type="button"
           onClick$={openList}
-          class="flex w-full items-center justify-between gap-2 rounded-lg border border-gray-300 bg-white px-3 py-2 text-left text-sm text-gray-900 shadow-sm hover:border-primary-400 focus:border-primary-500 focus:outline-none focus:ring focus:ring-primary-200 dark:border-gray-600 dark:bg-gray-950 dark:text-gray-100 dark:focus:ring-primary-700/40"
+          class={ADMIN_SELECT_TRIGGER_CLS}
         >
-          <span class="truncate">{summary}</span>
+          <span class="min-w-0 flex-1 truncate">{summary}</span>
           <span class="shrink-0 text-gray-400" aria-hidden="true">
             ▾
           </span>
         </button>
       ) : (
-        <div class="rounded-lg border border-primary-300 bg-white shadow-md dark:border-primary-700 dark:bg-gray-950">
+        <div class="rounded-lg border border-primary-300 bg-white text-start shadow-md dark:border-primary-700 dark:bg-gray-950">
           <input
             type="search"
             autofocus
@@ -94,7 +98,7 @@ export const SearchableLocaleSelect = component$<SearchableLocaleSelectProps>((p
             }}
             onFocus$={clearBlurTimer}
             onBlur$={scheduleClose}
-            class="w-full rounded-t-lg border-0 border-b border-gray-200 bg-white px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-primary-500 dark:border-gray-700 dark:bg-gray-950 dark:text-gray-100"
+            class="w-full rounded-t-lg border-0 border-b border-gray-200 bg-white px-3 py-2 text-start text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-primary-500 dark:border-gray-700 dark:bg-gray-950 dark:text-gray-100"
           />
           <ul
             class="max-h-60 overflow-y-auto py-1 text-sm"
@@ -102,7 +106,7 @@ export const SearchableLocaleSelect = component$<SearchableLocaleSelectProps>((p
             onMouseDown$={(e: Event) => e.preventDefault()}
           >
             {matches.length === 0 ? (
-              <li class="px-3 py-2 text-gray-500 dark:text-gray-400">
+              <li class="px-3 py-2 text-start text-gray-500 dark:text-gray-400">
                 {query.value.trim() ? props.noResultsText : props.emptyHint}
               </li>
             ) : (
@@ -110,7 +114,7 @@ export const SearchableLocaleSelect = component$<SearchableLocaleSelectProps>((p
                 <li key={opt.code} role="option">
                   <button
                     type="button"
-                    class="flex w-full flex-col items-start px-3 py-2 text-left hover:bg-primary-50 dark:hover:bg-primary-950/40"
+                    class={`${ADMIN_SELECT_OPTION_CLS} flex-col items-start`}
                     onClick$={() => pick(opt)}
                   >
                     <span class="font-medium text-gray-900 dark:text-gray-100">{opt.label}</span>

@@ -8,6 +8,14 @@ import {
   resolveServiceIconUrl,
   serviceIconSelectBoundValue,
 } from '../../lib/marketing/service-icons';
+import {
+  ADMIN_SELECT_BACKDROP_CLS,
+  ADMIN_SELECT_CHEVRON_CLS,
+  ADMIN_SELECT_OPTION_ACTIVE_CLS,
+  ADMIN_SELECT_OPTION_CLS,
+  ADMIN_SELECT_PANEL_CLS,
+  ADMIN_SELECT_TRIGGER_CLS,
+} from './admin-select-classes';
 
 const ICON_LABEL_KEYS: Record<(typeof SERVICE_ICON_SELECT_VALUES)[number], string> = {
   web: 'services.iconOptWeb',
@@ -59,7 +67,7 @@ export const ServiceIconSelect = component$<{
       <button
         type="button"
         id={props.id}
-        class="relative z-50 flex w-full items-center justify-between gap-3 rounded-lg border border-gray-300 bg-white px-3 py-2 text-left text-sm text-gray-900 shadow-sm focus:border-primary-500 focus:outline-none focus:ring focus:ring-primary-200 dark:border-gray-600 dark:bg-gray-950 dark:text-gray-100 dark:focus:ring-primary-700/40"
+        class={ADMIN_SELECT_TRIGGER_CLS}
         aria-haspopup="listbox"
         aria-expanded={open.value}
         aria-controls={listboxId}
@@ -88,7 +96,7 @@ export const ServiceIconSelect = component$<{
           )}
           <span class="min-w-0 truncate">{triggerLabel}</span>
         </span>
-        <svg class="h-5 w-5 shrink-0 text-gray-500" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+        <svg class={ADMIN_SELECT_CHEVRON_CLS} viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
           <path
             fill-rule="evenodd"
             d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.94a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z"
@@ -102,22 +110,18 @@ export const ServiceIconSelect = component$<{
           {/* Close when clicking outside the control */}
           <button
             type="button"
-            class="fixed inset-0 z-40 cursor-default bg-black/10 dark:bg-black/30"
+            class={ADMIN_SELECT_BACKDROP_CLS}
             aria-hidden="true"
             onClick$={() => {
               open.value = false;
             }}
           />
-          <div
-            id={listboxId}
-            role="listbox"
-            class="absolute z-50 mt-1 max-h-72 w-full overflow-auto rounded-lg border border-gray-200 bg-white py-1 shadow-lg dark:border-gray-700 dark:bg-gray-900"
-          >
+          <div id={listboxId} role="listbox" class={ADMIN_SELECT_PANEL_CLS}>
             <button
               type="button"
               role="option"
               aria-selected={bound === ''}
-              class={`flex w-full items-center gap-3 px-3 py-2 text-left text-sm hover:bg-gray-50 dark:hover:bg-gray-800 ${bound === '' ? 'bg-primary-50 dark:bg-primary-950/40' : ''}`}
+              class={[ADMIN_SELECT_OPTION_CLS, bound === '' ? ADMIN_SELECT_OPTION_ACTIVE_CLS : ''].join(' ')}
               onClick$={() => {
                 props.onChange$('');
                 open.value = false;
@@ -134,7 +138,7 @@ export const ServiceIconSelect = component$<{
                 type="button"
                 role="option"
                 aria-selected={bound === raw}
-                class={`flex w-full items-center gap-3 px-3 py-2 text-left text-sm hover:bg-gray-50 dark:hover:bg-gray-800 ${bound === raw ? 'bg-primary-50 dark:bg-primary-950/40' : ''}`}
+                class={[ADMIN_SELECT_OPTION_CLS, bound === raw ? ADMIN_SELECT_OPTION_ACTIVE_CLS : ''].join(' ')}
                 onClick$={() => {
                   props.onChange$(raw);
                   open.value = false;
@@ -163,7 +167,7 @@ export const ServiceIconSelect = component$<{
                   type="button"
                   role="option"
                   aria-selected={selected}
-                  class={`flex w-full items-center gap-3 px-3 py-2 text-left text-sm hover:bg-gray-50 dark:hover:bg-gray-800 ${selected ? 'bg-primary-50 dark:bg-primary-950/40' : ''}`}
+                  class={[ADMIN_SELECT_OPTION_CLS, selected ? ADMIN_SELECT_OPTION_ACTIVE_CLS : ''].join(' ')}
                   onClick$={() => {
                     props.onChange$(key);
                     open.value = false;

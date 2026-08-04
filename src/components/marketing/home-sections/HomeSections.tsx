@@ -62,7 +62,7 @@ export const HeroHomeSection = component$<HomeSectionSharedProps>(({ settings, u
       <Container class="relative">
         <div class="grid items-center gap-10 lg:grid-cols-2 lg:gap-12 xl:gap-16">
           <AnimatedReveal>
-            <div class="mx-auto max-w-2xl text-center lg:mx-0 lg:max-w-xl lg:text-left">
+            <div class="mx-auto max-w-2xl text-center lg:mx-0 lg:max-w-xl lg:text-start">
               <h1 class="text-4xl font-bold tracking-tight text-slate-900 dark:text-white sm:text-5xl lg:text-6xl">
                 {headline}
               </h1>
@@ -185,8 +185,8 @@ export const ServicesTeaserHomeSection = component$<
                         </svg>
                       </span>
                     </div>
-                    <h3 class="text-lg font-semibold tracking-tight text-slate-900 dark:text-white">{s.name}</h3>
-                    <p class="mt-2 flex-1 text-sm leading-relaxed text-slate-600 dark:text-slate-400">
+                    <h3 class="text-start text-lg font-semibold tracking-tight text-slate-900 dark:text-white">{s.name}</h3>
+                    <p class="mt-2 flex-1 text-start text-sm leading-relaxed text-slate-600 dark:text-slate-400">
                       {s.shortDescription}
                     </p>
                     <p class="mt-4 inline-flex items-center gap-1 text-sm font-medium text-primary-600 opacity-0 transition-all duration-300 group-hover:opacity-100 dark:text-primary-400">
@@ -224,7 +224,7 @@ export const CaseStudiesHomeSection = component$<
       <Container>
         <AnimatedReveal>
           <div class="flex items-end justify-between gap-4">
-            <div>
+            <div class="min-w-0 text-start">
               <h2 class="text-3xl font-bold tracking-tight text-slate-900 dark:text-white sm:text-4xl">
                 {title}
               </h2>
@@ -317,7 +317,7 @@ export const BlogPreviewHomeSection = component$<
       <Container>
         <AnimatedReveal>
           <div class="flex items-end justify-between gap-4">
-            <div>
+            <div class="min-w-0 text-start">
               <h2 class="text-3xl font-bold tracking-tight text-slate-900 dark:text-white sm:text-4xl">
                 {title}
               </h2>

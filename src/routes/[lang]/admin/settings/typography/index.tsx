@@ -1,4 +1,4 @@
-import { component$, useSignal, useTask$, useVisibleTask$ } from '@builder.io/qwik';
+import { component$, useSignal, useTask$, useVisibleTask$, $ } from '@builder.io/qwik';
 import type { DocumentHead } from '@builder.io/qwik-city';
 import { Form, routeLoader$ } from '@builder.io/qwik-city';
 import { Link } from '@builder.io/qwik-city';
@@ -9,6 +9,7 @@ import { API_ENDPOINTS } from '../../../../../lib/api/endpoints';
 import { extractFontsList } from '../../../../../lib/admin/font-api';
 import { useAppRoutes } from '../../../../../lib/constants/routes';
 import type { SiteFont } from '../../../../../types/font';
+import { AdminSelect } from '../../../../../components/admin/AdminSelect';
 import { SettingsSaveButton, useSettings, useUpdateSettings } from '../layout';
 
 export const useFontsForTypography = routeLoader$(async ({ cookie, request, params }) => {
@@ -130,52 +131,40 @@ export default component$(() => {
         {fontMode.value === 'custom' ? (
           <div class="grid gap-4 md:grid-cols-2">
             <div>
-              <label class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-200">
+              <label class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-200" for="font_ltr_id">
                 {translateApp(lang, 'settings.fontLtr')}
               </label>
-              <select
+              <AdminSelect
+                id="font_ltr_id"
                 name="font_ltr_id"
-                class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100"
                 value={fontLtrId.value}
-                onChange$={(e) => {
-                  fontLtrId.value = (e.target as HTMLSelectElement).value;
-                }}
-              >
-                <option value="">{translateApp(lang, 'settings.fontSelectPlaceholder')}</option>
-                {fontsLoader.value.map((font) => (
-                  <option
-                    key={font.id}
-                    value={String(font.id)}
-                    selected={fontLtrId.value === String(font.id)}
-                  >
-                    {`${font.name} (${font.css_family})`}
-                  </option>
-                ))}
-              </select>
+                placeholder={translateApp(lang, 'settings.fontSelectPlaceholder')}
+                options={fontsLoader.value.map((font) => ({
+                  value: String(font.id),
+                  label: `${font.name} (${font.css_family})`,
+                }))}
+                onChange$={$((value) => {
+                  fontLtrId.value = value;
+                })}
+              />
             </div>
             <div>
-              <label class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-200">
+              <label class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-200" for="font_rtl_id">
                 {translateApp(lang, 'settings.fontRtl')}
               </label>
-              <select
+              <AdminSelect
+                id="font_rtl_id"
                 name="font_rtl_id"
-                class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100"
                 value={fontRtlId.value}
-                onChange$={(e) => {
-                  fontRtlId.value = (e.target as HTMLSelectElement).value;
-                }}
-              >
-                <option value="">{translateApp(lang, 'settings.fontSelectPlaceholder')}</option>
-                {fontsLoader.value.map((font) => (
-                  <option
-                    key={font.id}
-                    value={String(font.id)}
-                    selected={fontRtlId.value === String(font.id)}
-                  >
-                    {`${font.name} (${font.css_family})`}
-                  </option>
-                ))}
-              </select>
+                placeholder={translateApp(lang, 'settings.fontSelectPlaceholder')}
+                options={fontsLoader.value.map((font) => ({
+                  value: String(font.id),
+                  label: `${font.name} (${font.css_family})`,
+                }))}
+                onChange$={$((value) => {
+                  fontRtlId.value = value;
+                })}
+              />
             </div>
             <p class="md:col-span-2 text-xs text-gray-500 dark:text-gray-400">
               <Link href={R.ADMIN.FONTS} class="text-primary-600 hover:underline dark:text-primary-400">
