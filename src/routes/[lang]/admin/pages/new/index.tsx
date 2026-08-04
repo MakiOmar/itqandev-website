@@ -4,6 +4,10 @@ import { Link, useNavigate } from '@builder.io/qwik-city';
 import { PageHeader } from '../../../../../components/common/PageHeader';
 import { PageSectionsEditor } from '../../../../../components/admin/pages/PageSectionsEditor';
 import { MediaSelector } from '../../../../../components/common/MediaSelector';
+import { AdminPublicPageLink } from '../../../../../components/admin/AdminPublicPageLink';
+import {
+  ContentPrimaryLanguageSelect,
+} from '../../../../../components/admin/PerFieldContentTranslations';
 import { useTranslate, translateApp } from '../../../../../lib/i18n/useTranslate';
 import { useSwal } from '../../../../../lib/hooks/useSwal';
 import { usePublicSiteMeta } from '../../layout';
@@ -11,16 +15,21 @@ import { useCreatePage } from '../../../../../lib/admin/page-actions';
 import { submitRouteActionFormData } from '../../../../../lib/admin/route-action-form-submit';
 import { adminPageEditHref, useAppRoutes } from '../../../../../lib/constants/routes';
 import { useContentSlugAutosuggestForm } from '../../../../../lib/slug/content-slug-auto';
-import {
-  fetchAppearanceRegistriesFromBrowser,
-} from '../../../../../lib/admin/appearance-actions';
+import { fetchAppearanceRegistriesFromBrowser } from '../../../../../lib/admin/appearance-actions';
 import { writeAppearanceSettingValue } from '../../../../../lib/admin/appearance-locale-settings';
 import type { AppearanceRegistryEntry, HomepageSectionInstance } from '../../../../../lib/marketing/appearance-types';
 import type { Media } from '../../../../../types/media';
 import { primaryLocaleForContent } from '../../../../../lib/content-display-locale';
 import {
+  ADMIN_BACK_BUTTON_CLASS,
+  ADMIN_FORM_CARD_CLASS,
+  ADMIN_FORM_INPUT_CLASS,
+  ADMIN_FORM_LABEL_CLASS,
+  ADMIN_FORM_SIDEBAR_CARD_CLASS,
+  ADMIN_FORM_TEXTAREA_CLASS,
   ADMIN_NATIVE_OPTION_CLASS,
   ADMIN_NATIVE_SELECT_CLASS,
+  ADMIN_PRIMARY_BUTTON_CLASS,
 } from '../../../../../lib/admin/native-select-classes';
 
 export default component$(() => {
@@ -58,6 +67,11 @@ export default component$(() => {
   });
 
   const handleSave$ = $(async () => {
+    const title = formData.value.title.trim();
+    if (!title) {
+      await showError(translateApp(lang, 'pages.titleRequired'));
+      return;
+    }
     saving.value = true;
     try {
       const siteDef = langConfig.value.default_locale || 'en';
@@ -96,99 +110,156 @@ export default component$(() => {
   return (
     <div>
       <PageHeader title={translateApp(lang, 'pages.addNew')} description={translateApp(lang, 'pages.subtitle')}>
-        <Link href={R.ADMIN.PAGES} class="text-sm text-primary-600 hover:underline">
-          {translateApp(lang, 'pages.list')}
+        <Link href={R.ADMIN.PAGES} class={ADMIN_BACK_BUTTON_CLASS}>
+          {translateApp(lang, 'common.back')}
         </Link>
       </PageHeader>
 
-      <div class="space-y-4 rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-900">
-        <div>
-          <label class="mb-1 block text-xs font-medium">{translateApp(lang, 'pages.fields.title')}</label>
-          <input
-            class="w-full rounded border px-3 py-2 text-sm dark:bg-gray-950"
-            value={formData.value.title}
-            onInput$={(e) => {
-              formData.value = { ...formData.value, title: (e.target as HTMLInputElement).value };
-            }}
-            onBlur$={pageSlugAuto.onTitleBlurSuggestSlug$}
-          />
-        </div>
-        <div>
-          <label class="mb-1 block text-xs font-medium">{translateApp(lang, 'pages.fields.slug')}</label>
-          <input
-            class="w-full rounded border px-3 py-2 text-sm font-mono dark:bg-gray-950"
-            value={formData.value.slug}
-            onInput$={(e) => {
-              pageSlugAuto.slugLocked.value = true;
-              formData.value = { ...formData.value, slug: (e.target as HTMLInputElement).value };
-            }}
-            onBlur$={pageSlugAuto.onSlugBlurEnsureUnique$}
-          />
-        </div>
-        <div>
-          <label class="mb-1 block text-xs font-medium">{translateApp(lang, 'pages.fields.excerpt')}</label>
-          <textarea
-            class="w-full rounded border px-3 py-2 text-sm dark:bg-gray-950"
-            rows={2}
-            value={formData.value.excerpt}
-            onInput$={(e) => {
-              formData.value = { ...formData.value, excerpt: (e.target as HTMLTextAreaElement).value };
-            }}
-          />
-        </div>
-        <div>
-          <label class="mb-1 block text-xs font-medium text-gray-700 dark:text-gray-200">
-            {translateApp(lang, 'pages.fields.status')}
-          </label>
-          <select
-            class={ADMIN_NATIVE_SELECT_CLASS}
-            value={formData.value.status}
-            onChange$={(e) => {
-              formData.value = {
-                ...formData.value,
-                status: (e.target as HTMLSelectElement).value as 'draft' | 'published',
-              };
-            }}
-          >
-            <option class={ADMIN_NATIVE_OPTION_CLASS} value="draft">
-              {translateApp(lang, 'pages.statusDraft')}
-            </option>
-            <option class={ADMIN_NATIVE_OPTION_CLASS} value="published">
-              {translateApp(lang, 'pages.statusPublished')}
-            </option>
-          </select>
+      {/* WordPress-style: main content + sticky publish sidebar */}
+      <div class="grid gap-6 lg:grid-cols-[minmax(0,1fr)_17.5rem] lg:items-start">
+        <div class="space-y-6">
+          <div class={ADMIN_FORM_CARD_CLASS}>
+            <div class="space-y-5">
+              <div>
+                <label for="page-title" class={ADMIN_FORM_LABEL_CLASS}>
+                  {translateApp(lang, 'pages.fields.title')} *
+                </label>
+                <input
+                  id="page-title"
+                  class={`${ADMIN_FORM_INPUT_CLASS} text-lg font-semibold`}
+                  value={formData.value.title}
+                  placeholder={translateApp(lang, 'pages.titlePlaceholder')}
+                  onInput$={(e) => {
+                    formData.value = { ...formData.value, title: (e.target as HTMLInputElement).value };
+                  }}
+                  onBlur$={pageSlugAuto.onTitleBlurSuggestSlug$}
+                />
+              </div>
+
+              <div>
+                <label for="page-slug" class={ADMIN_FORM_LABEL_CLASS}>
+                  {translateApp(lang, 'pages.fields.slug')}
+                </label>
+                <input
+                  id="page-slug"
+                  class={`${ADMIN_FORM_INPUT_CLASS} font-mono text-xs`}
+                  value={formData.value.slug}
+                  onInput$={(e) => {
+                    pageSlugAuto.slugLocked.value = true;
+                    formData.value = { ...formData.value, slug: (e.target as HTMLInputElement).value };
+                  }}
+                  onBlur$={pageSlugAuto.onSlugBlurEnsureUnique$}
+                />
+                <AdminPublicPageLink lang={lang} kind="pages" slug={formData.value.slug} />
+              </div>
+
+              <div>
+                <label for="page-excerpt" class={ADMIN_FORM_LABEL_CLASS}>
+                  {translateApp(lang, 'pages.fields.excerpt')}
+                </label>
+                <textarea
+                  id="page-excerpt"
+                  class={ADMIN_FORM_TEXTAREA_CLASS}
+                  rows={3}
+                  value={formData.value.excerpt}
+                  placeholder={translateApp(lang, 'pages.excerptPlaceholder')}
+                  onInput$={(e) => {
+                    formData.value = {
+                      ...formData.value,
+                      excerpt: (e.target as HTMLTextAreaElement).value,
+                    };
+                  }}
+                />
+              </div>
+            </div>
+          </div>
+
+          <div class={ADMIN_FORM_CARD_CLASS}>
+            <PageSectionsEditor
+              lang={lang}
+              sections={sections.value}
+              registry={registry.value}
+              languages={langConfig.value.site_languages}
+              defaultLocale={langConfig.value.default_locale}
+              activeLocale={activeSettingsLocale.value}
+              mediaPreviewById={mediaPreviewById.value}
+              onLocaleChange$={$((code) => {
+                activeSettingsLocale.value = code;
+              })}
+              onChange$={$((next) => {
+                sections.value = next;
+              })}
+              onMediaPreview$={$((mediaId, url) => {
+                mediaPreviewById.value = { ...mediaPreviewById.value, [String(mediaId)]: url };
+              })}
+              onPickMedia$={$((sectionId, key, accept) => {
+                mediaTarget.value = { sectionId, key, accept };
+              })}
+            />
+          </div>
         </div>
 
-        <PageSectionsEditor
-          lang={lang}
-          sections={sections.value}
-          registry={registry.value}
-          languages={langConfig.value.site_languages}
-          defaultLocale={langConfig.value.default_locale}
-          activeLocale={activeSettingsLocale.value}
-          mediaPreviewById={mediaPreviewById.value}
-          onLocaleChange$={$((code) => {
-            activeSettingsLocale.value = code;
-          })}
-          onChange$={$((next) => {
-            sections.value = next;
-          })}
-          onMediaPreview$={$((mediaId, url) => {
-            mediaPreviewById.value = { ...mediaPreviewById.value, [String(mediaId)]: url };
-          })}
-          onPickMedia$={$((sectionId, key, accept) => {
-            mediaTarget.value = { sectionId, key, accept };
-          })}
-        />
+        <aside class="space-y-4 lg:sticky lg:top-24">
+          <div class={ADMIN_FORM_SIDEBAR_CARD_CLASS}>
+            <h3 class="mb-3 text-sm font-semibold text-gray-900 dark:text-gray-100">
+              {translateApp(lang, 'pages.publish')}
+            </h3>
+            <div class="space-y-3">
+              <div>
+                <label for="page-status" class={ADMIN_FORM_LABEL_CLASS}>
+                  {translateApp(lang, 'pages.fields.status')}
+                </label>
+                <select
+                  id="page-status"
+                  class={ADMIN_NATIVE_SELECT_CLASS}
+                  value={formData.value.status}
+                  onChange$={(e) => {
+                    formData.value = {
+                      ...formData.value,
+                      status: (e.target as HTMLSelectElement).value as 'draft' | 'published',
+                    };
+                  }}
+                >
+                  <option class={ADMIN_NATIVE_OPTION_CLASS} value="draft">
+                    {translateApp(lang, 'pages.statusDraft')}
+                  </option>
+                  <option class={ADMIN_NATIVE_OPTION_CLASS} value="published">
+                    {translateApp(lang, 'pages.statusPublished')}
+                  </option>
+                </select>
+              </div>
+              <div class="flex flex-col gap-2 border-t border-gray-200 pt-3 dark:border-gray-700">
+                <button
+                  type="button"
+                  class={ADMIN_PRIMARY_BUTTON_CLASS}
+                  disabled={saving.value}
+                  onClick$={handleSave$}
+                >
+                  {saving.value ? translateApp(lang, 'common.loading') : translateApp(lang, 'common.save')}
+                </button>
+                <Link href={R.ADMIN.PAGES} class={`${ADMIN_BACK_BUTTON_CLASS} text-center`}>
+                  {translateApp(lang, 'common.cancel')}
+                </Link>
+              </div>
+            </div>
+          </div>
 
-        <button
-          type="button"
-          class="rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
-          disabled={saving.value}
-          onClick$={handleSave$}
-        >
-          {translateApp(lang, 'common.save')}
-        </button>
+          <div class={ADMIN_FORM_SIDEBAR_CARD_CLASS + ' !p-0 overflow-hidden'}>
+            <div class="p-1">
+              <ContentPrimaryLanguageSelect
+                siteLanguages={langConfig.value.site_languages || []}
+                defaultLocale={langConfig.value.default_locale || 'en'}
+                value={contentLocaleDraft.value}
+                label={translateApp(lang, 'contentTranslations.contentPrimaryLanguage')}
+                hint={translateApp(lang, 'contentTranslations.contentPrimaryHint')}
+                useSiteDefaultLabel={translateApp(lang, 'contentTranslations.useSiteDefault')}
+                onChange$={$((code) => {
+                  contentLocaleDraft.value = code;
+                })}
+              />
+            </div>
+          </div>
+        </aside>
       </div>
 
       {mediaTarget.value ? (
@@ -203,7 +274,7 @@ export default component$(() => {
             if (url) {
               mediaPreviewById.value = { ...mediaPreviewById.value, [String(media.id)]: url };
             }
-            const next = sections.value.map((section) => {
+            sections.value = sections.value.map((section) => {
               if (section.id !== target.sectionId) return section;
               return {
                 ...section,
@@ -217,7 +288,6 @@ export default component$(() => {
                 ),
               };
             });
-            sections.value = next;
           })}
           onClose={$(() => {
             mediaTarget.value = null;
@@ -229,5 +299,6 @@ export default component$(() => {
 });
 
 export const head: DocumentHead = {
-  title: 'New page',
+  title: 'Create Page - Dashboard',
+  meta: [{ name: 'description', content: 'Create a marketing CMS page' }],
 };

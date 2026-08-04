@@ -33,6 +33,26 @@ export type PageSectionsEditorProps = {
   onMediaPreview$?: QRL<(mediaId: number, url: string) => void>;
 };
 
+async function insertSectionType(
+  current: HomepageSectionInstance[],
+  registry: AppearanceRegistryEntry[],
+  type: string,
+  onChange$: QRL<(next: HomepageSectionInstance[]) => void>,
+): Promise<void> {
+  const entry = registry.find((r) => r.type === type);
+  if (!entry) return;
+  await onChange$([
+    ...current,
+    {
+      id: newSectionId(type),
+      type,
+      enabled: true,
+      layout_width: type === 'hero' ? 'full' : 'boxed',
+      settings: { ...(entry.default_settings ?? {}) },
+    },
+  ]);
+}
+
 export const PageSectionsEditor = component$<PageSectionsEditorProps>((props) => {
   const counts = countByType(props.sections);
   const insertable = props.registry.filter((entry) =>
@@ -41,30 +61,25 @@ export const PageSectionsEditor = component$<PageSectionsEditorProps>((props) =>
 
   return (
     <div class="space-y-4">
-      <div class="flex flex-wrap items-center justify-between gap-2">
-        <h3 class="text-sm font-semibold text-gray-800 dark:text-gray-100 text-start">
-          {translateApp(props.lang, 'pages.sections')}
-        </h3>
-        {insertable.length > 0 ? (
+      <div class="flex flex-wrap items-end justify-between gap-3">
+        <div class="min-w-0 text-start">
+          <h3 class="text-base font-semibold text-gray-900 dark:text-gray-100">
+            {translateApp(props.lang, 'pages.sections')}
+          </h3>
+          <p class="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
+            {translateApp(props.lang, 'pages.sectionsHint')}
+          </p>
+        </div>
+        {props.sections.length > 0 && insertable.length > 0 ? (
           <select
             class={ADMIN_NATIVE_SELECT_COMPACT_CLASS}
             value=""
+            aria-label={translateApp(props.lang, 'pages.addSection')}
             onChange$={async (e) => {
               const type = (e.target as HTMLSelectElement).value;
               (e.target as HTMLSelectElement).value = '';
               if (!type) return;
-              const entry = props.registry.find((r) => r.type === type);
-              if (!entry) return;
-              await props.onChange$([
-                ...props.sections,
-                {
-                  id: newSectionId(type),
-                  type,
-                  enabled: true,
-                  layout_width: type === 'hero' ? 'full' : 'boxed',
-                  settings: { ...(entry.default_settings ?? {}) },
-                },
-              ]);
+              await insertSectionType(props.sections, props.registry, type, props.onChange$);
             }}
           >
             <option class={ADMIN_NATIVE_OPTION_CLASS} value="">
@@ -80,9 +95,37 @@ export const PageSectionsEditor = component$<PageSectionsEditorProps>((props) =>
       </div>
 
       {props.sections.length === 0 ? (
-        <p class="rounded-lg border border-dashed border-gray-300 px-3 py-6 text-center text-xs text-gray-400 dark:border-gray-600">
-          {translateApp(props.lang, 'pages.sectionsEmpty')}
-        </p>
+        <div class="rounded-xl border border-dashed border-gray-300 bg-gray-50/80 px-4 py-8 text-center dark:border-gray-600 dark:bg-gray-950/40">
+          <p class="text-sm font-medium text-gray-800 dark:text-gray-100">
+            {translateApp(props.lang, 'pages.sectionsEmptyTitle')}
+          </p>
+          <p class="mx-auto mt-1 max-w-md text-xs text-gray-500 dark:text-gray-400">
+            {translateApp(props.lang, 'pages.sectionsEmpty')}
+          </p>
+          {insertable.length > 0 ? (
+            <div class="mx-auto mt-5 grid max-w-2xl grid-cols-2 gap-2 sm:grid-cols-3">
+              {insertable.map((entry) => (
+                <button
+                  key={entry.type}
+                  type="button"
+                  class="rounded-lg border border-gray-300 bg-white px-3 py-3 text-start text-sm font-medium text-gray-800 shadow-sm transition hover:border-primary-400 hover:bg-primary-50 dark:border-gray-600 dark:bg-gray-900 dark:text-gray-100 dark:hover:border-primary-500 dark:hover:bg-gray-800"
+                  onClick$={async () => {
+                    await insertSectionType(
+                      props.sections,
+                      props.registry,
+                      entry.type,
+                      props.onChange$,
+                    );
+                  }}
+                >
+                  {appearanceSectionLabel(props.lang, entry.type, entry.label)}
+                </button>
+              ))}
+            </div>
+          ) : (
+            <p class="mt-4 text-xs text-gray-400">{translateApp(props.lang, 'pages.sectionsLoading')}</p>
+          )}
+        </div>
       ) : (
         <ul class="space-y-3">
           {props.sections.map((section, index) => {
@@ -90,10 +133,10 @@ export const PageSectionsEditor = component$<PageSectionsEditorProps>((props) =>
             return (
               <li
                 key={section.id}
-                class="rounded-lg border border-gray-200 bg-gray-50/80 p-3 dark:border-gray-700 dark:bg-gray-900/40"
+                class="rounded-lg border border-gray-200 bg-gray-50/80 p-4 dark:border-gray-700 dark:bg-gray-900/40"
               >
                 <div class="mb-3 flex flex-wrap items-center gap-2">
-                  <span class="text-sm font-medium text-gray-800 dark:text-gray-100">
+                  <span class="text-sm font-semibold text-gray-800 dark:text-gray-100">
                     {appearanceSectionLabel(props.lang, section.type, entry?.label || section.type)}
                   </span>
                   <AdminSwitch
@@ -108,7 +151,7 @@ export const PageSectionsEditor = component$<PageSectionsEditorProps>((props) =>
                   />
                   <button
                     type="button"
-                    class="rounded border px-2 py-1 text-xs disabled:opacity-40"
+                    class="rounded border border-gray-300 px-2 py-1 text-xs dark:border-gray-600 disabled:opacity-40"
                     disabled={index === 0}
                     onClick$={async () => {
                       await props.onChange$(moveItem(props.sections, index, index - 1));
@@ -118,7 +161,7 @@ export const PageSectionsEditor = component$<PageSectionsEditorProps>((props) =>
                   </button>
                   <button
                     type="button"
-                    class="rounded border px-2 py-1 text-xs disabled:opacity-40"
+                    class="rounded border border-gray-300 px-2 py-1 text-xs dark:border-gray-600 disabled:opacity-40"
                     disabled={index >= props.sections.length - 1}
                     onClick$={async () => {
                       await props.onChange$(moveItem(props.sections, index, index + 1));
@@ -157,7 +200,9 @@ export const PageSectionsEditor = component$<PageSectionsEditorProps>((props) =>
                     onMediaPreview$={props.onMediaPreview$}
                   />
                 ) : (
-                  <p class="text-xs text-gray-400">{translateApp(props.lang, 'appearance.noSectionSettings')}</p>
+                  <p class="text-xs text-gray-400">
+                    {translateApp(props.lang, 'appearance.noSectionSettings')}
+                  </p>
                 )}
               </li>
             );

@@ -4,6 +4,7 @@ import { Link, routeLoader$ } from '@builder.io/qwik-city';
 import { PageHeader } from '../../../../../components/common/PageHeader';
 import { PageSectionsEditor } from '../../../../../components/admin/pages/PageSectionsEditor';
 import { MediaSelector } from '../../../../../components/common/MediaSelector';
+import { AdminPublicPageLink } from '../../../../../components/admin/AdminPublicPageLink';
 import { useTranslate, translateApp } from '../../../../../lib/i18n/useTranslate';
 import { useSwal } from '../../../../../lib/hooks/useSwal';
 import { usePublicSiteMeta } from '../../layout';
@@ -31,8 +32,15 @@ import {
   EditingLocaleFieldsShell,
 } from '../../../../../components/admin/PerFieldContentTranslations';
 import {
+  ADMIN_BACK_BUTTON_CLASS,
+  ADMIN_FORM_CARD_CLASS,
+  ADMIN_FORM_INPUT_CLASS,
+  ADMIN_FORM_LABEL_CLASS,
+  ADMIN_FORM_SIDEBAR_CARD_CLASS,
+  ADMIN_FORM_TEXTAREA_CLASS,
   ADMIN_NATIVE_OPTION_CLASS,
   ADMIN_NATIVE_SELECT_CLASS,
+  ADMIN_PRIMARY_BUTTON_CLASS,
 } from '../../../../../lib/admin/native-select-classes';
 
 function mapPageFromApi(raw: Record<string, unknown>): AdminPage {
@@ -179,134 +187,168 @@ export default component$(() => {
   return (
     <div>
       <PageHeader title={translateApp(lang, 'pages.edit')} description={page.slug}>
-        <Link href={R.ADMIN.PAGES} class="text-sm text-primary-600 hover:underline">
-          {translateApp(lang, 'pages.list')}
+        <Link href={R.ADMIN.PAGES} class={ADMIN_BACK_BUTTON_CLASS}>
+          {translateApp(lang, 'common.back')}
         </Link>
       </PageHeader>
 
-      <div class="mb-4 space-y-3 rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-900">
-        <ContentPrimaryLanguageSelect
+      <div class="grid gap-6 lg:grid-cols-[minmax(0,1fr)_17.5rem] lg:items-start">
+        <EditingLocaleFieldsShell
           siteLanguages={langConfig.value.site_languages || []}
-          defaultLocale={langConfig.value.default_locale || 'en'}
-          value={contentLocaleDraft.value}
-          label={translateApp(lang, 'contentTranslations.contentPrimaryLanguage')}
-          hint={translateApp(lang, 'contentTranslations.contentPrimaryHint')}
-          useSiteDefaultLabel={translateApp(lang, 'contentTranslations.useSiteDefault')}
-          onChange$={$((code) => {
-            contentLocaleDraft.value = code;
-          })}
-        />
-        <ContentEditingLanguageSelect
-          siteLanguages={langConfig.value.site_languages || []}
-          value={editingLocaleDraft.value}
-          label={translateApp(lang, 'contentTranslations.editingLanguage')}
-          hintPrimary={translateApp(lang, 'contentTranslations.editingHintPrimary')}
-          hintSecondary={translateApp(lang, 'contentTranslations.editingHintSecondary')}
-          secondarySavePrefix={translateApp(lang, 'contentTranslations.secondarySavePrefix')}
-          effectivePrimaryLocale={primaryLocaleForContent(
-            langConfig.value.site_languages,
-            langConfig.value.default_locale,
-            contentLocaleDraft.value.trim() || null,
-          )}
-          onChange$={$((code) => {
-            editingLocaleDraft.value = code;
-          })}
-        />
+          editingLocale={editingLocaleDraft}
+        >
+          <div class="space-y-6">
+            <div class={ADMIN_FORM_CARD_CLASS}>
+              <div class="space-y-5">
+                <div>
+                  <label for="page-edit-title" class={ADMIN_FORM_LABEL_CLASS}>
+                    {translateApp(lang, 'pages.fields.title')} *
+                  </label>
+                  <input
+                    id="page-edit-title"
+                    class={`${ADMIN_FORM_INPUT_CLASS} text-lg font-semibold`}
+                    value={formData.value.title}
+                    onInput$={(e) => {
+                      formData.value = { ...formData.value, title: (e.target as HTMLInputElement).value };
+                    }}
+                  />
+                </div>
+                <div>
+                  <label for="page-edit-slug" class={ADMIN_FORM_LABEL_CLASS}>
+                    {translateApp(lang, 'pages.fields.slug')}
+                  </label>
+                  <input
+                    id="page-edit-slug"
+                    class={`${ADMIN_FORM_INPUT_CLASS} font-mono text-xs`}
+                    value={formData.value.slug}
+                    onInput$={(e) => {
+                      formData.value = { ...formData.value, slug: (e.target as HTMLInputElement).value };
+                    }}
+                  />
+                  <AdminPublicPageLink lang={lang} kind="pages" slug={formData.value.slug} />
+                </div>
+                <div>
+                  <label for="page-edit-excerpt" class={ADMIN_FORM_LABEL_CLASS}>
+                    {translateApp(lang, 'pages.fields.excerpt')}
+                  </label>
+                  <textarea
+                    id="page-edit-excerpt"
+                    class={ADMIN_FORM_TEXTAREA_CLASS}
+                    rows={3}
+                    value={formData.value.excerpt}
+                    onInput$={(e) => {
+                      formData.value = {
+                        ...formData.value,
+                        excerpt: (e.target as HTMLTextAreaElement).value,
+                      };
+                    }}
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div class={ADMIN_FORM_CARD_CLASS}>
+              <PageSectionsEditor
+                lang={lang}
+                sections={sections.value}
+                registry={registry.value}
+                languages={langConfig.value.site_languages}
+                defaultLocale={langConfig.value.default_locale}
+                activeLocale={activeSettingsLocale.value}
+                mediaPreviewById={mediaPreviewById.value}
+                onLocaleChange$={$((code) => {
+                  activeSettingsLocale.value = code;
+                })}
+                onChange$={$((next) => {
+                  sections.value = next;
+                })}
+                onMediaPreview$={$((mediaId, url) => {
+                  mediaPreviewById.value = { ...mediaPreviewById.value, [String(mediaId)]: url };
+                })}
+                onPickMedia$={$((sectionId, key, accept) => {
+                  mediaTarget.value = { sectionId, key, accept };
+                })}
+              />
+            </div>
+          </div>
+        </EditingLocaleFieldsShell>
+
+        <aside class="space-y-4 lg:sticky lg:top-24">
+          <div class={ADMIN_FORM_SIDEBAR_CARD_CLASS}>
+            <h3 class="mb-3 text-sm font-semibold text-gray-900 dark:text-gray-100">
+              {translateApp(lang, 'pages.publish')}
+            </h3>
+            <div class="space-y-3">
+              <div>
+                <label for="page-edit-status" class={ADMIN_FORM_LABEL_CLASS}>
+                  {translateApp(lang, 'pages.fields.status')}
+                </label>
+                <select
+                  id="page-edit-status"
+                  class={ADMIN_NATIVE_SELECT_CLASS}
+                  value={formData.value.status}
+                  onChange$={(e) => {
+                    formData.value = {
+                      ...formData.value,
+                      status: (e.target as HTMLSelectElement).value as 'draft' | 'published',
+                    };
+                  }}
+                >
+                  <option class={ADMIN_NATIVE_OPTION_CLASS} value="draft">
+                    {translateApp(lang, 'pages.statusDraft')}
+                  </option>
+                  <option class={ADMIN_NATIVE_OPTION_CLASS} value="published">
+                    {translateApp(lang, 'pages.statusPublished')}
+                  </option>
+                </select>
+              </div>
+              <div class="flex flex-col gap-2 border-t border-gray-200 pt-3 dark:border-gray-700">
+                <button
+                  type="button"
+                  class={ADMIN_PRIMARY_BUTTON_CLASS}
+                  disabled={saving.value}
+                  onClick$={handleSave$}
+                >
+                  {saving.value ? translateApp(lang, 'common.loading') : translateApp(lang, 'common.save')}
+                </button>
+                <Link href={R.ADMIN.PAGES} class={`${ADMIN_BACK_BUTTON_CLASS} text-center`}>
+                  {translateApp(lang, 'common.cancel')}
+                </Link>
+              </div>
+            </div>
+          </div>
+
+          <div class="space-y-3">
+            <ContentPrimaryLanguageSelect
+              siteLanguages={langConfig.value.site_languages || []}
+              defaultLocale={langConfig.value.default_locale || 'en'}
+              value={contentLocaleDraft.value}
+              label={translateApp(lang, 'contentTranslations.contentPrimaryLanguage')}
+              hint={translateApp(lang, 'contentTranslations.contentPrimaryHint')}
+              useSiteDefaultLabel={translateApp(lang, 'contentTranslations.useSiteDefault')}
+              onChange$={$((code) => {
+                contentLocaleDraft.value = code;
+              })}
+            />
+            <ContentEditingLanguageSelect
+              siteLanguages={langConfig.value.site_languages || []}
+              value={editingLocaleDraft.value}
+              label={translateApp(lang, 'contentTranslations.editingLanguage')}
+              hintPrimary={translateApp(lang, 'contentTranslations.editingHintPrimary')}
+              hintSecondary={translateApp(lang, 'contentTranslations.editingHintSecondary')}
+              secondarySavePrefix={translateApp(lang, 'contentTranslations.secondarySavePrefix')}
+              effectivePrimaryLocale={primaryLocaleForContent(
+                langConfig.value.site_languages,
+                langConfig.value.default_locale,
+                contentLocaleDraft.value.trim() || null,
+              )}
+              onChange$={$((code) => {
+                editingLocaleDraft.value = code;
+              })}
+            />
+          </div>
+        </aside>
       </div>
-
-      <EditingLocaleFieldsShell
-        siteLanguages={langConfig.value.site_languages || []}
-        editingLocale={editingLocaleDraft}
-      >        <div class="space-y-4 rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-900">
-          <div>
-            <label class="mb-1 block text-xs font-medium">{translateApp(lang, 'pages.fields.title')}</label>
-            <input
-              class="w-full rounded border px-3 py-2 text-sm dark:bg-gray-950"
-              value={formData.value.title}
-              onInput$={(e) => {
-                formData.value = { ...formData.value, title: (e.target as HTMLInputElement).value };
-              }}
-            />
-          </div>
-          <div>
-            <label class="mb-1 block text-xs font-medium">{translateApp(lang, 'pages.fields.slug')}</label>
-            <input
-              class="w-full rounded border px-3 py-2 text-sm font-mono dark:bg-gray-950"
-              value={formData.value.slug}
-              onInput$={(e) => {
-                formData.value = { ...formData.value, slug: (e.target as HTMLInputElement).value };
-              }}
-            />
-          </div>
-          <div>
-            <label class="mb-1 block text-xs font-medium">{translateApp(lang, 'pages.fields.excerpt')}</label>
-            <textarea
-              class="w-full rounded border px-3 py-2 text-sm dark:bg-gray-950"
-              rows={2}
-              value={formData.value.excerpt}
-              onInput$={(e) => {
-                formData.value = {
-                  ...formData.value,
-                  excerpt: (e.target as HTMLTextAreaElement).value,
-                };
-              }}
-            />
-          </div>
-          <div>
-            <label class="mb-1 block text-xs font-medium text-gray-700 dark:text-gray-200">
-              {translateApp(lang, 'pages.fields.status')}
-            </label>
-            <select
-              class={ADMIN_NATIVE_SELECT_CLASS}
-              value={formData.value.status}
-              onChange$={(e) => {
-                formData.value = {
-                  ...formData.value,
-                  status: (e.target as HTMLSelectElement).value as 'draft' | 'published',
-                };
-              }}
-            >
-              <option class={ADMIN_NATIVE_OPTION_CLASS} value="draft">
-                {translateApp(lang, 'pages.statusDraft')}
-              </option>
-              <option class={ADMIN_NATIVE_OPTION_CLASS} value="published">
-                {translateApp(lang, 'pages.statusPublished')}
-              </option>
-            </select>
-          </div>
-
-          <PageSectionsEditor
-            lang={lang}
-            sections={sections.value}
-            registry={registry.value}
-            languages={langConfig.value.site_languages}
-            defaultLocale={langConfig.value.default_locale}
-            activeLocale={activeSettingsLocale.value}
-            mediaPreviewById={mediaPreviewById.value}
-            onLocaleChange$={$((code) => {
-              activeSettingsLocale.value = code;
-            })}
-            onChange$={$((next) => {
-              sections.value = next;
-            })}
-            onMediaPreview$={$((mediaId, url) => {
-              mediaPreviewById.value = { ...mediaPreviewById.value, [String(mediaId)]: url };
-            })}
-            onPickMedia$={$((sectionId, key, accept) => {
-              mediaTarget.value = { sectionId, key, accept };
-            })}
-          />
-
-          <button
-            type="button"
-            class="rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
-            disabled={saving.value}
-            onClick$={handleSave$}
-          >
-            {translateApp(lang, 'common.save')}
-          </button>
-        </div>
-      </EditingLocaleFieldsShell>
 
       {mediaTarget.value ? (
         <MediaSelector
@@ -345,5 +387,6 @@ export default component$(() => {
 });
 
 export const head: DocumentHead = {
-  title: 'Edit page',
+  title: 'Edit Page - Dashboard',
+  meta: [{ name: 'description', content: 'Edit a marketing CMS page' }],
 };
