@@ -104,7 +104,7 @@ Requires `Authorization` as above. Responds **403** if the user cannot run syste
 
 | Field | Type | Description |
 |-------|------|-------------|
-| `entity` | string | One of: `projects`, `blog_posts`, `services`, `categories`, `skills` |
+| `entity` | string | One of: `projects`, `blog_posts`, `services`, `categories`, `skills`, `pages` |
 | `source` | string | Title or provisional slug text (max 255); server runs `Str::slug()` then uniquifies |
 | `ignore_id` | int (optional) | When editing, current record id so its own slug is not treated as a collision |
 
@@ -656,7 +656,24 @@ Requires `Authorization: Bearer` and the **`manage menus`** permission (or a rol
 | PUT | `/api/v1/menu-items/{id}` | Update item |
 | DELETE | `/api/v1/menu-items/{id}` | Delete item |
 
-**`item_type` values:** `custom_link` (requires `url`), `static_route` (requires `static_route_key`: `home`, `services`, `work`, `about`, `pricing`, `blog`, `contact`), `project`, `blog_post`, `service` (each requires `reference_id`).
+**`item_type` values:** `custom_link` (requires `url`), `static_route` (requires `static_route_key`: `home`, `services`, `work`, `about`, `pricing`, `blog`, `contact`), `project`, `blog_post`, `service`, `category`, `skill`, `page` (each content type requires `reference_id`). Published `page` items resolve to `/{locale}/pages/{slug}/`.
+
+## Authenticated + public CMS pages (`feature.module:pages`)
+
+Requires permission **`manage pages`** for admin routes. Public routes are guest-readable for **published** pages only.
+
+| Method | Path | Purpose |
+|--------|------|---------|
+| GET | `/api/v1/pages` | List pages (`X-Content-Locale` filters; no primary fallback for secondary locales) |
+| POST | `/api/v1/pages` | Create page (`title`, `slug`, `excerpt`, `status`, `content_locale`, `sections`, `translations`) |
+| GET | `/api/v1/pages/{id}` | Show page with translations + sections |
+| PUT | `/api/v1/pages/{id}` | Update page |
+| DELETE | `/api/v1/pages/{id}` | Delete page |
+| POST | `/api/v1/pages/bulk-delete` | Bulk delete `{ "ids": [...] }` |
+| GET | `/api/public/pages` | Published pages list for marketing |
+| GET | `/api/public/pages/{slug}` | Published page detail: localized fields, presented `sections`, `seo_meta` |
+
+Public marketing URLs: `/{lang}/pages/{slug}/`. Section JSON shape matches the Appearance homepage builder.
 
 ## Testing API Integration
 

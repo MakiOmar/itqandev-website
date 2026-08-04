@@ -188,6 +188,24 @@
     "deleteConfirm": "هل أنت متأكد من حذف هذه الخدمة؟",
     "empty": "لا توجد خدمات بعد"
   },
+  "pages": {
+    "title": "الصفحات",
+    "subtitle": "إدارة صفحات الموقع وتخطيط الأقسام",
+    "addNew": "إضافة صفحة",
+    "edit": "تعديل صفحة",
+    "list": "قائمة الصفحات",
+    "empty": "لا توجد صفحات بعد",
+    "deleteConfirm": "هل أنت متأكد من حذف هذه الصفحة؟",
+    "sections": "أقسام الصفحة",
+    "addSection": "إضافة قسم…",
+    "sectionsEmpty": "لا توجد أقسام بعد. أضف قسماً لبناء الصفحة.",
+    "fields": {
+      "title": "العنوان",
+      "slug": "المعرف (slug)",
+      "excerpt": "المقتطف",
+      "status": "الحالة"
+    }
+  },
   "testimonials": {
     "title": "الشهادات",
     "subtitle": "إدارة شهادات العملاء",
@@ -401,8 +419,10 @@
     "addSelectedSkills": "إضافة المهارات المحددة",
     "typeCategory": "تصنيف (تصفية الأعمال)",
     "typeSkill": "مهارة (تصفية الأعمال)",
+    "typePage": "صفحة",
     "pickCategory": "التصنيف",
     "pickSkill": "المهارة",
+    "pickPage": "الصفحة",
     "selectItem": "تحديد الصف"
   },
   "users": {
@@ -537,7 +557,11 @@
     "globeSummary": "ترجمات الملخص",
     "globeDescription": "ترجمات الوصف",
     "globeExcerpt": "ترجمات المقتطف",
-    "globeContent": "ترجمات المحتوى"
+    "globeContent": "ترجمات المحتوى",
+    "editingLanguage": "لغة التحرير",
+    "editingHintPrimary": "أنت تحرر الحقول الرئيسية للغة محتوى هذه الصفحة.",
+    "editingHintSecondary": "يُحفظ في صف ترجمة لهذه اللغة.",
+    "secondarySavePrefix": "ترجمة"
   },
   "seo": {
     "title": "SEO",
@@ -562,6 +586,7 @@
     "categories": "التصنيفات",
     "skills": "المهارات",
     "services": "الخدمات",
+    "pages": "الصفحات",
     "testimonials": "الشهادات",
     "blog": "المدونة",
     "media": "المكتبة الإعلامية",

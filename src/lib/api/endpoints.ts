@@ -106,6 +106,18 @@ export const API_ENDPOINTS = {
     EXPORT: '/v1/services/export',
     IMPORT: '/v1/services/import',
   },
+  PAGES: {
+    LIST: '/v1/pages',
+    GET: (id: string | number) => `/v1/pages/${id}`,
+    CREATE: '/v1/pages',
+    UPDATE: (id: string | number) => `/v1/pages/${id}`,
+    DELETE: (id: string | number) => `/v1/pages/${id}`,
+    BULK_DELETE: '/v1/pages/bulk-delete',
+  },
+  PUBLIC_PAGES: {
+    LIST: '/public/pages',
+    GET: (slug: string) => `/public/pages/${encodeURIComponent(slug)}`,
+  },
   // Testimonials
   TESTIMONIALS: {
     LIST: '/v1/testimonials',

@@ -42,6 +42,8 @@ export function getLocalizedRoutes(lang: string) {
       TESTIMONIALS_NEW: L(`${p}/testimonials/new`),
       BLOG: L(`${p}/blog`),
       BLOG_NEW: L(`${p}/blog/new`),
+      PAGES: L(`${p}/pages`),
+      PAGES_NEW: L(`${p}/pages/new`),
       MEDIA: L(`${p}/media`),
       MENUS: L(`${p}/menus`),
       LOGOUT: L(`${p}/logout`),
@@ -102,6 +104,12 @@ export function adminBlogEditHref(lang: string, id: string | number): string {
   const config = getConfig();
   const p = config.routes.admin.prefix;
   return withUiLocale(lang, `${p}/blog/${id}`);
+}
+
+export function adminPageEditHref(lang: string, id: string | number): string {
+  const config = getConfig();
+  const p = config.routes.admin.prefix;
+  return withUiLocale(lang, `${p}/pages/${id}`);
 }
 
 /** Localized routes for the current `preferred-locale` cookie (server loaders/actions). */

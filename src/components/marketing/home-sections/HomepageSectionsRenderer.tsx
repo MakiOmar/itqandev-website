@@ -27,11 +27,21 @@ export type HomepageSectionsRendererProps = {
   blogPosts: BlogPost[];
   techStack: string[];
   branding: PublicBrandingState;
+  /**
+   * When true (default), empty/missing sections fall back to homepage defaults.
+   * CMS pages should pass false so an empty builder stays empty.
+   */
+  allowDefaultSections?: boolean;
 };
 
 export const HomepageSectionsRenderer = component$<HomepageSectionsRendererProps>((props) => {
+  const allowDefaults = props.allowDefaultSections !== false;
   const list =
-    props.sections && props.sections.length > 0 ? props.sections : defaultHomepageSections();
+    props.sections && props.sections.length > 0
+      ? props.sections
+      : allowDefaults
+        ? defaultHomepageSections()
+        : [];
   const showTestimonialsModule = isFeatureModuleEnabled(props.branding.features, 'testimonials');
   const config = getConfig();
 

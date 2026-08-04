@@ -148,6 +148,14 @@ export const Sidebar = component$<SidebarProps>((props) => {
       featureModule: 'services',
     },
     {
+      label: translateApp(lang, 'sidebar.pages'),
+      href: R.ADMIN.PAGES,
+      icon: BlogIcon,
+      activeOnChildPaths: true,
+      permission: 'manage pages',
+      featureModule: 'pages',
+    },
+    {
       label: translateApp(lang, 'sidebar.testimonials'),
       href: R.ADMIN.TESTIMONIALS,
       icon: TestimonialsIcon,

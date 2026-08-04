@@ -66,7 +66,8 @@ type MenuItemType =
   | 'blog_post'
   | 'service'
   | 'category'
-  | 'skill';
+  | 'skill'
+  | 'page';
 
 function collectMenuItemRefs(roots: MenuItemNode[]): Array<{ item_type: string; reference_id: number | null }> {
   const out: Array<{ item_type: string; reference_id: number | null }> = [];
@@ -223,6 +224,7 @@ export default component$(() => {
   const projects = useSignal<PickerProject[]>([]);
   const blogPosts = useSignal<PickerPost[]>([]);
   const services = useSignal<PickerService[]>([]);
+  const pages = useSignal<PickerProject[]>([]);
   const categories = useSignal<PickerTax[]>([]);
   const skills = useSignal<PickerTax[]>([]);
 
@@ -445,7 +447,7 @@ export default component$(() => {
       if (form.item_type === 'static_route') {
         payload.static_route_key = form.static_route_key;
       }
-      if (['project', 'blog_post', 'service', 'category', 'skill'].includes(form.item_type)) {
+      if (['project', 'blog_post', 'service', 'category', 'skill', 'page'].includes(form.item_type)) {
         payload.reference_id = parseInt(String(form.reference_id), 10);
       }
       if (form.id) {
@@ -657,12 +659,13 @@ export default component$(() => {
     const presentationLocale = uiLangFromUrlPathname(pathname);
     const api = getApiClient(undefined, presentationLocale);
     try {
-      const [pr, br, sr, cr, skr] = await Promise.all([
+      const [pr, br, sr, cr, skr, pgr] = await Promise.all([
         api.get(API_ENDPOINTS.PROJECTS.LIST).catch(() => ({ data: [] })),
         api.get(API_ENDPOINTS.BLOG.LIST).catch(() => ({ data: [] })),
         api.get(API_ENDPOINTS.SERVICES.LIST).catch(() => ({ data: [] })),
         api.get(API_ENDPOINTS.CATEGORIES.LIST).catch(() => ({ data: [] })),
         api.get(API_ENDPOINTS.SKILLS.LIST).catch(() => ({ data: [] })),
+        api.get(API_ENDPOINTS.PAGES.LIST).catch(() => ({ data: [] })),
       ]);
       const pRows = extractRows(pr) as Record<string, unknown>[];
       projects.value = pRows.map((r) => ({
@@ -691,12 +694,18 @@ export default component$(() => {
         name: String(r.name ?? ''),
         slug: String(r.slug ?? ''),
       }));
+      const pgRows = extractRows(pgr) as Record<string, unknown>[];
+      pages.value = pgRows.map((r) => ({
+        id: Number(r.id),
+        title: String(r.title ?? ''),
+      }));
     } catch {
       projects.value = [];
       blogPosts.value = [];
       services.value = [];
       categories.value = [];
       skills.value = [];
+      pages.value = [];
     }
   });
 
@@ -867,6 +876,7 @@ export default component$(() => {
                                 services.value,
                                 categories.value,
                                 skills.value,
+                                pages.value,
                                 lang,
                               )}
                             />
@@ -938,6 +948,7 @@ export default component$(() => {
                     <option value="service">{String(translateApp(lang, 'menusPage.typeService'))}</option>
                     <option value="category">{String(translateApp(lang, 'menusPage.typeCategory'))}</option>
                     <option value="skill">{String(translateApp(lang, 'menusPage.typeSkill'))}</option>
+                    <option value="page">{String(translateApp(lang, 'menusPage.typePage'))}</option>
                   </select>
                 </div>
 
@@ -1069,6 +1080,26 @@ export default component$(() => {
                       {skills.value.map((s) => (
                         <option key={s.id} value={s.id}>
                           {`${s.name} (${s.slug})`}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                )}
+
+                {form.item_type === 'page' && (
+                  <div class="md:col-span-2">
+                    <label class={labelClass}>{String(translateApp(lang, 'menusPage.pickPage'))}</label>
+                    <select
+                      class={inputClass}
+                      value={form.reference_id}
+                      onInput$={(e) => {
+                        form.reference_id = (e.target as HTMLSelectElement).value;
+                      }}
+                    >
+                      <option value="">{String(translateApp(lang, 'menusPage.pickPlaceholder'))}</option>
+                      {pages.value.map((p) => (
+                        <option key={p.id} value={p.id}>
+                          {p.title}
                         </option>
                       ))}
                     </select>
@@ -1210,6 +1241,7 @@ function rowLabelSync(
   svcs: PickerService[],
   cats: PickerTax[],
   sks: PickerTax[],
+  pageRows: PickerProject[],
   lang: string,
 ): string {
   if (item.label?.trim()) {
@@ -1241,6 +1273,10 @@ function rowLabelSync(
   if (item.item_type === 'skill') {
     const s = sks.find((x) => x.id === item.reference_id);
     return s?.name ?? `#${item.reference_id ?? ''}`;
+  }
+  if (item.item_type === 'page') {
+    const p = pageRows.find((x) => x.id === item.reference_id);
+    return p?.title ?? `#${item.reference_id ?? ''}`;
   }
   return item.item_type;
 }

@@ -188,6 +188,24 @@
     "deleteConfirm": "Are you sure you want to delete this service?",
     "empty": "No services yet"
   },
+  "pages": {
+    "title": "Pages",
+    "subtitle": "Manage marketing CMS pages and section layouts",
+    "addNew": "Add Page",
+    "edit": "Edit Page",
+    "list": "Pages List",
+    "empty": "No pages yet",
+    "deleteConfirm": "Are you sure you want to delete this page?",
+    "sections": "Page sections",
+    "addSection": "Add section…",
+    "sectionsEmpty": "No sections yet. Add a section to build this page.",
+    "fields": {
+      "title": "Title",
+      "slug": "Slug",
+      "excerpt": "Excerpt",
+      "status": "Status"
+    }
+  },
   "testimonials": {
     "title": "Testimonials",
     "subtitle": "Manage customer testimonials",
@@ -401,8 +419,10 @@
     "addSelectedSkills": "Add selected skills",
     "typeCategory": "Category (work filter)",
     "typeSkill": "Skill (work filter)",
+    "typePage": "Page",
     "pickCategory": "Category",
     "pickSkill": "Skill",
+    "pickPage": "Page",
     "selectItem": "Select row"
   },
   "users": {
@@ -537,7 +557,11 @@
     "globeSummary": "Translations for summary",
     "globeDescription": "Translations for description",
     "globeExcerpt": "Translations for excerpt",
-    "globeContent": "Translations for content"
+    "globeContent": "Translations for content",
+    "editingLanguage": "Editing language",
+    "editingHintPrimary": "You are editing the main fields for this page’s content language.",
+    "editingHintSecondary": "Saves into a translation row for this language.",
+    "secondarySavePrefix": "Translation"
   },
   "seo": {
     "title": "SEO",
@@ -562,6 +586,7 @@
     "categories": "Categories",
     "skills": "Skills",
     "services": "Services",
+    "pages": "Pages",
     "testimonials": "Testimonials",
     "blog": "Blog",
     "media": "Media Library",

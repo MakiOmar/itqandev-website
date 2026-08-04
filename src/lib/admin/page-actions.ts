@@ -1,0 +1,169 @@
+import { routeAction$, zod$, z } from '@builder.io/qwik-city';
+import { getApiClient, extractCookieHeader } from '../api/client';
+import { API_ENDPOINTS } from '../api/endpoints';
+import { parseTranslationsJson } from '../content-translations';
+import { shouldWritePrimaryColumns } from '../content-display-locale';
+
+function formatPageApiError(err: unknown): string {
+  const e = err as { message?: string; status?: number; errors?: Record<string, string[] | string> };
+  const base = String(e?.message ?? 'Request failed');
+  if (e?.status === 422 && e.errors && typeof e.errors === 'object') {
+    const lines: string[] = [];
+    for (const [k, v] of Object.entries(e.errors)) {
+      if (Array.isArray(v)) {
+        for (const m of v) lines.push(`${k}: ${m}`);
+      } else if (v != null) {
+        lines.push(`${k}: ${String(v)}`);
+      }
+    }
+    if (lines.length > 0) {
+      return `${base} — ${lines.slice(0, 8).join('; ')}`.slice(0, 800);
+    }
+  }
+  return base.slice(0, 600);
+}
+
+function parseSectionsJson(raw: string | undefined | null): unknown[] {
+  if (raw == null || String(raw).trim() === '') return [];
+  try {
+    const parsed = JSON.parse(String(raw));
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
+
+export function mergeSecondaryPageTranslations(
+  translationsJson: string | undefined,
+  uiLocale: string,
+  edited: { title: string; excerpt: string },
+): unknown[] {
+  const base = parseTranslationsJson(translationsJson) ?? [];
+  const u = uiLocale.toLowerCase();
+  const idx = base.findIndex((row) => {
+    if (!row || typeof row !== 'object') return false;
+    return String((row as Record<string, unknown>).locale ?? '').toLowerCase() === u;
+  });
+  const row = { locale: u, title: edited.title, excerpt: edited.excerpt };
+  if (idx >= 0) {
+    base[idx] = { ...(base[idx] as object), ...row };
+  } else {
+    base.push(row);
+  }
+  return base;
+}
+
+export const pageFormSchema = z
+  .object({
+    title: z.string().min(1).max(255),
+    slug: z.string().min(1).max(255),
+    excerpt: z.string().max(512).optional(),
+    status: z.enum(['draft', 'published']).optional(),
+    content_locale: z.string().max(16).optional(),
+    editing_locale: z.string().max(16).optional(),
+    effective_primary_locale: z.string().max(16).optional(),
+    canonical_title: z.string().optional(),
+    canonical_excerpt: z.string().optional(),
+    sections_json: z.string().optional(),
+    translations_json: z.string().optional(),
+  })
+  .passthrough();
+
+function buildPageBody(data: Record<string, unknown>): Record<string, unknown> {
+  const effectivePrimary = String(data.effective_primary_locale || data.content_locale || 'en');
+  const editingLocale = String(data.editing_locale || effectivePrimary);
+  const sections = parseSectionsJson(data.sections_json as string | undefined);
+  const parsedTranslations = parseTranslationsJson(data.translations_json as string | undefined);
+
+  let title = String(data.title || '');
+  let excerpt = data.excerpt != null ? String(data.excerpt) : '';
+  let translationsOut: unknown[] | undefined;
+
+  if (shouldWritePrimaryColumns(editingLocale, effectivePrimary)) {
+    if (parsedTranslations) translationsOut = parsedTranslations;
+  } else {
+    title = String(data.canonical_title ?? title);
+    excerpt = String(data.canonical_excerpt ?? excerpt);
+    translationsOut = mergeSecondaryPageTranslations(data.translations_json as string | undefined, editingLocale, {
+      title: String(data.title || ''),
+      excerpt: data.excerpt != null ? String(data.excerpt) : '',
+    });
+  }
+
+  const body: Record<string, unknown> = {
+    title,
+    slug: String(data.slug || ''),
+    excerpt,
+    status: data.status === 'published' ? 'published' : 'draft',
+    sections,
+  };
+  if (data.content_locale !== undefined) {
+    const raw = String(data.content_locale || '').trim();
+    body.content_locale = raw || null;
+  }
+  if (translationsOut) {
+    body.translations = translationsOut;
+  }
+  return body;
+}
+
+export const useCreatePage = routeAction$(
+  async (data, { cookie, request, fail }) => {
+    try {
+      const api = getApiClient(extractCookieHeader(cookie, request));
+      const body = buildPageBody(data as Record<string, unknown>);
+      const res = await api.post<{ id?: number }>(API_ENDPOINTS.PAGES.CREATE, body);
+      const id = (res as { data?: { id?: number } })?.data?.id ?? (res as { id?: number })?.id;
+      return { success: true as const, id };
+    } catch (err) {
+      return fail(400, { message: formatPageApiError(err) });
+    }
+  },
+  zod$(pageFormSchema),
+);
+
+export async function runPageUpdateFromBrowser(
+  id: number | string,
+  data: Record<string, unknown>,
+): Promise<{ success: boolean; message?: string; error?: string }> {
+  try {
+    const api = getApiClient(null);
+    await api.put(API_ENDPOINTS.PAGES.UPDATE(id), buildPageBody(data));
+    return { success: true, message: 'Page saved.' };
+  } catch (err) {
+    return { success: false, error: formatPageApiError(err) };
+  }
+}
+
+export const useDeletePage = routeAction$(
+  async (data, { cookie, request, fail }) => {
+    try {
+      const api = getApiClient(extractCookieHeader(cookie, request));
+      await api.delete(API_ENDPOINTS.PAGES.DELETE(data.id));
+      return { success: true as const };
+    } catch (err) {
+      return fail(400, { message: formatPageApiError(err) });
+    }
+  },
+  zod$({ id: z.coerce.number().int().positive() }),
+);
+
+export const useBulkDeletePages = routeAction$(
+  async (data, { cookie, request, fail }) => {
+    try {
+      const ids = String(data.ids || '')
+        .split(',')
+        .map((x) => Number(x.trim()))
+        .filter((n) => Number.isInteger(n) && n > 0);
+      if (ids.length === 0) {
+        return fail(422, { message: 'No ids' });
+      }
+      const api = getApiClient(extractCookieHeader(cookie, request));
+      await api.post(API_ENDPOINTS.PAGES.BULK_DELETE, { ids });
+      return { success: true as const };
+    } catch (err) {
+      return fail(400, { message: formatPageApiError(err) });
+    }
+  },
+  zod$({ ids: z.string().min(1) }),
+);

@@ -11,6 +11,7 @@ const ADMIN_PATH_MODULE: Array<{ prefix: string; module: FeatureModuleKey }> = [
   { prefix: '/admin/services', module: 'services' },
   { prefix: '/admin/testimonials', module: 'testimonials' },
   { prefix: '/admin/blog', module: 'blog' },
+  { prefix: '/admin/pages', module: 'pages' },
   { prefix: '/admin/media', module: 'media' },
   { prefix: '/admin/users', module: 'users' },
 ];
@@ -41,6 +42,9 @@ export function getFeatureModuleForPublicHref(href: string): FeatureModuleKey | 
   }
   if (path.includes('/blog')) {
     return 'blog';
+  }
+  if (path.includes('/pages')) {
+    return 'pages';
   }
   return null;
 }
