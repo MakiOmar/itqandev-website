@@ -20,6 +20,14 @@ import type {
 
 const VALID_ZONES = new Set(['top', 'main', 'bottom']);
 
+/** Module-level so `$` handlers can call it without capturing a non-serializable closure. */
+function readFooterZone(
+  doc: FooterBuilderDocument | null,
+  zone: string,
+): FooterZoneInstance {
+  return doc?.zones?.[zone as 'top' | 'main' | 'bottom'] ?? { enabled: true, columns: [] };
+}
+
 export default component$(() => {
   const loc = useLocation();
   const zone = String(loc.params.zone ?? '').toLowerCase();
@@ -48,9 +56,6 @@ export default component$(() => {
       loading.value = false;
     }
   });
-
-  const zoneData = (): FooterZoneInstance =>
-    doc.value?.zones?.[zone as 'top' | 'main' | 'bottom'] ?? { enabled: true, columns: [] };
 
   const setZone = $((next: FooterZoneInstance) => {
     if (!doc.value) return;
@@ -101,7 +106,7 @@ export default component$(() => {
             type="button"
             class="rounded-lg border px-3 py-2 text-sm"
             onClick$={() => {
-              const z = zoneData();
+              const z = readFooterZone(doc.value, zone);
               const col: FooterColumnInstance = {
                 id: newColumnId(),
                 span: 3,
@@ -127,7 +132,7 @@ export default component$(() => {
         <p class="text-sm text-gray-500">{translateApp(lang, 'common.loading')}</p>
       ) : (
         <ul class="space-y-3" role="list">
-          {zoneData().columns.map((col, index) => {
+          {readFooterZone(doc.value, zone).columns.map((col, index) => {
             const isDropTarget = dropOverIndex.value === index && dragFromIndex.value !== index;
             return (
               <li
@@ -149,7 +154,7 @@ export default component$(() => {
                   e.preventDefault();
                   const from = dragFromIndex.value;
                   if (from != null && from !== index) {
-                    const z = zoneData();
+                    const z = readFooterZone(doc.value, zone);
                     setZone({ ...z, columns: moveItem(z.columns, from, index) });
                   }
                   dragFromIndex.value = null;
@@ -190,7 +195,7 @@ export default component$(() => {
                     value={col.span}
                     onInput$={(e) => {
                       const span = Number((e.target as HTMLInputElement).value);
-                      const z = zoneData();
+                      const z = readFooterZone(doc.value, zone);
                       setZone({
                         ...z,
                         columns: z.columns.map((c, i) => (i === index ? { ...c, span } : c)),
@@ -209,7 +214,7 @@ export default component$(() => {
                   type="button"
                   class="rounded border border-red-300 px-2 py-1 text-xs text-red-600"
                   onClick$={() => {
-                    const z = zoneData();
+                    const z = readFooterZone(doc.value, zone);
                     setZone({ ...z, columns: z.columns.filter((_, i) => i !== index) });
                   }}
                 >

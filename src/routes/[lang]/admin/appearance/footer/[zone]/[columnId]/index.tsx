@@ -34,6 +34,16 @@ import type {
 import type { Media } from '~/types/media';
 const VALID_ZONES = new Set(['top', 'main', 'bottom']);
 
+/** Module-level so `$` handlers can call it without capturing a non-serializable closure. */
+function readFooterColumn(
+  doc: FooterBuilderDocument | null,
+  zone: string,
+  columnId: string,
+): FooterColumnInstance | null {
+  const z = doc?.zones?.[zone as 'top' | 'main' | 'bottom'];
+  return z?.columns.find((c) => c.id === columnId) ?? null;
+}
+
 export default component$(() => {
   const loc = useLocation();
   const zone = String(loc.params.zone ?? '').toLowerCase();
@@ -83,11 +93,6 @@ export default component$(() => {
     }
   });
 
-  const getColumn = (): FooterColumnInstance | null => {
-    const z = doc.value?.zones?.[zone as 'top' | 'main' | 'bottom'];
-    return z?.columns.find((c) => c.id === columnId) ?? null;
-  };
-
   const updateColumn = $((updater: (col: FooterColumnInstance) => FooterColumnInstance) => {
     if (!doc.value) return;
     const zKey = zone as 'top' | 'main' | 'bottom';
@@ -130,7 +135,7 @@ export default component$(() => {
     return <p class="text-sm text-red-600">Unknown column.</p>;
   }
 
-  const column = getColumn();
+  const column = readFooterColumn(doc.value, zone, columnId);
 
   return (
     <div class="space-y-6">
@@ -196,7 +201,7 @@ export default component$(() => {
               onClick$={() => {
                 const type = insertType.value;
                 const entry = registry.value.find((r) => r.type === type);
-                const counts = countByType(getColumn()?.blocks ?? []);
+                const counts = countByType(readFooterColumn(doc.value, zone, columnId)?.blocks ?? []);
                 if (!canInsertType(type, counts, entry?.max_instances ?? null)) {
                   showError(translateApp(lang, 'common.error'), {
                     text: `Maximum instances for ${entry?.label ?? type}`,
@@ -218,7 +223,7 @@ export default component$(() => {
           </div>
 
           <ul class="space-y-3" role="list">
-            {(getColumn()?.blocks ?? []).map((block, index) => {
+            {(readFooterColumn(doc.value, zone, columnId)?.blocks ?? []).map((block, index) => {
               const entry = registry.value.find((r) => r.type === block.type);
               const label = entry?.label ?? block.type;
               const open = expandedId.value === block.id;
@@ -359,7 +364,7 @@ export default component$(() => {
           onSelect={$((media: Media) => {
             const target = mediaTarget.value;
             if (!target) return;
-            const col = getColumn();
+            const col = readFooterColumn(doc.value, zone, columnId);
             const block = col?.blocks.find((b) => b.id === target.blockId);
             const entry = registry.value.find((r) => r.type === block?.type);
             const field = entry?.settings_fields?.find((f) => f.key === target.key);
