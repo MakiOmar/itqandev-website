@@ -70,7 +70,8 @@ export type AppearanceSettingFieldType =
   | 'number'
   | 'boolean'
   | 'media'
-  | 'json';
+  | 'json'
+  | 'floating_icons';
 
 export type AppearanceSettingField = {
   key: string;
@@ -81,6 +82,23 @@ export type AppearanceSettingField = {
   max?: number;
   /** When true, edited per language tab into settings.translations.{locale}. */
   translatable?: boolean;
+};
+
+/** Floating ornament icons around the hero media (admin stores media_id; public gets url). */
+export type HeroFloatingIconMotion = 'rotate' | 'diagonal' | 'bounce';
+
+export type HeroFloatingIcon = {
+  id: string;
+  enabled?: boolean;
+  media_id?: number | null;
+  /** Present on public shell after resolve. */
+  url?: string;
+  alt?: string | null;
+  motion?: HeroFloatingIconMotion | string;
+  /** Percent of hero media box (0–100). */
+  x?: number;
+  y?: number;
+  size?: number;
 };
 
 export type AppearanceRegistryEntry = {

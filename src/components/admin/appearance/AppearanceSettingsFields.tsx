@@ -1,5 +1,6 @@
 import { component$, type QRL } from '@builder.io/qwik';
 import { AdminSwitch } from './AdminSwitch';
+import { HeroFloatingIconsEditor } from './HeroFloatingIconsEditor';
 import {
   isAppearanceFieldTranslatable,
   readAppearanceSettingValue,
@@ -29,6 +30,8 @@ export type AppearanceSettingsFieldsProps = {
   languagesSettingsHref?: string;
   /** Resolved preview URLs keyed by media id string (for id-valued media fields). */
   mediaPreviewById?: Record<string, string>;
+  /** When a nested editor picks media, cache the preview URL by id. */
+  onMediaPreview$?: QRL<(mediaId: number, url: string) => void>;
 };
 
 type FieldControlProps = {
@@ -39,6 +42,8 @@ type FieldControlProps = {
   onSettingsChange$: QRL<(next: Record<string, unknown>) => void>;
   onPickMedia$: QRL<(key: string, accept?: string) => void>;
   mediaPreviewById?: Record<string, string>;
+  onMediaPreview$?: QRL<(mediaId: number, url: string) => void>;
+  lang: string;
 };
 
 function asString(v: unknown): string {
@@ -52,9 +57,8 @@ function localeLabel(row: SiteLanguageRow): string {
 }
 
 const AppearanceSettingFieldControl = component$<FieldControlProps>((props) => {
-  const { lang } = useTranslate();
   const field = props.field;
-  const label = appearanceFieldLabel(lang, field.key, field.label);
+  const label = appearanceFieldLabel(props.lang, field.key, field.label);
   const translatable = isAppearanceFieldTranslatable(field);
   const raw = readAppearanceSettingValue(
     props.values,
@@ -63,6 +67,34 @@ const AppearanceSettingFieldControl = component$<FieldControlProps>((props) => {
     props.defaultLocale,
     translatable,
   );
+
+  if (field.type === 'floating_icons') {
+    return (
+      <div class="md:col-span-2">
+        <label class="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-300 text-start">
+          {label}
+        </label>
+        <HeroFloatingIconsEditor
+          lang={props.lang}
+          icons={raw}
+          mediaPreviewById={props.mediaPreviewById}
+          onChange$={async (icons) => {
+            await props.onSettingsChange$(
+              writeAppearanceSettingValue(
+                props.values,
+                field.key,
+                icons,
+                props.activeLocale,
+                props.defaultLocale,
+                false,
+              ),
+            );
+          }}
+          onPreviewUrl$={props.onMediaPreview$}
+        />
+      </div>
+    );
+  }
 
   if (field.type === 'boolean') {
     const checked = raw === true || raw === 'true' || raw === 1 || raw === '1';
@@ -111,7 +143,7 @@ const AppearanceSettingFieldControl = component$<FieldControlProps>((props) => {
             </div>
           ) : (
             <div class="flex h-20 w-32 items-center justify-center rounded border border-dashed border-gray-300 text-xs text-gray-400 dark:border-gray-600">
-              {translateApp(lang, 'appearance.noImage')}
+              {translateApp(props.lang, 'appearance.noImage')}
             </div>
           )}
           <div class="flex flex-col gap-2">
@@ -122,7 +154,7 @@ const AppearanceSettingFieldControl = component$<FieldControlProps>((props) => {
                 await props.onPickMedia$(field.key, field.accept);
               }}
             >
-              {translateApp(lang, 'appearance.selectFromLibrary')}
+              {translateApp(props.lang, 'appearance.selectFromLibrary')}
             </button>
             {raw !== undefined && raw !== null && raw !== '' ? (
               <button
@@ -141,13 +173,13 @@ const AppearanceSettingFieldControl = component$<FieldControlProps>((props) => {
                   );
                 }}
               >
-                {translateApp(lang, 'appearance.clear')}
+                {translateApp(props.lang, 'appearance.clear')}
               </button>
             ) : null}
             <input
               type="url"
               class="w-full min-w-[14rem] rounded border px-2 py-1 text-xs dark:bg-gray-900"
-              placeholder={translateApp(lang, 'appearance.orPasteUrl')}
+              placeholder={translateApp(props.lang, 'appearance.orPasteUrl')}
               value={urlInput}
               onInput$={async (e) => {
                 await props.onSettingsChange$(
@@ -369,9 +401,11 @@ export const AppearanceSettingsFields = component$<AppearanceSettingsFieldsProps
               values={props.values}
               activeLocale={activeLocale}
               defaultLocale={defaultLocale}
+              lang={lang}
               onSettingsChange$={props.onSettingsChange$}
               onPickMedia$={props.onPickMedia$}
               mediaPreviewById={props.mediaPreviewById}
+              onMediaPreview$={props.onMediaPreview$}
             />
           ))}
         </div>
@@ -392,9 +426,11 @@ export const AppearanceSettingsFields = component$<AppearanceSettingsFieldsProps
                 values={props.values}
                 activeLocale={activeLocale}
                 defaultLocale={defaultLocale}
+                lang={lang}
                 onSettingsChange$={props.onSettingsChange$}
                 onPickMedia$={props.onPickMedia$}
                 mediaPreviewById={props.mediaPreviewById}
+                onMediaPreview$={props.onMediaPreview$}
               />
             ))}
           </div>

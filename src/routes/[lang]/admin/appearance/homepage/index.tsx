@@ -300,6 +300,12 @@ export default component$(() => {
                           activeLocale={settingsLocale.value}
                           languagesSettingsHref={R.ADMIN.SETTINGS_LANGUAGES}
                           mediaPreviewById={mediaPreviewById.value}
+                          onMediaPreview$={$((mediaId, url) => {
+                            mediaPreviewById.value = {
+                              ...mediaPreviewById.value,
+                              [String(mediaId)]: url,
+                            };
+                          })}
                           onLocaleChange$={$((code) => {
                             settingsLocale.value = code;
                           })}

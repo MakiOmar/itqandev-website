@@ -16,8 +16,10 @@ import {
   type PublicShellState,
 } from '~/lib/marketing/public-shell';
 import { uiLangFromUrlPathname } from '~/lib/i18n/ui-locale-path';
+import { marketingRoutes } from '~/lib/marketing/constants';
 import type { PublicNavItem } from '~/lib/marketing/public-menu';
 import type { SiteContent } from '~/lib/marketing/types';
+import type { HomepageSectionInstance } from '~/lib/marketing/appearance-types';
 
 /**
  * One Laravel round-trip for branding, primary menu, and services merged into site content.
@@ -42,6 +44,20 @@ export const usePublicAuth = routeLoader$(async ({ cookie, request }) => {
   }
 });
 
+function isPublicHomePath(pathname: string, uiLocale: string): boolean {
+  const home = marketingRoutes(uiLocale).home.replace(/\/+$/, '') || '/';
+  const path = pathname.replace(/\/+$/, '') || '/';
+  return path === home;
+}
+
+function heroWantsOverlayNav(sections: HomepageSectionInstance[] | undefined): boolean {
+  if (!sections?.length) return false;
+  const hero = sections.find((s) => s.type === 'hero');
+  if (!hero) return false;
+  const v = hero.settings?.full_viewport;
+  return v === true || v === 'true' || v === 1 || v === '1';
+}
+
 /**
  * Public marketing layout: Header + main + Footer.
  */
@@ -54,10 +70,14 @@ export default component$(() => {
   const primaryMenu = useSignal<PublicNavItem[]>(shellLoader.value.primaryMenu);
   useDevClientMarketingHydration(branding, primaryMenu, uiLocale);
   const contact = shellLoader.value.siteContent?.contact;
+  const overlayNav =
+    isPublicHomePath(loc.url.pathname, uiLocale) &&
+    heroWantsOverlayNav(shellLoader.value.homepageSections as HomepageSectionInstance[]);
 
   return (
     <div
       data-public-page
+      data-hero-overlay-nav={overlayNav ? 'true' : undefined}
       class="relative isolate min-h-screen flex flex-col bg-gradient-to-br from-slate-50 via-blue-50/30 to-indigo-50/20 dark:from-slate-900 dark:via-slate-800/30 dark:to-slate-900/20 transition-colors duration-300"
     >
       {/* Full-viewport particles behind page chrome + content */}
@@ -72,6 +92,7 @@ export default component$(() => {
             branding={branding.value}
             navItems={primaryMenu.value}
             features={branding.value?.features}
+            overlayNav={overlayNav}
           />
           <main class="flex-1 overflow-y-auto">
             <Slot />

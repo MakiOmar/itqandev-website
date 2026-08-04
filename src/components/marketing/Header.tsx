@@ -33,6 +33,10 @@ interface HeaderProps {
   navItems?: PublicNavItem[] | null;
   /** Module toggles from GET /api/public/site-meta */
   features?: Partial<Record<FeatureModuleKey, boolean>> & Record<string, boolean>;
+  /**
+   * When true (full-viewport homepage hero), sit over the hero instead of sticky in document flow.
+   */
+  overlayNav?: boolean;
 }
 
 export const Header = component$<HeaderProps>((props) => {
@@ -107,8 +111,14 @@ export const Header = component$<HeaderProps>((props) => {
 
   return (
     <header
-      class="sticky top-0 z-40 w-full border-b border-slate-200/80 bg-white/80 text-slate-900 backdrop-blur-md light:border-slate-200/80 light:bg-white/80 light:text-slate-900 dark:border-slate-700/80 dark:bg-slate-900/80 dark:text-slate-100"
+      class={[
+        'z-40 w-full border-b text-slate-900 backdrop-blur-md light:border-slate-200/80 light:bg-white/80 light:text-slate-900 dark:border-slate-700/80 dark:bg-slate-900/80 dark:text-slate-100',
+        props.overlayNav
+          ? 'absolute inset-x-0 top-0 border-transparent bg-white/70 dark:bg-slate-900/70'
+          : 'sticky top-0 border-slate-200/80 bg-white/80',
+      ].join(' ')}
       role="banner"
+      data-overlay-nav={props.overlayNav ? 'true' : undefined}
     >
       <Container class="flex h-16 w-full items-center justify-between gap-3 md:justify-start sm:h-18">
         {/* Logo — keep away from main nav cluster */}

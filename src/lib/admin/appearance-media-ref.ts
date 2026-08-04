@@ -47,7 +47,7 @@ export function appearanceMediaUrlInputValue(value: unknown): string {
   return typeof value === 'string' ? value : '';
 }
 
-/** Collect media ids from one settings object (flat keys + translations bags). */
+/** Collect media ids from one settings object (flat keys + translations bags + floating_icons). */
 export function collectAppearanceMediaIdsFromSettings(
   settings: Record<string, unknown> | null | undefined,
 ): number[] {
@@ -65,6 +65,14 @@ export function collectAppearanceMediaIdsFromSettings(
             if (id !== null) ids.add(id);
           }
         }
+      }
+      continue;
+    }
+    if (key === 'floating_icons' && Array.isArray(value)) {
+      for (const row of value) {
+        if (!row || typeof row !== 'object' || Array.isArray(row)) continue;
+        const id = appearanceMediaId((row as Record<string, unknown>).media_id);
+        if (id !== null) ids.add(id);
       }
       continue;
     }

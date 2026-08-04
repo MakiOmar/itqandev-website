@@ -10,7 +10,10 @@ import { BlogCard } from '~/components/marketing/BlogCard';
 import { resolveServiceIconUrl } from '~/lib/marketing/service-icons';
 import { resolveLaravelMediaUrl } from '~/lib/marketing/resolve-laravel-media-url';
 import { marketingRoutes } from '~/lib/marketing/constants';
+import { normalizeHeroFloatingIcons } from '~/lib/admin/hero-floating-icons';
 import type { CaseStudy, Testimonial, BlogPost, Service } from '~/lib/marketing/types';
+import type { HeroFloatingIcon } from '~/lib/marketing/appearance-types';
+import './hero-floating-icons.css';
 
 function settingString(settings: Record<string, unknown> | undefined, key: string, fallback: string): string {
   const v = settings?.[key];
@@ -26,6 +29,11 @@ function settingInt(settings: Record<string, unknown> | undefined, key: string, 
 function settingOptionalString(settings: Record<string, unknown> | undefined, key: string): string {
   const v = settings?.[key];
   return typeof v === 'string' && v.trim() ? v.trim() : '';
+}
+
+function settingBool(settings: Record<string, unknown> | undefined, key: string): boolean {
+  const v = settings?.[key];
+  return v === true || v === 'true' || v === 1 || v === '1';
 }
 
 export type HomeSectionSharedProps = {
@@ -49,17 +57,56 @@ export const HeroHomeSection = component$<HomeSectionSharedProps>(({ settings, u
   const imageMobile = resolveLaravelMediaUrl(imageMobileRaw) || imageMobileRaw;
   const imageAlt = settingOptionalString(settings, 'image_alt') || headline;
 
+  const fullViewport = settingBool(settings, 'full_viewport');
+  // Allow 0 so nav can sit flush; clamp to registry range (0–200).
+  const navTopSpace = (() => {
+    const v = settings?.nav_top_space;
+    const n = typeof v === 'number' ? v : Number(v);
+    if (!Number.isFinite(n)) return 88;
+    return Math.max(0, Math.min(200, Math.floor(n)));
+  })();
+  const watermarkEnabled = settingBool(settings, 'watermark_enabled');
+  const watermarkText = settingOptionalString(settings, 'watermark_text');
+  const floatingEnabled = settingBool(settings, 'floating_icons_enabled');
+  const floatingIcons: HeroFloatingIcon[] = floatingEnabled
+    ? normalizeHeroFloatingIcons(settings?.floating_icons).filter(
+        (icon) => icon.enabled !== false && (icon.url || icon.media_id),
+      )
+    : [];
+
+  const sectionClass = [
+    'relative overflow-hidden bg-gradient-to-b from-primary-50/70 via-white to-white dark:from-primary-950/25 dark:via-slate-900 dark:to-slate-900',
+    fullViewport
+      ? 'flex min-h-[100dvh] min-h-screen flex-col justify-center pb-12 sm:pb-16'
+      : 'pt-12 sm:pt-16 lg:pt-20',
+  ].join(' ');
+
   return (
-    <Section class="relative overflow-hidden bg-gradient-to-b from-primary-50/70 via-white to-white pt-12 sm:pt-16 lg:pt-20 dark:from-primary-950/25 dark:via-slate-900 dark:to-slate-900">
+    <Section
+      flush={fullViewport}
+      class={sectionClass}
+      style={fullViewport ? { paddingTop: `${navTopSpace}px` } : undefined}
+      data-hero-full-viewport={fullViewport ? 'true' : undefined}
+    >
+      {watermarkEnabled && watermarkText ? (
+        <div
+          class="pointer-events-none absolute inset-0 z-0 flex select-none items-center justify-center overflow-hidden"
+          aria-hidden="true"
+        >
+          <span class="max-w-[95vw] truncate px-4 text-center text-[14vw] font-black leading-none tracking-tight text-slate-900/[0.045] dark:text-white/[0.05] sm:text-[12vw] lg:text-[10vw]">
+            {watermarkText}
+          </span>
+        </div>
+      ) : null}
       <div
-        class="pointer-events-none absolute -right-24 -top-24 h-72 w-72 rounded-full bg-primary-400/25 blur-3xl dark:bg-primary-500/15"
+        class="pointer-events-none absolute -right-24 -top-24 z-0 h-72 w-72 rounded-full bg-primary-400/25 blur-3xl dark:bg-primary-500/15"
         aria-hidden="true"
       />
       <div
-        class="pointer-events-none absolute -bottom-40 -left-24 h-80 w-80 rounded-full bg-sky-300/20 blur-3xl dark:bg-sky-900/25"
+        class="pointer-events-none absolute -bottom-40 -left-24 z-0 h-80 w-80 rounded-full bg-sky-300/20 blur-3xl dark:bg-sky-900/25"
         aria-hidden="true"
       />
-      <Container class="relative">
+      <Container class="relative z-[1]">
         <div class="grid items-center gap-10 lg:grid-cols-2 lg:gap-12 xl:gap-16">
           <AnimatedReveal>
             <div class="mx-auto max-w-2xl text-center lg:mx-0 lg:max-w-xl lg:text-start">
@@ -78,7 +125,7 @@ export const HeroHomeSection = component$<HomeSectionSharedProps>(({ settings, u
             </div>
           </AnimatedReveal>
           <AnimatedReveal delay={100}>
-            <div class="mx-auto w-full max-w-lg lg:mx-0 lg:max-w-none">
+            <div class="relative mx-auto w-full max-w-lg lg:mx-0 lg:max-w-none">
               <picture>
                 <source media="(max-width: 1023px)" srcset={imageMobile} type="image/webp" />
                 <img
@@ -91,6 +138,37 @@ export const HeroHomeSection = component$<HomeSectionSharedProps>(({ settings, u
                   fetchPriority="high"
                 />
               </picture>
+              {floatingIcons.map((icon) => {
+                const src = resolveLaravelMediaUrl(icon.url || '') || icon.url || '';
+                if (!src) return null;
+                const motion = icon.motion === 'diagonal' || icon.motion === 'bounce' ? icon.motion : 'rotate';
+                const size = icon.size && icon.size > 0 ? icon.size : 56;
+                return (
+                  <div
+                    key={icon.id}
+                    class="pointer-events-none absolute z-[2]"
+                    style={{
+                      left: `${icon.x ?? 10}%`,
+                      top: `${icon.y ?? 20}%`,
+                      width: `${size}px`,
+                      height: `${size}px`,
+                      transform: 'translate(-50%, -50%)',
+                    }}
+                  >
+                    <div class={`hero-float-icon hero-float-icon--${motion}`}>
+                      <img
+                        src={src}
+                        alt={icon.alt || ''}
+                        width={size}
+                        height={size}
+                        class="h-full w-full rounded-2xl object-contain shadow-lg shadow-slate-900/15 ring-1 ring-white/40 dark:ring-white/10"
+                        decoding="async"
+                        loading="lazy"
+                      />
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           </AnimatedReveal>
         </div>

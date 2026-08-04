@@ -30,6 +30,9 @@ img,picture{max-width:100%;display:block;height:auto}
   position:sticky;top:0;z-index:40;width:100%;
   border-bottom:1px solid rgb(226 232 240 / .8);
   background:rgb(255 255 255 / .8);backdrop-filter:blur(12px);color:#0f172a}
+[data-public-page][data-hero-overlay-nav] header[role="banner"]{
+  position:absolute;inset-inline:0;top:0;border-bottom-color:transparent;
+  background:rgb(255 255 255 / .7)}
 html.light [data-public-page] header[role="banner"],
 html:not(.dark) [data-public-page] header[role="banner"]{
   color:#0f172a}

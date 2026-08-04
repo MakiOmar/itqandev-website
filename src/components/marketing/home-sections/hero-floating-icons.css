@@ -1,0 +1,57 @@
+/* Hero floating ornaments around the main media. */
+
+@keyframes hero-float-rotate {
+  from {
+    transform: rotate(-12deg);
+  }
+  to {
+    transform: rotate(12deg);
+  }
+}
+
+@keyframes hero-float-diagonal {
+  from {
+    transform: translate(0, 0);
+  }
+  to {
+    transform: translate(14px, -14px);
+  }
+}
+
+@keyframes hero-float-bounce {
+  from {
+    transform: translateY(0);
+  }
+  to {
+    transform: translateY(-12px);
+  }
+}
+
+.hero-float-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  will-change: transform;
+}
+
+.hero-float-icon--rotate {
+  animation: hero-float-rotate 3.4s ease-in-out infinite alternate;
+}
+
+.hero-float-icon--diagonal {
+  animation: hero-float-diagonal 4.2s ease-in-out infinite alternate;
+}
+
+.hero-float-icon--bounce {
+  animation: hero-float-bounce 2.8s ease-in-out infinite alternate;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-float-icon--rotate,
+  .hero-float-icon--diagonal,
+  .hero-float-icon--bounce {
+    animation: none;
+  }
+}
