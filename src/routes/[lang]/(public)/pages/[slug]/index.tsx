@@ -10,7 +10,7 @@ import { publicSiteName } from '~/lib/marketing/public-page-head';
 import { getPublicSiteBaseUrl } from '~/lib/seo/canonical-url';
 import { resolveMarketingApiBaseUrl } from '~/lib/marketing/resolve-api-base';
 import { mapMarketingSeoMetaFromApi } from '~/lib/marketing/seo-snippet';
-import type { HomepageSectionInstance } from '~/lib/marketing/appearance-types';
+import type { PageSectionNode } from '~/lib/marketing/appearance-types';
 import type { PublicPageDetail } from '~/types/page';
 
 export const usePublicPageDetail = routeLoader$(async ({ params, request, fail }) => {
@@ -65,7 +65,7 @@ export default component$(() => {
   const page = raw as PublicPageDetail;
   const shell = usePublicShell();
   const support = usePageSupportingData();
-  const sections = (page.sections || []) as HomepageSectionInstance[];
+  const sections = (page.sections || []) as PageSectionNode[];
 
   return (
     <HomepageSectionsRenderer
@@ -77,6 +77,7 @@ export default component$(() => {
       blogPosts={support.value.blogPosts}
       techStack={shell.value.siteContent?.techStack ?? []}
       branding={shell.value.branding}
+      layoutAware={true}
       allowDefaultSections={false}
     />
   );

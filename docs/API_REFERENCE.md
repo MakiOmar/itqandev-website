@@ -673,7 +673,20 @@ Requires permission **`manage pages`** for admin routes. Public routes are guest
 | GET | `/api/public/pages` | Published pages list for marketing |
 | GET | `/api/public/pages/{slug}` | Published page detail: localized fields, presented `sections`, `seo_meta` |
 
-Public marketing URLs: `/{lang}/pages/{slug}/`. Section JSON shape matches the Appearance homepage builder.
+Public marketing URLs: `/{lang}/pages/{slug}/`.
+
+### Pages `sections` document (layout tree)
+
+CMS Pages use a **layout tree** (homepage Appearance stays a flat section list):
+
+- **Band** (`type: "layout"`): `layout_width` (`boxed` | `full`), `enabled`, `settings`, `rows[]`
+- **Row**: `stack_below` (`none` | `tablet` | `desktop`), `gap`, `columns[]`
+- **Column**: `span: { mobile, tablet, desktop }` (1–12 each; breakpoints align with Tailwind `default` / `md` / `lg`), `blocks[]`
+- **Block**: leaf content reuse of homepage section types (`hero`, `cta`, …) with `settings`
+
+`stack_below: tablet` forces full-width columns on mobile; `desktop` stacks below the desktop breakpoint.
+
+Legacy flat sections (`{ type: "cta", settings, … }`) sent to create/update are **auto-wrapped** into a one-column layout band on normalize. Public `GET /api/public/pages/{slug}` returns presented layout bands (locale + media resolved on leaf blocks only).
 
 ## Testing API Integration
 

@@ -16,9 +16,12 @@ import {
   fetchAppearanceRegistriesFromBrowser,
   hydrateAppearanceMediaPreviews,
 } from '../../../../../lib/admin/appearance-actions';
-import { collectAppearanceMediaIdsFromSections } from '../../../../../lib/admin/appearance-media-ref';
-import { writeAppearanceSettingValue } from '../../../../../lib/admin/appearance-locale-settings';
-import type { AppearanceRegistryEntry, HomepageSectionInstance } from '../../../../../lib/marketing/appearance-types';
+import { collectAppearanceMediaIdsFromPageSections, ensurePageLayoutBands, findBlockInBands, updateBlockInBands } from '../../../../../lib/admin/page-layout';
+import {
+  isAppearanceFieldTranslatable,
+  writeAppearanceSettingValue,
+} from '../../../../../lib/admin/appearance-locale-settings';
+import type { AppearanceRegistryEntry, PageSectionNode } from '../../../../../lib/marketing/appearance-types';
 import type { AdminPage } from '../../../../../types/page';
 import type { Media } from '../../../../../types/media';
 import {
@@ -98,12 +101,12 @@ export default component$(() => {
   const canonicalTitle = useSignal(page.title);
   const canonicalExcerpt = useSignal(page.excerpt || '');
   const translationsJson = useSignal(JSON.stringify(page.translations || []));
-  const sections = useSignal<HomepageSectionInstance[]>(
-    (page.sections as HomepageSectionInstance[]) || [],
+  const sections = useSignal<PageSectionNode[]>(
+    (page.sections as PageSectionNode[]) || [],
   );
   const registry = useSignal<AppearanceRegistryEntry[]>([]);
   const mediaPreviewById = useSignal<Record<string, string>>({});
-  const mediaTarget = useSignal<{ sectionId: string; key: string; accept?: string } | null>(null);
+  const mediaTarget = useSignal<{ blockId: string; key: string; accept?: string } | null>(null);
   const activeSettingsLocale = useSignal(langConfig.value.default_locale || 'en');
   const saving = useSignal(false);
 
@@ -142,7 +145,7 @@ export default component$(() => {
     try {
       const regs = await fetchAppearanceRegistriesFromBrowser();
       registry.value = regs.homepage_sections ?? [];
-      const ids = collectAppearanceMediaIdsFromSections(sections.value);
+      const ids = collectAppearanceMediaIdsFromPageSections(sections.value);
       mediaPreviewById.value = await hydrateAppearanceMediaPreviews(ids, mediaPreviewById.value);
     } catch {
       registry.value = [];
@@ -275,8 +278,8 @@ export default component$(() => {
                 onMediaPreview$={$((mediaId, url) => {
                   mediaPreviewById.value = { ...mediaPreviewById.value, [String(mediaId)]: url };
                 })}
-                onPickMedia$={$((sectionId, key, accept) => {
-                  mediaTarget.value = { sectionId, key, accept };
+                onPickMedia$={$((blockId, key, accept) => {
+                  mediaTarget.value = { blockId, key, accept };
                 })}
               />
             </div>
@@ -342,20 +345,22 @@ export default component$(() => {
             if (url) {
               mediaPreviewById.value = { ...mediaPreviewById.value, [String(media.id)]: url };
             }
-            sections.value = sections.value.map((section) => {
-              if (section.id !== target.sectionId) return section;
-              return {
-                ...section,
-                settings: writeAppearanceSettingValue(
-                  section.settings ?? {},
-                  target.key,
-                  media.id,
-                  activeSettingsLocale.value,
-                  langConfig.value.default_locale || 'en',
-                  true,
-                ),
-              };
-            });
+            const bands = ensurePageLayoutBands(sections.value);
+            const block = findBlockInBands(bands, target.blockId);
+            const entry = registry.value.find((r) => r.type === block?.type);
+            const field = entry?.settings_fields?.find((f) => f.key === target.key);
+            const translatable = field ? isAppearanceFieldTranslatable(field) : false;
+            sections.value = updateBlockInBands(bands, target.blockId, (blk) => ({
+              ...blk,
+              settings: writeAppearanceSettingValue(
+                blk.settings ?? {},
+                target.key,
+                media.id,
+                activeSettingsLocale.value,
+                langConfig.value.default_locale || 'en',
+                translatable,
+              ),
+            }));
           })}
           onClose={$(() => {
             mediaTarget.value = null;

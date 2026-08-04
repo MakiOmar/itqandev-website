@@ -1,3 +1,5 @@
+import type { PageSectionNode } from '../lib/marketing/appearance-types';
+
 export type PageTranslationRow = {
   locale: string;
   title?: string | null;
@@ -12,7 +14,7 @@ export type AdminPage = {
   status: 'draft' | 'published' | string;
   content_locale: string | null;
   published_at: string | null;
-  sections: unknown[];
+  sections: PageSectionNode[];
   translations: PageTranslationRow[];
   createdAt?: string;
   updatedAt?: string;
@@ -25,12 +27,7 @@ export type PublicPageDetail = {
   excerpt: string | null;
   content_locale?: string | null;
   published_at: string | null;
-  sections: Array<{
-    id: string;
-    type: string;
-    layout_width?: string;
-    settings?: Record<string, unknown>;
-  }>;
+  sections: PageSectionNode[];
   /** Localized SEO snippet from public API (`SeoMetaPresenter::toPublicSnippet`). */
   seo_meta?: unknown;
 };

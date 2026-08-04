@@ -19,6 +19,51 @@ export type HomepageSectionInstance = {
   settings?: Record<string, unknown>;
 };
 
+/** CMS Pages layout: band → row → columns → leaf blocks (homepage stays flat). */
+export type LayoutBreakpoint = 'mobile' | 'tablet' | 'desktop';
+
+export type ColumnSpans = {
+  mobile: number;
+  tablet: number;
+  desktop: number;
+};
+
+export type PageLayoutStackBelow = 'none' | 'tablet' | 'desktop';
+
+export type PageLayoutBlock = {
+  id: string;
+  type: HomepageSectionType | string;
+  enabled?: boolean;
+  settings?: Record<string, unknown>;
+};
+
+export type PageLayoutColumn = {
+  id: string;
+  span: ColumnSpans;
+  blocks: PageLayoutBlock[];
+};
+
+export type PageLayoutRow = {
+  id: string;
+  stack_below?: PageLayoutStackBelow;
+  gap?: number;
+  columns: PageLayoutColumn[];
+};
+
+export type PageLayoutBand = {
+  id: string;
+  type: 'layout';
+  enabled?: boolean;
+  layout_width?: HomepageLayoutWidth;
+  settings?: Record<string, unknown>;
+  rows: PageLayoutRow[];
+};
+
+/** Pages admin / API may still hold legacy flat sections until normalize wraps them. */
+export type PageSectionNode = PageLayoutBand | HomepageSectionInstance;
+
+export const FULL_COLUMN_SPANS: ColumnSpans = { mobile: 12, tablet: 12, desktop: 12 };
+
 export type FooterMode = 'hardcoded' | 'builder';
 
 export type FooterBlockType =

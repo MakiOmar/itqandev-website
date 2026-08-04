@@ -17,8 +17,13 @@ import { submitRouteActionFormData } from '../../../../../lib/admin/route-action
 import { adminPageEditHref, useAppRoutes } from '../../../../../lib/constants/routes';
 import { useContentSlugAutosuggestForm } from '../../../../../lib/slug/content-slug-auto';
 import { fetchAppearanceRegistriesFromBrowser } from '../../../../../lib/admin/appearance-actions';
-import { writeAppearanceSettingValue } from '../../../../../lib/admin/appearance-locale-settings';
-import type { AppearanceRegistryEntry, HomepageSectionInstance } from '../../../../../lib/marketing/appearance-types';
+import { writeAppearanceSettingValue, isAppearanceFieldTranslatable } from '../../../../../lib/admin/appearance-locale-settings';
+import {
+  ensurePageLayoutBands,
+  findBlockInBands,
+  updateBlockInBands,
+} from '../../../../../lib/admin/page-layout';
+import type { AppearanceRegistryEntry, PageSectionNode } from '../../../../../lib/marketing/appearance-types';
 import type { Media } from '../../../../../types/media';
 import { primaryLocaleForContent } from '../../../../../lib/content-display-locale';
 import {
@@ -49,10 +54,10 @@ export default component$(() => {
   });
   const contentLocaleDraft = useSignal('');
   const editingLocaleDraft = useSignal(langConfig.value.content_editing_locale);
-  const sections = useSignal<HomepageSectionInstance[]>([]);
+  const sections = useSignal<PageSectionNode[]>([]);
   const registry = useSignal<AppearanceRegistryEntry[]>([]);
   const mediaPreviewById = useSignal<Record<string, string>>({});
-  const mediaTarget = useSignal<{ sectionId: string; key: string; accept?: string } | null>(null);
+  const mediaTarget = useSignal<{ blockId: string; key: string; accept?: string } | null>(null);
   const activeSettingsLocale = useSignal(langConfig.value.default_locale || 'en');
   const saving = useSignal(false);
 
@@ -202,8 +207,8 @@ export default component$(() => {
               onMediaPreview$={$((mediaId, url) => {
                 mediaPreviewById.value = { ...mediaPreviewById.value, [String(mediaId)]: url };
               })}
-              onPickMedia$={$((sectionId, key, accept) => {
-                mediaTarget.value = { sectionId, key, accept };
+              onPickMedia$={$((blockId, key, accept) => {
+                mediaTarget.value = { blockId, key, accept };
               })}
             />
           </div>
@@ -268,20 +273,22 @@ export default component$(() => {
             if (url) {
               mediaPreviewById.value = { ...mediaPreviewById.value, [String(media.id)]: url };
             }
-            sections.value = sections.value.map((section) => {
-              if (section.id !== target.sectionId) return section;
-              return {
-                ...section,
-                settings: writeAppearanceSettingValue(
-                  section.settings ?? {},
-                  target.key,
-                  media.id,
-                  activeSettingsLocale.value,
-                  langConfig.value.default_locale || 'en',
-                  true,
-                ),
-              };
-            });
+            const bands = ensurePageLayoutBands(sections.value);
+            const block = findBlockInBands(bands, target.blockId);
+            const entry = registry.value.find((r) => r.type === block?.type);
+            const field = entry?.settings_fields?.find((f) => f.key === target.key);
+            const translatable = field ? isAppearanceFieldTranslatable(field) : false;
+            sections.value = updateBlockInBands(bands, target.blockId, (blk) => ({
+              ...blk,
+              settings: writeAppearanceSettingValue(
+                blk.settings ?? {},
+                target.key,
+                media.id,
+                activeSettingsLocale.value,
+                langConfig.value.default_locale || 'en',
+                translatable,
+              ),
+            }));
           })}
           onClose={$(() => {
             mediaTarget.value = null;
