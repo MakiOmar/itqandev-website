@@ -122,7 +122,10 @@ function manualVendorChunk(id: string): string | undefined {
  */
 export default defineConfig(({ command, mode, isSsrBuild }): UserConfig => {
   const env = loadEnv(mode, process.cwd(), "");
-  const apiProxyTarget = (env.VITE_API_PROXY_TARGET || "http://127.0.0.1").replace(/\/$/, "");
+  const apiProxyTarget = (env.VITE_API_PROXY_TARGET || "http://127.0.0.1:8000").replace(
+    /\/$/,
+    "",
+  );
   /** Shared proxy for dev server and preview — browser /api and /storage → Laravel. */
   const laravelDevProxy = {
     "/api": {
@@ -147,9 +150,9 @@ export default defineConfig(({ command, mode, isSsrBuild }): UserConfig => {
     const normalized = arg.replace(/\\/g, "/");
     return normalized.includes("adapters/") && normalized.includes("vite.config");
   });
+  // Client bundle (production deploy or local `--mode preview`); not SSR / adapter server builds.
   const isClientBuild =
     command === "build" &&
-    mode === "production" &&
     !isSsrBuild &&
     !isAdapterServerBuild;
   const isDevServer = command === "serve";

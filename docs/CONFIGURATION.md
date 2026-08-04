@@ -20,9 +20,12 @@ Vite loads env by **mode**:
 | Command | Mode | Files (later wins) |
 |---------|------|--------------------|
 | `npm run dev` | `ssr` | `.env` → `.env.ssr` (local only; gitignored `.env`) |
-| `npm run build` | `production` | `.env` → **`.env.production`** (committed live URLs) |
+| `npm run preview` | `preview` | `.env` → **`.env.preview`** (localhost API → `:8000`, site on `:4173`) |
+| `npm run build` / `preview:prod` | `production` | `.env` → **`.env.production`** (committed live URLs) |
 
 Use **local** API values in `.env` (copy from `.env.example`). Keep **live** split-domain URLs in `.env.production` so production builds do not accidentally bake in localhost. Hostinger panel `VITE_*` vars still override at deploy build time when set.
+
+**Local preview (`http://localhost:4173`):** `npm run preview` builds and serves with `--mode preview` so the Vite proxy and SSR call `VITE_API_PROXY_TARGET` / `VITE_SSR_API_BASE_URL` (default `http://127.0.0.1:8000`). Run Laravel (`php artisan serve`) first. Use `npm run preview:prod` only when you intentionally want the baked production API host.
 
 ### API Configuration
 

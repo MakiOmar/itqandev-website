@@ -47,16 +47,21 @@ function isLoopbackHttpOrigin(origin: string): boolean {
   }
 }
 
-/** True when origin is the Vite/Qwik dev server (SSR must not fetch it — same-process deadlock). */
+/** True when origin is the Vite/Qwik dev or preview server (SSR must not fetch it — same-process deadlock). */
 function isViteDevServerOrigin(origin: string): boolean {
   try {
     const page = new URL(origin);
-    const dev = new URL(devServerOrigin());
     const loopback = (h: string) => h === '127.0.0.1' || h === 'localhost';
-    if (!loopback(page.hostname) || !loopback(dev.hostname)) {
+    if (!loopback(page.hostname)) {
       return false;
     }
-    return page.port === dev.port;
+    const pagePort = page.port || (page.protocol === 'https:' ? '443' : '80');
+    // Default Vite ports: dev 5173, preview 4173; also match configured VITE_DEV_SERVER_ORIGIN.
+    if (pagePort === '5173' || pagePort === '4173') {
+      return true;
+    }
+    const dev = new URL(devServerOrigin());
+    return pagePort === (dev.port || (dev.protocol === 'https:' ? '443' : '80'));
   } catch {
     return false;
   }
@@ -83,7 +88,7 @@ function resolveSsrAbsoluteApiBase(normalizedPath: string): string {
   if (proxyTarget) {
     return trimSlash(`${trimSlash(proxyTarget)}${normalizedPath}`);
   }
-  return trimSlash(`http://127.0.0.1:5173${normalizedPath}`);
+  return trimSlash(`http://127.0.0.1:8000${normalizedPath}`);
 }
 
 /** Resolved API root for dev SSR (for diagnostics — same logic Node uses at runtime). */
