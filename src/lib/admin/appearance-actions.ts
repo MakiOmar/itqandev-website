@@ -5,6 +5,7 @@ import type {
   FooterBuilderDocument,
   HomepageSectionInstance,
 } from '../marketing/appearance-types';
+import { appearanceMediaId } from './appearance-media-ref';
 
 /** Prefer Laravel/ApiError `.message` (plain objects), then Error, then fallback. */
 export function formatAppearanceError(err: unknown, fallback = 'Request failed'): string {
@@ -134,4 +135,48 @@ export function canInsertType(
 ): boolean {
   if (maxInstances == null) return true;
   return (counts[type] ?? 0) < maxInstances;
+}
+
+/**
+ * Resolve media library URLs for builder preview after reload (settings store ids only).
+ */
+export async function hydrateAppearanceMediaPreviews(
+  ids: number[],
+  existing: Record<string, string> = {},
+): Promise<Record<string, string>> {
+  const unique = Array.from(
+    new Set(
+      ids
+        .map((id) => appearanceMediaId(id))
+        .filter((id): id is number => id !== null),
+    ),
+  ).filter((id) => !existing[String(id)]?.trim());
+
+  if (unique.length === 0) {
+    return { ...existing };
+  }
+
+  const api = getApiClient(null);
+  const next = { ...existing };
+  await Promise.all(
+    unique.map(async (id) => {
+      try {
+        const res = await api.get<{
+          url?: string;
+          thumbnailUrl?: string;
+          thumbnail_url?: string;
+        }>(API_ENDPOINTS.MEDIA.GET(id));
+        const payload =
+          (res as { data?: { url?: string; thumbnailUrl?: string; thumbnail_url?: string } }).data ??
+          (res as unknown as { url?: string; thumbnailUrl?: string; thumbnail_url?: string });
+        const url = payload?.url || payload?.thumbnailUrl || payload?.thumbnail_url || '';
+        if (url) {
+          next[String(id)] = url;
+        }
+      } catch {
+        /* keep #id placeholder until a successful fetch */
+      }
+    }),
+  );
+  return next;
 }

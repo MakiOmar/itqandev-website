@@ -15,6 +15,7 @@ import {
   fetchAppearanceRegistriesFromBrowser,
   fetchFooterBuilderFromBrowser,
   formatAppearanceError,
+  hydrateAppearanceMediaPreviews,
   moveItem,
   newBlockId,
   saveFooterBuilderFromBrowser,
@@ -23,6 +24,7 @@ import {
   isAppearanceFieldTranslatable,
   writeAppearanceSettingValue,
 } from '~/lib/admin/appearance-locale-settings';
+import { collectAppearanceMediaIdsFromFooterDoc } from '~/lib/admin/appearance-media-ref';
 import type {
   AppearanceRegistryEntry,
   FooterBlockInstance,
@@ -30,7 +32,6 @@ import type {
   FooterColumnInstance,
 } from '~/lib/marketing/appearance-types';
 import type { Media } from '~/types/media';
-
 const VALID_ZONES = new Set(['top', 'main', 'bottom']);
 
 export default component$(() => {
@@ -69,6 +70,10 @@ export default component$(() => {
       registry.value = regs.footer_blocks;
       doc.value = footer;
       if (regs.footer_blocks[0]) insertType.value = regs.footer_blocks[0].type;
+      const ids = collectAppearanceMediaIdsFromFooterDoc(footer);
+      if (ids.length > 0) {
+        mediaPreviewById.value = await hydrateAppearanceMediaPreviews(ids, mediaPreviewById.value);
+      }
     } catch (e) {
       showError(translateApp(lang, 'common.error'), {
         text: formatAppearanceError(e, 'Failed to load column'),

@@ -14,6 +14,7 @@ import {
   fetchAppearanceRegistriesFromBrowser,
   fetchHomepageBuilderFromBrowser,
   formatAppearanceError,
+  hydrateAppearanceMediaPreviews,
   moveItem,
   newSectionId,
   saveHomepageBuilderFromBrowser,
@@ -22,12 +23,12 @@ import {
   isAppearanceFieldTranslatable,
   writeAppearanceSettingValue,
 } from '~/lib/admin/appearance-locale-settings';
+import { collectAppearanceMediaIdsFromSections } from '~/lib/admin/appearance-media-ref';
 import type {
   AppearanceRegistryEntry,
   HomepageSectionInstance,
 } from '~/lib/marketing/appearance-types';
 import type { Media } from '~/types/media';
-
 export default component$(() => {
   const { lang } = useTranslate();
   const R = getLocalizedRoutes(lang);
@@ -58,6 +59,10 @@ export default component$(() => {
       sections.value = home.sections;
       if (regs.homepage_sections[0]) {
         insertType.value = regs.homepage_sections[0].type;
+      }
+      const ids = collectAppearanceMediaIdsFromSections(home.sections);
+      if (ids.length > 0) {
+        mediaPreviewById.value = await hydrateAppearanceMediaPreviews(ids, mediaPreviewById.value);
       }
     } catch (e) {
       showError(translateApp(lang, 'common.error'), {

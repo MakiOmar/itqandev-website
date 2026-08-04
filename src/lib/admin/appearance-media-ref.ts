@@ -46,3 +46,69 @@ export function appearanceMediaUrlInputValue(value: unknown): string {
   }
   return typeof value === 'string' ? value : '';
 }
+
+/** Collect media ids from one settings object (flat keys + translations bags). */
+export function collectAppearanceMediaIdsFromSettings(
+  settings: Record<string, unknown> | null | undefined,
+): number[] {
+  if (!settings || typeof settings !== 'object') {
+    return [];
+  }
+  const ids = new Set<number>();
+  for (const [key, value] of Object.entries(settings)) {
+    if (key === 'translations') {
+      if (value && typeof value === 'object' && !Array.isArray(value)) {
+        for (const bag of Object.values(value as Record<string, unknown>)) {
+          if (!bag || typeof bag !== 'object' || Array.isArray(bag)) continue;
+          for (const nested of Object.values(bag as Record<string, unknown>)) {
+            const id = appearanceMediaId(nested);
+            if (id !== null) ids.add(id);
+          }
+        }
+      }
+      continue;
+    }
+    const id = appearanceMediaId(value);
+    if (id !== null) ids.add(id);
+  }
+  return Array.from(ids);
+}
+
+export function collectAppearanceMediaIdsFromSections(
+  sections: Array<{ settings?: Record<string, unknown> } | null | undefined>,
+): number[] {
+  const ids = new Set<number>();
+  for (const section of sections) {
+    for (const id of collectAppearanceMediaIdsFromSettings(section?.settings)) {
+      ids.add(id);
+    }
+  }
+  return Array.from(ids);
+}
+
+export function collectAppearanceMediaIdsFromFooterDoc(doc: {
+  zones?: Partial<
+    Record<
+      string,
+      {
+        columns?: Array<{
+          blocks?: Array<{ settings?: Record<string, unknown> }>;
+        }>;
+      }
+    >
+  >;
+} | null | undefined): number[] {
+  const ids = new Set<number>();
+  if (!doc?.zones) return [];
+  for (const zone of Object.values(doc.zones)) {
+    if (!zone?.columns) continue;
+    for (const col of zone.columns) {
+      for (const block of col.blocks ?? []) {
+        for (const id of collectAppearanceMediaIdsFromSettings(block.settings)) {
+          ids.add(id);
+        }
+      }
+    }
+  }
+  return Array.from(ids);
+}
