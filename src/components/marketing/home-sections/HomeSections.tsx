@@ -75,7 +75,8 @@ export const HeroHomeSection = component$<HomeSectionSharedProps>(({ settings, u
     : [];
 
   const sectionClass = [
-    'relative overflow-hidden bg-gradient-to-b from-primary-50/70 via-white to-white dark:from-primary-950/25 dark:via-slate-900 dark:to-slate-900',
+    // Visible so floating icons can hang past the image frame (blur orbs may spill slightly).
+    'relative overflow-visible bg-gradient-to-b from-primary-50/70 via-white to-white dark:from-primary-950/25 dark:via-slate-900 dark:to-slate-900',
     fullViewport
       ? 'flex min-h-[100dvh] min-h-screen flex-col justify-center pb-12 sm:pb-16'
       : 'pt-12 sm:pt-16 lg:pt-20',
@@ -125,7 +126,8 @@ export const HeroHomeSection = component$<HomeSectionSharedProps>(({ settings, u
             </div>
           </AnimatedReveal>
           <AnimatedReveal delay={100}>
-            <div class="relative mx-auto w-full max-w-lg lg:mx-0 lg:max-w-none">
+            {/* overflow-visible so icons at &lt;0% / &gt;100% can hang outside the media frame */}
+            <div class="relative mx-auto w-full max-w-lg overflow-visible lg:mx-0 lg:max-w-none">
               <picture>
                 <source media="(max-width: 1023px)" srcset={imageMobile} type="image/webp" />
                 <img
@@ -133,7 +135,7 @@ export const HeroHomeSection = component$<HomeSectionSharedProps>(({ settings, u
                   width={1400}
                   height={788}
                   alt={imageAlt}
-                  class="h-auto w-full rounded-2xl border border-slate-200/90 shadow-2xl shadow-slate-900/[0.08] ring-1 ring-slate-900/5 dark:border-slate-600/40 dark:shadow-primary-950/35 dark:ring-white/10"
+                  class="relative z-[1] h-auto w-full rounded-2xl border border-slate-200/90 shadow-2xl shadow-slate-900/[0.08] ring-1 ring-slate-900/5 dark:border-slate-600/40 dark:shadow-primary-950/35 dark:ring-white/10"
                   decoding="async"
                   fetchPriority="high"
                 />

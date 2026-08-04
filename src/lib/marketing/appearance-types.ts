@@ -95,7 +95,7 @@ export type HeroFloatingIcon = {
   url?: string;
   alt?: string | null;
   motion?: HeroFloatingIconMotion | string;
-  /** Percent of hero media box (0–100). */
+  /** Percent of hero media box (−20…120; &lt;0 / &gt;100 hangs outside edges). */
   x?: number;
   y?: number;
   size?: number;

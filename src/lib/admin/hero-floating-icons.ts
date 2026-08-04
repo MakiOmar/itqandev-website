@@ -8,6 +8,10 @@ export const HERO_FLOATING_ICON_MOTIONS: HeroFloatingIconMotion[] = ['rotate', '
 
 export const HERO_FLOATING_ICONS_MAX = 24;
 
+/** Percent of image box; below 0 / above 100 hangs outside the media edge. */
+export const HERO_FLOATING_POSITION_MIN = -20;
+export const HERO_FLOATING_POSITION_MAX = 120;
+
 export function newHeroFloatingIconId(): string {
   return `icon_${Math.random().toString(36).slice(2, 10)}`;
 }
@@ -56,16 +60,22 @@ export function normalizeHeroFloatingIcons(raw: unknown): HeroFloatingIcon[] {
 function clampPercent(v: unknown): number {
   const n = typeof v === 'number' ? v : Number(v);
   if (!Number.isFinite(n)) return 0;
-  return Math.round(Math.max(0, Math.min(100, n)) * 100) / 100;
+  return (
+    Math.round(
+      Math.max(HERO_FLOATING_POSITION_MIN, Math.min(HERO_FLOATING_POSITION_MAX, n)) * 100,
+    ) / 100
+  );
 }
 
 export function defaultHeroFloatingIcon(partial?: Partial<HeroFloatingIcon>): HeroFloatingIcon {
+  // Prefer edge placements: slight negative / >100 = outside; low teens = just inside.
   const presets: Array<Pick<HeroFloatingIcon, 'x' | 'y' | 'motion'>> = [
-    { x: 8, y: 18, motion: 'rotate' },
-    { x: 92, y: 22, motion: 'diagonal' },
-    { x: 6, y: 72, motion: 'bounce' },
-    { x: 90, y: 78, motion: 'rotate' },
-    { x: 14, y: 48, motion: 'diagonal' },
+    { x: -6, y: 18, motion: 'rotate' },
+    { x: 106, y: 22, motion: 'diagonal' },
+    { x: 8, y: 78, motion: 'bounce' },
+    { x: 94, y: -4, motion: 'rotate' },
+    { x: -4, y: 52, motion: 'diagonal' },
+    { x: 104, y: 68, motion: 'bounce' },
   ];
   const i = Math.floor(Math.random() * presets.length);
   const preset = presets[i]!;

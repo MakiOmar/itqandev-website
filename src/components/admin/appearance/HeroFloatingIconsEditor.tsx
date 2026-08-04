@@ -9,6 +9,8 @@ import {
 import {
   HERO_FLOATING_ICON_MOTIONS,
   HERO_FLOATING_ICONS_MAX,
+  HERO_FLOATING_POSITION_MAX,
+  HERO_FLOATING_POSITION_MIN,
   defaultHeroFloatingIcon,
   normalizeHeroFloatingIcons,
 } from '~/lib/admin/hero-floating-icons';
@@ -148,8 +150,8 @@ export const HeroFloatingIconsEditor = component$<HeroFloatingIconsEditorProps>(
                         </label>
                         <input
                           type="number"
-                          min={0}
-                          max={100}
+                          min={HERO_FLOATING_POSITION_MIN}
+                          max={HERO_FLOATING_POSITION_MAX}
                           step={1}
                           class="w-full rounded border px-2 py-1.5 text-xs dark:bg-gray-950"
                           value={icon.x ?? 0}
@@ -168,8 +170,8 @@ export const HeroFloatingIconsEditor = component$<HeroFloatingIconsEditorProps>(
                         </label>
                         <input
                           type="number"
-                          min={0}
-                          max={100}
+                          min={HERO_FLOATING_POSITION_MIN}
+                          max={HERO_FLOATING_POSITION_MAX}
                           step={1}
                           class="w-full rounded border px-2 py-1.5 text-xs dark:bg-gray-950"
                           value={icon.y ?? 0}
