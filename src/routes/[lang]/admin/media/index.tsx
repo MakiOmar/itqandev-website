@@ -9,6 +9,52 @@ import { API_ENDPOINTS } from '../../../../lib/api/endpoints';
 import { getProjectSettings } from '../../../../lib/api/project-settings';
 import { formatFileSize } from '../../../../lib/utils/formatters';
 import type { Media } from '../../../../types';
+import { usePublicSiteMeta } from '../layout';
+
+function readEditingMediaMeta(
+  media: any,
+  locale: string,
+  defaultLocale: string,
+  field: 'alt_text' | 'description',
+): string {
+  const loc = locale.toLowerCase();
+  const def = defaultLocale.toLowerCase();
+  if (loc === def) {
+    if (field === 'alt_text') {
+      return String(media?.altText ?? media?.alt_text ?? '');
+    }
+    return String(media?.description ?? '');
+  }
+  const bag = media?.translations?.[loc];
+  return String(bag?.[field] ?? '');
+}
+
+function writeEditingMediaMeta(
+  media: any,
+  locale: string,
+  defaultLocale: string,
+  field: 'alt_text' | 'description',
+  value: string,
+): void {
+  const loc = locale.toLowerCase();
+  const def = defaultLocale.toLowerCase();
+  if (loc === def) {
+    if (field === 'alt_text') {
+      media.altText = value;
+      media.alt_text = value;
+    } else {
+      media.description = value;
+    }
+    return;
+  }
+  if (!media.translations || typeof media.translations !== 'object') {
+    media.translations = {};
+  }
+  if (!media.translations[loc] || typeof media.translations[loc] !== 'object') {
+    media.translations[loc] = {};
+  }
+  media.translations[loc][field] = value;
+}
 
 /**
  * Folder interface
@@ -151,10 +197,20 @@ export const useUpdateMedia = routeAction$(async (data, { fail, cookie, request 
   try {
     const cookieHeader = extractCookieHeader(cookie, request);
     const apiClient = getApiClient(cookieHeader);
+    let translations: Record<string, { alt_text?: string; description?: string }> | undefined;
+    if (typeof data.translations_json === 'string' && data.translations_json.trim()) {
+      try {
+        translations = JSON.parse(data.translations_json);
+      } catch {
+        translations = undefined;
+      }
+    }
     await apiClient.put(API_ENDPOINTS.MEDIA.UPDATE(data.id as string), {
       name: data.name,
       alt_text: data.alt_text || '',
       description: data.description || '',
+      locale: data.locale || undefined,
+      translations,
       folder_id: data.folder_id || null,
       tags: Array.isArray(data.tags) ? data.tags : [],
     });
@@ -167,6 +223,8 @@ export const useUpdateMedia = routeAction$(async (data, { fail, cookie, request 
   name: z.string(),
   alt_text: z.string().optional(),
   description: z.string().optional(),
+  locale: z.string().optional(),
+  translations_json: z.string().optional(),
   folder_id: z.union([z.string(), z.number(), z.null()]).optional(),
   tags: z.array(z.string()).optional(),
 }));
@@ -227,6 +285,7 @@ export default component$(() => {
   const { confirm, success, error: showError } = useSwal();
   const navigate = useNavigate();
   const location = useLocation();
+  const langConfig = usePublicSiteMeta();
   const mediaData = useMedia();
   const foldersData = useFolders();
   const updateAction = useUpdateMedia();
@@ -238,6 +297,13 @@ export default component$(() => {
   const isSelectionMode = location.url.searchParams.get('select') === 'true';
   const acceptType = location.url.searchParams.get('accept') || '';
   const callbackType = location.url.searchParams.get('callback') || ''; // For identifying selection type (hero, video, featured_image)
+
+  const defaultContentLocale = (
+    langConfig.value.default_locale ||
+    langConfig.value.content_editing_locale ||
+    'en'
+  ).toLowerCase();
+  const mediaMetaLocale = useSignal(defaultContentLocale);
 
   const media = useSignal(mediaData.value.media);
   const folders = useSignal(foldersData.value);
@@ -586,16 +652,27 @@ export default component$(() => {
     try {
       const apiClient = getApiClient();
       const fullMedia = await apiClient.get(API_ENDPOINTS.MEDIA.GET(item.id));
+      const payload = fullMedia?.data ?? fullMedia ?? item;
       editingMedia.value = {
-        ...(fullMedia?.data ?? fullMedia ?? item),
-        tagNames: ((fullMedia?.data ?? fullMedia ?? item) as any)?.tags?.map((t: any) => t.name) || [],
+        ...payload,
+        altText: (payload as any)?.altText ?? (payload as any)?.alt_text ?? '',
+        alt_text: (payload as any)?.alt_text ?? (payload as any)?.altText ?? '',
+        description: (payload as any)?.description ?? '',
+        translations: (payload as any)?.translations ?? {},
+        tagNames: ((payload as any)?.tags?.map((t: any) => t.name) || []),
       };
+      mediaMetaLocale.value = defaultContentLocale;
       showEditModal.value = true;
     } catch {
       editingMedia.value = {
         ...item,
+        altText: (item as any)?.altText ?? (item as any)?.alt_text ?? '',
+        alt_text: (item as any)?.alt_text ?? (item as any)?.altText ?? '',
+        description: (item as any)?.description ?? '',
+        translations: (item as any)?.translations ?? {},
         tagNames: (item as any)?.tags?.map((t: any) => t.name) || [],
       };
+      mediaMetaLocale.value = defaultContentLocale;
       showEditModal.value = true;
     }
   });
@@ -619,15 +696,19 @@ export default component$(() => {
 
   const saveMedia = $(async () => {
     if (!editingMedia.value) return;
-    
+
     try {
-      const altText = editingMedia.value.altText || (editingMedia.value as any).alt_text || '';
+      const translations = editingMedia.value.translations && typeof editingMedia.value.translations === 'object'
+        ? editingMedia.value.translations
+        : {};
       const response = await updateAction.submit({
         id: String(editingMedia.value.id),
         name: editingMedia.value.name,
-        alt_text: altText,
-        description: (editingMedia.value as any).description || '',
-        folder_id: (editingMedia.value as any).folder_id || null,
+        alt_text: editingMedia.value.altText || editingMedia.value.alt_text || '',
+        description: editingMedia.value.description || '',
+        locale: defaultContentLocale,
+        translations_json: JSON.stringify(translations),
+        folder_id: editingMedia.value.folder_id || null,
         tags: editingMedia.value.tagNames || [],
       });
       if (response.value?.failed) {
@@ -1232,32 +1313,91 @@ export default component$(() => {
                       />
                     </div>
 
-                    {/* Alt Text */}
+                    {/* Locale tabs for alt / description */}
+                    {(langConfig.value.site_languages?.length ?? 0) > 1 ? (
+                      <div>
+                        <p class="mb-2 text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400 text-start">
+                          {translateApp(lang, 'appearance.language')}
+                        </p>
+                        <div class="flex flex-wrap gap-1 rounded-lg border border-gray-200 bg-gray-50 p-1 dark:border-gray-700 dark:bg-gray-900/60">
+                          {langConfig.value.site_languages.map((row) => {
+                            const code = String(row.code || '').toLowerCase();
+                            const active = code === mediaMetaLocale.value;
+                            return (
+                              <button
+                                key={code}
+                                type="button"
+                                class={[
+                                  'rounded-md px-3 py-1.5 text-sm font-medium transition-colors',
+                                  active
+                                    ? 'bg-white text-primary-700 shadow-sm dark:bg-gray-800 dark:text-primary-300'
+                                    : 'text-gray-600 hover:bg-white/70 dark:text-gray-300 dark:hover:bg-gray-800/80',
+                                ].join(' ')}
+                                onClick$={() => {
+                                  mediaMetaLocale.value = code;
+                                }}
+                              >
+                                {row.native_label || row.label || code}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    ) : null}
+
+                    {/* Alt Text (locale-aware) */}
                     <div>
                       <label class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-200">
                         {translateApp(lang, 'media.altText')}
                       </label>
                       <input
                         type="text"
-                        value={editingMedia.value.altText || (editingMedia.value as any).alt_text || ''}
+                        key={`alt-${mediaMetaLocale.value}`}
+                        value={readEditingMediaMeta(
+                          editingMedia.value,
+                          mediaMetaLocale.value,
+                          defaultContentLocale,
+                          'alt_text',
+                        )}
                         onInput$={(e: any) => {
-                          editingMedia.value.altText = e.target.value;
-                          (editingMedia.value as any).alt_text = e.target.value;
+                          writeEditingMediaMeta(
+                            editingMedia.value,
+                            mediaMetaLocale.value,
+                            defaultContentLocale,
+                            'alt_text',
+                            e.target.value,
+                          );
+                          editingMedia.value = { ...editingMedia.value };
                         }}
                         placeholder="Alternative text for accessibility"
                         class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-primary-500 focus:outline-none focus:ring focus:ring-primary-200 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:focus:ring-primary-700/40"
                       />
                     </div>
 
-                    {/* Description */}
+                    {/* Description (locale-aware) */}
                     <div>
                       <label class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-200">
                         {translateApp(lang, 'media.description')}
                       </label>
                       <textarea
                         rows={4}
-                        value={(editingMedia.value as any).description || ''}
-                        onInput$={(e: any) => ((editingMedia.value as any).description = e.target.value)}
+                        key={`desc-${mediaMetaLocale.value}`}
+                        value={readEditingMediaMeta(
+                          editingMedia.value,
+                          mediaMetaLocale.value,
+                          defaultContentLocale,
+                          'description',
+                        )}
+                        onInput$={(e: any) => {
+                          writeEditingMediaMeta(
+                            editingMedia.value,
+                            mediaMetaLocale.value,
+                            defaultContentLocale,
+                            'description',
+                            e.target.value,
+                          );
+                          editingMedia.value = { ...editingMedia.value };
+                        }}
                         placeholder="Description of the media file"
                         class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-primary-500 focus:outline-none focus:ring focus:ring-primary-200 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:focus:ring-primary-700/40"
                       />

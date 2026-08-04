@@ -2,6 +2,11 @@
  * Media entity types
  */
 
+export interface MediaTranslationFields {
+  alt_text?: string | null;
+  description?: string | null;
+}
+
 export interface Media {
   id: number;
   name: string;
@@ -14,6 +19,8 @@ export interface Media {
   folderId?: number;
   altText?: string;
   description?: string;
+  /** Secondary locales keyed by language code (primary lives on altText/description). */
+  translations?: Record<string, MediaTranslationFields>;
   url: string;
   thumbnailUrl?: string;
   createdAt: string;
@@ -55,6 +62,8 @@ export interface MediaUpdateInput {
   description?: string;
   folderId?: number;
   tagIds?: number[];
+  locale?: string;
+  translations?: Record<string, MediaTranslationFields>;
 }
 
 export interface MediaFilter {

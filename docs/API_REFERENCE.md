@@ -565,13 +565,19 @@ Require `Authorization: Bearer` and the `manageSettings` gate (`admin` / `super_
 
 | Method | Path | Body / notes |
 |--------|------|----------------|
-| `GET` | `/api/appearance/registries` | Catalogs with `type`, `label`, `max_instances`, `default_settings`, and typed `settings_fields` (`text` \| `textarea` \| `number` \| `boolean` \| `media` \| `json`, plus `translatable`). Text fields store secondary locales under `settings.translations.{locale}` |
+| `GET` | `/api/appearance/registries` | Catalogs with `type`, `label`, `max_instances`, `default_settings`, and typed `settings_fields` (`text` \| `textarea` \| `number` \| `boolean` \| `media` \| `json`, plus `translatable`). Translatable fields (text/textarea by default; media when flagged, e.g. hero `image` / `image_mobile`) store secondary locales under `settings.translations.{locale}`. Media field values are a **media library id** (int) or a legacy URL/path string. |
 | `GET` | `/api/appearance/homepage` | Full `homepage_builder` document |
 | `PUT` | `/api/appearance/homepage` | `{ "sections": [ … ] }` |
 | `GET` | `/api/appearance/footer` | Full `footer_builder` document |
 | `PUT` | `/api/appearance/footer` | `{ "mode": "hardcoded"\|"builder", "zones": { … } }` |
 
 Persisted under `project-settings.json` keys `homepage_builder` / `footer_builder`. See `docs/CONFIGURATION.md` (Appearance builders).
+
+Public shell presentation resolves media fields to URL strings and adds `{key}_alt` from the media library (locale-aware, primary fallback). Legacy URL/path values are kept as URLs with `null` alt (frontend may fall back to headline).
+
+### Media library meta (authenticated)
+
+`PUT /api/v1/media/{id}`: `alt_text`, `description`, optional `locale`, optional `translations` map for secondary locales (`media_translations` table). Primary locale writes columns on `media`. Response includes overlaid `alt_text` / `description` and, when loaded, a `translations` bag.
 
 ### GET `/api/public/site-content`
 

@@ -19,6 +19,10 @@ import {
   newBlockId,
   saveFooterBuilderFromBrowser,
 } from '~/lib/admin/appearance-actions';
+import {
+  isAppearanceFieldTranslatable,
+  writeAppearanceSettingValue,
+} from '~/lib/admin/appearance-locale-settings';
 import type {
   AppearanceRegistryEntry,
   FooterBlockInstance,
@@ -46,6 +50,7 @@ export default component$(() => {
   const dragFromIndex = useSignal<number | null>(null);
   const dropOverIndex = useSignal<number | null>(null);
   const mediaTarget = useSignal<{ blockId: string; key: string; accept?: string } | null>(null);
+  const mediaPreviewById = useSignal<Record<string, string>>({});
   const settingsLocale = useSignal(
     (langConfig.value.content_editing_locale || langConfig.value.default_locale || 'en').toLowerCase(),
   );
@@ -319,6 +324,7 @@ export default component$(() => {
                           defaultLocale={langConfig.value.default_locale}
                           activeLocale={settingsLocale.value}
                           languagesSettingsHref={R.ADMIN.SETTINGS_LANGUAGES}
+                          mediaPreviewById={mediaPreviewById.value}
                           onLocaleChange$={$((code) => {
                             settingsLocale.value = code;
                           })}
@@ -348,12 +354,34 @@ export default component$(() => {
           onSelect={$((media: Media) => {
             const target = mediaTarget.value;
             if (!target) return;
+            const col = getColumn();
+            const block = col?.blocks.find((b) => b.id === target.blockId);
+            const entry = registry.value.find((r) => r.type === block?.type);
+            const field = entry?.settings_fields?.find((f) => f.key === target.key);
+            const translatable = field ? isAppearanceFieldTranslatable(field) : false;
+            const defaultLocale = (langConfig.value.default_locale || 'en').toLowerCase();
             const url = media.url || media.thumbnailUrl || '';
-            updateColumn((col) => ({
-              ...col,
-              blocks: col.blocks.map((b) =>
+            if (media.id && url) {
+              mediaPreviewById.value = {
+                ...mediaPreviewById.value,
+                [String(media.id)]: url,
+              };
+            }
+            updateColumn((c) => ({
+              ...c,
+              blocks: c.blocks.map((b) =>
                 b.id === target.blockId
-                  ? { ...b, settings: { ...(b.settings ?? {}), [target.key]: url } }
+                  ? {
+                      ...b,
+                      settings: writeAppearanceSettingValue(
+                        b.settings ?? {},
+                        target.key,
+                        media.id,
+                        settingsLocale.value,
+                        defaultLocale,
+                        translatable,
+                      ),
+                    }
                   : b,
               ),
             }));

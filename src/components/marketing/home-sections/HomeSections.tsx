@@ -8,6 +8,7 @@ import { CaseStudyCard } from '~/components/marketing/CaseStudyCard';
 import { TestimonialGrid } from '~/components/marketing/TestimonialGrid';
 import { BlogCard } from '~/components/marketing/BlogCard';
 import { resolveServiceIconUrl } from '~/lib/marketing/service-icons';
+import { resolveLaravelMediaUrl } from '~/lib/marketing/resolve-laravel-media-url';
 import { marketingRoutes } from '~/lib/marketing/constants';
 import type { CaseStudy, Testimonial, BlogPost, Service } from '~/lib/marketing/types';
 
@@ -20,6 +21,11 @@ function settingInt(settings: Record<string, unknown> | undefined, key: string, 
   const v = settings?.[key];
   const n = typeof v === 'number' ? v : Number(v);
   return Number.isFinite(n) && n > 0 ? Math.floor(n) : fallback;
+}
+
+function settingOptionalString(settings: Record<string, unknown> | undefined, key: string): string {
+  const v = settings?.[key];
+  return typeof v === 'string' && v.trim() ? v.trim() : '';
 }
 
 export type HomeSectionSharedProps = {
@@ -37,8 +43,11 @@ export const HeroHomeSection = component$<HomeSectionSharedProps>(({ settings, u
   );
   const primaryCta = settingString(settings, 'primary_cta_label', 'Get in touch');
   const secondaryCta = settingString(settings, 'secondary_cta_label', 'View our work');
-  const image = settingString(settings, 'image', '/hero-banner.webp');
-  const imageMobile = settingString(settings, 'image_mobile', '/hero-banner-mobile.webp');
+  const imageRaw = settingString(settings, 'image', '/hero-banner.webp');
+  const imageMobileRaw = settingString(settings, 'image_mobile', '/hero-banner-mobile.webp');
+  const image = resolveLaravelMediaUrl(imageRaw) || imageRaw;
+  const imageMobile = resolveLaravelMediaUrl(imageMobileRaw) || imageMobileRaw;
+  const imageAlt = settingOptionalString(settings, 'image_alt') || headline;
 
   return (
     <Section class="relative overflow-hidden bg-gradient-to-b from-primary-50/70 via-white to-white pt-12 sm:pt-16 lg:pt-20 dark:from-primary-950/25 dark:via-slate-900 dark:to-slate-900">
@@ -76,7 +85,7 @@ export const HeroHomeSection = component$<HomeSectionSharedProps>(({ settings, u
                   src={image}
                   width={1400}
                   height={788}
-                  alt={headline}
+                  alt={imageAlt}
                   class="h-auto w-full rounded-2xl border border-slate-200/90 shadow-2xl shadow-slate-900/[0.08] ring-1 ring-slate-900/5 dark:border-slate-600/40 dark:shadow-primary-950/35 dark:ring-white/10"
                   decoding="async"
                   fetchPriority="high"

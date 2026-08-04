@@ -18,6 +18,10 @@ import {
   newSectionId,
   saveHomepageBuilderFromBrowser,
 } from '~/lib/admin/appearance-actions';
+import {
+  isAppearanceFieldTranslatable,
+  writeAppearanceSettingValue,
+} from '~/lib/admin/appearance-locale-settings';
 import type {
   AppearanceRegistryEntry,
   HomepageSectionInstance,
@@ -38,6 +42,7 @@ export default component$(() => {
   const dragFromIndex = useSignal<number | null>(null);
   const dropOverIndex = useSignal<number | null>(null);
   const mediaTarget = useSignal<{ sectionId: string; key: string; accept?: string } | null>(null);
+  const mediaPreviewById = useSignal<Record<string, string>>({});
   const settingsLocale = useSignal(
     (langConfig.value.content_editing_locale || langConfig.value.default_locale || 'en').toLowerCase(),
   );
@@ -289,6 +294,7 @@ export default component$(() => {
                           defaultLocale={langConfig.value.default_locale}
                           activeLocale={settingsLocale.value}
                           languagesSettingsHref={R.ADMIN.SETTINGS_LANGUAGES}
+                          mediaPreviewById={mediaPreviewById.value}
                           onLocaleChange$={$((code) => {
                             settingsLocale.value = code;
                           })}
@@ -320,12 +326,34 @@ export default component$(() => {
           onSelect={$((media: Media) => {
             const target = mediaTarget.value;
             if (!target) return;
+            const entry = registry.value.find((r) => {
+              const sec = sections.value.find((s) => s.id === target.sectionId);
+              return sec && r.type === sec.type;
+            });
+            const field = entry?.settings_fields?.find((f) => f.key === target.key);
+            const translatable = field ? isAppearanceFieldTranslatable(field) : false;
+            const defaultLocale = (langConfig.value.default_locale || 'en').toLowerCase();
             const url = media.url || media.thumbnailUrl || '';
-            sections.value = sections.value.map((s) =>
-              s.id === target.sectionId
-                ? { ...s, settings: { ...(s.settings ?? {}), [target.key]: url } }
-                : s,
-            );
+            if (media.id && url) {
+              mediaPreviewById.value = {
+                ...mediaPreviewById.value,
+                [String(media.id)]: url,
+              };
+            }
+            sections.value = sections.value.map((s) => {
+              if (s.id !== target.sectionId) return s;
+              return {
+                ...s,
+                settings: writeAppearanceSettingValue(
+                  s.settings ?? {},
+                  target.key,
+                  media.id,
+                  settingsLocale.value,
+                  defaultLocale,
+                  translatable,
+                ),
+              };
+            });
             mediaTarget.value = null;
           })}
           onClose={$(() => {

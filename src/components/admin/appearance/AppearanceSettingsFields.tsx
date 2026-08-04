@@ -5,6 +5,12 @@ import {
   readAppearanceSettingValue,
   writeAppearanceSettingValue,
 } from '~/lib/admin/appearance-locale-settings';
+import {
+  appearanceMediaId,
+  appearanceMediaPreviewSrc,
+  appearanceMediaUrlInputValue,
+} from '~/lib/admin/appearance-media-ref';
+import { resolveLaravelMediaUrl } from '~/lib/marketing/resolve-laravel-media-url';
 import { useTranslate, translateApp } from '~/lib/i18n/useTranslate';
 import { appearanceFieldLabel } from '~/lib/i18n/appearance-labels';
 import type { AppearanceSettingField } from '~/lib/marketing/appearance-types';
@@ -21,6 +27,8 @@ export type AppearanceSettingsFieldsProps = {
   onLocaleChange$?: QRL<(code: string) => void>;
   /** Optional admin link when site has only one configured content language. */
   languagesSettingsHref?: string;
+  /** Resolved preview URLs keyed by media id string (for id-valued media fields). */
+  mediaPreviewById?: Record<string, string>;
 };
 
 type FieldControlProps = {
@@ -30,6 +38,7 @@ type FieldControlProps = {
   defaultLocale: string;
   onSettingsChange$: QRL<(next: Record<string, unknown>) => void>;
   onPickMedia$: QRL<(key: string, accept?: string) => void>;
+  mediaPreviewById?: Record<string, string>;
 };
 
 function asString(v: unknown): string {
@@ -80,19 +89,26 @@ const AppearanceSettingFieldControl = component$<FieldControlProps>((props) => {
   }
 
   if (field.type === 'media') {
-    const url = asString(raw);
+    const preview = appearanceMediaPreviewSrc(raw, props.mediaPreviewById);
+    const previewSrc = preview ? resolveLaravelMediaUrl(preview) || preview : '';
+    const mediaId = appearanceMediaId(raw);
+    const urlInput = appearanceMediaUrlInputValue(raw);
     return (
       <div class="md:col-span-2">
         <label class="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-300">
           {label}
         </label>
         <div class="flex flex-wrap items-start gap-3">
-          {url ? (
+          {previewSrc ? (
             <img
-              src={url}
+              src={previewSrc}
               alt=""
               class="h-20 w-auto max-w-[12rem] rounded border border-gray-200 object-cover dark:border-gray-600"
             />
+          ) : mediaId !== null ? (
+            <div class="flex h-20 w-32 items-center justify-center rounded border border-dashed border-gray-300 text-xs text-gray-400 dark:border-gray-600">
+              #{mediaId}
+            </div>
           ) : (
             <div class="flex h-20 w-32 items-center justify-center rounded border border-dashed border-gray-300 text-xs text-gray-400 dark:border-gray-600">
               {translateApp(lang, 'appearance.noImage')}
@@ -108,7 +124,7 @@ const AppearanceSettingFieldControl = component$<FieldControlProps>((props) => {
             >
               {translateApp(lang, 'appearance.selectFromLibrary')}
             </button>
-            {url ? (
+            {raw !== undefined && raw !== null && raw !== '' ? (
               <button
                 type="button"
                 class="rounded-lg border border-gray-300 px-3 py-2 text-xs dark:border-gray-600"
@@ -132,7 +148,7 @@ const AppearanceSettingFieldControl = component$<FieldControlProps>((props) => {
               type="url"
               class="w-full min-w-[14rem] rounded border px-2 py-1 text-xs dark:bg-gray-900"
               placeholder={translateApp(lang, 'appearance.orPasteUrl')}
-              value={url}
+              value={urlInput}
               onInput$={async (e) => {
                 await props.onSettingsChange$(
                   writeAppearanceSettingValue(
@@ -355,6 +371,7 @@ export const AppearanceSettingsFields = component$<AppearanceSettingsFieldsProps
               defaultLocale={defaultLocale}
               onSettingsChange$={props.onSettingsChange$}
               onPickMedia$={props.onPickMedia$}
+              mediaPreviewById={props.mediaPreviewById}
             />
           ))}
         </div>
@@ -377,6 +394,7 @@ export const AppearanceSettingsFields = component$<AppearanceSettingsFieldsProps
                 defaultLocale={defaultLocale}
                 onSettingsChange$={props.onSettingsChange$}
                 onPickMedia$={props.onPickMedia$}
+                mediaPreviewById={props.mediaPreviewById}
               />
             ))}
           </div>
