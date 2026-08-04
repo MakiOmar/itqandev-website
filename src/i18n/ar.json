@@ -196,6 +196,8 @@
     "list": "قائمة الصفحات",
     "empty": "لا توجد صفحات بعد",
     "deleteConfirm": "هل أنت متأكد من حذف هذه الصفحة؟",
+    "statusDraft": "مسودة",
+    "statusPublished": "منشور",
     "sections": "أقسام الصفحة",
     "addSection": "إضافة قسم…",
     "sectionsEmpty": "لا توجد أقسام بعد. أضف قسماً لبناء الصفحة.",

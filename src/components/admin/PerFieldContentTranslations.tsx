@@ -19,6 +19,7 @@ import {
 import { directionForSiteLocale, langAttributeForLocale } from '../../lib/i18n/editing-locale-direction';
 import { readPreferredLocaleFromBrowser } from '../../lib/i18n/preferred-locale-persist';
 import { LazyRichTextEditorField } from './LazyRichTextEditorField';
+import { ADMIN_NATIVE_OPTION_CLASS, ADMIN_NATIVE_SELECT_CLASS } from '../../lib/admin/native-select-classes';
 
 type TranslationKind = 'project' | 'blog';
 
@@ -293,16 +294,20 @@ export const ContentPrimaryLanguageSelect = component$<{
       <select
         id="content_locale"
         name="content_locale"
-        class="w-full max-w-md rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-primary-500 focus:outline-none focus:ring focus:ring-primary-200 dark:border-gray-600 dark:bg-gray-950 dark:text-gray-100"
+        class={`${ADMIN_NATIVE_SELECT_CLASS} max-w-md`}
         value={props.value}
         onChange$={(e) => {
           const v = (e.target as HTMLSelectElement).value;
           props.onChange$?.(v);
         }}
       >
-        <option value="">{`${props.useSiteDefaultLabel} (${props.defaultLocale})`}</option>
+        <option class={ADMIN_NATIVE_OPTION_CLASS} value="">
+          {`${props.useSiteDefaultLabel} (${props.defaultLocale})`}
+        </option>
         {props.siteLanguages.map((l) => (
-          <option key={l.code} value={l.code}>{`${l.native_label || l.label} (${l.code})`}</option>
+          <option class={ADMIN_NATIVE_OPTION_CLASS} key={l.code} value={l.code}>
+            {`${l.native_label || l.label} (${l.code})`}
+          </option>
         ))}
       </select>
       <p class="mt-2 text-xs text-gray-500 dark:text-gray-400">{props.hint}</p>
@@ -415,7 +420,7 @@ export const ContentEditingLanguageSelect = component$<{
         key={selectModel.value}
         id="editing_locale"
         name="editing_locale"
-        class="w-full max-w-md rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-primary-500 focus:outline-none focus:ring focus:ring-primary-200 dark:border-gray-600 dark:bg-gray-950 dark:text-gray-100"
+        class={`${ADMIN_NATIVE_SELECT_CLASS} max-w-md`}
         value={selectModel.value}
         onChange$={(e) => {
           const v = (e.target as HTMLSelectElement).value;
@@ -424,7 +429,9 @@ export const ContentEditingLanguageSelect = component$<{
         }}
       >
         {props.siteLanguages.map((l) => (
-          <option key={l.code} value={l.code}>{`${l.native_label || l.label} (${l.code})`}</option>
+          <option class={ADMIN_NATIVE_OPTION_CLASS} key={l.code} value={l.code}>
+            {`${l.native_label || l.label} (${l.code})`}
+          </option>
         ))}
       </select>
       <p class="mt-2 text-xs text-gray-500 dark:text-gray-400">

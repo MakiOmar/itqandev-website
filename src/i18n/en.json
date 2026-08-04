@@ -196,6 +196,8 @@
     "list": "Pages List",
     "empty": "No pages yet",
     "deleteConfirm": "Are you sure you want to delete this page?",
+    "statusDraft": "Draft",
+    "statusPublished": "Published",
     "sections": "Page sections",
     "addSection": "Add section…",
     "sectionsEmpty": "No sections yet. Add a section to build this page.",

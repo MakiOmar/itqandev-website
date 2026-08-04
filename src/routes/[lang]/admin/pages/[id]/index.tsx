@@ -30,6 +30,10 @@ import {
   ContentPrimaryLanguageSelect,
   EditingLocaleFieldsShell,
 } from '../../../../../components/admin/PerFieldContentTranslations';
+import {
+  ADMIN_NATIVE_OPTION_CLASS,
+  ADMIN_NATIVE_SELECT_CLASS,
+} from '../../../../../lib/admin/native-select-classes';
 
 function mapPageFromApi(raw: Record<string, unknown>): AdminPage {
   return {
@@ -249,9 +253,11 @@ export default component$(() => {
             />
           </div>
           <div>
-            <label class="mb-1 block text-xs font-medium">{translateApp(lang, 'pages.fields.status')}</label>
+            <label class="mb-1 block text-xs font-medium text-gray-700 dark:text-gray-200">
+              {translateApp(lang, 'pages.fields.status')}
+            </label>
             <select
-              class="w-full rounded border px-3 py-2 text-sm dark:bg-gray-950"
+              class={ADMIN_NATIVE_SELECT_CLASS}
               value={formData.value.status}
               onChange$={(e) => {
                 formData.value = {
@@ -260,8 +266,12 @@ export default component$(() => {
                 };
               }}
             >
-              <option value="draft">draft</option>
-              <option value="published">published</option>
+              <option class={ADMIN_NATIVE_OPTION_CLASS} value="draft">
+                {translateApp(lang, 'pages.statusDraft')}
+              </option>
+              <option class={ADMIN_NATIVE_OPTION_CLASS} value="published">
+                {translateApp(lang, 'pages.statusPublished')}
+              </option>
             </select>
           </div>
 

@@ -153,6 +153,9 @@ export const Sidebar = component$<SidebarProps>((props) => {
       icon: BlogIcon,
       activeOnChildPaths: true,
       permission: 'manage pages',
+      // Role fallback when /me permissions were cached before `manage pages` existed.
+      menuManagementAccess: true,
+      menuManagementRoles: ['super_admin', 'admin', 'company', 'editor'],
       featureModule: 'pages',
     },
     {

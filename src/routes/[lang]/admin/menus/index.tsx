@@ -11,6 +11,7 @@ import { auth } from '../../../../lib/auth';
 import type { AuthSession } from '../../../../lib/auth/types';
 import { routesFromPreferredCookie } from '../../../../lib/constants/routes';
 import { uiLangFromUrlPathname } from '../../../../lib/i18n/ui-locale-path';
+import { ADMIN_NATIVE_SELECT_CLASS } from '../../../../lib/admin/native-select-classes';
 
 interface MenuRow {
   id: number;
@@ -709,8 +710,7 @@ export default component$(() => {
     }
   });
 
-  const inputClass =
-    'w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100';
+  const inputClass = ADMIN_NATIVE_SELECT_CLASS;
   const labelClass = 'mb-1 block text-sm font-medium text-gray-700 dark:text-gray-200';
 
   return (

@@ -9,6 +9,10 @@ import {
 } from '~/lib/admin/appearance-actions';
 import { appearanceSectionLabel } from '~/lib/i18n/appearance-labels';
 import { translateApp } from '~/lib/i18n/useTranslate';
+import {
+  ADMIN_NATIVE_OPTION_CLASS,
+  ADMIN_NATIVE_SELECT_COMPACT_CLASS,
+} from '~/lib/admin/native-select-classes';
 import type {
   AppearanceRegistryEntry,
   HomepageSectionInstance,
@@ -43,7 +47,7 @@ export const PageSectionsEditor = component$<PageSectionsEditorProps>((props) =>
         </h3>
         {insertable.length > 0 ? (
           <select
-            class="rounded-lg border border-gray-300 bg-white px-2 py-1.5 text-xs dark:border-gray-600 dark:bg-gray-900"
+            class={ADMIN_NATIVE_SELECT_COMPACT_CLASS}
             value=""
             onChange$={async (e) => {
               const type = (e.target as HTMLSelectElement).value;
@@ -63,9 +67,11 @@ export const PageSectionsEditor = component$<PageSectionsEditorProps>((props) =>
               ]);
             }}
           >
-            <option value="">{translateApp(props.lang, 'pages.addSection')}</option>
+            <option class={ADMIN_NATIVE_OPTION_CLASS} value="">
+              {translateApp(props.lang, 'pages.addSection')}
+            </option>
             {insertable.map((entry) => (
-              <option key={entry.type} value={entry.type}>
+              <option class={ADMIN_NATIVE_OPTION_CLASS} key={entry.type} value={entry.type}>
                 {appearanceSectionLabel(props.lang, entry.type, entry.label)}
               </option>
             ))}
