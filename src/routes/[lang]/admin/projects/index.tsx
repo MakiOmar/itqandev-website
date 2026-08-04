@@ -1,6 +1,6 @@
 import { component$, useSignal, $ } from '@builder.io/qwik';
 import type { DocumentHead } from '@builder.io/qwik-city';
-import { routeLoader$, routeAction$, useNavigate, Link, zod$, z } from '@builder.io/qwik-city';
+import { routeLoader$, useNavigate, Link } from '@builder.io/qwik-city';
 import { PageHeader } from '../../../../components/common/PageHeader';
 import { AdminContentImportExportButtons } from '../../../../components/admin/AdminContentImportExportButtons';
 import { LoadingSpinner } from '../../../../components/common/LoadingSpinner';
@@ -8,6 +8,10 @@ import { useTranslate, translateApp } from '../../../../lib/i18n/useTranslate';
 import { useSwal } from '../../../../lib/hooks/useSwal';
 import { getApiClient } from '../../../../lib/api/client';
 import { adminApiClient } from '../../../../lib/admin/admin-api-client';
+import {
+  runProjectBulkDeleteFromBrowser,
+  runProjectDeleteFromBrowser,
+} from '../../../../lib/admin/project-actions';
 import { API_ENDPOINTS } from '../../../../lib/api/endpoints';
 import { adminProjectEditHref, useAppRoutes } from '../../../../lib/constants/routes';
 import type { Project } from '../../../../types/project';
@@ -52,33 +56,6 @@ export const useProjects = routeLoader$(async ({ cookie, request, params }) => {
 });
 
 /**
- * Delete project action
- */
-export const useDeleteProject = routeAction$(async (data, { fail }) => {
-  try {
-    const apiClient = getApiClient();
-    await apiClient.delete(API_ENDPOINTS.PROJECTS.DELETE(data.id as string));
-    return { success: true };
-  } catch (error: any) {
-    return fail(500, { message: error.message || 'Failed to delete project' });
-  }
-}, zod$({ id: z.string() }));
-
-/**
- * Bulk delete projects action
- */
-export const useBulkDeleteProjects = routeAction$(async (data, { fail }) => {
-  try {
-    const apiClient = getApiClient();
-    const ids = Array.isArray(data.ids) ? data.ids : [data.ids];
-    await apiClient.post(API_ENDPOINTS.PROJECTS.BULK_DELETE, { ids });
-    return { success: true };
-  } catch (error: any) {
-    return fail(500, { message: error.message || 'Failed to delete projects' });
-  }
-}, zod$({ ids: z.union([z.string(), z.array(z.string())]) }));
-
-/**
  * Projects list page - Matching Vue Dashboard
  */
 export default component$(() => {
@@ -88,8 +65,6 @@ export default component$(() => {
   const navigate = useNavigate();
   const projectsLoader = useProjects();
   const langConfig = usePublicSiteMeta();
-  const deleteAction = useDeleteProject();
-  const bulkDeleteAction = useBulkDeleteProjects();
 
   const { items: projects, loading, refetch } = useLocaleAwareList<Project>(
     projectsLoader,
@@ -131,14 +106,15 @@ export default component$(() => {
     });
     if (!result.isConfirmed) return;
 
-    const response = await deleteAction.submit({ id: String(id) });
-    if (response.value?.failed) {
-      await showError((response.value as any).message || translations.failedToDelete);
-    } else {
-      await success(translations.successTitle, { text: translations.deletedText });
-      projects.value = projects.value.filter((p) => p.id !== id);
-      selectedItems.value.delete(id);
+    const deleted = await runProjectDeleteFromBrowser(id);
+    if (!deleted.ok) {
+      await showError(deleted.message || translations.failedToDelete);
+      return;
     }
+    await success(translations.successTitle, { text: translations.deletedText });
+    projects.value = projects.value.filter((p) => p.id !== id);
+    selectedItems.value.delete(id);
+    selectedItems.value = new Set(selectedItems.value);
   });
 
   const toggleSelect = $((id: string | number) => {
@@ -201,15 +177,15 @@ export default component$(() => {
     if (!result.isConfirmed) return;
 
     const ids = Array.from(selectedItems.value);
-    const response = await bulkDeleteAction.submit({ ids: ids.map(String) });
-    if (response.value?.failed) {
-      await showError((response.value as any).message || translations.failedToDeleteMultiple);
-    } else {
-      await success(translations.successTitle, { text: translations.deletedText });
-      projects.value = projects.value.filter((p) => !selectedItems.value.has(p.id));
-      selectedItems.value.clear();
-      selectedItems.value = new Set();
+    const deleted = await runProjectBulkDeleteFromBrowser(ids);
+    if (!deleted.ok) {
+      await showError(deleted.message || translations.failedToDeleteMultiple);
+      return;
     }
+    await success(translations.successTitle, { text: translations.deletedText });
+    const remove = new Set(ids);
+    projects.value = projects.value.filter((p) => !remove.has(p.id));
+    selectedItems.value = new Set();
   });
 
   const goToEdit = $((id: string | number) => {
