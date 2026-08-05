@@ -29,6 +29,25 @@ function CopyIcon() {
   );
 }
 
+function CheckIcon() {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 20 20"
+      fill="currentColor"
+      class="h-3.5 w-3.5"
+      aria-hidden="true"
+    >
+      {/* Success tick */}
+      <path
+        fill-rule="evenodd"
+        d="M16.704 4.153a.75.75 0 0 1 .143 1.052l-8 10.5a.75.75 0 0 1-1.127.075l-4.5-4.5a.75.75 0 0 1 1.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 0 1 1.05-.143Z"
+        clip-rule="evenodd"
+      />
+    </svg>
+  );
+}
+
 const SubmissionFieldRow = component$<{
   lang: string;
   row: SubmissionDisplayRow;
@@ -38,12 +57,15 @@ const SubmissionFieldRow = component$<{
 
   const onCopy$ = $(async () => {
     const text = props.row.valueText;
-    try {
-      await navigator.clipboard.writeText(text);
+    const markCopied = () => {
       copied.value = true;
       setTimeout(() => {
         copied.value = false;
       }, 1500);
+    };
+    try {
+      await navigator.clipboard.writeText(text);
+      markCopied();
     } catch {
       // Fallback for non-secure contexts
       const ta = document.createElement('textarea');
@@ -55,10 +77,7 @@ const SubmissionFieldRow = component$<{
       ta.select();
       document.execCommand('copy');
       document.body.removeChild(ta);
-      copied.value = true;
-      setTimeout(() => {
-        copied.value = false;
-      }, 1500);
+      markCopied();
     }
   });
 
@@ -86,17 +105,26 @@ const SubmissionFieldRow = component$<{
       </div>
       <button
         type="button"
-        class="mt-0.5 flex-shrink-0 rounded border border-gray-200 p-1 text-gray-500 hover:bg-gray-50 hover:text-gray-800 dark:border-gray-600 dark:hover:bg-slate-800 dark:hover:text-gray-200"
+        class={[
+          'mt-0.5 flex-shrink-0 rounded border p-1 transition-colors',
+          copied.value
+            ? 'border-green-300 bg-green-50 text-green-600 dark:border-green-700 dark:bg-green-950/40 dark:text-green-400'
+            : 'border-gray-200 text-gray-500 hover:bg-gray-50 hover:text-gray-800 dark:border-gray-600 dark:hover:bg-slate-800 dark:hover:text-gray-200',
+        ].join(' ')}
         title={
           copied.value
             ? translateApp(props.lang, 'forms.valueCopied')
             : translateApp(props.lang, 'forms.copyValue')
         }
-        aria-label={translateApp(props.lang, 'forms.copyValue')}
+        aria-label={
+          copied.value
+            ? translateApp(props.lang, 'forms.valueCopied')
+            : translateApp(props.lang, 'forms.copyValue')
+        }
         onClick$={onCopy$}
       >
-        {/* Comment: copy icon for field value */}
-        <CopyIcon />
+        {/* Swap to a green tick after a successful copy */}
+        {copied.value ? <CheckIcon /> : <CopyIcon />}
       </button>
     </div>
   );

@@ -35,9 +35,22 @@ type SubmissionsPageData = {
   formId: number;
   formTitle: string;
   formSlug: string;
+  formTranslations: Array<{ locale: string; title?: string | null }>;
   formLayout: unknown;
   submissions: SubmissionRow[];
 };
+
+function formLabelForLocale(
+  formTitle: string,
+  translations: Array<{ locale: string; title?: string | null }>,
+  locale: string | null,
+): string {
+  if (!locale) return formTitle;
+  const code = locale.toLowerCase();
+  const row = translations.find((t) => String(t.locale || '').toLowerCase() === code);
+  const translated = row?.title?.trim();
+  return translated || formTitle;
+}
 
 function mapSubmission(raw: Record<string, unknown>): SubmissionRow {
   return {
@@ -83,6 +96,9 @@ export const useFormSubmissions = routeLoader$(async ({ params, cookie, request,
       formId: id,
       formTitle: String(formBody.title ?? ''),
       formSlug: String(formBody.slug ?? ''),
+      formTranslations: Array.isArray(formBody.translations)
+        ? (formBody.translations as Array<{ locale: string; title?: string | null }>)
+        : [],
       formLayout: formBody.layout ?? { rows: [] },
       submissions: normalizeSubmissions(subBody),
     } satisfies SubmissionsPageData;
@@ -183,6 +199,7 @@ export default component$(() => {
             <thead class="border-b border-gray-200 bg-gray-50 text-xs uppercase text-gray-500 dark:border-gray-700 dark:bg-slate-950">
               <tr>
                 <th class="px-3 py-2">ID</th>
+                <th class="px-3 py-2">{translateApp(lang, 'forms.formLabel')}</th>
                 <th class="px-3 py-2">{translateApp(lang, 'forms.fields.status')}</th>
                 <th class="px-3 py-2">{translateApp(lang, 'forms.submissionLocale')}</th>
                 <th class="px-3 py-2">{translateApp(lang, 'forms.submissionDate')}</th>
@@ -193,6 +210,9 @@ export default component$(() => {
               {rows.value.map((row) => (
                 <tr key={row.id} class="border-b border-gray-100 dark:border-gray-800">
                   <td class="px-3 py-2 font-mono text-xs">{row.id}</td>
+                  <td class="px-3 py-2 font-medium text-gray-900 dark:text-gray-100">
+                    {formLabelForLocale(page.formTitle, page.formTranslations, row.locale)}
+                  </td>
                   <td class="px-3 py-2">
                     <select
                       class={ADMIN_NATIVE_SELECT_COMPACT_CLASS}
