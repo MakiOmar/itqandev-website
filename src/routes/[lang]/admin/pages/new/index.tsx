@@ -110,7 +110,8 @@ export default component$(() => {
         effective_primary_locale: effectivePrimary,
         canonical_title: formData.value.title,
         canonical_excerpt: formData.value.excerpt,
-        sections_json: JSON.stringify(sections.value),
+        sections_json: JSON.stringify(sections.value || []),
+        persist_sections: true,
         translations_json: '[]',
       });
       if (result.success && result.id) {

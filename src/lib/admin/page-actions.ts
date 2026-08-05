@@ -72,7 +72,6 @@ export const pageFormSchema = z
 function buildPageBody(data: Record<string, unknown>): Record<string, unknown> {
   const effectivePrimary = String(data.effective_primary_locale || data.content_locale || 'en');
   const editingLocale = String(data.editing_locale || effectivePrimary);
-  const sections = parseSectionsJson(data.sections_json as string | undefined);
   const parsedTranslations = parseTranslationsJson(data.translations_json as string | undefined);
 
   let title = String(data.title || '');
@@ -95,8 +94,17 @@ function buildPageBody(data: Record<string, unknown>): Record<string, unknown> {
     slug: String(data.slug || ''),
     excerpt,
     status: data.status === 'published' ? 'published' : 'draft',
-    sections,
   };
+  // Only the fullscreen builder writes layout. Classic metadata saves must omit
+  // `sections` so they cannot wipe builder content with [].
+  const persistSections =
+    data.persist_sections === true ||
+    data.persist_sections === 1 ||
+    data.persist_sections === '1' ||
+    data.persist_sections === 'true';
+  if (persistSections) {
+    body.sections = parseSectionsJson(data.sections_json as string | undefined);
+  }
   if (data.content_locale !== undefined) {
     const raw = String(data.content_locale || '').trim();
     body.content_locale = raw || null;

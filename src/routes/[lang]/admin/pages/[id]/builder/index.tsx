@@ -89,6 +89,7 @@ export default component$(() => {
         effective_primary_locale: effectivePrimary,
         canonical_title: page.title,
         canonical_excerpt: page.excerpt || '',
+        persist_sections: true,
         sections_json: JSON.stringify(sections.value),
         translations_json: JSON.stringify(page.translations || []),
       });

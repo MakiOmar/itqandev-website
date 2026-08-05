@@ -1,9 +1,7 @@
-import { component$, useSignal, $, useVisibleTask$, useTask$ } from '@builder.io/qwik';
+import { component$, useSignal, $, useTask$ } from '@builder.io/qwik';
 import type { DocumentHead } from '@builder.io/qwik-city';
 import { Link, routeLoader$ } from '@builder.io/qwik-city';
 import { PageHeader } from '../../../../../components/common/PageHeader';
-import { PageSectionsEditor } from '../../../../../components/admin/pages/PageSectionsEditor';
-import { MediaSelector } from '../../../../../components/common/MediaSelector';
 import { AdminPublicPageLink } from '../../../../../components/admin/AdminPublicPageLink';
 import { useTranslate, translateApp } from '../../../../../lib/i18n/useTranslate';
 import { useSwal } from '../../../../../lib/hooks/useSwal';
@@ -15,18 +13,8 @@ import {
   adminPageBuilderHref,
   useAppRoutes,
 } from '../../../../../lib/constants/routes';
-import {
-  fetchAppearanceRegistriesFromBrowser,
-  hydrateAppearanceMediaPreviews,
-} from '../../../../../lib/admin/appearance-actions';
-import { collectAppearanceMediaIdsFromPageSections, ensurePageLayoutBands, findBlockInBands, updateBlockInBands } from '../../../../../lib/admin/page-layout';
-import {
-  isAppearanceFieldTranslatable,
-  writeAppearanceSettingValue,
-} from '../../../../../lib/admin/appearance-locale-settings';
-import type { AppearanceRegistryEntry, PageSectionNode } from '../../../../../lib/marketing/appearance-types';
+import type { PageSectionNode } from '../../../../../lib/marketing/appearance-types';
 import type { AdminPage } from '../../../../../types/page';
-import type { Media } from '../../../../../types/media';
 import {
   mergeBlogPostFieldsForUiLocale,
   primaryLocaleForContent,
@@ -104,13 +92,7 @@ export default component$(() => {
   const canonicalTitle = useSignal(page.title);
   const canonicalExcerpt = useSignal(page.excerpt || '');
   const translationsJson = useSignal(JSON.stringify(page.translations || []));
-  const sections = useSignal<PageSectionNode[]>(
-    (page.sections as PageSectionNode[]) || [],
-  );
-  const registry = useSignal<AppearanceRegistryEntry[]>([]);
-  const mediaPreviewById = useSignal<Record<string, string>>({});
-  const mediaTarget = useSignal<{ blockId: string; key: string; accept?: string } | null>(null);
-  const activeSettingsLocale = useSignal(langConfig.value.default_locale || 'en');
+  const sectionCount = Array.isArray(page.sections) ? page.sections.length : 0;
   const saving = useSignal(false);
 
   useTask$(({ track }) => {
@@ -143,18 +125,6 @@ export default component$(() => {
     };
   });
 
-  // eslint-disable-next-line qwik/no-use-visible-task
-  useVisibleTask$(async () => {
-    try {
-      const regs = await fetchAppearanceRegistriesFromBrowser();
-      registry.value = regs.homepage_sections ?? [];
-      const ids = collectAppearanceMediaIdsFromPageSections(sections.value);
-      mediaPreviewById.value = await hydrateAppearanceMediaPreviews(ids, mediaPreviewById.value);
-    } catch {
-      registry.value = [];
-    }
-  });
-
   const handleSave$ = $(async () => {
     saving.value = true;
     try {
@@ -169,6 +139,7 @@ export default component$(() => {
         canonicalTitle.value = formData.value.title;
         canonicalExcerpt.value = formData.value.excerpt;
       }
+      // Metadata only — never send sections (builder owns layout).
       const result = await runPageUpdateFromBrowser(page.id, {
         title: formData.value.title,
         slug: formData.value.slug,
@@ -179,7 +150,6 @@ export default component$(() => {
         effective_primary_locale: effectivePrimary,
         canonical_title: canonicalTitle.value,
         canonical_excerpt: canonicalExcerpt.value,
-        sections_json: JSON.stringify(sections.value),
         translations_json: translationsJson.value,
       });
       if (result.success) {
@@ -272,13 +242,21 @@ export default component$(() => {
             </div>
 
             <div class={ADMIN_FORM_CARD_CLASS}>
-              <div class="mb-4 flex flex-wrap items-start justify-between gap-3 rounded-lg border border-primary-200 bg-primary-50/60 px-3 py-2.5 dark:border-primary-900 dark:bg-primary-950/30">
+              <div class="flex flex-wrap items-start justify-between gap-3 rounded-lg border border-primary-200 bg-primary-50/60 px-3 py-3 dark:border-primary-900 dark:bg-primary-950/30">
                 <div class="min-w-0 text-start">
                   <p class="text-sm font-medium text-primary-900 dark:text-primary-100">
                     {translateApp(lang, 'pages.builderModeHint')}
                   </p>
                   <p class="mt-0.5 text-xs text-primary-800/80 dark:text-primary-200/80">
                     {translateApp(lang, 'pages.classicSectionsHint')}
+                  </p>
+                  <p class="mt-2 text-xs text-primary-900/70 dark:text-primary-200/70">
+                    {sectionCount > 0
+                      ? translateApp(lang, 'pages.layoutBandCount').replace(
+                          '{{count}}',
+                          String(sectionCount),
+                        )
+                      : translateApp(lang, 'pages.layoutEmpty')}
                   </p>
                 </div>
                 <Link
@@ -288,27 +266,6 @@ export default component$(() => {
                   {translateApp(lang, 'pages.openBuilder')}
                 </Link>
               </div>
-              <PageSectionsEditor
-                lang={lang}
-                sections={sections.value}
-                registry={registry.value}
-                languages={langConfig.value.site_languages}
-                defaultLocale={langConfig.value.default_locale}
-                activeLocale={activeSettingsLocale.value}
-                mediaPreviewById={mediaPreviewById.value}
-                onLocaleChange$={$((code) => {
-                  activeSettingsLocale.value = code;
-                })}
-                onChange$={$((next) => {
-                  sections.value = next;
-                })}
-                onMediaPreview$={$((mediaId, url) => {
-                  mediaPreviewById.value = { ...mediaPreviewById.value, [String(mediaId)]: url };
-                })}
-                onPickMedia$={$((blockId, key, accept) => {
-                  mediaTarget.value = { blockId, key, accept };
-                })}
-              />
             </div>
           </div>
         </EditingLocaleFieldsShell>
@@ -359,46 +316,15 @@ export default component$(() => {
           </div>
         </aside>
       </div>
-
-      {mediaTarget.value ? (
-        <MediaSelector
-          title={translateApp(lang, 'appearance.selectImage')}
-          accept={mediaTarget.value.accept || 'image/*'}
-          onSelect={$((media: Media) => {
-            const target = mediaTarget.value;
-            mediaTarget.value = null;
-            if (!target || !media.id) return;
-            const url = media.url || media.thumbnailUrl || '';
-            if (url) {
-              mediaPreviewById.value = { ...mediaPreviewById.value, [String(media.id)]: url };
-            }
-            const bands = ensurePageLayoutBands(sections.value);
-            const block = findBlockInBands(bands, target.blockId);
-            const entry = registry.value.find((r) => r.type === block?.type);
-            const field = entry?.settings_fields?.find((f) => f.key === target.key);
-            const translatable = field ? isAppearanceFieldTranslatable(field) : false;
-            sections.value = updateBlockInBands(bands, target.blockId, (blk) => ({
-              ...blk,
-              settings: writeAppearanceSettingValue(
-                blk.settings ?? {},
-                target.key,
-                media.id,
-                activeSettingsLocale.value,
-                langConfig.value.default_locale || 'en',
-                translatable,
-              ),
-            }));
-          })}
-          onClose={$(() => {
-            mediaTarget.value = null;
-          })}
-        />
-      ) : null}
     </div>
   );
 });
 
-export const head: DocumentHead = {
-  title: 'Edit Page - Dashboard',
-  meta: [{ name: 'description', content: 'Edit a marketing CMS page' }],
+export const head: DocumentHead = ({ resolveValue }) => {
+  try {
+    const page = resolveValue(usePageEditor) as AdminPage;
+    return { title: page?.title ? `Edit: ${page.title}` : 'Edit page' };
+  } catch {
+    return { title: 'Edit page' };
+  }
 };
