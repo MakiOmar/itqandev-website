@@ -698,6 +698,8 @@ Requires permission **`manage pages`** for admin routes. Public routes are guest
 | GET | `/api/public/pages/{slug}` | Published page detail: localized fields, presented `sections`, `seo_meta` |
 
 Seeded slug **`contact`** (`ContactPageSeeder`) is the page-builder layout for the marketing contact experience. Public `/{lang}/contact/` loads that CMS page when the pages module is enabled; otherwise it uses the legacy hard-coded form + office card.
+
+Seeded slug **`about`** (`AboutPageSeeder`) is the page-builder layout for the marketing about experience (intro, stats, vertical journey timeline since 2014, values, process, CTA). Public `/{lang}/about/` loads that CMS page when the pages module is enabled; otherwise it uses the legacy `site.json` about block. Importable template: `website/src/lib/admin/page-templates/about-page.builder.json`.
 | GET | `/api/public/forms/{slug}` | Published form definition (layout, settings, captcha site key); `feature.module:forms`; `X-Content-Locale` |
 | POST | `/api/public/forms/{slug}/submit` | Submit form field values (+ optional `captcha_token`); runs enabled actions in order; `throttle:form-submit` |
 

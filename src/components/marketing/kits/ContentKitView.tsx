@@ -7,6 +7,7 @@ import { Container } from '~/components/marketing/Container';
 import { Section } from '~/components/marketing/Section';
 import { AnimatedReveal } from '~/components/marketing/AnimatedReveal';
 import { marketingRoutes } from '~/lib/marketing/constants';
+import { withUiLocale } from '~/lib/i18n/ui-locale-path';
 import type { ContactInfo } from '~/lib/marketing/types';
 import { translateApp } from '~/lib/i18n/useTranslate';
 
@@ -24,6 +25,18 @@ export type ContentKitProps = {
 function str(s: Record<string, unknown>, key: string, fallback = ''): string {
   const v = s[key];
   return typeof v === 'string' ? v : v != null ? String(v) : fallback;
+}
+
+/** Prefix in-app paths with the active UI locale; leave absolute/external URLs alone. */
+function localizeHref(uiLocale: string, href: string): string {
+  const trimmed = href.trim();
+  if (!trimmed || /^https?:\/\//i.test(trimmed) || trimmed.startsWith('mailto:') || trimmed.startsWith('tel:')) {
+    return trimmed;
+  }
+  if (trimmed.startsWith('/')) {
+    return withUiLocale(uiLocale, trimmed);
+  }
+  return trimmed;
 }
 
 function truthySetting(v: unknown, defaultTrue = false): boolean {
@@ -106,20 +119,31 @@ export const ContentKitView = component$<ContentKitProps>((props) => {
         ? (s.items as Array<{ value?: number; label?: string }>)
         : [];
       if (!items.length) return null;
-      return (
-        <Section>
-          <Container>
-            {str(s, 'title') ? (
-              <h2 class="mb-8 text-center text-2xl font-bold text-slate-900 dark:text-white">
-                {str(s, 'title')}
+      const title = str(s, 'title');
+      const inner = (
+        <AnimatedReveal>
+          <div class="relative overflow-hidden rounded-3xl border border-slate-200/70 bg-gradient-to-br from-primary-50/80 via-white to-sky-50/60 px-6 py-10 shadow-sm dark:border-slate-700/70 dark:from-primary-950/40 dark:via-slate-900 dark:to-slate-900 sm:px-10 sm:py-12">
+            <div
+              class="pointer-events-none absolute -right-16 top-0 h-40 w-40 rounded-full bg-primary-400/20 blur-3xl dark:bg-primary-500/10"
+              aria-hidden="true"
+            />
+            {title ? (
+              <h2 class="relative mb-10 text-center text-2xl font-bold tracking-tight text-slate-900 dark:text-white sm:text-3xl">
+                {title}
               </h2>
             ) : null}
-            <div class="grid grid-cols-2 gap-6 sm:grid-cols-3">
+            <div class="relative grid grid-cols-2 gap-6 sm:grid-cols-3 sm:gap-8">
               {items.map((it, i) => (
                 <AnimatedCounter key={i} value={Number(it.value) || 0} label={String(it.label || '')} />
               ))}
             </div>
-          </Container>
+          </div>
+        </AnimatedReveal>
+      );
+      if (props.embedded) return inner;
+      return (
+        <Section>
+          <Container>{inner}</Container>
         </Section>
       );
     }
@@ -337,55 +361,112 @@ export const ContentKitView = component$<ContentKitProps>((props) => {
     case 'image_text': {
       const image = str(s, 'image');
       const left = str(s, 'image_position', 'right') === 'left';
+      const copy = (
+        <div class={image ? (left ? 'lg:order-2' : 'lg:order-1') : 'mx-auto max-w-3xl'}>
+          {str(s, 'eyebrow') ? (
+            <p class="text-xs font-semibold uppercase tracking-widest text-primary-600 dark:text-primary-400">
+              {str(s, 'eyebrow')}
+            </p>
+          ) : null}
+          <h2 class="mt-2 text-3xl font-bold tracking-tight text-slate-900 dark:text-white sm:text-4xl">
+            {str(s, 'title')}
+          </h2>
+          <div
+            class="prose prose-slate mt-5 max-w-none leading-relaxed dark:prose-invert"
+            dangerouslySetInnerHTML={str(s, 'body')}
+          />
+          {str(s, 'button_label') && str(s, 'button_url') ? (
+            <div class="mt-8">
+              <Button href={localizeHref(props.uiLocale, str(s, 'button_url'))} variant="primary">
+                {str(s, 'button_label')}
+              </Button>
+            </div>
+          ) : null}
+        </div>
+      );
+      const body = (
+        <AnimatedReveal>
+          {image ? (
+            <div class="grid items-center gap-10 lg:grid-cols-2">
+              <div class={left ? 'lg:order-1' : 'lg:order-2'}>
+                <div class="overflow-hidden rounded-2xl border border-slate-200/80 shadow-sm ring-1 ring-slate-900/5 dark:border-slate-700/80 dark:ring-white/5">
+                  <img
+                    src={image}
+                    alt={str(s, 'image_alt') || ''}
+                    class="w-full object-cover"
+                    loading="lazy"
+                  />
+                </div>
+              </div>
+              {copy}
+            </div>
+          ) : (
+            copy
+          )}
+        </AnimatedReveal>
+      );
+      if (props.embedded) return body;
       return (
         <Section>
-          <Container>
-            <div class={`grid items-center gap-10 lg:grid-cols-2 ${left ? '' : ''}`}>
-              <div class={left ? 'lg:order-1' : 'lg:order-2'}>
-                {image ? (
-                  <img src={image} alt={str(s, 'image_alt') || ''} class="w-full rounded-xl object-cover" loading="lazy" />
-                ) : null}
-              </div>
-              <div class={left ? 'lg:order-2' : 'lg:order-1'}>
-                {str(s, 'eyebrow') ? (
-                  <p class="text-sm font-semibold uppercase tracking-wide text-primary-600 dark:text-primary-400">
-                    {str(s, 'eyebrow')}
-                  </p>
-                ) : null}
-                <h2 class="mt-2 text-3xl font-bold text-slate-900 dark:text-white">{str(s, 'title')}</h2>
-                <div
-                  class="prose prose-slate mt-4 dark:prose-invert"
-                  dangerouslySetInnerHTML={str(s, 'body')}
-                />
-                {str(s, 'button_label') && str(s, 'button_url') ? (
-                  <div class="mt-6">
-                    <Button href={str(s, 'button_url')} variant="primary">
-                      {str(s, 'button_label')}
-                    </Button>
-                  </div>
-                ) : null}
-              </div>
-            </div>
-          </Container>
+          <Container>{body}</Container>
         </Section>
       );
     }
     case 'timeline': {
       const items = Array.isArray(s.items) ? (s.items as Array<Record<string, unknown>>) : [];
+      if (!items.length) return null;
+      const title = str(s, 'title', 'How we work');
+      const subtitle = str(s, 'subtitle');
+      const list = (
+        <AnimatedReveal>
+          <div class="relative overflow-hidden rounded-3xl border border-slate-200/70 bg-white/80 p-6 shadow-sm backdrop-blur-md dark:border-slate-700/70 dark:bg-slate-800/50 dark:backdrop-blur-none sm:p-10">
+            <div
+              class="pointer-events-none absolute -left-20 top-10 h-56 w-56 rounded-full bg-sky-300/20 blur-3xl dark:bg-sky-900/20"
+              aria-hidden="true"
+            />
+            <div class="relative mx-auto max-w-3xl">
+              <h2 class="text-2xl font-bold tracking-tight text-slate-900 dark:text-white sm:text-3xl">
+                {title}
+              </h2>
+              {subtitle ? (
+                <p class="mt-3 max-w-2xl text-base leading-relaxed text-slate-600 dark:text-slate-300">
+                  {subtitle}
+                </p>
+              ) : null}
+              <ol class="relative mt-10 space-y-0 border-s-2 border-primary-200/80 ps-8 dark:border-primary-800/60" role="list">
+                {items.map((it, i) => {
+                  const year = String(it.year || '').trim();
+                  return (
+                    <li key={i} class="relative pb-10 last:pb-0">
+                      <span
+                        class="absolute -start-[2.55rem] top-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-white ring-4 ring-primary-100 dark:bg-slate-900 dark:ring-primary-900/60"
+                        aria-hidden="true"
+                      >
+                        <span class="h-2.5 w-2.5 rounded-full bg-primary-500 shadow shadow-primary-500/40" />
+                      </span>
+                      {year ? (
+                        <p class="mb-1.5 text-xs font-semibold uppercase tracking-[0.2em] text-primary-600 dark:text-primary-400">
+                          {year}
+                        </p>
+                      ) : null}
+                      <h3 class="text-lg font-semibold tracking-tight text-slate-900 dark:text-white">
+                        {String(it.title || '')}
+                      </h3>
+                      <p class="mt-2 text-sm leading-relaxed text-slate-600 dark:text-slate-400 sm:text-base">
+                        {String(it.description || '')}
+                      </p>
+                    </li>
+                  );
+                })}
+              </ol>
+            </div>
+          </div>
+        </AnimatedReveal>
+      );
+      if (props.embedded) return list;
       return (
         <Section>
-          <Container>
-            <h2 class="text-2xl font-bold text-slate-900 dark:text-white">{str(s, 'title', 'How we work')}</h2>
-            <ol class="mt-8 space-y-6 border-s border-slate-200 ps-6 dark:border-slate-700">
-              {items.map((it, i) => (
-                <li key={i} class="relative">
-                  <span class="absolute -start-[1.6rem] top-1 h-3 w-3 rounded-full bg-primary-500" />
-                  <h3 class="font-semibold text-slate-900 dark:text-white">{String(it.title || '')}</h3>
-                  <p class="mt-1 text-sm text-slate-600 dark:text-slate-400">{String(it.description || '')}</p>
-                </li>
-              ))}
-            </ol>
-          </Container>
+          <Container>{list}</Container>
         </Section>
       );
     }
@@ -420,19 +501,39 @@ export const ContentKitView = component$<ContentKitProps>((props) => {
     }
     case 'feature_grid': {
       const items = Array.isArray(s.items) ? (s.items as Array<Record<string, unknown>>) : [];
-      return (
-        <Section>
-          <Container>
-            <h2 class="text-2xl font-bold text-slate-900 dark:text-white">{str(s, 'title')}</h2>
-            <div class="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+      if (!items.length) return null;
+      const grid = (
+        <AnimatedReveal>
+          <div>
+            <h2 class="text-2xl font-bold tracking-tight text-slate-900 dark:text-white sm:text-3xl">
+              {str(s, 'title')}
+            </h2>
+            <div class="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-2">
               {items.map((it, i) => (
-                <div key={i} class="rounded-xl border border-slate-200 p-5 dark:border-slate-700">
-                  <h3 class="font-semibold text-slate-900 dark:text-white">{String(it.title || '')}</h3>
-                  <p class="mt-2 text-sm text-slate-600 dark:text-slate-400">{String(it.description || '')}</p>
+                <div
+                  key={i}
+                  class="group relative overflow-hidden rounded-2xl border border-slate-200/80 bg-white/85 p-6 shadow-sm shadow-primary-500/5 backdrop-blur-md transition hover:border-primary-300/60 dark:border-slate-700/80 dark:bg-slate-800/55 dark:backdrop-blur-none dark:hover:border-primary-500/40"
+                >
+                  <div
+                    class="pointer-events-none absolute -right-10 -top-10 h-28 w-28 rounded-full bg-primary-400/10 blur-2xl transition group-hover:bg-primary-400/20 dark:bg-primary-500/10"
+                    aria-hidden="true"
+                  />
+                  <h3 class="relative text-lg font-semibold tracking-tight text-slate-900 dark:text-white">
+                    {String(it.title || '')}
+                  </h3>
+                  <p class="relative mt-2 text-sm leading-relaxed text-slate-600 dark:text-slate-400">
+                    {String(it.description || '')}
+                  </p>
                 </div>
               ))}
             </div>
-          </Container>
+          </div>
+        </AnimatedReveal>
+      );
+      if (props.embedded) return grid;
+      return (
+        <Section>
+          <Container>{grid}</Container>
         </Section>
       );
     }
