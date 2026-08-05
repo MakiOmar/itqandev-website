@@ -40,6 +40,7 @@
     "deleted": "Deleted successfully",
     "cacheCleared": "Cache cleared",
     "view": "View",
+    "viewSite": "View site",
     "viewPublicPage": "View public page"
   },
   "builderExport": {
@@ -763,7 +764,8 @@
     "systemBackup": "Backup & Restore",
     "tools": "Tools",
     "toolsSearchReplace": "Search & Replace",
-    "closeSidebar": "Close sidebar"
+    "closeSidebar": "Close sidebar",
+    "toggleSidebar": "Toggle sidebar"
   },
   "appearance": {
     "homepageTitle": "Homepage builder",

@@ -1,54 +1,23 @@
-import { component$, type QRL, useContext, useSignal, useVisibleTask$ } from '@builder.io/qwik';
-import { Link } from '@builder.io/qwik-city';
+import { component$, type QRL, useContext } from '@builder.io/qwik';
 import { UserDropdown } from '../common/UserDropdown';
 import { LanguageSwitcher } from '../common/LanguageSwitcher';
 import { useAppRoutes } from '../../lib/constants/routes';
 import { AdminSessionContext } from '../../stores/admin-session-context';
 import { MenuIcon } from './icons';
-import { ProjectSettingsContext } from '../../stores/project-settings-store';
+import { useTranslate, translateApp } from '../../lib/i18n/useTranslate';
 
 interface HeaderProps {
   onMenuClick?: QRL<() => void>;
 }
 
 /**
- * Dashboard header component with menu toggle
- * Uses project settings (logo, name) from Laravel API
+ * Dashboard header: menu toggle, view-site link, language + user controls.
+ * Brand logo/name live in the sidebar.
  */
 export const Header = component$<HeaderProps>((props) => {
   const auth = useContext(AdminSessionContext);
+  const { lang } = useTranslate();
   const R = useAppRoutes();
-  const projectSettings = useContext(ProjectSettingsContext);
-  const isDarkMode = useSignal(false);
-  
-  // Get project name and logo from Laravel settings
-  const projectName = projectSettings.settings?.name || 'Dashboard';
-  const defaultLogo = projectSettings.settings?.logo;
-  const projectLightLogo = projectSettings.settings?.logoLight || defaultLogo;
-  const projectDarkLogo = projectSettings.settings?.logoDark || defaultLogo;
-  const activeLogo = isDarkMode.value
-    ? (projectDarkLogo || projectLightLogo || '')
-    : (projectLightLogo || projectDarkLogo || '');
-
-  // eslint-disable-next-line qwik/no-use-visible-task
-  useVisibleTask$(({ cleanup }) => {
-    const updateTheme = () => {
-      if (typeof document === 'undefined') return;
-      isDarkMode.value = document.documentElement.classList.contains('dark');
-    };
-
-    updateTheme();
-
-    if (typeof document !== 'undefined') {
-      const observer = new MutationObserver(updateTheme);
-      observer.observe(document.documentElement, {
-        attributes: true,
-        attributeFilter: ['class'],
-      });
-
-      cleanup(() => observer.disconnect());
-    }
-  });
 
   return (
     <>
@@ -60,30 +29,34 @@ export const Header = component$<HeaderProps>((props) => {
             <button
               onClick$={props.onMenuClick}
               class="text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 transition-colors p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700"
-              aria-label="Toggle sidebar"
+              aria-label={translateApp(lang, 'sidebar.toggleSidebar')}
             >
               <MenuIcon />
             </button>
           )}
-          {/* Single brand logo + name: links to public homepage */}
-          <Link
+          {/* Opens the public marketing site in a new tab */}
+          <a
             href={R.PUBLIC.HOME}
-            class="flex min-w-0 items-center gap-3 md:gap-4 rounded-lg outline-none ring-offset-2 ring-offset-white focus-visible:ring-2 focus-visible:ring-blue-500 dark:ring-offset-slate-800"
-            aria-label={`${projectName} — go to homepage`}
+            target="_blank"
+            rel="noopener noreferrer"
+            class="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 shadow-sm transition hover:border-primary-300 hover:bg-primary-50 hover:text-primary-700 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-200 dark:hover:border-primary-500 dark:hover:bg-slate-800 dark:hover:text-primary-300"
           >
-            {activeLogo ? (
-              <img
-                src={activeLogo}
-                alt=""
-                width="48"
-                height="48"
-                class="h-8 max-w-logo md:h-10 lg:h-12 shrink-0 object-contain"
+            <svg
+              class="h-4 w-4 shrink-0 opacity-80"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+              aria-hidden="true"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
               />
-            ) : null}
-            <h1 class="truncate text-xl sm:text-2xl md:text-3xl font-bold bg-gradient-to-r from-slate-900 to-slate-700 dark:from-slate-100 dark:to-slate-300 bg-clip-text text-transparent tracking-tight">
-              {projectName}
-            </h1>
-          </Link>
+            </svg>
+            {translateApp(lang, 'common.viewSite')}
+          </a>
         </div>
         <div class="flex items-center gap-3 md:gap-4">
           <LanguageSwitcher />

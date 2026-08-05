@@ -40,6 +40,7 @@
     "deleted": "تم الحذف بنجاح",
     "cacheCleared": "تم مسح الذاكرة المؤقتة",
     "view": "عرض",
+    "viewSite": "عرض الموقع",
     "viewPublicPage": "عرض الصفحة العامة"
   },
   "builderExport": {
@@ -763,7 +764,8 @@
     "systemBackup": "النسخ الاحتياطي والاستعادة",
     "tools": "الأدوات",
     "toolsSearchReplace": "بحث واستبدال",
-    "closeSidebar": "إغلاق القائمة"
+    "closeSidebar": "إغلاق القائمة",
+    "toggleSidebar": "تبديل القائمة"
   },
   "appearance": {
     "homepageTitle": "منشئ الصفحة الرئيسية",

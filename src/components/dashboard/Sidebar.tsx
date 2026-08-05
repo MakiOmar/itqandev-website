@@ -77,8 +77,19 @@ export const Sidebar = component$<SidebarProps>((props) => {
   // This ensures sidebar position changes simultaneously with direction, preventing flash
   // Initialize from locale for SSR, then sync with document attribute on client
   const isRTL = useSignal(isUiLocaleRtl(locale.lang));
+  const isDarkMode = useSignal(false);
+
+  // Project branding from Laravel (logo preferred in sidebar; name as fallback)
+  const projectName = projectSettings.settings?.name || 'Dashboard';
+  const defaultLogo = projectSettings.settings?.logo;
+  const projectLightLogo = projectSettings.settings?.logoLight || defaultLogo;
+  const projectDarkLogo = projectSettings.settings?.logoDark || defaultLogo;
+  const featureFlags = projectSettings.settings?.features;
+  const activeLogo = isDarkMode.value
+    ? (projectDarkLogo || projectLightLogo || '')
+    : (projectLightLogo || projectDarkLogo || '');
   
-  // Track direction from document attribute and update immediately
+  // Track direction/theme from document and update immediately
   // eslint-disable-next-line qwik/no-use-visible-task
   useVisibleTask$(({ cleanup }) => {
     const updateUiState = () => {
@@ -88,6 +99,7 @@ export const Sidebar = component$<SidebarProps>((props) => {
         if (isRTL.value !== (dir === 'rtl')) {
           isRTL.value = dir === 'rtl';
         }
+        isDarkMode.value = document.documentElement.classList.contains('dark');
       }
     };
     
@@ -99,16 +111,12 @@ export const Sidebar = component$<SidebarProps>((props) => {
       const observer = new MutationObserver(updateUiState);
       observer.observe(document.documentElement, {
         attributes: true,
-        attributeFilter: ['dir'],
+        attributeFilter: ['dir', 'class'],
       });
       
       cleanup(() => observer.disconnect());
     }
   });
-  
-  // Project name from Laravel (logo is shown only in the dashboard header)
-  const projectName = projectSettings.settings?.name || 'Dashboard';
-  const featureFlags = projectSettings.settings?.features;
 
   const navItems: NavItem[] = [
     {
@@ -355,10 +363,10 @@ export const Sidebar = component$<SidebarProps>((props) => {
         <div class="flex h-full flex-col">
           <div class="flex items-center justify-between h-16 md:h-20 lg:h-28 px-4 sm:px-6 md:px-8 lg:px-10 border-b border-slate-200/60 dark:border-slate-700/60">
             <div class="flex min-w-0 flex-1 items-center">
-              {/* Brand text only: logo lives in header; link matches header homepage */}
+              {/* Brand: logo when configured, otherwise site name */}
               <Link
                 href={R.PUBLIC.HOME}
-                class="min-w-0 rounded-lg outline-none ring-offset-2 ring-offset-white focus-visible:ring-2 focus-visible:ring-blue-500 dark:ring-offset-slate-800"
+                class="flex min-w-0 items-center gap-2 rounded-lg outline-none ring-offset-2 ring-offset-white focus-visible:ring-2 focus-visible:ring-blue-500 dark:ring-offset-slate-800"
                 aria-label={`${projectName} — go to homepage`}
                 onClick$={() => {
                   if (typeof window !== 'undefined' && window.innerWidth < 1024 && props.onClose) {
@@ -366,9 +374,19 @@ export const Sidebar = component$<SidebarProps>((props) => {
                   }
                 }}
               >
-                <h2 class="truncate text-base md:text-lg lg:text-xl font-bold bg-gradient-to-r from-slate-900 to-slate-700 dark:from-slate-100 dark:to-slate-300 bg-clip-text text-transparent tracking-tight">
-                  {projectName}
-                </h2>
+                {activeLogo ? (
+                  <img
+                    src={activeLogo}
+                    alt={projectName}
+                    width="160"
+                    height="48"
+                    class="h-8 w-auto max-w-[10rem] object-contain md:h-10 lg:h-12"
+                  />
+                ) : (
+                  <h2 class="truncate text-base md:text-lg lg:text-xl font-bold bg-gradient-to-r from-slate-900 to-slate-700 dark:from-slate-100 dark:to-slate-300 bg-clip-text text-transparent tracking-tight">
+                    {projectName}
+                  </h2>
+                )}
               </Link>
             </div>
             {props.onClose && (
