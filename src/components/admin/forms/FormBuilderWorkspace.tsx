@@ -26,6 +26,13 @@ import type {
 } from '~/types/form';
 import type { SiteLanguageRow } from '~/types/site-language';
 import { moveItem } from '~/lib/admin/appearance-actions';
+import type { AppearanceSettingField } from '~/lib/marketing/appearance-types';
+
+const FORM_GENERAL_SETTING_FIELDS: AppearanceSettingField[] = [
+  { key: 'submit_label', type: 'text', label: 'Submit button label', translatable: true },
+  { key: 'success_message', type: 'textarea', label: 'Success message', translatable: true },
+  { key: 'error_message', type: 'textarea', label: 'Error message', translatable: true },
+];
 
 type Device = 'mobile' | 'tablet' | 'desktop';
 type Selection =
@@ -215,80 +222,64 @@ export const FormBuilderWorkspace = component$<FormBuilderWorkspaceProps>((props
 
         <main class="min-w-0 flex-1 overflow-y-auto bg-gray-100 p-4 dark:bg-slate-950">
           {tab.value === 'settings' ? (
-            <div class="mx-auto max-w-xl space-y-3 rounded-xl border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-slate-900">
-              <label class="block text-xs font-medium">
-                {translateApp(props.lang, 'forms.submitLabel')}
-                <input
-                  class="mt-1 w-full rounded border border-gray-300 px-2 py-1.5 text-sm dark:border-gray-600 dark:bg-slate-950"
-                  value={settings.submit_label || ''}
-                  onInput$={(e) => {
-                    props.settings.value = {
-                      ...ensureFormSettings(props.settings.value),
-                      submit_label: (e.target as HTMLInputElement).value,
-                    };
-                  }}
-                />
-              </label>
-              <label class="block text-xs font-medium">
-                {translateApp(props.lang, 'forms.successMessage')}
-                <textarea
-                  class="mt-1 w-full rounded border border-gray-300 px-2 py-1.5 text-sm dark:border-gray-600 dark:bg-slate-950"
-                  rows={3}
-                  value={settings.success_message || ''}
-                  onInput$={(e) => {
-                    props.settings.value = {
-                      ...ensureFormSettings(props.settings.value),
-                      success_message: (e.target as HTMLTextAreaElement).value,
-                    };
-                  }}
-                />
-              </label>
-              <label class="block text-xs font-medium">
-                {translateApp(props.lang, 'forms.errorMessage')}
-                <textarea
-                  class="mt-1 w-full rounded border border-gray-300 px-2 py-1.5 text-sm dark:border-gray-600 dark:bg-slate-950"
-                  rows={2}
-                  value={settings.error_message || ''}
-                  onInput$={(e) => {
-                    props.settings.value = {
-                      ...ensureFormSettings(props.settings.value),
-                      error_message: (e.target as HTMLTextAreaElement).value,
-                    };
-                  }}
-                />
-              </label>
-              <label class="block text-xs font-medium">
-                {translateApp(props.lang, 'forms.captcha')}
-                <select
-                  class={`${ADMIN_NATIVE_SELECT_COMPACT_CLASS} mt-1 w-full`}
-                  value={settings.captcha || 'none'}
-                  onChange$={(e) => {
-                    props.settings.value = {
-                      ...ensureFormSettings(props.settings.value),
-                      captcha: (e.target as HTMLSelectElement).value as FormSettings['captcha'],
-                    };
-                  }}
-                >
-                  {['none', 'turnstile', 'recaptcha_v2', 'recaptcha_v3'].map((v) => (
-                    <option key={v} class={ADMIN_NATIVE_OPTION_CLASS} value={v}>
-                      {v}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <label class="flex items-center gap-2 text-xs font-medium">
-                <input
-                  type="checkbox"
-                  checked={settings.honeypot !== false}
-                  onChange$={(e) => {
-                    props.settings.value = {
-                      ...ensureFormSettings(props.settings.value),
-                      honeypot: (e.target as HTMLInputElement).checked,
-                    };
-                  }}
-                />
-                {translateApp(props.lang, 'forms.honeypot')}
-              </label>
+            <div class="mx-auto max-w-xl space-y-4 rounded-xl border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-slate-900">
+              <AppearanceSettingsFields
+                fields={FORM_GENERAL_SETTING_FIELDS}
+                values={ensureFormSettings(props.settings.value) as Record<string, unknown>}
+                onSettingsChange$={async (nextSettings) => {
+                  props.settings.value = ensureFormSettings({
+                    ...ensureFormSettings(props.settings.value),
+                    ...nextSettings,
+                  });
+                }}
+                onPickMedia$={$(async () => {})}
+                languages={props.siteLanguages}
+                defaultLocale={props.defaultLocale}
+                activeLocale={props.activeLocale.value}
+                onLocaleChange$={$((code) => {
+                  props.activeLocale.value = code;
+                })}
+                mediaPreviewById={{}}
+                onMediaPreview$={$(() => {})}
+              />
+
+              <div class="space-y-3 border-t border-gray-200 pt-3 dark:border-gray-700">
+                <label class="block text-xs font-medium">
+                  {translateApp(props.lang, 'forms.captcha')}
+                  <select
+                    class={`${ADMIN_NATIVE_SELECT_COMPACT_CLASS} mt-1 w-full`}
+                    value={settings.captcha || 'none'}
+                    onChange$={(e) => {
+                      props.settings.value = {
+                        ...ensureFormSettings(props.settings.value),
+                        captcha: (e.target as HTMLSelectElement).value as FormSettings['captcha'],
+                      };
+                    }}
+                  >
+                    {['none', 'turnstile', 'recaptcha_v2', 'recaptcha_v3'].map((v) => (
+                      <option key={v} class={ADMIN_NATIVE_OPTION_CLASS} value={v}>
+                        {v}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <p class="text-[11px] leading-relaxed text-gray-500 dark:text-gray-400">
+                  {translateApp(props.lang, 'forms.captchaKeysHint')}
+                </p>
+                <label class="flex items-center gap-2 text-xs font-medium">
+                  <input
+                    type="checkbox"
+                    checked={settings.honeypot !== false}
+                    onChange$={(e) => {
+                      props.settings.value = {
+                        ...ensureFormSettings(props.settings.value),
+                        honeypot: (e.target as HTMLInputElement).checked,
+                      };
+                    }}
+                  />
+                  {translateApp(props.lang, 'forms.honeypot')}
+                </label>
+              </div>
             </div>
           ) : null}
 

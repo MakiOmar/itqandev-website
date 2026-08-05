@@ -303,6 +303,7 @@
     "successMessage": "Success message",
     "errorMessage": "Error message",
     "captcha": "Captcha",
+    "captchaKeysHint": "Site/secret keys are not set here. Add TURNSTILE_* or RECAPTCHA_* to backend/.env (see docs/CONFIGURATION.md), then choose the provider on this form.",
     "honeypot": "Honeypot protection",
     "enabled": "Enabled",
     "addRow": "Add row",

@@ -303,6 +303,7 @@
     "successMessage": "رسالة النجاح",
     "errorMessage": "رسالة الخطأ",
     "captcha": "التحقق (Captcha)",
+    "captchaKeysHint": "مفاتيح الموقع/السر لا تُضبط هنا. أضف TURNSTILE_* أو RECAPTCHA_* في backend/.env (راجع docs/CONFIGURATION.md)، ثم اختر المزود من هذا النموذج.",
     "honeypot": "حماية Honeypot",
     "enabled": "مفعّل",
     "addRow": "إضافة صف",
