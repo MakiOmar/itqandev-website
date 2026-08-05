@@ -12,7 +12,12 @@ const DASHBOARD_STAFF_ROLES = new Set([
 /**
  * Whether the user dropdown should link to the dashboard home instead of profile settings.
  */
-export function userHasDashboardMenu(user: Pick<User, 'role' | 'permissions'>): boolean {
+export function userHasDashboardMenu(
+  user: Pick<User, 'role' | 'permissions'> | null | undefined,
+): boolean {
+  if (!user) {
+    return false;
+  }
   if (DASHBOARD_STAFF_ROLES.has(user.role)) {
     return true;
   }

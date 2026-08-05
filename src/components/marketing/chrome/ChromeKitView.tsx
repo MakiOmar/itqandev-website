@@ -179,7 +179,7 @@ export const ChromeKitView = component$<ChromeKitViewProps>((props) => {
           ) : null}
           {showAuth ? (
             user ? (
-              <UserDropdown session={props.session!} />
+              <UserDropdown user={user} />
             ) : (
               <Button href={loginHref} variant="outline" class="text-sm">
                 Login
