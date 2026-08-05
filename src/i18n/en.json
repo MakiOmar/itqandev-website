@@ -290,7 +290,11 @@
     "submissionsEmpty": "Published forms will collect submissions here.",
     "submissionDeleteConfirm": "Delete this submission?",
     "submissionLocale": "Locale",
-    "submissionPayload": "Payload",
+    "submissionPayload": "Submission",
+    "viewSubmission": "View",
+    "viewSubmissionTitle": "Submission",
+    "copyValue": "Copy value",
+    "valueCopied": "Copied",
     "submissionDate": "Submitted",
     "exportCsv": "Export CSV",
     "submissionStatus": {

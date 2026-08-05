@@ -291,6 +291,10 @@
     "submissionDeleteConfirm": "هل تريد حذف هذه الإرسالية؟",
     "submissionLocale": "اللغة",
     "submissionPayload": "البيانات",
+    "viewSubmission": "عرض",
+    "viewSubmissionTitle": "إرسالية",
+    "copyValue": "نسخ القيمة",
+    "valueCopied": "تم النسخ",
     "submissionDate": "تاريخ الإرسال",
     "exportCsv": "تصدير CSV",
     "submissionStatus": {

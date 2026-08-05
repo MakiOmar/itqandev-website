@@ -3,6 +3,7 @@ import type { DocumentHead } from '@builder.io/qwik-city';
 import { Link, routeLoader$ } from '@builder.io/qwik-city';
 import { PageHeader } from '../../../../../../components/common/PageHeader';
 import { EmptyState } from '../../../../../../components/common/EmptyState';
+import { SubmissionPayloadView } from '../../../../../../components/admin/forms/SubmissionPayloadView';
 import { useTranslate, translateApp } from '../../../../../../lib/i18n/useTranslate';
 import { useSwal } from '../../../../../../lib/hooks/useSwal';
 import { getApiClient } from '../../../../../../lib/api/client';
@@ -34,6 +35,7 @@ type SubmissionsPageData = {
   formId: number;
   formTitle: string;
   formSlug: string;
+  formLayout: unknown;
   submissions: SubmissionRow[];
 };
 
@@ -81,6 +83,7 @@ export const useFormSubmissions = routeLoader$(async ({ params, cookie, request,
       formId: id,
       formTitle: String(formBody.title ?? ''),
       formSlug: String(formBody.slug ?? ''),
+      formLayout: formBody.layout ?? { rows: [] },
       submissions: normalizeSubmissions(subBody),
     } satisfies SubmissionsPageData;
   } catch {
@@ -95,6 +98,7 @@ export default component$(() => {
   const page = useFormSubmissions().value as SubmissionsPageData;
   const rows = useSignal<SubmissionRow[]>(page.submissions);
   const exportHref = useSignal('');
+  const viewing = useSignal<SubmissionRow | null>(null);
 
   // eslint-disable-next-line qwik/no-use-visible-task
   useVisibleTask$(() => {
@@ -124,6 +128,9 @@ export default component$(() => {
       const api = getApiClient(null);
       await api.delete(API_ENDPOINTS.FORMS.SUBMISSION(page.formId, id));
       rows.value = rows.value.filter((r) => r.id !== id);
+      if (viewing.value?.id === id) {
+        viewing.value = null;
+      }
       await success(translateApp(lang, 'common.deleted'));
     } catch (err) {
       await showError(
@@ -132,14 +139,9 @@ export default component$(() => {
     }
   });
 
-  const payloadPreview = (payload: Record<string, unknown>): string => {
-    try {
-      const json = JSON.stringify(payload);
-      return json.length > 120 ? `${json.slice(0, 117)}…` : json;
-    } catch {
-      return '';
-    }
-  };
+  const closeView$ = $(() => {
+    viewing.value = null;
+  });
 
   return (
     <div class="space-y-4">
@@ -183,9 +185,8 @@ export default component$(() => {
                 <th class="px-3 py-2">ID</th>
                 <th class="px-3 py-2">{translateApp(lang, 'forms.fields.status')}</th>
                 <th class="px-3 py-2">{translateApp(lang, 'forms.submissionLocale')}</th>
-                <th class="px-3 py-2">{translateApp(lang, 'forms.submissionPayload')}</th>
                 <th class="px-3 py-2">{translateApp(lang, 'forms.submissionDate')}</th>
-                <th class="px-3 py-2" />
+                <th class="px-3 py-2 text-end">{translateApp(lang, 'common.actions')}</th>
               </tr>
             </thead>
             <tbody>
@@ -208,18 +209,26 @@ export default component$(() => {
                     </select>
                   </td>
                   <td class="px-3 py-2 text-gray-500">{row.locale || '—'}</td>
-                  <td class="max-w-xs truncate px-3 py-2 font-mono text-xs" title={payloadPreview(row.payload)}>
-                    {payloadPreview(row.payload)}
-                  </td>
                   <td class="px-3 py-2 text-gray-500 whitespace-nowrap">{row.created_at}</td>
                   <td class="px-3 py-2 text-end">
-                    <button
-                      type="button"
-                      class="text-xs text-red-600"
-                      onClick$={() => onDelete$(row.id)}
-                    >
-                      {translateApp(lang, 'common.delete')}
-                    </button>
+                    <div class="flex flex-wrap items-center justify-end gap-3">
+                      <button
+                        type="button"
+                        class="text-xs font-medium text-blue-600 hover:underline dark:text-blue-400"
+                        onClick$={() => {
+                          viewing.value = row;
+                        }}
+                      >
+                        {translateApp(lang, 'forms.viewSubmission')}
+                      </button>
+                      <button
+                        type="button"
+                        class="text-xs text-red-600"
+                        onClick$={() => onDelete$(row.id)}
+                      >
+                        {translateApp(lang, 'common.delete')}
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -227,6 +236,52 @@ export default component$(() => {
           </table>
         </div>
       )}
+
+      {viewing.value ? (
+        <div
+          class="fixed inset-0 z-50 flex items-center justify-center p-4"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="submission-view-title"
+        >
+          {/* Backdrop */}
+          <button
+            type="button"
+            class="absolute inset-0 bg-black/50"
+            aria-label={translateApp(lang, 'common.close')}
+            onClick$={closeView$}
+          />
+          <div class="relative z-10 flex max-h-[min(90vh,40rem)] w-full max-w-lg flex-col overflow-hidden rounded-xl border border-gray-200 bg-white shadow-xl dark:border-gray-700 dark:bg-slate-900">
+            <div class="flex flex-shrink-0 items-start justify-between gap-3 border-b border-gray-200 px-4 py-3 dark:border-gray-700">
+              <div>
+                <h2
+                  id="submission-view-title"
+                  class="text-base font-semibold text-gray-900 dark:text-gray-100"
+                >
+                  {translateApp(lang, 'forms.viewSubmissionTitle')} #{viewing.value.id}
+                </h2>
+                <p class="mt-0.5 text-xs text-gray-500">
+                  {viewing.value.locale || '—'} · {viewing.value.created_at}
+                </p>
+              </div>
+              <button
+                type="button"
+                class={ADMIN_BACK_BUTTON_CLASS}
+                onClick$={closeView$}
+              >
+                {translateApp(lang, 'common.close')}
+              </button>
+            </div>
+            <div class="min-h-0 flex-1 overflow-y-auto px-4 py-3">
+              <SubmissionPayloadView
+                lang={lang}
+                payload={viewing.value.payload}
+                formLayout={page.formLayout}
+              />
+            </div>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 });
