@@ -302,7 +302,7 @@ export const PageBuilderWorkspace = component$<PageBuilderWorkspaceProps>((props
                 key={entry.type}
                 type="button"
                 draggable={true}
-                class="w-full cursor-grab rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-start text-sm font-medium text-gray-800 hover:border-primary-400 hover:bg-primary-50 active:cursor-grabbing dark:border-gray-700 dark:bg-slate-950 dark:text-gray-100 dark:hover:border-primary-500"
+                class="w-full cursor-grab rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-start text-sm font-medium text-gray-800 hover:border-primary-400 hover:bg-primary-50 hover:text-primary-950 active:cursor-grabbing dark:border-gray-700 dark:bg-slate-950 dark:text-gray-100 dark:hover:border-primary-400 dark:hover:bg-slate-800 dark:hover:text-white"
                 onDragStart$={(e) => {
                   dragWidgetType.value = entry.type;
                   dragBlock.value = null;
@@ -429,10 +429,14 @@ export const PageBuilderWorkspace = component$<PageBuilderWorkspaceProps>((props
                         </button>
                         <button
                           type="button"
-                          class="ms-auto rounded border border-red-300 px-2 py-0.5 text-xs text-red-600"
+                          class="ms-auto rounded border border-red-500 bg-red-600 px-2 py-0.5 text-xs font-medium text-white hover:bg-red-500"
                           onClick$={async () => {
                             selection.value = null;
-                            await commit$(bands.filter((_, i) => i !== bandIndex));
+                            await commit$(
+                              ensurePageLayoutBands(props.sections.value).filter(
+                                (_, i) => i !== bandIndex,
+                              ),
+                            );
                           }}
                         >
                           {translateApp(props.lang, 'appearance.remove')}
@@ -602,10 +606,11 @@ export const PageBuilderWorkspace = component$<PageBuilderWorkspaceProps>((props
                                         </button>
                                         <button
                                           type="button"
-                                          class="rounded border border-gray-300 px-1.5 py-0.5 text-[11px] text-gray-700 hover:border-primary-400 hover:text-primary-700 dark:border-gray-600 dark:text-gray-200"
+                                          class="inline-flex h-6 min-w-6 items-center justify-center rounded border border-gray-400 bg-white px-1.5 text-xs font-semibold text-gray-800 hover:border-primary-500 hover:bg-primary-50 hover:text-primary-800 dark:border-gray-500 dark:bg-slate-800 dark:text-white dark:hover:border-primary-400 dark:hover:bg-slate-700"
                                           title={translateApp(props.lang, 'pages.editColumn')}
                                           aria-label={translateApp(props.lang, 'pages.editColumn')}
-                                          onClick$={() => {
+                                          onClick$={(e) => {
+                                            e.stopPropagation();
                                             selection.value = {
                                               kind: 'column',
                                               bandIndex,
@@ -618,26 +623,30 @@ export const PageBuilderWorkspace = component$<PageBuilderWorkspaceProps>((props
                                         </button>
                                         <button
                                           type="button"
-                                          class="rounded border border-red-300 px-1.5 py-0.5 text-[11px] text-red-600 disabled:opacity-40 dark:border-red-800"
+                                          class="inline-flex h-6 min-w-6 items-center justify-center rounded border border-red-500 bg-red-600 px-1.5 text-xs font-bold leading-none text-white hover:bg-red-500"
                                           title={translateApp(props.lang, 'pages.removeColumn')}
                                           aria-label={translateApp(props.lang, 'pages.removeColumn')}
-                                          disabled={row.columns.length <= 1}
-                                          onClick$={async () => {
-                                            if (row.columns.length <= 1) return;
+                                          onClick$={async (e) => {
+                                            e.stopPropagation();
                                             selection.value = null;
-                                            const next = bands.map((b, bi) => {
+                                            const current = ensurePageLayoutBands(
+                                              props.sections.value,
+                                            );
+                                            const next = current.map((b, bi) => {
                                               if (bi !== bandIndex) return b;
                                               return {
                                                 ...b,
-                                                rows: b.rows.map((r, ri) => {
-                                                  if (ri !== rowIndex) return r;
-                                                  return {
-                                                    ...r,
-                                                    columns: r.columns.filter(
-                                                      (_, ci) => ci !== colIndex,
-                                                    ),
-                                                  };
-                                                }),
+                                                rows: b.rows
+                                                  .map((r, ri) => {
+                                                    if (ri !== rowIndex) return r;
+                                                    return {
+                                                      ...r,
+                                                      columns: r.columns.filter(
+                                                        (_, ci) => ci !== colIndex,
+                                                      ),
+                                                    };
+                                                  })
+                                                  .filter((r) => r.columns.length > 0),
                                               };
                                             });
                                             await commit$(next);
@@ -754,12 +763,7 @@ export const PageBuilderWorkspace = component$<PageBuilderWorkspaceProps>((props
                                               </span>
                                               <button
                                                 type="button"
-                                                class={[
-                                                  'shrink-0 rounded px-1.5 py-0.5 text-[11px] leading-none',
-                                                  blockSelected
-                                                    ? 'bg-white/20 text-white hover:bg-white/30'
-                                                    : 'border border-red-300 text-red-600 hover:bg-red-50 dark:border-red-800 dark:hover:bg-red-950/40',
-                                                ].join(' ')}
+                                                class="inline-flex h-5 min-w-5 shrink-0 items-center justify-center rounded border border-red-500 bg-red-600 px-1 text-[11px] font-bold leading-none text-white hover:bg-red-500"
                                                 title={translateApp(props.lang, 'pages.removeWidget')}
                                                 aria-label={translateApp(
                                                   props.lang,
@@ -767,7 +771,10 @@ export const PageBuilderWorkspace = component$<PageBuilderWorkspaceProps>((props
                                                 )}
                                                 onClick$={async (e) => {
                                                   e.stopPropagation();
-                                                  const next = bands.map((b, bi) => {
+                                                  const current = ensurePageLayoutBands(
+                                                    props.sections.value,
+                                                  );
+                                                  const next = current.map((b, bi) => {
                                                     if (bi !== bandIndex) return b;
                                                     return {
                                                       ...b,
