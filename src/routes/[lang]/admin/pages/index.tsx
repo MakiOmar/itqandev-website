@@ -12,8 +12,10 @@ import { API_ENDPOINTS } from '../../../../lib/api/endpoints';
 import { adminPageEditHref, useAppRoutes } from '../../../../lib/constants/routes';
 import type { AdminPage } from '../../../../types/page';
 import { useLocaleAwareList } from '../../../../lib/hooks/useLocaleAwareList';
-import { useDeletePage, useBulkDeletePages } from '../../../../lib/admin/page-actions';
-import { looksLikeRouteActionResult, submitRouteActionFormData } from '../../../../lib/admin/route-action-form-submit';
+import {
+  runPageBulkDeleteFromBrowser,
+  runPageDeleteFromBrowser,
+} from '../../../../lib/admin/page-actions';
 import {
   adminPublicAbsoluteUrl,
   adminPublicDetailPath,
@@ -78,46 +80,40 @@ export default component$(() => {
     }),
   );
 
-  const deleteAction = useDeletePage();
-  const bulkDeleteAction = useBulkDeletePages();
   const allIds = useComputed$(() => pagesState.value.map((p) => p.id));
 
   const onDelete$ = $(async (id: number) => {
-    const ok = await confirm({
-      title: translateApp(lang, 'common.delete'),
-      text: translateApp(lang, 'pages.deleteConfirm'),
+    const prompt = await confirm(String(translateApp(lang, 'pages.deleteConfirm')), {
+      icon: 'warning',
+      title: String(translateApp(lang, 'common.delete')),
     });
-    if (!ok) return;
-    const result = await submitRouteActionFormData(deleteAction, { id: String(id) });
-    if (looksLikeRouteActionResult(result) && (result as { success?: boolean }).success) {
-      await success(translateApp(lang, 'common.deleted'));
-      await refetch();
-    } else {
-      await showError(
-        String((result as { message?: string })?.message || translateApp(lang, 'common.error')),
-      );
+    if (!prompt.isConfirmed) return;
+
+    const deleted = await runPageDeleteFromBrowser(id);
+    if (!deleted.ok) {
+      await showError(deleted.message || String(translateApp(lang, 'common.error')));
+      return;
     }
+    await success(String(translateApp(lang, 'common.deleted')));
+    await refetch();
   });
 
   const onBulkDelete$ = $(async () => {
     if (selected.value.length === 0) return;
-    const ok = await confirm({
-      title: translateApp(lang, 'common.delete'),
-      text: translateApp(lang, 'pages.deleteConfirm'),
+    const prompt = await confirm(String(translateApp(lang, 'pages.deleteConfirm')), {
+      icon: 'warning',
+      title: String(translateApp(lang, 'common.delete')),
     });
-    if (!ok) return;
-    const result = await submitRouteActionFormData(bulkDeleteAction, {
-      ids: selected.value.join(','),
-    });
-    if (looksLikeRouteActionResult(result) && (result as { success?: boolean }).success) {
-      selected.value = [];
-      await success(translateApp(lang, 'common.deleted'));
-      await refetch();
-    } else {
-      await showError(
-        String((result as { message?: string })?.message || translateApp(lang, 'common.error')),
-      );
+    if (!prompt.isConfirmed) return;
+
+    const deleted = await runPageBulkDeleteFromBrowser(selected.value);
+    if (!deleted.ok) {
+      await showError(deleted.message || String(translateApp(lang, 'common.error')));
+      return;
     }
+    selected.value = [];
+    await success(String(translateApp(lang, 'common.deleted')));
+    await refetch();
   });
 
   return (

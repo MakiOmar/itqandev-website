@@ -176,6 +176,18 @@ export const useDeletePage = routeAction$(
   zod$({ id: z.coerce.number().int().positive() }),
 );
 
+export async function runPageDeleteFromBrowser(
+  id: number | string,
+): Promise<{ ok: boolean; message?: string }> {
+  try {
+    const api = getApiClient(null);
+    await api.delete(API_ENDPOINTS.PAGES.DELETE(id));
+    return { ok: true };
+  } catch (err) {
+    return { ok: false, message: formatPageApiError(err) };
+  }
+}
+
 export const useBulkDeletePages = routeAction$(
   async (data, { cookie, request, fail }) => {
     try {
@@ -195,3 +207,22 @@ export const useBulkDeletePages = routeAction$(
   },
   zod$({ ids: z.string().min(1) }),
 );
+
+export async function runPageBulkDeleteFromBrowser(
+  ids: Array<number | string>,
+): Promise<{ ok: boolean; message?: string }> {
+  try {
+    const normalized = ids
+      .map((x) => Number(x))
+      .filter((n) => Number.isInteger(n) && n > 0);
+    if (normalized.length === 0) {
+      return { ok: false, message: 'No ids' };
+    }
+    const api = getApiClient(null);
+    await api.post(API_ENDPOINTS.PAGES.BULK_DELETE, { ids: normalized });
+    return { ok: true };
+  } catch (err) {
+    return { ok: false, message: formatPageApiError(err) };
+  }
+}
+
