@@ -2,7 +2,7 @@
 import { component$, useSignal, $, type QRL } from '@builder.io/qwik';
 import { LoadingSpinner } from './LoadingSpinner';
 import { EmptyState } from './EmptyState';
-import { ADMIN_CHECKBOX_CLASS } from '../lib/admin/native-select-classes';
+import { ADMIN_CHECKBOX_CLASS } from '../../lib/admin/native-select-classes';
 
 export interface Column<T> {
   key: keyof T | string;

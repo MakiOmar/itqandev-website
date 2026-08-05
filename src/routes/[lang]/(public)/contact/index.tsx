@@ -202,23 +202,24 @@ export default component$(() => {
 });
 
 export const head: DocumentHead = ({ resolveValue, url }) => {
+  let pageTitle = 'Contact';
+  let description = 'Get in touch with our team.';
   try {
     const page = resolveValue(useContactCmsPage) as PublicPageDetail | null;
-    if (page && typeof page.title === 'string') {
-      return publicListPageHead({
-        resolveValue,
-        url,
-        title: page.title || 'Contact',
-        description: page.excerpt || 'Get in touch with our team.',
-      });
+    if (page && typeof page.title === 'string' && page.title.trim()) {
+      pageTitle = page.title.trim();
+      if (typeof page.excerpt === 'string' && page.excerpt.trim()) {
+        description = page.excerpt.trim();
+      }
     }
   } catch {
-    /* fall through */
+    /* loader unavailable during head — keep defaults */
   }
   return publicListPageHead({
+    page: pageTitle,
+    description,
     resolveValue,
+    usePublicShell,
     url,
-    title: 'Contact',
-    description: 'Get in touch with our team.',
   });
 };
