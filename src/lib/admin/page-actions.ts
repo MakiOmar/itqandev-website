@@ -122,6 +122,26 @@ export const useCreatePage = routeAction$(
   zod$(pageFormSchema),
 );
 
+export async function runPageCreateFromBrowser(
+  data: Record<string, unknown>,
+): Promise<{ success: boolean; id?: number; error?: string }> {
+  try {
+    const api = getApiClient(null);
+    const body = buildPageBody(data);
+    if (!String(body.slug || '').trim()) {
+      return { success: false, error: 'Slug is required' };
+    }
+    const res = await api.post<{ id?: number }>(API_ENDPOINTS.PAGES.CREATE, body);
+    const id = (res as { data?: { id?: number } })?.data?.id ?? (res as { id?: number })?.id;
+    if (id == null || !Number.isFinite(Number(id))) {
+      return { success: false, error: 'Page created but no id returned' };
+    }
+    return { success: true, id: Number(id) };
+  } catch (err) {
+    return { success: false, error: formatPageApiError(err) };
+  }
+}
+
 export async function runPageUpdateFromBrowser(
   id: number | string,
   data: Record<string, unknown>,

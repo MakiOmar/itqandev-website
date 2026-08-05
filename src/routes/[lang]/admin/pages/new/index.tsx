@@ -12,10 +12,12 @@ import {
 import { useTranslate, translateApp } from '../../../../../lib/i18n/useTranslate';
 import { useSwal } from '../../../../../lib/hooks/useSwal';
 import { usePublicSiteMeta } from '../../layout';
-import { useCreatePage } from '../../../../../lib/admin/page-actions';
-import { submitRouteActionFormData } from '../../../../../lib/admin/route-action-form-submit';
+import { runPageCreateFromBrowser } from '../../../../../lib/admin/page-actions';
 import { adminPageBuilderHref, useAppRoutes } from '../../../../../lib/constants/routes';
-import { useContentSlugAutosuggestForm } from '../../../../../lib/slug/content-slug-auto';
+import {
+  suggestUniqueContentSlug,
+  useContentSlugAutosuggestForm,
+} from '../../../../../lib/slug/content-slug-auto';
 import { fetchAppearanceRegistriesFromBrowser } from '../../../../../lib/admin/appearance-actions';
 import { writeAppearanceSettingValue, isAppearanceFieldTranslatable } from '../../../../../lib/admin/appearance-locale-settings';
 import {
@@ -44,7 +46,6 @@ export default component$(() => {
   const { success, error: showError } = useSwal();
   const navigate = useNavigate();
   const langConfig = usePublicSiteMeta();
-  const createAction = useCreatePage();
 
   const formData = useSignal({
     title: '',
@@ -81,15 +82,27 @@ export default component$(() => {
     }
     saving.value = true;
     try {
+      let slug = formData.value.slug.trim();
+      if (!slug) {
+        slug = (await suggestUniqueContentSlug('pages', title)) || '';
+        if (slug) {
+          formData.value = { ...formData.value, slug };
+        }
+      }
+      if (!slug) {
+        await showError(translateApp(lang, 'pages.slugRequired'));
+        return;
+      }
+
       const siteDef = langConfig.value.default_locale || 'en';
       const effectivePrimary = primaryLocaleForContent(
         langConfig.value.site_languages,
         siteDef,
         contentLocaleDraft.value.trim() || null,
       );
-      const result = await submitRouteActionFormData(createAction, {
+      const result = await runPageCreateFromBrowser({
         title: formData.value.title,
-        slug: formData.value.slug,
+        slug,
         excerpt: formData.value.excerpt,
         status: formData.value.status,
         content_locale: contentLocaleDraft.value,
@@ -100,15 +113,16 @@ export default component$(() => {
         sections_json: JSON.stringify(sections.value),
         translations_json: '[]',
       });
-      const id = (result as { id?: number })?.id;
-      if ((result as { success?: boolean })?.success && id) {
+      if (result.success && result.id) {
         await success(translateApp(lang, 'common.created'));
-        await navigate(adminPageBuilderHref(lang, id));
+        await navigate(adminPageBuilderHref(lang, result.id));
       } else {
-        await showError(
-          String((result as { message?: string })?.message || translateApp(lang, 'common.error')),
-        );
+        await showError(String(result.error || translateApp(lang, 'common.error')));
       }
+    } catch (err) {
+      await showError(
+        err instanceof Error ? err.message : translateApp(lang, 'common.error'),
+      );
     } finally {
       saving.value = false;
     }

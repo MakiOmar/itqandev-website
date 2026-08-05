@@ -200,6 +200,7 @@
     "statusPublished": "منشور",
     "publish": "النشر",
     "titleRequired": "يُرجى إدخال عنوان الصفحة.",
+    "slugRequired": "تعذّر إنشاء المعرف (slug). أدخله يدوياً ثم أعد المحاولة.",
     "titlePlaceholder": "أدخل عنوان الصفحة",
     "excerptPlaceholder": "ملخص اختصاري للقوائم والـ SEO",
     "sections": "تخطيط الصفحة",

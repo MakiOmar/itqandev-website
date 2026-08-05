@@ -200,6 +200,7 @@
     "statusPublished": "Published",
     "publish": "Publish",
     "titleRequired": "Please enter a page title.",
+    "slugRequired": "Could not generate a URL slug. Enter one manually and try again.",
     "titlePlaceholder": "Enter page title",
     "excerptPlaceholder": "Optional short summary for listings and SEO",
     "sections": "Page layout",
