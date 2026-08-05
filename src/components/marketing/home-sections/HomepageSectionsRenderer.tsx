@@ -9,6 +9,7 @@ import {
   TestimonialsHomeSection,
 } from '~/components/marketing/home-sections/HomeSections';
 import { FormRenderer } from '~/components/marketing/forms/FormRenderer';
+import { BlogPostsList } from '~/components/marketing/blog/BlogPostsList';
 import { PortfolioProjectsList } from '~/components/marketing/portfolio/PortfolioProjectsList';
 import { AtomicWidgetView } from '~/components/marketing/widgets/AtomicWidgetView';
 import { ContentKitView } from '~/components/marketing/kits/ContentKitView';
@@ -26,6 +27,7 @@ import {
 } from '~/lib/marketing/appearance-types';
 import type { CaseStudy, Testimonial, BlogPost, Service, ContactInfo } from '~/lib/marketing/types';
 import type {
+  BlogPostListResult,
   CaseStudyListResult,
   PortfolioCategory,
 } from '~/lib/marketing/content-layer';
@@ -115,6 +117,8 @@ export type HomepageSectionsRendererProps = {
   portfolioCategories?: PortfolioCategory[] | null;
   portfolioCategorySlug?: string | null;
   portfolioSkillSlug?: string | null;
+  /** SSR payload for `blog_posts_list` kit (articles / blog page). */
+  blogList?: BlogPostListResult | null;
 };
 
 function renderBlock(
@@ -268,6 +272,41 @@ function renderBlock(
       return (
         <section key={key} class="py-10">
           {list}
+        </section>
+      );
+    }
+    case 'blog_posts_list': {
+      if (!showBlogModule) return null;
+      const perPageRaw = Number(settings.per_page);
+      const perPage = Number.isFinite(perPageRaw) && perPageRaw > 0 ? Math.min(48, perPageRaw) : 12;
+      const emptyBlogList: BlogPostListResult = {
+        items: [],
+        meta: {
+          current_page: 1,
+          last_page: 1,
+          per_page: perPage,
+          total: 0,
+          from: null,
+          to: null,
+        },
+      };
+      const blogList = (
+        <BlogPostsList
+          uiLocale={props.uiLocale}
+          initialList={props.blogList ?? emptyBlogList}
+          perPage={perPage}
+        />
+      );
+      if (props.embedKits) {
+        return (
+          <div key={key} class="w-full">
+            {blogList}
+          </div>
+        );
+      }
+      return (
+        <section key={key} class="py-10">
+          {blogList}
         </section>
       );
     }

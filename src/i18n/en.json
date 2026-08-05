@@ -62,6 +62,17 @@
     "projectsCount": "{{count}} projects",
     "homeCrumb": "Home"
   },
+  "articlesPage": {
+    "title": "Articles",
+    "eyebrow": "Insights",
+    "subtitle": "Updates, tips, and insights from our team.",
+    "empty": "No articles published yet.",
+    "showing": "Showing {{from}}–{{to}} of {{total}}",
+    "page": "Page {{current}} of {{last}}",
+    "previous": "Previous",
+    "next": "Next",
+    "homeCrumb": "Home"
+  },
   "builderExport": {
     "export": "Export",
     "import": "Import",

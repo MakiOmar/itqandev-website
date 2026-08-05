@@ -62,6 +62,17 @@
     "projectsCount": "{{count}} مشاريع",
     "homeCrumb": "الرئيسية"
   },
+  "articlesPage": {
+    "title": "المقالات",
+    "eyebrow": "رؤى",
+    "subtitle": "تحديثات ونصائح ورؤى من فريقنا.",
+    "empty": "لا توجد مقالات منشورة بعد.",
+    "showing": "عرض {{from}}–{{to}} من {{total}}",
+    "page": "صفحة {{current}} من {{last}}",
+    "previous": "السابق",
+    "next": "التالي",
+    "homeCrumb": "الرئيسية"
+  },
   "builderExport": {
     "export": "تصدير",
     "import": "استيراد",

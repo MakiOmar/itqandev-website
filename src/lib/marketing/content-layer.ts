@@ -583,14 +583,148 @@ export async function getServiceBySlug(slug: string, locale?: string | null): Pr
 }
 
 /** Get all blog posts (sorted by date desc). */
-export async function getBlogPosts(): Promise<BlogPost[]> {
-  if (contentSource === 'api') {
-    const data = await marketingGet<{ data?: BlogPost[] }>(MARKETING_ENDPOINTS.blogPosts);
-    const list = Array.isArray(data) ? data : (data?.data ?? []);
-    return list.map(normalizeBlogPost).sort((a, b) => (b.date > a.date ? 1 : -1));
+export async function getBlogPosts(
+  locale?: string,
+  fetchContext?: MarketingFetchContext,
+): Promise<BlogPost[]> {
+  const page = await getBlogPostsPage(locale, { page: 1, perPage: 48 }, fetchContext);
+  return page.items;
+}
+
+export type BlogPostListFilters = {
+  page?: number;
+  perPage?: number;
+};
+
+export type BlogPostListResult = {
+  items: BlogPost[];
+  meta: PortfolioListMeta;
+};
+
+function mapPublicBlogPostRecord(raw: Record<string, unknown>): BlogPost {
+  const coverRaw = raw.coverImage ?? raw.cover_image;
+  const cover =
+    typeof coverRaw === 'string' && coverRaw.trim()
+      ? coverRaw.trim()
+      : undefined;
+  const dateRaw = raw.date ?? raw.published_at;
+  const authorRaw = raw.author;
+  let author: BlogPost['author'];
+  if (typeof authorRaw === 'string' && authorRaw.trim()) {
+    author = { name: authorRaw.trim() };
+  } else if (authorRaw && typeof authorRaw === 'object' && typeof (authorRaw as { name?: unknown }).name === 'string') {
+    author = { name: String((authorRaw as { name: string }).name) };
   }
-  const sorted = [...blogPosts].sort((a, b) => (b.date > a.date ? 1 : -1));
-  return Promise.resolve(sorted);
+  return normalizeBlogPost({
+    id: (raw.id as string | number) ?? '',
+    slug: String(raw.slug ?? ''),
+    title: String(raw.title ?? ''),
+    excerpt: String(raw.excerpt ?? ''),
+    body:
+      typeof raw.body === 'string'
+        ? raw.body
+        : typeof raw.content === 'string'
+          ? raw.content
+          : '',
+    date: typeof dateRaw === 'string' ? dateRaw : '',
+    author,
+    coverImage: cover,
+    coverImageAlt: typeof raw.coverImageAlt === 'string' ? raw.coverImageAlt : undefined,
+    seoMeta: (raw.seoMeta ?? raw.seo_meta) as BlogPost['seoMeta'],
+  });
+}
+
+async function fetchPublishedBlogPostsPageFromApi(
+  options: { per_page: number; page: number; locale?: string },
+  fetchContext?: MarketingFetchContext,
+): Promise<BlogPostListResult | null> {
+  if (!hasMarketingApiBase(fetchContext)) {
+    return null;
+  }
+  try {
+    const q = new URLSearchParams();
+    q.set('per_page', String(options.per_page));
+    q.set('page', String(Math.max(1, options.page)));
+    const path = `${MARKETING_ENDPOINTS.blogPosts}?${q.toString()}`;
+    const payload = await marketingFetch<unknown>(path, {
+      method: 'GET',
+      locale: options.locale,
+      fullBody: true,
+      ...fetchContext,
+    });
+    const records = unwrapMarketingListRecords(payload);
+    const items = records.map(mapPublicBlogPostRecord).filter((p) => p.slug.length > 0);
+    return {
+      items,
+      meta: parsePortfolioMeta(payload, options.page, options.per_page),
+    };
+  } catch (e) {
+    if (!isDevSsrMarketingFetchFailure(e)) {
+      console.warn('[marketing] fetch public blog posts page failed', e);
+    }
+    return null;
+  }
+}
+
+/** Paginated blog listing (API when configured; local JSON fallback). */
+export async function getBlogPostsPage(
+  locale?: string,
+  filters?: BlogPostListFilters,
+  fetchContext?: MarketingFetchContext,
+): Promise<BlogPostListResult> {
+  const page = Math.max(1, Number(filters?.page) || 1);
+  const perPage = Math.min(48, Math.max(1, Number(filters?.perPage) || 12));
+  const live = await fetchPublishedBlogPostsPageFromApi(
+    { per_page: perPage, page, locale },
+    fetchContext,
+  );
+  if (live) {
+    return live;
+  }
+  if (hasMarketingApiBase(fetchContext)) {
+    return { items: [], meta: emptyPortfolioMeta(page, perPage) };
+  }
+
+  if (contentSource === 'api') {
+    try {
+      const q = new URLSearchParams();
+      q.set('per_page', String(perPage));
+      q.set('page', String(page));
+      const data = await marketingGet<unknown>(
+        `${MARKETING_ENDPOINTS.blogPosts}?${q.toString()}`,
+        locale,
+        fetchContext,
+      );
+      const records = unwrapMarketingListRecords(data);
+      const items = records.map(mapPublicBlogPostRecord).filter((p) => p.slug.length > 0);
+      return {
+        items,
+        meta: parsePortfolioMeta(data, page, perPage),
+      };
+    } catch (e) {
+      if (!isDevSsrMarketingFetchFailure(e)) {
+        console.warn('[marketing] fetch blog posts (api source) failed', e);
+      }
+      return { items: [], meta: emptyPortfolioMeta(page, perPage) };
+    }
+  }
+
+  const all = [...blogPosts].sort((a, b) => (b.date > a.date ? 1 : -1));
+  const lastPage = Math.max(1, Math.ceil(all.length / perPage) || 1);
+  const safePage = Math.min(page, lastPage);
+  const start = (safePage - 1) * perPage;
+  const items = all.slice(start, start + perPage);
+  return {
+    items,
+    meta: {
+      current_page: safePage,
+      last_page: lastPage,
+      per_page: perPage,
+      total: all.length,
+      from: items.length ? start + 1 : null,
+      to: items.length ? start + items.length : null,
+    },
+  };
 }
 
 /** Get a single blog post by slug. */
