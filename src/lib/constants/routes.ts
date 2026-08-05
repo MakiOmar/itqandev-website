@@ -112,6 +112,12 @@ export function adminPageEditHref(lang: string, id: string | number): string {
   return withUiLocale(lang, `${p}/pages/${id}`);
 }
 
+export function adminPageBuilderHref(lang: string, id: string | number): string {
+  const config = getConfig();
+  const p = config.routes.admin.prefix;
+  return withUiLocale(lang, `${p}/pages/${id}/builder`);
+}
+
 /** Localized routes for the current `preferred-locale` cookie (server loaders/actions). */
 export function routesFromPreferredCookie(cookie: { get(name: string): unknown }) {
   return getLocalizedRoutes(uiLangFromPreferredCookie(cookie));

@@ -14,7 +14,7 @@ import { useSwal } from '../../../../../lib/hooks/useSwal';
 import { usePublicSiteMeta } from '../../layout';
 import { useCreatePage } from '../../../../../lib/admin/page-actions';
 import { submitRouteActionFormData } from '../../../../../lib/admin/route-action-form-submit';
-import { adminPageEditHref, useAppRoutes } from '../../../../../lib/constants/routes';
+import { adminPageBuilderHref, useAppRoutes } from '../../../../../lib/constants/routes';
 import { useContentSlugAutosuggestForm } from '../../../../../lib/slug/content-slug-auto';
 import { fetchAppearanceRegistriesFromBrowser } from '../../../../../lib/admin/appearance-actions';
 import { writeAppearanceSettingValue, isAppearanceFieldTranslatable } from '../../../../../lib/admin/appearance-locale-settings';
@@ -103,7 +103,7 @@ export default component$(() => {
       const id = (result as { id?: number })?.id;
       if ((result as { success?: boolean })?.success && id) {
         await success(translateApp(lang, 'common.created'));
-        await navigate(adminPageEditHref(lang, id));
+        await navigate(adminPageBuilderHref(lang, id));
       } else {
         await showError(
           String((result as { message?: string })?.message || translateApp(lang, 'common.error')),
@@ -190,6 +190,9 @@ export default component$(() => {
           </div>
 
           <div class={ADMIN_FORM_CARD_CLASS}>
+            <p class="mb-4 rounded-lg border border-amber-200 bg-amber-50/80 px-3 py-2 text-xs text-amber-900 dark:border-amber-900 dark:bg-amber-950/30 dark:text-amber-100">
+              {translateApp(lang, 'pages.builderAfterSaveHint')}
+            </p>
             <PageSectionsEditor
               lang={lang}
               sections={sections.value}

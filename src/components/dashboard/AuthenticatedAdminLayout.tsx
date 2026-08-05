@@ -1,6 +1,8 @@
 import { component$, Slot, useSignal, $, useStore, useContext, useContextProvider, useVisibleTask$ } from '@builder.io/qwik';
+import { useLocation } from '@builder.io/qwik-city';
 import { useSpeakLocale } from 'qwik-speak';
 import { isUiLocaleRtl } from '../../lib/i18n/ui-locale-segments';
+import { stripUiLocaleFromPathname } from '../../lib/i18n/ui-locale-path';
 import { Sidebar } from './Sidebar';
 import { Header } from './Header';
 import { getConfig } from '../../lib/config';
@@ -10,6 +12,11 @@ import { ProjectSettingsContext } from '../../stores/project-settings-store';
 import { getLocalizedRoutes } from '../../lib/constants/routes';
 import { AdminSessionContext } from '../../stores/admin-session-context';
 
+function isAdminPageBuilderPath(pathname: string): boolean {
+  const logical = stripUiLocaleFromPathname(pathname.replace(/\/+$/, '') || '/');
+  return /^\/admin\/pages\/[^/]+\/builder$/.test(logical);
+}
+
 /**
  * Dashboard chrome (sidebar, header, settings, auth sync).
  * Kept separate from admin layout so /admin/login does not load useVisibleTask QRL chunks.
@@ -17,9 +24,11 @@ import { AdminSessionContext } from '../../stores/admin-session-context';
 export const AuthenticatedAdminLayout = component$((props: { settings?: ProjectSettings }) => {
   const config = getConfig();
   const locale = useSpeakLocale();
+  const location = useLocation();
   const localized = getLocalizedRoutes(locale.lang);
   const loginHrefClient = localized.ADMIN.LOGIN.replace(/\/+$/, '');
   const adminAuth = useContext(AdminSessionContext);
+  const pageBuilderChrome = isAdminPageBuilderPath(location.url.pathname);
 
   const isRTL = useSignal(isUiLocaleRtl(locale.lang));
 
@@ -132,6 +141,26 @@ export const AuthenticatedAdminLayout = component$((props: { settings?: ProjectS
 
   if (!adminAuth.value) {
     return null;
+  }
+
+  // Fullscreen page builder: auth bootstrap only — no dashboard sidebar/header chrome.
+  if (pageBuilderChrome) {
+    return (
+      <>
+        <script
+          dangerouslySetInnerHTML={`
+          (function(){try{
+            var key=${JSON.stringify(config.auth.cookieName)};
+            var session=${JSON.stringify(adminAuth.value).replace(/</g, '\\u003c')};
+            localStorage.setItem(key, JSON.stringify(session));
+          }catch(e){}})();
+        `}
+        />
+        <div class="fixed inset-0 z-40 overflow-hidden bg-slate-100 text-gray-900 dark:bg-slate-950 dark:text-gray-100">
+          <Slot />
+        </div>
+      </>
+    );
   }
 
   return (

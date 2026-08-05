@@ -11,7 +11,10 @@ import { usePublicSiteMeta } from '../../layout';
 import { runPageUpdateFromBrowser } from '../../../../../lib/admin/page-actions';
 import { adminApiClient } from '../../../../../lib/admin/admin-api-client';
 import { API_ENDPOINTS } from '../../../../../lib/api/endpoints';
-import { useAppRoutes } from '../../../../../lib/constants/routes';
+import {
+  adminPageBuilderHref,
+  useAppRoutes,
+} from '../../../../../lib/constants/routes';
 import {
   fetchAppearanceRegistriesFromBrowser,
   hydrateAppearanceMediaPreviews,
@@ -57,7 +60,7 @@ function mapPageFromApi(raw: Record<string, unknown>): AdminPage {
     status: String(raw.status ?? 'draft'),
     content_locale: (raw.content_locale as string | null) ?? null,
     published_at: (raw.published_at as string | null) ?? null,
-    sections: Array.isArray(raw.sections) ? (raw.sections as HomepageSectionInstance[]) : [],
+    sections: Array.isArray(raw.sections) ? (raw.sections as PageSectionNode[]) : [],
     translations: Array.isArray(raw.translations)
       ? (raw.translations as AdminPage['translations'])
       : [],
@@ -192,9 +195,17 @@ export default component$(() => {
   return (
     <div>
       <PageHeader title={translateApp(lang, 'pages.edit')} description={page.slug}>
-        <Link href={R.ADMIN.PAGES} class={ADMIN_BACK_BUTTON_CLASS}>
-          {translateApp(lang, 'common.back')}
-        </Link>
+        <div class="flex flex-wrap gap-2">
+          <Link
+            href={adminPageBuilderHref(lang, page.id)}
+            class={ADMIN_PRIMARY_BUTTON_CLASS}
+          >
+            {translateApp(lang, 'pages.openBuilder')}
+          </Link>
+          <Link href={R.ADMIN.PAGES} class={ADMIN_BACK_BUTTON_CLASS}>
+            {translateApp(lang, 'common.back')}
+          </Link>
+        </div>
       </PageHeader>
 
       <div class="grid gap-6 lg:grid-cols-[minmax(0,1fr)_17.5rem] lg:items-start">
@@ -261,6 +272,22 @@ export default component$(() => {
             </div>
 
             <div class={ADMIN_FORM_CARD_CLASS}>
+              <div class="mb-4 flex flex-wrap items-start justify-between gap-3 rounded-lg border border-primary-200 bg-primary-50/60 px-3 py-2.5 dark:border-primary-900 dark:bg-primary-950/30">
+                <div class="min-w-0 text-start">
+                  <p class="text-sm font-medium text-primary-900 dark:text-primary-100">
+                    {translateApp(lang, 'pages.builderModeHint')}
+                  </p>
+                  <p class="mt-0.5 text-xs text-primary-800/80 dark:text-primary-200/80">
+                    {translateApp(lang, 'pages.classicSectionsHint')}
+                  </p>
+                </div>
+                <Link
+                  href={adminPageBuilderHref(lang, page.id)}
+                  class="shrink-0 rounded-lg bg-primary-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-primary-700"
+                >
+                  {translateApp(lang, 'pages.openBuilder')}
+                </Link>
+              </div>
               <PageSectionsEditor
                 lang={lang}
                 sections={sections.value}

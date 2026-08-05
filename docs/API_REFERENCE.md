@@ -673,7 +673,7 @@ Requires permission **`manage pages`** for admin routes. Public routes are guest
 | GET | `/api/public/pages` | Published pages list for marketing |
 | GET | `/api/public/pages/{slug}` | Published page detail: localized fields, presented `sections`, `seo_meta` |
 
-Public marketing URLs: `/{lang}/pages/{slug}/`.
+Public marketing URLs: `/{lang}/pages/{slug}/`. Admin visual builder (fullscreen): `/{lang}/admin/pages/{id}/builder/` — classic metadata editor remains at `/{lang}/admin/pages/{id}/`.
 
 ### Pages `sections` document (layout tree)
 
