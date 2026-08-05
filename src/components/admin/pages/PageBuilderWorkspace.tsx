@@ -55,6 +55,8 @@ export type PageBuilderWorkspaceProps = {
   lang: string;
   pageTitle: string;
   classicEditHref: string;
+  /** Admin chrome trail, e.g. Pages → Page title → Builder */
+  breadcrumbs?: Array<{ label: string; href?: string }>;
   sections: Signal<PageSectionNode[]>;
   registry: Signal<AppearanceRegistryEntry[]>;
   siteLanguages: SiteLanguageRow[];
@@ -408,6 +410,34 @@ export const PageBuilderWorkspace = component$<PageBuilderWorkspaceProps>((props
           {translateApp(props.lang, 'pages.exitBuilder')}
         </Link>
         <div class="min-w-0 flex-1">
+          {props.breadcrumbs && props.breadcrumbs.length > 0 ? (
+            <nav aria-label="Breadcrumb" class="mb-0.5">
+              <ol class="flex flex-wrap items-center gap-1 text-xs text-gray-500 dark:text-gray-400">
+                {props.breadcrumbs.map((c, i) => (
+                  <li key={i} class="flex min-w-0 items-center gap-1">
+                    {i > 0 ? <span aria-hidden="true">/</span> : null}
+                    {c.href && i < props.breadcrumbs!.length - 1 ? (
+                      <Link href={c.href} class="truncate hover:text-primary-600 dark:hover:text-primary-400">
+                        {c.label}
+                      </Link>
+                    ) : (
+                      <span
+                        class={[
+                          'truncate',
+                          i === props.breadcrumbs!.length - 1
+                            ? 'font-medium text-gray-800 dark:text-gray-100'
+                            : '',
+                        ].join(' ')}
+                        aria-current={i === props.breadcrumbs!.length - 1 ? 'page' : undefined}
+                      >
+                        {c.label}
+                      </span>
+                    )}
+                  </li>
+                ))}
+              </ol>
+            </nav>
+          ) : null}
           <p class="truncate text-sm font-semibold text-gray-900 dark:text-gray-100">
             {translateApp(props.lang, 'pages.builderTitle')}
             {props.pageTitle ? ` — ${props.pageTitle}` : ''}
@@ -644,6 +674,7 @@ export const PageBuilderWorkspace = component$<PageBuilderWorkspaceProps>((props
                   }}
                   allowDefaultSections={false}
                   layoutAware={true}
+                  pageContext={{ title: props.pageTitle || 'Page' }}
                 />
               </div>
             ) : null}

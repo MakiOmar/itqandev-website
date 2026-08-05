@@ -6,11 +6,13 @@ import { Card } from '~/components/marketing/Card';
 import { Container } from '~/components/marketing/Container';
 import { Section } from '~/components/marketing/Section';
 import { AnimatedReveal } from '~/components/marketing/AnimatedReveal';
+import { marketingRoutes } from '~/lib/marketing/constants';
 
 export type ContentKitProps = {
   type: string;
   settings: Record<string, unknown>;
   uiLocale: string;
+  pageContext?: { title: string; slug?: string };
 };
 
 function str(s: Record<string, unknown>, key: string, fallback = ''): string {
@@ -403,6 +405,76 @@ export const ContentKitView = component$<ContentKitProps>((props) => {
                 ) : null}
               </div>
             </AnimatedReveal>
+          </Container>
+        </Section>
+      );
+    }
+    case 'page_header': {
+      const showTitle =
+        s.show_title === true || s.show_title === 'true' || s.show_title === 1 || s.show_title === undefined;
+      const showCrumbs =
+        s.show_breadcrumbs === true ||
+        s.show_breadcrumbs === 'true' ||
+        s.show_breadcrumbs === 1 ||
+        s.show_breadcrumbs === undefined;
+      const routes = marketingRoutes(props.uiLocale);
+      const pageTitle =
+        str(s, 'title_override').trim() ||
+        props.pageContext?.title?.trim() ||
+        str(s, 'title').trim() ||
+        'Page';
+      const homeLabel = str(s, 'home_label', 'Home');
+      const extras = Array.isArray(s.extra_crumbs)
+        ? (s.extra_crumbs as Array<Record<string, unknown>>)
+        : [];
+      const crumbs: Array<{ label: string; href?: string }> = [
+        { label: homeLabel, href: routes.home },
+        ...extras
+          .filter((c) => String(c.label || '').trim())
+          .map((c) => ({
+            label: String(c.label || ''),
+            href: String(c.url || '').trim() || undefined,
+          })),
+        { label: pageTitle },
+      ];
+      return (
+        <Section variant="muted">
+          <Container>
+            {showCrumbs ? (
+              <nav aria-label="Breadcrumb" class="mb-4">
+                <ol class="flex flex-wrap items-center gap-1 text-sm text-slate-500 dark:text-slate-400">
+                  {crumbs.map((c, i) => (
+                    <li key={i} class="flex items-center gap-1">
+                      {i > 0 ? <span aria-hidden="true">/</span> : null}
+                      {c.href && i < crumbs.length - 1 ? (
+                        <a href={c.href} class="hover:text-primary-600 dark:hover:text-primary-400">
+                          {c.label}
+                        </a>
+                      ) : (
+                        <span
+                          class={
+                            i === crumbs.length - 1
+                              ? 'font-medium text-slate-800 dark:text-slate-100'
+                              : undefined
+                          }
+                          aria-current={i === crumbs.length - 1 ? 'page' : undefined}
+                        >
+                          {c.label}
+                        </span>
+                      )}
+                    </li>
+                  ))}
+                </ol>
+              </nav>
+            ) : null}
+            {showTitle ? (
+              <h1 class="text-3xl font-bold tracking-tight text-slate-900 dark:text-white sm:text-4xl">
+                {pageTitle}
+              </h1>
+            ) : null}
+            {str(s, 'subtitle') ? (
+              <p class="mt-3 max-w-2xl text-slate-600 dark:text-slate-300">{str(s, 'subtitle')}</p>
+            ) : null}
           </Container>
         </Section>
       );

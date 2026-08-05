@@ -1,6 +1,7 @@
 import { component$ } from '@builder.io/qwik';
 import { Button } from '~/components/marketing/Button';
 import { MarketingImageLightbox } from '~/components/marketing/MarketingImageLightbox';
+import { marketingRoutes } from '~/lib/marketing/constants';
 
 export type AtomicWidgetProps = {
   type: string;
@@ -239,6 +240,47 @@ export const AtomicWidgetView = component$<AtomicWidgetProps>((props) => {
     case 'anchor': {
       const id = str(s, 'anchor_id', 'section').replace(/[^a-zA-Z0-9_-]/g, '');
       return <div id={id || undefined} class="scroll-mt-24" />;
+    }
+    case 'breadcrumb': {
+      const homeLabel = str(s, 'home_label', 'Home');
+      const items = Array.isArray(s.items) ? (s.items as Array<Record<string, unknown>>) : [];
+      const homeHref = marketingRoutes(props.uiLocale).home;
+      const crumbs = [
+        { label: homeLabel, href: homeHref },
+        ...items
+          .filter((c) => String(c.label || '').trim())
+          .map((c) => ({
+            label: String(c.label || ''),
+            href: String(c.url || '').trim() || undefined,
+          })),
+      ];
+      return (
+        <nav aria-label="Breadcrumb">
+          <ol class="flex flex-wrap items-center gap-1 text-sm text-slate-500 dark:text-slate-400">
+            {crumbs.map((c, i) => (
+              <li key={i} class="flex items-center gap-1">
+                {i > 0 ? <span aria-hidden="true">/</span> : null}
+                {c.href && i < crumbs.length - 1 ? (
+                  <a href={c.href} class="hover:text-primary-600 dark:hover:text-primary-400">
+                    {c.label}
+                  </a>
+                ) : (
+                  <span
+                    class={
+                      i === crumbs.length - 1
+                        ? 'font-medium text-slate-800 dark:text-slate-100'
+                        : undefined
+                    }
+                    aria-current={i === crumbs.length - 1 ? 'page' : undefined}
+                  >
+                    {c.label}
+                  </span>
+                )}
+              </li>
+            ))}
+          </ol>
+        </nav>
+      );
     }
     case 'map': {
       const url = str(s, 'embed_url');

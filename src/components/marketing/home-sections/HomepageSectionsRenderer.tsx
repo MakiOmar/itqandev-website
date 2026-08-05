@@ -59,6 +59,7 @@ const WIDGET_TYPES = new Set([
   'embed',
   'button_group',
   'anchor',
+  'breadcrumb',
   'map',
   'social_links',
 ]);
@@ -76,6 +77,7 @@ const CONTENT_KITS = new Set([
   'accordion_content',
   'tabs_content',
   'video_cta',
+  'page_header',
 ]);
 
 export type HomepageSectionsRendererProps = {
@@ -97,6 +99,8 @@ export type HomepageSectionsRendererProps = {
    * Homepage Appearance stays flat.
    */
   layoutAware?: boolean;
+  /** Current CMS page identity for page_header kit (title / crumbs). */
+  pageContext?: { title: string; slug?: string };
 };
 
 function renderBlock(
@@ -119,7 +123,13 @@ function renderBlock(
   }
   if (CONTENT_KITS.has(block.type)) {
     return (
-      <ContentKitView key={key} type={block.type} settings={settings} uiLocale={props.uiLocale} />
+      <ContentKitView
+        key={key}
+        type={block.type}
+        settings={settings}
+        uiLocale={props.uiLocale}
+        pageContext={props.pageContext}
+      />
     );
   }
 

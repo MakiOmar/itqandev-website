@@ -87,6 +87,7 @@ export default component$(() => {
       branding={shell.value.branding}
       layoutAware={true}
       allowDefaultSections={false}
+      pageContext={{ title: page.title, slug: page.slug }}
     />
   );
 });

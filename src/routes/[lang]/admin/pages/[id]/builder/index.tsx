@@ -8,7 +8,7 @@ import { usePublicSiteMeta } from '../../../layout';
 import { runPageUpdateFromBrowser } from '../../../../../../lib/admin/page-actions';
 import { adminApiClient } from '../../../../../../lib/admin/admin-api-client';
 import { API_ENDPOINTS } from '../../../../../../lib/api/endpoints';
-import { adminPageEditHref } from '../../../../../../lib/constants/routes';
+import { adminPageEditHref, useAppRoutes } from '../../../../../../lib/constants/routes';
 import { fetchAppearanceRegistriesFromBrowser } from '../../../../../../lib/admin/appearance-actions';
 import type { AppearanceRegistryEntry, PageSectionNode } from '../../../../../../lib/marketing/appearance-types';
 import type { AdminPage } from '../../../../../../types/page';
@@ -50,6 +50,7 @@ export const usePageBuilderData = routeLoader$(async ({ params, cookie, request,
 
 export default component$(() => {
   const { lang } = useTranslate();
+  const R = useAppRoutes();
   const { success, error: showError } = useSwal();
   const langConfig = usePublicSiteMeta();
   const pageLoader = usePageBuilderData();
@@ -108,6 +109,11 @@ export default component$(() => {
       lang={lang}
       pageTitle={page.title}
       classicEditHref={adminPageEditHref(lang, page.id)}
+      breadcrumbs={[
+        { label: translateApp(lang, 'pages.title'), href: R.ADMIN.PAGES },
+        { label: page.title || `#${page.id}`, href: adminPageEditHref(lang, page.id) },
+        { label: translateApp(lang, 'pages.builderTitle') },
+      ]}
       sections={sections}
       registry={registry}
       siteLanguages={langConfig.value.site_languages || []}
