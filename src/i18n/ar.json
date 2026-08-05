@@ -39,6 +39,7 @@
     "updated": "تم التحديث بنجاح",
     "deleted": "تم الحذف بنجاح",
     "cacheCleared": "تم مسح الذاكرة المؤقتة",
+    "view": "عرض",
     "viewPublicPage": "عرض الصفحة العامة"
   },
   "builderExport": {

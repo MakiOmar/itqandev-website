@@ -14,6 +14,11 @@ import type { AdminPage } from '../../../../types/page';
 import { useLocaleAwareList } from '../../../../lib/hooks/useLocaleAwareList';
 import { useDeletePage, useBulkDeletePages } from '../../../../lib/admin/page-actions';
 import { looksLikeRouteActionResult, submitRouteActionFormData } from '../../../../lib/admin/route-action-form-submit';
+import {
+  adminPublicAbsoluteUrl,
+  adminPublicDetailPath,
+} from '../../../../lib/admin/public-content-url';
+import { ADMIN_CHECKBOX_CLASS } from '../../../../lib/admin/native-select-classes';
 
 function mapPageFromApi(raw: Record<string, unknown>): AdminPage {
   return {
@@ -150,45 +155,66 @@ export default component$(() => {
             <table class="min-w-full text-sm">
               <thead class="bg-gray-50 text-start dark:bg-gray-900">
                 <tr>
-                  <th class="px-3 py-2">
-                    <input
-                      type="checkbox"
-                      checked={
-                        allIds.value.length > 0 &&
-                        selected.value.length === allIds.value.length
-                      }
-                      onChange$={(e) => {
-                        selected.value = (e.target as HTMLInputElement).checked
-                          ? [...allIds.value]
-                          : [];
-                      }}
-                    />
+                  <th scope="col" class="w-10 px-3 py-2 align-middle text-start">
+                    <div class="flex h-4 items-center justify-start">
+                      <input
+                        type="checkbox"
+                        class={ADMIN_CHECKBOX_CLASS}
+                        aria-label={translateApp(lang, 'common.selectAll')}
+                        checked={
+                          allIds.value.length > 0 &&
+                          selected.value.length === allIds.value.length
+                        }
+                        onChange$={(e) => {
+                          selected.value = (e.target as HTMLInputElement).checked
+                            ? [...allIds.value]
+                            : [];
+                        }}
+                      />
+                    </div>
                   </th>
-                  <th class="px-3 py-2 text-start">{translateApp(lang, 'pages.fields.title')}</th>
-                  <th class="px-3 py-2 text-start">{translateApp(lang, 'pages.fields.slug')}</th>
-                  <th class="px-3 py-2 text-start">{translateApp(lang, 'pages.fields.status')}</th>
-                  <th class="px-3 py-2 text-end">{translateApp(lang, 'common.actions')}</th>
+                  <th class="px-3 py-2 text-start align-middle">{translateApp(lang, 'pages.fields.title')}</th>
+                  <th class="px-3 py-2 text-start align-middle">{translateApp(lang, 'pages.fields.slug')}</th>
+                  <th class="px-3 py-2 text-start align-middle">{translateApp(lang, 'pages.fields.status')}</th>
+                  <th class="px-3 py-2 text-end align-middle">{translateApp(lang, 'common.actions')}</th>
                 </tr>
               </thead>
               <tbody>
-                {pagesState.value.map((page) => (
+                {pagesState.value.map((page) => {
+                  const publicPath = adminPublicDetailPath(lang, 'pages', page.slug);
+                  const publicHref = publicPath ? adminPublicAbsoluteUrl(publicPath) : null;
+                  return (
                   <tr key={page.id} class="border-t border-gray-100 dark:border-gray-800">
-                    <td class="px-3 py-2">
-                      <input
-                        type="checkbox"
-                        checked={selected.value.includes(page.id)}
-                        onChange$={(e) => {
-                          const checked = (e.target as HTMLInputElement).checked;
-                          selected.value = checked
-                            ? [...selected.value, page.id]
-                            : selected.value.filter((id) => id !== page.id);
-                        }}
-                      />
+                    <td class="w-10 px-3 py-2 align-middle">
+                      <div class="flex h-4 items-center justify-start">
+                        <input
+                          type="checkbox"
+                          class={ADMIN_CHECKBOX_CLASS}
+                          aria-label={page.title}
+                          checked={selected.value.includes(page.id)}
+                          onChange$={(e) => {
+                            const checked = (e.target as HTMLInputElement).checked;
+                            selected.value = checked
+                              ? [...selected.value, page.id]
+                              : selected.value.filter((id) => id !== page.id);
+                          }}
+                        />
+                      </div>
                     </td>
-                    <td class="px-3 py-2">{page.title}</td>
-                    <td class="px-3 py-2 font-mono text-xs">{page.slug}</td>
-                    <td class="px-3 py-2">{page.status}</td>
-                    <td class="px-3 py-2 text-end space-x-2">
+                    <td class="px-3 py-2 align-middle">{page.title}</td>
+                    <td class="px-3 py-2 align-middle font-mono text-xs">{page.slug}</td>
+                    <td class="px-3 py-2 align-middle">{page.status}</td>
+                    <td class="px-3 py-2 text-end align-middle space-x-2">
+                      {publicHref ? (
+                        <a
+                          href={publicHref}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          class="text-primary-600 hover:underline dark:text-primary-400"
+                        >
+                          {translateApp(lang, 'common.view')}
+                        </a>
+                      ) : null}
                       <Link
                         href={adminPageEditHref(lang, page.id)}
                         class="text-primary-600 hover:underline"
@@ -204,7 +230,8 @@ export default component$(() => {
                       </button>
                     </td>
                   </tr>
-                ))}
+                  );
+                })}
               </tbody>
             </table>
           </div>

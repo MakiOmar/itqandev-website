@@ -33,6 +33,10 @@ export function adminPublicDetailPath(lang: string, kind: AdminPublicDetailKind,
     case 'projects':
       return `/${langSeg}/work/${seg}`;
     case 'pages':
+      // Canonical marketing contact URL (hard-coded route prefers this slug).
+      if (String(slug ?? '').trim().toLowerCase() === 'contact') {
+        return `/${langSeg}/contact/`;
+      }
       return `/${langSeg}/pages/${seg}/`;
     case 'forms':
       return `/${langSeg}/forms/${seg}/`;

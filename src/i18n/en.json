@@ -39,6 +39,7 @@
     "updated": "Updated successfully",
     "deleted": "Deleted successfully",
     "cacheCleared": "Cache cleared",
+    "view": "View",
     "viewPublicPage": "View public page"
   },
   "builderExport": {
