@@ -1,6 +1,10 @@
-import { component$, useSignal, $, type QRL, type Signal } from '@builder.io/qwik';
+import { component$, useSignal, useTask$, $, type QRL, type Signal } from '@builder.io/qwik';
 import { Link } from '@builder.io/qwik-city';
 import { AppearanceSettingsFields } from '~/components/admin/appearance/AppearanceSettingsFields';
+import {
+  AdminContentLanguageFields,
+  ADMIN_CONTENT_FIELDS_GRID_CLASS,
+} from '~/components/admin/AdminContentLanguageFields';
 import {
   createActionFromRegistry,
   createEmptyRow,
@@ -11,8 +15,11 @@ import {
   ensureFormSettings,
   previewFieldSpanClass,
 } from '~/lib/admin/form-layout';
+import { mergeBlogPostFieldsForUiLocale, primaryLocaleForContent } from '~/lib/content-display-locale';
 import { translateApp } from '~/lib/i18n/useTranslate';
 import {
+  ADMIN_FORM_INPUT_CLASS,
+  ADMIN_FORM_LABEL_CLASS,
   ADMIN_NATIVE_OPTION_CLASS,
   ADMIN_NATIVE_SELECT_COMPACT_CLASS,
   ADMIN_PRIMARY_BUTTON_CLASS,
@@ -99,7 +106,7 @@ function moveFieldToRow(
 export type FormBuilderWorkspaceProps = {
   lang: string;
   formId: number;
-  formTitle: string;
+  formTitle: Signal<string>;
   classicEditHref: string;
   submissionsHref: string;
   layout: Signal<FormLayoutDocument>;
@@ -109,6 +116,13 @@ export type FormBuilderWorkspaceProps = {
   actionRegistry: Signal<FormActionRegistryEntry[]>;
   siteLanguages: SiteLanguageRow[];
   defaultLocale: string;
+  /** Primary content language for this form (`content_locale`). */
+  contentLocale: Signal<string>;
+  /** Locale for form title translation rows (also syncs settings/field copy tabs). */
+  editingLocale: Signal<string>;
+  canonicalTitle: Signal<string>;
+  translationsJson: Signal<string>;
+  /** Shared with AppearanceSettingsFields tabs for submit labels / field labels. */
   activeLocale: Signal<string>;
   saving: Signal<boolean>;
   onSave$: QRL<() => Promise<void>>;
@@ -121,6 +135,37 @@ export const FormBuilderWorkspace = component$<FormBuilderWorkspaceProps>((props
   const dragFieldType = useSignal<string | null>(null);
   const dragFieldPath = useSignal<DragFieldPath | null>(null);
   const dropRowIndex = useSignal<number | null>(null);
+
+  useTask$(({ track }) => {
+    track(() => props.editingLocale.value);
+    track(() => props.contentLocale.value);
+    track(() => props.siteLanguages);
+    track(() => props.translationsJson.value);
+    track(() => props.canonicalTitle.value);
+    const primary = primaryLocaleForContent(
+      props.siteLanguages,
+      props.defaultLocale,
+      props.contentLocale.value.trim() || null,
+    );
+    const merged = mergeBlogPostFieldsForUiLocale(
+      {
+        title: props.canonicalTitle.value,
+        excerpt: '',
+        content: '',
+        content_locale: props.contentLocale.value || null,
+        translations: JSON.parse(props.translationsJson.value || '[]'),
+      } as any,
+      props.editingLocale.value || primary,
+      props.siteLanguages,
+      props.defaultLocale,
+      props.contentLocale.value.trim() || null,
+    );
+    props.formTitle.value = merged.title;
+    // Keep field/settings language tabs aligned with the form title editing locale.
+    if (props.activeLocale.value !== props.editingLocale.value) {
+      props.activeLocale.value = props.editingLocale.value || primary;
+    }
+  });
 
   const commitLayout$ = $(async (next: FormLayoutDocument) => {
     props.layout.value = ensureFormLayout(next);
@@ -164,7 +209,7 @@ export const FormBuilderWorkspace = component$<FormBuilderWorkspaceProps>((props
         <div class="min-w-0 flex-1">
           <p class="truncate text-sm font-semibold text-gray-900 dark:text-gray-100">
             {translateApp(props.lang, 'forms.builderTitle')}
-            {props.formTitle ? ` — ${props.formTitle}` : ''}
+            {props.formTitle.value ? ` — ${props.formTitle.value}` : ''}
           </p>
           <p class="truncate text-xs text-gray-500 dark:text-gray-400">
             {translateApp(props.lang, 'forms.builderHint')}
@@ -319,25 +364,57 @@ export const FormBuilderWorkspace = component$<FormBuilderWorkspaceProps>((props
         <main class="min-w-0 flex-1 overflow-y-auto bg-gray-100 p-4 dark:bg-slate-950">
           {tab.value === 'settings' ? (
             <div class="mx-auto max-w-xl space-y-4 rounded-xl border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-slate-900">
-              <AppearanceSettingsFields
-                fields={FORM_GENERAL_SETTING_FIELDS}
-                values={ensureFormSettings(props.settings.value) as Record<string, unknown>}
-                onSettingsChange$={async (nextSettings) => {
-                  props.settings.value = ensureFormSettings({
-                    ...ensureFormSettings(props.settings.value),
-                    ...nextSettings,
-                  });
-                }}
-                onPickMedia$={$(async () => {})}
-                languages={props.siteLanguages}
-                defaultLocale={props.defaultLocale}
-                activeLocale={props.activeLocale.value}
-                onLocaleChange$={$((code) => {
-                  props.activeLocale.value = code;
-                })}
-                mediaPreviewById={{}}
-                onMediaPreview$={$(() => {})}
-              />
+              <div class={ADMIN_CONTENT_FIELDS_GRID_CLASS}>
+                <AdminContentLanguageFields
+                  lang={props.lang}
+                  siteLanguages={props.siteLanguages}
+                  defaultLocale={props.defaultLocale}
+                  contentLocale={props.contentLocale}
+                  editingLocale={props.editingLocale}
+                />
+                <div class="md:col-span-2">
+                  <label for="form-builder-title" class={ADMIN_FORM_LABEL_CLASS}>
+                    {translateApp(props.lang, 'forms.fields.title')} *
+                  </label>
+                  <input
+                    id="form-builder-title"
+                    class={ADMIN_FORM_INPUT_CLASS}
+                    value={props.formTitle.value}
+                    onInput$={(e) => {
+                      props.formTitle.value = (e.target as HTMLInputElement).value;
+                    }}
+                  />
+                  <p class="mt-1 text-[11px] text-gray-500 dark:text-gray-400">
+                    {translateApp(props.lang, 'forms.titleLocaleHint')}
+                  </p>
+                </div>
+              </div>
+
+              <div class="border-t border-gray-200 pt-3 dark:border-gray-700">
+                <p class="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-500">
+                  {translateApp(props.lang, 'forms.messagesTab')}
+                </p>
+                <AppearanceSettingsFields
+                  fields={FORM_GENERAL_SETTING_FIELDS}
+                  values={ensureFormSettings(props.settings.value) as Record<string, unknown>}
+                  onSettingsChange$={async (nextSettings) => {
+                    props.settings.value = ensureFormSettings({
+                      ...ensureFormSettings(props.settings.value),
+                      ...nextSettings,
+                    });
+                  }}
+                  onPickMedia$={$(async () => {})}
+                  languages={props.siteLanguages}
+                  defaultLocale={props.defaultLocale}
+                  activeLocale={props.activeLocale.value}
+                  onLocaleChange$={$((code) => {
+                    props.activeLocale.value = code;
+                    props.editingLocale.value = code;
+                  })}
+                  mediaPreviewById={{}}
+                  onMediaPreview$={$(() => {})}
+                />
+              </div>
 
               <div class="space-y-3 border-t border-gray-200 pt-3 dark:border-gray-700">
                 <label class="block text-xs font-medium">
@@ -755,6 +832,7 @@ export const FormBuilderWorkspace = component$<FormBuilderWorkspaceProps>((props
                       activeLocale={props.activeLocale.value}
                       onLocaleChange$={$((code) => {
                         props.activeLocale.value = code;
+                        props.editingLocale.value = code;
                       })}
                       mediaPreviewById={{}}
                       onMediaPreview$={$(() => {})}
@@ -789,6 +867,7 @@ export const FormBuilderWorkspace = component$<FormBuilderWorkspaceProps>((props
                       activeLocale={props.activeLocale.value}
                       onLocaleChange$={$((code) => {
                         props.activeLocale.value = code;
+                        props.editingLocale.value = code;
                       })}
                       mediaPreviewById={{}}
                       onMediaPreview$={$(() => {})}

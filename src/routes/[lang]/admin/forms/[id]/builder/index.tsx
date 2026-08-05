@@ -18,7 +18,10 @@ import {
   ensureFormLayout,
   ensureFormSettings,
 } from '../../../../../../lib/admin/form-layout';
-import { primaryLocaleForContent } from '../../../../../../lib/content-display-locale';
+import {
+  primaryLocaleForContent,
+  shouldWritePrimaryColumns,
+} from '../../../../../../lib/content-display-locale';
 import type {
   AdminForm,
   FormActionNode,
@@ -78,6 +81,11 @@ export default component$(() => {
   const settings = useSignal<FormSettings>(ensureFormSettings(form.settings));
   const fieldRegistry = useSignal<FormFieldRegistryEntry[]>([]);
   const actionRegistry = useSignal<FormActionRegistryEntry[]>([]);
+  const formTitle = useSignal(form.title);
+  const contentLocale = useSignal(form.content_locale || '');
+  const editingLocale = useSignal(langConfig.value.default_locale || 'en');
+  const canonicalTitle = useSignal(form.title);
+  const translationsJson = useSignal(JSON.stringify(form.translations || []));
   const activeLocale = useSignal(langConfig.value.default_locale || 'en');
   const saving = useSignal(false);
 
@@ -94,28 +102,48 @@ export default component$(() => {
   });
 
   const handleSave$ = $(async () => {
+    if (!formTitle.value.trim()) {
+      await showError(translateApp(lang, 'forms.titleRequired'));
+      return;
+    }
     saving.value = true;
     try {
       const siteDef = langConfig.value.default_locale || 'en';
       const effectivePrimary = primaryLocaleForContent(
         langConfig.value.site_languages,
         siteDef,
-        form.content_locale,
+        contentLocale.value.trim() || null,
       );
+      const editing = editingLocale.value || effectivePrimary;
+      if (shouldWritePrimaryColumns(editing, effectivePrimary)) {
+        canonicalTitle.value = formTitle.value;
+      }
       const result = await runFormUpdateFromBrowser(form.id, {
-        title: form.title,
+        title: formTitle.value,
         slug: form.slug,
         status: form.status === 'published' ? 'published' : 'draft',
-        content_locale: form.content_locale || '',
-        editing_locale: effectivePrimary,
+        content_locale: contentLocale.value,
+        editing_locale: editing,
         effective_primary_locale: effectivePrimary,
-        canonical_title: form.title,
+        canonical_title: canonicalTitle.value,
         layout_json: JSON.stringify(ensureFormLayout(layout.value)),
         actions_json: JSON.stringify(ensureFormActions(actions.value)),
         settings_json: JSON.stringify(ensureFormSettings(settings.value)),
-        translations_json: JSON.stringify(form.translations || []),
+        translations_json: translationsJson.value,
       });
       if (result.success) {
+        // Keep local translations JSON in sync after secondary-locale title saves.
+        if (!shouldWritePrimaryColumns(editing, effectivePrimary)) {
+          const list = JSON.parse(translationsJson.value || '[]') as Array<Record<string, unknown>>;
+          const u = editing.toLowerCase();
+          const idx = list.findIndex(
+            (row) => String(row.locale ?? '').toLowerCase() === u,
+          );
+          const row = { locale: u, title: formTitle.value };
+          if (idx >= 0) list[idx] = { ...list[idx], ...row };
+          else list.push(row);
+          translationsJson.value = JSON.stringify(list);
+        }
         await success(translateApp(lang, 'common.updated'));
       } else {
         await showError(result.error || translateApp(lang, 'common.error'));
@@ -130,7 +158,7 @@ export default component$(() => {
       <FormBuilderWorkspace
         lang={lang}
         formId={form.id}
-        formTitle={form.title}
+        formTitle={formTitle}
         classicEditHref={adminFormEditHref(lang, form.id)}
         submissionsHref={adminFormSubmissionsHref(lang, form.id)}
         layout={layout}
@@ -140,6 +168,10 @@ export default component$(() => {
         actionRegistry={actionRegistry}
         siteLanguages={langConfig.value.site_languages || []}
         defaultLocale={langConfig.value.default_locale || 'en'}
+        contentLocale={contentLocale}
+        editingLocale={editingLocale}
+        canonicalTitle={canonicalTitle}
+        translationsJson={translationsJson}
         activeLocale={activeLocale}
         saving={saving}
         onSave$={handleSave$}
@@ -148,10 +180,15 @@ export default component$(() => {
   );
 });
 
-export const head: DocumentHead = ({ params }) => ({
-  title: translateApp(String(params.lang || 'en'), 'forms.builderTitle'),
-  meta: [
-    { name: 'description', content: 'Fullscreen form layout builder' },
-    { name: 'robots', content: 'noindex, nofollow' },
-  ],
-});
+export const head: DocumentHead = ({ resolveValue }) => {
+  try {
+    const form = resolveValue(useFormBuilderData) as AdminForm;
+    return {
+      title: form?.title
+        ? `Builder: ${form.title}`
+        : translateApp('en', 'forms.builderTitle'),
+    };
+  } catch {
+    return { title: 'Form builder' };
+  }
+};
