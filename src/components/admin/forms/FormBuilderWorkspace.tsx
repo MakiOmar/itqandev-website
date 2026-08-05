@@ -28,6 +28,8 @@ import type { SiteLanguageRow } from '~/types/site-language';
 import { moveItem } from '~/lib/admin/appearance-actions';
 import type { AppearanceSettingField } from '~/lib/marketing/appearance-types';
 
+const FIELD_DND = 'application/x-credocode-form-field';
+
 const FORM_GENERAL_SETTING_FIELDS: AppearanceSettingField[] = [
   { key: 'submit_label', type: 'text', label: 'Submit button label', translatable: true },
   { key: 'success_message', type: 'textarea', label: 'Success message', translatable: true },
@@ -40,6 +42,60 @@ type Selection =
   | { kind: 'action'; actionIndex: number }
   | null;
 
+type DragFieldPath = { rowIndex: number; fieldIndex: number };
+
+/** Module-level helpers so `$` handlers stay serializable. */
+function usedSpanInRow(
+  row: { fields: Array<{ span: { mobile: number; tablet: number; desktop: number } }> },
+  device: Device,
+): number {
+  return row.fields.reduce((sum, f) => sum + effectiveFieldSpan(f.span, device), 0);
+}
+
+function insertFieldIntoRow(
+  layout: FormLayoutDocument,
+  registry: FormFieldRegistryEntry[],
+  type: string,
+  rowIndex: number,
+  device: Device,
+): { layout: FormLayoutDocument; fieldIndex: number } | null {
+  const next = ensureFormLayout(layout);
+  const entry = registry.find((r) => r.type === type);
+  if (!entry) return null;
+  while (next.rows.length <= rowIndex) {
+    next.rows.push(createEmptyRow());
+  }
+  const row = next.rows[rowIndex];
+  const remaining = Math.max(0, 12 - usedSpanInRow(row, device));
+  const span = remaining > 0 ? remaining : 12;
+  row.fields.push(createFieldFromRegistry(type, entry.default_settings || {}, span));
+  return { layout: next, fieldIndex: row.fields.length - 1 };
+}
+
+function moveFieldToRow(
+  layout: FormLayoutDocument,
+  from: DragFieldPath,
+  toRowIndex: number,
+): { layout: FormLayoutDocument; rowIndex: number; fieldIndex: number } | null {
+  const next = ensureFormLayout(layout);
+  const source = next.rows[from.rowIndex];
+  if (!source || from.fieldIndex < 0 || from.fieldIndex >= source.fields.length) return null;
+  if (from.rowIndex === toRowIndex) {
+    return { layout: next, rowIndex: from.rowIndex, fieldIndex: from.fieldIndex };
+  }
+  while (next.rows.length <= toRowIndex) {
+    next.rows.push(createEmptyRow());
+  }
+  const [field] = source.fields.splice(from.fieldIndex, 1);
+  if (!field) return null;
+  const target = next.rows[toRowIndex];
+  target.fields.push(field);
+  next.rows = next.rows.filter((r) => r.fields.length > 0);
+  const newRowIndex = next.rows.findIndex((r) => r.id === target.id);
+  const fieldIndex = next.rows[newRowIndex]?.fields.findIndex((f) => f.id === field.id) ?? -1;
+  if (newRowIndex < 0 || fieldIndex < 0) return null;
+  return { layout: next, rowIndex: newRowIndex, fieldIndex };
+}
 export type FormBuilderWorkspaceProps = {
   lang: string;
   formId: number;
@@ -62,12 +118,21 @@ export const FormBuilderWorkspace = component$<FormBuilderWorkspaceProps>((props
   const device = useSignal<Device>('desktop');
   const selection = useSignal<Selection>(null);
   const tab = useSignal<'fields' | 'actions' | 'settings'>('fields');
+  const dragFieldType = useSignal<string | null>(null);
+  const dragFieldPath = useSignal<DragFieldPath | null>(null);
+  const dropRowIndex = useSignal<number | null>(null);
 
   const commitLayout$ = $(async (next: FormLayoutDocument) => {
     props.layout.value = ensureFormLayout(next);
   });
   const commitActions$ = $(async (next: FormActionNode[]) => {
     props.actions.value = ensureFormActions(next);
+  });
+
+  const clearDrag$ = $(() => {
+    dragFieldType.value = null;
+    dragFieldPath.value = null;
+    dropRowIndex.value = null;
   });
 
   const layout = ensureFormLayout(props.layout.value);
@@ -158,27 +223,58 @@ export const FormBuilderWorkspace = component$<FormBuilderWorkspaceProps>((props
             ))}
           </div>
           <div class="space-y-2 overflow-y-auto p-3">
+            {tab.value === 'fields' ? (
+              <p class="text-[11px] text-gray-500 dark:text-gray-400">
+                {translateApp(props.lang, 'forms.dragFieldsHint')}
+              </p>
+            ) : null}
             {tab.value === 'fields'
               ? props.fieldRegistry.value.map((entry) => (
                   <button
                     key={entry.type}
                     type="button"
-                    class="w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-start text-sm font-medium text-gray-800 hover:border-primary-400 hover:bg-primary-50 hover:text-primary-950 dark:border-gray-700 dark:bg-slate-950 dark:text-gray-100 dark:hover:bg-slate-800 dark:hover:text-white"
+                    draggable={true}
+                    class="w-full cursor-grab rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-start text-sm font-medium text-gray-800 hover:border-primary-400 hover:bg-primary-50 hover:text-primary-950 active:cursor-grabbing dark:border-gray-700 dark:bg-slate-950 dark:text-gray-100 dark:hover:bg-slate-800 dark:hover:text-white"
+                    onDragStart$={(e) => {
+                      dragFieldPath.value = null;
+                      dragFieldType.value = entry.type;
+                      const dt = e.dataTransfer;
+                      if (dt) {
+                        dt.effectAllowed = 'copy';
+                        dt.setData(FIELD_DND, entry.type);
+                        dt.setData('text/plain', entry.type);
+                      }
+                    }}
+                    onDragEnd$={clearDrag$}
                     onClick$={async () => {
                       const next = ensureFormLayout(props.layout.value);
-                      let row = next.rows[next.rows.length - 1];
-                      if (!row) {
-                        row = createEmptyRow();
-                        next.rows.push(row);
+                      // Prefer a row with free span (selected row first), else last row.
+                      let targetRowIndex = next.rows.length - 1;
+                      if (selection.value?.kind === 'field') {
+                        targetRowIndex = selection.value.rowIndex;
+                      } else {
+                        const withSpace = next.rows.findIndex(
+                          (r) => 12 - usedSpanInRow(r, device.value) > 0,
+                        );
+                        if (withSpace >= 0) targetRowIndex = withSpace;
                       }
-                      row.fields.push(
-                        createFieldFromRegistry(entry.type, entry.default_settings || {}, 12),
+                      if (targetRowIndex < 0) {
+                        next.rows.push(createEmptyRow());
+                        targetRowIndex = 0;
+                      }
+                      const inserted = insertFieldIntoRow(
+                        next,
+                        props.fieldRegistry.value,
+                        entry.type,
+                        targetRowIndex,
+                        device.value,
                       );
-                      await commitLayout$(next);
+                      if (!inserted) return;
+                      await commitLayout$(inserted.layout);
                       selection.value = {
                         kind: 'field',
-                        rowIndex: next.rows.length - 1,
-                        fieldIndex: row.fields.length - 1,
+                        rowIndex: Math.min(targetRowIndex, inserted.layout.rows.length - 1),
+                        fieldIndex: inserted.fieldIndex,
                       };
                     }}
                   >
@@ -383,14 +479,87 @@ export const FormBuilderWorkspace = component$<FormBuilderWorkspaceProps>((props
               >
                 {translateApp(props.lang, 'forms.addRow')}
               </button>
-              {layout.rows.map((row, rowIndex) => (
+              {layout.rows.map((row, rowIndex) => {
+                const usedSpan = row.fields.reduce(
+                  (sum, f) => sum + effectiveFieldSpan(f.span, device.value),
+                  0,
+                );
+                const remaining = Math.max(0, 12 - usedSpan);
+                const isDropTarget = dropRowIndex.value === rowIndex;
+                return (
                 <div
                   key={row.id}
-                  class="rounded-xl border border-dashed border-gray-300 bg-white p-3 dark:border-gray-600 dark:bg-slate-900"
+                  class={[
+                    'rounded-xl border border-dashed bg-white p-3 dark:bg-slate-900',
+                    isDropTarget
+                      ? 'border-primary-500 ring-2 ring-primary-500/40'
+                      : 'border-gray-300 dark:border-gray-600',
+                  ].join(' ')}
+                  onDragOver$={(e) => {
+                    if (dragFieldType.value || dragFieldPath.value) {
+                      e.preventDefault();
+                      dropRowIndex.value = rowIndex;
+                    }
+                  }}
+                  onDragLeave$={() => {
+                    if (dropRowIndex.value === rowIndex) {
+                      dropRowIndex.value = null;
+                    }
+                  }}
+                  onDrop$={async (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    const widgetType =
+                      dragFieldType.value ||
+                      e.dataTransfer?.getData(FIELD_DND) ||
+                      null;
+                    const from = dragFieldPath.value;
+                    dropRowIndex.value = null;
+                    dragFieldType.value = null;
+                    dragFieldPath.value = null;
+
+                    if (from) {
+                      const moved = moveFieldToRow(props.layout.value, from, rowIndex);
+                      if (!moved) return;
+                      await commitLayout$(moved.layout);
+                      selection.value = {
+                        kind: 'field',
+                        rowIndex: moved.rowIndex,
+                        fieldIndex: moved.fieldIndex,
+                      };
+                      return;
+                    }
+
+                    if (
+                      widgetType &&
+                      props.fieldRegistry.value.some((r) => r.type === widgetType)
+                    ) {
+                      const inserted = insertFieldIntoRow(
+                        props.layout.value,
+                        props.fieldRegistry.value,
+                        widgetType,
+                        rowIndex,
+                        device.value,
+                      );
+                      if (!inserted) return;
+                      await commitLayout$(inserted.layout);
+                      selection.value = {
+                        kind: 'field',
+                        rowIndex: Math.min(rowIndex, inserted.layout.rows.length - 1),
+                        fieldIndex: inserted.fieldIndex,
+                      };
+                    }
+                  }}
                 >
                   <div class="mb-2 flex items-center gap-2">
                     <span class="text-xs font-semibold uppercase text-gray-500">
                       {translateApp(props.lang, 'forms.row')} {rowIndex + 1}
+                    </span>
+                    <span class="text-[11px] text-gray-400">
+                      {usedSpan}/12
+                      {remaining > 0
+                        ? ` · ${translateApp(props.lang, 'forms.remainingSpan')} ${remaining}`
+                        : ''}
                     </span>
                     <button
                       type="button"
@@ -416,13 +585,24 @@ export const FormBuilderWorkspace = component$<FormBuilderWorkspaceProps>((props
                       return (
                         <div
                           key={field.id}
+                          draggable={true}
                           class={[
                             previewFieldSpanClass(span),
-                            'rounded-md border p-2',
+                            'cursor-grab rounded-md border p-2 active:cursor-grabbing',
                             selected
                               ? 'border-primary-500 ring-1 ring-primary-500/40'
                               : 'border-gray-200 dark:border-gray-700',
                           ].join(' ')}
+                          onDragStart$={(e) => {
+                            dragFieldType.value = null;
+                            dragFieldPath.value = { rowIndex, fieldIndex };
+                            const dt = e.dataTransfer;
+                            if (dt) {
+                              dt.effectAllowed = 'move';
+                              dt.setData('text/plain', field.id);
+                            }
+                          }}
+                          onDragEnd$={clearDrag$}
                         >
                           <div class="mb-1 flex items-center gap-1">
                             <button
@@ -466,9 +646,20 @@ export const FormBuilderWorkspace = component$<FormBuilderWorkspaceProps>((props
                         </div>
                       );
                     })}
+                    {remaining > 0 ? (
+                      <div
+                        class={[
+                          previewFieldSpanClass(remaining),
+                          'flex min-h-[4.5rem] items-center justify-center rounded-md border border-dashed border-primary-400/60 bg-primary-50/30 px-2 text-center text-[11px] text-primary-700 dark:border-primary-500/50 dark:bg-primary-950/20 dark:text-primary-300',
+                        ].join(' ')}
+                      >
+                        {translateApp(props.lang, 'forms.dropFieldHere')}
+                      </div>
+                    ) : null}
                   </div>
                 </div>
-              ))}
+                );
+              })}
             </div>
           ) : null}
         </main>
