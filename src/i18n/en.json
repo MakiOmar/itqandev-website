@@ -612,7 +612,18 @@
     "pickCategory": "Category",
     "pickSkill": "Skill",
     "pickPage": "Page",
-    "selectItem": "Select row"
+    "selectItem": "Select row",
+    "searchEntities": "Search…",
+    "entityPickMultiHint": "Select one or more items, then add them. Items already on this menu are skipped.",
+    "entityPickSingleHint": "Choose one item for this link.",
+    "selectAllFiltered": "Select filtered",
+    "selectedCount": "{{count}} selected",
+    "noEntityMatches": "No matches.",
+    "alreadyOnMenu": "already on menu",
+    "nothingSelectedEntities": "Select one or more entities from the list.",
+    "entitiesAdded": "Added {{count}} link(s) to the menu.",
+    "entitiesAllSkipped": "All selected items are already on this menu.",
+    "addSelectedButton": "Add selected"
   },
   "users": {
     "title": "Users",

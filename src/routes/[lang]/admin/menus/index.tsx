@@ -11,7 +11,7 @@ import { auth } from '../../../../lib/auth';
 import type { AuthSession } from '../../../../lib/auth/types';
 import { routesFromPreferredCookie } from '../../../../lib/constants/routes';
 import { uiLangFromUrlPathname } from '../../../../lib/i18n/ui-locale-path';
-import { ADMIN_NATIVE_SELECT_CLASS } from '../../../../lib/admin/native-select-classes';
+import { ADMIN_NATIVE_SELECT_CLASS, ADMIN_CHECKBOX_CLASS } from '../../../../lib/admin/native-select-classes';
 
 interface MenuRow {
   id: number;
@@ -69,6 +69,29 @@ type MenuItemType =
   | 'category'
   | 'skill'
   | 'page';
+
+const ENTITY_REF_TYPES: MenuItemType[] = [
+  'page',
+  'project',
+  'blog_post',
+  'service',
+  'category',
+  'skill',
+];
+
+type PickerOption = { id: number; label: string };
+
+function isEntityRefType(type: string): boolean {
+  return ENTITY_REF_TYPES.includes(type as MenuItemType);
+}
+
+function filterPickerOptions(options: PickerOption[], query: string): PickerOption[] {
+  const needle = query.trim().toLowerCase();
+  if (!needle) {
+    return options;
+  }
+  return options.filter((o) => o.label.toLowerCase().includes(needle));
+}
 
 function collectMenuItemRefs(roots: MenuItemNode[]): Array<{ item_type: string; reference_id: number | null }> {
   const out: Array<{ item_type: string; reference_id: number | null }> = [];
@@ -222,6 +245,10 @@ export default component$(() => {
   const bulkRowPick = useStore({ m: {} as Record<number, boolean> });
   const taxCatPick = useStore({ m: {} as Record<number, boolean> });
   const taxSkillPick = useStore({ m: {} as Record<number, boolean> });
+  const entityPick = useStore({ m: {} as Record<number, boolean> });
+  const entitySearch = useSignal('');
+  const taxCatSearch = useSignal('');
+  const taxSkillSearch = useSignal('');
 
   const form = useStore({
     id: null as number | null,
@@ -245,6 +272,8 @@ export default component$(() => {
     form.label = '';
     form.label_ar = '';
     form.open_in_new_tab = false;
+    entityPick.m = {};
+    entitySearch.value = '';
   });
 
   const fetchDetail$ = $(async (menuId: number) => {
@@ -270,6 +299,8 @@ export default component$(() => {
     bulkRowPick.m = {};
     taxCatPick.m = {};
     taxSkillPick.m = {};
+    taxCatSearch.value = '';
+    taxSkillSearch.value = '';
     await fetchDetail$(id);
     await resetForm$();
   });
@@ -425,29 +456,94 @@ export default component$(() => {
     saving.value = true;
     try {
       const api = getApiClient();
-      const payload: Record<string, unknown> = {
-        parent_id: form.parent_id,
-        sort_order: Number(form.sort_order) || 0,
-        label: form.label.trim() || null,
-        item_type: form.item_type,
-        open_in_new_tab: form.open_in_new_tab,
-        translations: [{ locale: 'ar', label: form.label_ar.trim() || null }],
-      };
-      if (form.item_type === 'custom_link') {
-        payload.url = form.url.trim();
-      }
-      if (['project', 'blog_post', 'service', 'category', 'skill', 'page'].includes(form.item_type)) {
-        payload.reference_id = parseInt(String(form.reference_id), 10);
-      }
+      const roots = menuDetail.value?.items ?? [];
+      const translations = [{ locale: 'ar', label: form.label_ar.trim() || null }];
+
       if (form.id) {
+        const payload: Record<string, unknown> = {
+          parent_id: form.parent_id,
+          sort_order: Number(form.sort_order) || 0,
+          label: form.label.trim() || null,
+          item_type: form.item_type,
+          open_in_new_tab: form.open_in_new_tab,
+          translations,
+        };
+        if (form.item_type === 'custom_link') {
+          payload.url = form.url.trim();
+        }
+        if (isEntityRefType(form.item_type)) {
+          const picked = Object.entries(entityPick.m)
+            .filter(([, v]) => v)
+            .map(([k]) => Number(k));
+          const refId =
+            picked.length === 1
+              ? picked[0]!
+              : parseInt(String(form.reference_id), 10);
+          if (!refId || Number.isNaN(refId)) {
+            await showError(String(translateApp(lang, 'menusPage.nothingSelectedEntities')));
+            return;
+          }
+          payload.reference_id = refId;
+        }
         await api.put(API_ENDPOINTS.MENUS.UPDATE_ITEM(form.id), payload);
         await success(String(translateApp(lang, 'menusPage.saved')));
-      } else {
-        await api.post(API_ENDPOINTS.MENUS.CREATE_ITEM(mid), payload);
+        await fetchDetail$(mid);
+        return;
+      }
+
+      if (form.item_type === 'custom_link') {
+        await api.post(API_ENDPOINTS.MENUS.CREATE_ITEM(mid), {
+          parent_id: form.parent_id,
+          sort_order: Number(form.sort_order) || 0,
+          label: form.label.trim() || null,
+          item_type: 'custom_link',
+          url: form.url.trim(),
+          open_in_new_tab: form.open_in_new_tab,
+          translations,
+        });
         await success(String(translateApp(lang, 'menusPage.added')));
         await resetForm$();
+        await fetchDetail$(mid);
+        return;
       }
-      await fetchDetail$(mid);
+
+      if (isEntityRefType(form.item_type)) {
+        const rawIds = Object.entries(entityPick.m)
+          .filter(([, v]) => v)
+          .map(([k]) => Number(k));
+        const idSet = [...new Set(rawIds.filter((id) => id > 0))];
+        if (!idSet.length) {
+          await showError(String(translateApp(lang, 'menusPage.nothingSelectedEntities')));
+          return;
+        }
+        let added = 0;
+        for (const refId of idSet) {
+          if (menuHasItemRef(roots, form.item_type, refId)) {
+            continue;
+          }
+          await api.post(API_ENDPOINTS.MENUS.CREATE_ITEM(mid), {
+            parent_id: form.parent_id,
+            item_type: form.item_type,
+            reference_id: refId,
+            open_in_new_tab: form.open_in_new_tab,
+            label: form.label.trim() || null,
+            translations,
+          });
+          added += 1;
+        }
+        entityPick.m = {};
+        entitySearch.value = '';
+        if (added > 0) {
+          await success(String(translateApp(lang, 'menusPage.entitiesAdded', { count: added })));
+          await resetForm$();
+        } else {
+          await showError(String(translateApp(lang, 'menusPage.entitiesAllSkipped')));
+        }
+        await fetchDetail$(mid);
+        return;
+      }
+
+      await showError(String(translateApp(lang, 'menusPage.saveFailed')));
     } catch {
       await showError(String(translateApp(lang, 'menusPage.saveFailed')));
     } finally {
@@ -466,6 +562,35 @@ export default component$(() => {
     form.url = item.url || '';
     form.reference_id = item.reference_id != null ? String(item.reference_id) : '';
     form.open_in_new_tab = !!item.open_in_new_tab;
+    entitySearch.value = '';
+    entityPick.m = {};
+    if (item.reference_id != null) {
+      entityPick.m[item.reference_id] = true;
+    }
+  });
+
+  const toggleEntityPick$ = $((id: number, exclusive: boolean) => {
+    if (exclusive) {
+      entityPick.m = { [id]: true };
+      form.reference_id = String(id);
+      return;
+    }
+    entityPick.m[id] = !entityPick.m[id];
+  });
+
+  const selectAllFilteredEntities$ = $((ids: number[], itemType: string) => {
+    const roots = menuDetail.value?.items ?? [];
+    for (const id of ids) {
+      if (menuHasItemRef(roots, itemType, id)) {
+        continue;
+      }
+      entityPick.m[id] = true;
+    }
+  });
+
+  const clearEntitySelection$ = $(() => {
+    entityPick.m = {};
+    form.reference_id = '';
   });
 
   const toggleRowBulk$ = $((id: number) => {
@@ -702,6 +827,50 @@ export default component$(() => {
   const inputClass = ADMIN_NATIVE_SELECT_CLASS;
   const labelClass = 'mb-1 block text-sm font-medium text-gray-700 dark:text-gray-200';
 
+  const menuRoots = menuDetail.value?.items ?? [];
+  let entityOptions: PickerOption[] = [];
+  switch (form.item_type) {
+    case 'page':
+      entityOptions = pages.value.map((p) => ({ id: p.id, label: p.title }));
+      break;
+    case 'project':
+      entityOptions = projects.value.map((p) => ({ id: p.id, label: p.title }));
+      break;
+    case 'blog_post':
+      entityOptions = blogPosts.value.map((p) => ({ id: p.id, label: p.title }));
+      break;
+    case 'service':
+      entityOptions = services.value.map((s) => ({ id: s.id, label: s.name }));
+      break;
+    case 'category':
+      entityOptions = categories.value.map((c) => ({
+        id: c.id,
+        label: `${c.name} (${c.slug})`,
+      }));
+      break;
+    case 'skill':
+      entityOptions = skills.value.map((s) => ({
+        id: s.id,
+        label: `${s.name} (${s.slug})`,
+      }));
+      break;
+    default:
+      entityOptions = [];
+  }
+  const filteredEntityOptions = filterPickerOptions(entityOptions, entitySearch.value);
+  const filteredEntityIds = filteredEntityOptions.map((o) => o.id);
+  const exclusiveEntityPick = form.id != null;
+  const selectedEntityCount = Object.values(entityPick.m).filter(Boolean).length;
+
+  const filteredCategories = filterPickerOptions(
+    categories.value.map((c) => ({ id: c.id, label: `${c.name} (${c.slug})` })),
+    taxCatSearch.value,
+  );
+  const filteredSkills = filterPickerOptions(
+    skills.value.map((s) => ({ id: s.id, label: `${s.name} (${s.slug})` })),
+    taxSkillSearch.value,
+  );
+
   return (
     <>
       <div>
@@ -928,6 +1097,9 @@ export default component$(() => {
                     value={form.item_type}
                     onInput$={(e) => {
                       form.item_type = (e.target as HTMLSelectElement).value as MenuItemType;
+                      entityPick.m = {};
+                      entitySearch.value = '';
+                      form.reference_id = '';
                     }}
                   >
                     <option value="page">{String(translateApp(lang, 'menusPage.typePage'))}</option>
@@ -955,123 +1127,98 @@ export default component$(() => {
                   </div>
                 )}
 
-                {form.item_type === 'project' && (
+                {isEntityRefType(form.item_type) && (
                   <div class="md:col-span-2">
-                    <label class={labelClass}>{String(translateApp(lang, 'menusPage.pickProject'))}</label>
-                    <select
-                      class={inputClass}
-                      value={form.reference_id}
+                    <label class={labelClass}>
+                      {String(
+                        translateApp(
+                          lang,
+                          form.item_type === 'page'
+                            ? 'menusPage.pickPage'
+                            : form.item_type === 'project'
+                              ? 'menusPage.pickProject'
+                              : form.item_type === 'blog_post'
+                                ? 'menusPage.pickPost'
+                                : form.item_type === 'service'
+                                  ? 'menusPage.pickService'
+                                  : form.item_type === 'category'
+                                    ? 'menusPage.pickCategory'
+                                    : 'menusPage.pickSkill',
+                        ),
+                      )}
+                    </label>
+                    <p class="mb-2 text-xs text-gray-500 dark:text-gray-400">
+                      {exclusiveEntityPick
+                        ? String(translateApp(lang, 'menusPage.entityPickSingleHint'))
+                        : String(translateApp(lang, 'menusPage.entityPickMultiHint'))}
+                    </p>
+                    <input
+                      class={`${inputClass} mb-2`}
+                      type="search"
+                      value={entitySearch.value}
+                      placeholder={String(translateApp(lang, 'menusPage.searchEntities'))}
                       onInput$={(e) => {
-                        form.reference_id = (e.target as HTMLSelectElement).value;
+                        entitySearch.value = (e.target as HTMLInputElement).value;
                       }}
-                    >
-                      <option value="">{String(translateApp(lang, 'menusPage.pickPlaceholder'))}</option>
-                      {projects.value.map((p) => (
-                        <option key={p.id} value={p.id}>
-                          {p.title}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                )}
-
-                {form.item_type === 'blog_post' && (
-                  <div class="md:col-span-2">
-                    <label class={labelClass}>{String(translateApp(lang, 'menusPage.pickPost'))}</label>
-                    <select
-                      class={inputClass}
-                      value={form.reference_id}
-                      onInput$={(e) => {
-                        form.reference_id = (e.target as HTMLSelectElement).value;
-                      }}
-                    >
-                      <option value="">{String(translateApp(lang, 'menusPage.pickPlaceholder'))}</option>
-                      {blogPosts.value.map((p) => (
-                        <option key={p.id} value={p.id}>
-                          {p.title}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                )}
-
-                {form.item_type === 'service' && (
-                  <div class="md:col-span-2">
-                    <label class={labelClass}>{String(translateApp(lang, 'menusPage.pickService'))}</label>
-                    <select
-                      class={inputClass}
-                      value={form.reference_id}
-                      onInput$={(e) => {
-                        form.reference_id = (e.target as HTMLSelectElement).value;
-                      }}
-                    >
-                      <option value="">{String(translateApp(lang, 'menusPage.pickPlaceholder'))}</option>
-                      {services.value.map((s) => (
-                        <option key={s.id} value={s.id}>
-                          {s.name}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                )}
-
-                {form.item_type === 'category' && (
-                  <div class="md:col-span-2">
-                    <label class={labelClass}>{String(translateApp(lang, 'menusPage.pickCategory'))}</label>
-                    <select
-                      class={inputClass}
-                      value={form.reference_id}
-                      onInput$={(e) => {
-                        form.reference_id = (e.target as HTMLSelectElement).value;
-                      }}
-                    >
-                      <option value="">{String(translateApp(lang, 'menusPage.pickPlaceholder'))}</option>
-                      {categories.value.map((c) => (
-                        <option key={c.id} value={c.id}>
-                          {`${c.name} (${c.slug})`}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                )}
-
-                {form.item_type === 'skill' && (
-                  <div class="md:col-span-2">
-                    <label class={labelClass}>{String(translateApp(lang, 'menusPage.pickSkill'))}</label>
-                    <select
-                      class={inputClass}
-                      value={form.reference_id}
-                      onInput$={(e) => {
-                        form.reference_id = (e.target as HTMLSelectElement).value;
-                      }}
-                    >
-                      <option value="">{String(translateApp(lang, 'menusPage.pickPlaceholder'))}</option>
-                      {skills.value.map((s) => (
-                        <option key={s.id} value={s.id}>
-                          {`${s.name} (${s.slug})`}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                )}
-
-                {form.item_type === 'page' && (
-                  <div class="md:col-span-2">
-                    <label class={labelClass}>{String(translateApp(lang, 'menusPage.pickPage'))}</label>
-                    <select
-                      class={inputClass}
-                      value={form.reference_id}
-                      onInput$={(e) => {
-                        form.reference_id = (e.target as HTMLSelectElement).value;
-                      }}
-                    >
-                      <option value="">{String(translateApp(lang, 'menusPage.pickPlaceholder'))}</option>
-                      {pages.value.map((p) => (
-                        <option key={p.id} value={p.id}>
-                          {p.title}
-                        </option>
-                      ))}
-                    </select>
+                    />
+                    {!exclusiveEntityPick ? (
+                      <div class="mb-2 flex flex-wrap gap-2">
+                        <button
+                          type="button"
+                          class="rounded border border-gray-300 px-2 py-1 text-xs dark:border-gray-600"
+                          onClick$={() => selectAllFilteredEntities$(filteredEntityIds, form.item_type)}
+                        >
+                          {String(translateApp(lang, 'menusPage.selectAllFiltered'))}
+                        </button>
+                        <button
+                          type="button"
+                          class="rounded border border-gray-300 px-2 py-1 text-xs dark:border-gray-600"
+                          onClick$={clearEntitySelection$}
+                        >
+                          {String(translateApp(lang, 'menusPage.clearSelection'))}
+                        </button>
+                        <span class="self-center text-xs text-gray-500 dark:text-gray-400">
+                          {String(
+                            translateApp(lang, 'menusPage.selectedCount', {
+                              count: selectedEntityCount,
+                            }),
+                          )}
+                        </span>
+                      </div>
+                    ) : null}
+                    <div class="max-h-56 space-y-1 overflow-y-auto rounded border border-gray-200 p-2 dark:border-gray-700">
+                      {filteredEntityOptions.length === 0 ? (
+                        <p class="text-xs text-gray-500">{String(translateApp(lang, 'menusPage.noEntityMatches'))}</p>
+                      ) : (
+                        filteredEntityOptions.map((opt) => {
+                          const alreadyOnMenu =
+                            !exclusiveEntityPick &&
+                            menuHasItemRef(menuRoots, form.item_type, opt.id);
+                          return (
+                            <label
+                              key={opt.id}
+                              class={`flex cursor-pointer items-center gap-2 rounded px-1 py-1 text-sm ${
+                                alreadyOnMenu ? 'opacity-55' : ''
+                              }`}
+                            >
+                              <input
+                                type="checkbox"
+                                class={ADMIN_CHECKBOX_CLASS}
+                                checked={!!entityPick.m[opt.id]}
+                                disabled={alreadyOnMenu}
+                                onChange$={() => toggleEntityPick$(opt.id, exclusiveEntityPick)}
+                              />
+                              <span class="text-gray-800 dark:text-gray-200">
+                                {opt.label}
+                                {alreadyOnMenu
+                                  ? ` — ${String(translateApp(lang, 'menusPage.alreadyOnMenu'))}`
+                                  : ''}
+                              </span>
+                            </label>
+                          );
+                        })
+                      )}
+                    </div>
                   </div>
                 )}
 
@@ -1126,7 +1273,9 @@ export default component$(() => {
                 >
                   {form.id
                     ? String(translateApp(lang, 'menusPage.updateButton'))
-                    : String(translateApp(lang, 'menusPage.addButton'))}
+                    : isEntityRefType(form.item_type)
+                      ? String(translateApp(lang, 'menusPage.addSelectedButton'))
+                      : String(translateApp(lang, 'menusPage.addButton'))}
                 </button>
                 {form.id ? (
                   <button
@@ -1153,19 +1302,28 @@ export default component$(() => {
                   <h3 class="mb-2 text-sm font-semibold text-gray-800 dark:text-gray-200">
                     {String(translateApp(lang, 'menusPage.categoriesTaxonomy'))}
                   </h3>
+                  <input
+                    class={`${inputClass} mb-2`}
+                    type="search"
+                    value={taxCatSearch.value}
+                    placeholder={String(translateApp(lang, 'menusPage.searchEntities'))}
+                    onInput$={(e) => {
+                      taxCatSearch.value = (e.target as HTMLInputElement).value;
+                    }}
+                  />
                   <div class="max-h-56 space-y-2 overflow-y-auto rounded border border-gray-100 p-2 dark:border-gray-700">
-                    {categories.value.length === 0 ? (
+                    {filteredCategories.length === 0 ? (
                       <p class="text-xs text-gray-500">{String(translateApp(lang, 'menusPage.taxonomyEmpty'))}</p>
                     ) : (
-                      categories.value.map((c) => (
+                      filteredCategories.map((c) => (
                         <label key={c.id} class="flex cursor-pointer items-center gap-2 text-sm">
                           <input
                             type="checkbox"
-                            class="h-4 w-4 rounded border-gray-300"
+                            class={ADMIN_CHECKBOX_CLASS}
                             checked={!!taxCatPick.m[c.id]}
                             onChange$={() => toggleTaxCat$(c.id)}
                           />
-                          <span class="text-gray-800 dark:text-gray-200">{`${c.name} (${c.slug})`}</span>
+                          <span class="text-gray-800 dark:text-gray-200">{c.label}</span>
                         </label>
                       ))
                     )}
@@ -1183,19 +1341,28 @@ export default component$(() => {
                   <h3 class="mb-2 text-sm font-semibold text-gray-800 dark:text-gray-200">
                     {String(translateApp(lang, 'menusPage.skillsTaxonomy'))}
                   </h3>
+                  <input
+                    class={`${inputClass} mb-2`}
+                    type="search"
+                    value={taxSkillSearch.value}
+                    placeholder={String(translateApp(lang, 'menusPage.searchEntities'))}
+                    onInput$={(e) => {
+                      taxSkillSearch.value = (e.target as HTMLInputElement).value;
+                    }}
+                  />
                   <div class="max-h-56 space-y-2 overflow-y-auto rounded border border-gray-100 p-2 dark:border-gray-700">
-                    {skills.value.length === 0 ? (
+                    {filteredSkills.length === 0 ? (
                       <p class="text-xs text-gray-500">{String(translateApp(lang, 'menusPage.taxonomyEmpty'))}</p>
                     ) : (
-                      skills.value.map((s) => (
+                      filteredSkills.map((s) => (
                         <label key={s.id} class="flex cursor-pointer items-center gap-2 text-sm">
                           <input
                             type="checkbox"
-                            class="h-4 w-4 rounded border-gray-300"
+                            class={ADMIN_CHECKBOX_CLASS}
                             checked={!!taxSkillPick.m[s.id]}
                             onChange$={() => toggleTaxSkill$(s.id)}
                           />
-                          <span class="text-gray-800 dark:text-gray-200">{`${s.name} (${s.slug})`}</span>
+                          <span class="text-gray-800 dark:text-gray-200">{s.label}</span>
                         </label>
                       ))
                     )}

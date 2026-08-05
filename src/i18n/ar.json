@@ -612,7 +612,18 @@
     "pickCategory": "التصنيف",
     "pickSkill": "المهارة",
     "pickPage": "الصفحة",
-    "selectItem": "تحديد الصف"
+    "selectItem": "تحديد الصف",
+    "searchEntities": "بحث…",
+    "entityPickMultiHint": "حدد عنصراً واحداً أو أكثر ثم أضفهم. العناصر الموجودة بالفعل في القائمة تُتخطّى.",
+    "entityPickSingleHint": "اختر عنصراً واحداً لهذا الرابط.",
+    "selectAllFiltered": "تحديد نتائج البحث",
+    "selectedCount": "{{count}} محدد",
+    "noEntityMatches": "لا نتائج.",
+    "alreadyOnMenu": "موجود بالفعل",
+    "nothingSelectedEntities": "حدد عنصراً واحداً أو أكثر من القائمة.",
+    "entitiesAdded": "تمت إضافة {{count}} رابط(ات) إلى القائمة.",
+    "entitiesAllSkipped": "جميع العناصر المحددة موجودة بالفعل في هذه القائمة.",
+    "addSelectedButton": "إضافة المحدد"
   },
   "users": {
     "title": "المستخدمون",
