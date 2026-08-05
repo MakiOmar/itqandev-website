@@ -94,6 +94,16 @@ Requires the same ability as system health (`manageSystemCache`). SQL dumps are 
 
 Restore is destructive (overwrites the live DB). Media files on disk are **not** included.
 
+### Search & Replace (`/api/v1/system/search-replace`)
+
+Requires the same ability as system health (`manageSystemCache`). See `docs/CONFIGURATION.md` for `SEARCH_REPLACE_*` env keys.
+
+| Method | Path | Purpose |
+|--------|------|---------|
+| `GET` | `/api/v1/system/search-replace/tables` | List tables + `meta.confirm_phrase` |
+| `POST` | `/api/v1/system/search-replace/preview` | Dry-run search (`find`, `tables[]`, `case_sensitive`, `ignore_slugs`) |
+| `POST` | `/api/v1/system/search-replace/apply` | Apply replace (`find`, `replace`, `tables[]`, toggles, `confirmation`) |
+
 **Error Response (401):**
 ```json
 {

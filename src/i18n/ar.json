@@ -760,6 +760,8 @@
     "systemHealth": "صحة النظام",
     "system": "النظام",
     "systemBackup": "النسخ الاحتياطي والاستعادة",
+    "tools": "الأدوات",
+    "toolsSearchReplace": "بحث واستبدال",
     "closeSidebar": "إغلاق القائمة"
   },
   "appearance": {
@@ -925,5 +927,43 @@
     "backupUploadHelp": "اختر ملف .sql. سيُطلب منك كتابة {{phrase}} قبل تنفيذ الاستعادة.",
     "backupChooseFile": "ملف SQL",
     "backupConfirmLabel": "اكتب {{phrase}} لتمكين الاستعادة"
+  },
+  "tools": {
+    "searchReplace": {
+      "title": "بحث واستبدال",
+      "subtitle": "ابحث واستبدل النص عبر جداول قاعدة البيانات المحددة. استخدم التشغيل التجريبي لمعاينة النتائج أولاً.",
+      "warning": "الاستبدال يكتب على قاعدة البيانات الحية. أنشئ نسخة احتياطية من النظام أولاً. يتم تخطي أعمدة الـ slug وURL عند تفعيل تجاهل الـ slugs. ملفات الوسائط على القرص غير مشمولة.",
+      "driver": "الاتصال: {{driver}}",
+      "tablesTitle": "الجداول",
+      "uncheckAll": "إلغاء تحديد الكل",
+      "stringColumns": "{{count}} أعمدة نصية",
+      "find": "بحث عن",
+      "replace": "استبدال بـ",
+      "dryRun": "تشغيل تجريبي (بحث فقط)",
+      "dryRunHint": "عطّل التشغيل التجريبي لتمكين الاستبدال. سيُطلب منك كتابة CONFIRM قبل تطبيق التغييرات.",
+      "caseSensitive": "حساس لحالة الأحرف",
+      "ignoreSlugs": "تجاهل أعمدة الـ slug وURL",
+      "preview": "بحث / معاينة",
+      "apply": "استبدال",
+      "findRequired": "أدخل نص البحث.",
+      "tablesRequired": "حدّد جدولاً واحداً على الأقل.",
+      "loadFailed": "تعذّر تحميل الجداول.",
+      "previewDone": "تم العثور على {{count}} تطابق/تطابقات.",
+      "previewFailed": "فشلت المعاينة.",
+      "replaceTitle": "تطبيق الاستبدال على قاعدة البيانات",
+      "replaceConfirmText": "سيحدّث هذا النص المطابق في الجداول المحددة. اكتب {{phrase}} للمتابعة.",
+      "replaceMismatch": "اكتب {{phrase}} تماماً للتأكيد.",
+      "applyDone": "تم تحديث {{count}} تطابق/تطابقات.",
+      "applyFailed": "فشل الاستبدال.",
+      "resultsTitle": "النتائج",
+      "resultsSummary": "التطابقات: {{matches}} · المستبدل: {{replaced}}",
+      "colTable": "الجدول",
+      "colMatches": "التطابقات",
+      "colReplaced": "المستبدل",
+      "colColumns": "الأعمدة المفحوصة",
+      "samplesTitle": "عينات",
+      "before": "قبل",
+      "after": "بعد"
+    }
   }
 }

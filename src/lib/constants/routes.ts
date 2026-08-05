@@ -31,6 +31,7 @@ export function getLocalizedRoutes(lang: string) {
       NOTIFICATIONS: L(`${p}/notifications`),
       SYSTEM: L(`${p}/system`),
       SYSTEM_BACKUP: L(`${p}/system/backup`),
+      TOOLS_SEARCH_REPLACE: L(`${p}/tools/search-replace`),
       PROJECTS: L(`${p}/projects`),
       PROJECTS_NEW: L(`${p}/projects/new`),
       CATEGORIES: L(`${p}/categories`),

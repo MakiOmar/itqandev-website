@@ -760,6 +760,8 @@
     "systemHealth": "System Health",
     "system": "System",
     "systemBackup": "Backup & Restore",
+    "tools": "Tools",
+    "toolsSearchReplace": "Search & Replace",
     "closeSidebar": "Close sidebar"
   },
   "appearance": {
@@ -925,5 +927,43 @@
     "backupUploadHelp": "Choose a .sql dump. You will be asked to type {{phrase}} before the restore runs.",
     "backupChooseFile": "SQL file",
     "backupConfirmLabel": "Type {{phrase}} to enable restore"
+  },
+  "tools": {
+    "searchReplace": {
+      "title": "Search & Replace",
+      "subtitle": "Find and replace text across selected database tables. Use Dry run to preview matches first.",
+      "warning": "Replace writes to the live database. Create a System backup first. Slugs and URL columns are skipped when Ignore slugs is on. Media files on disk are not scanned.",
+      "driver": "Connection: {{driver}}",
+      "tablesTitle": "Tables",
+      "uncheckAll": "Uncheck all",
+      "stringColumns": "{{count}} string columns",
+      "find": "Find",
+      "replace": "Replace with",
+      "dryRun": "Dry run (search only)",
+      "dryRunHint": "Turn off Dry run to enable Replace. You will type CONFIRM before changes are applied.",
+      "caseSensitive": "Case sensitive",
+      "ignoreSlugs": "Ignore slugs and URL columns",
+      "preview": "Search / Preview",
+      "apply": "Replace",
+      "findRequired": "Enter text to find.",
+      "tablesRequired": "Select at least one table.",
+      "loadFailed": "Could not load tables.",
+      "previewDone": "Found {{count}} match(es).",
+      "previewFailed": "Preview failed.",
+      "replaceTitle": "Apply database replace",
+      "replaceConfirmText": "This updates matching text in the selected tables. Type {{phrase}} to continue.",
+      "replaceMismatch": "Type {{phrase}} exactly to confirm.",
+      "applyDone": "Updated {{count}} row/column match(es).",
+      "applyFailed": "Replace failed.",
+      "resultsTitle": "Results",
+      "resultsSummary": "Matches: {{matches}} · Replaced: {{replaced}}",
+      "colTable": "Table",
+      "colMatches": "Matches",
+      "colReplaced": "Replaced",
+      "colColumns": "Columns scanned",
+      "samplesTitle": "Sample matches",
+      "before": "Before",
+      "after": "After"
+    }
   }
 }

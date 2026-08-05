@@ -58,6 +58,9 @@ export const API_ENDPOINTS = {
     BACKUPS: '/v1/system/backups',
     BACKUP: (filename: string) => `/v1/system/backups/${encodeURIComponent(filename)}`,
     BACKUP_RESTORE: '/v1/system/backups/restore',
+    SEARCH_REPLACE_TABLES: '/v1/system/search-replace/tables',
+    SEARCH_REPLACE_PREVIEW: '/v1/system/search-replace/preview',
+    SEARCH_REPLACE_APPLY: '/v1/system/search-replace/apply',
     STATS: '/system/stats',
   },
   /** Authenticated helpers (admin UI); server enforces uniqueness on the owning table. */
