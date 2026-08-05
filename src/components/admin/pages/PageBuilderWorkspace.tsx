@@ -584,21 +584,68 @@ export const PageBuilderWorkspace = component$<PageBuilderWorkspaceProps>((props
                                         }
                                       }}
                                     >
-                                      <button
-                                        type="button"
-                                        class="mb-1 text-[11px] font-medium text-gray-600 dark:text-gray-300"
-                                        onClick$={() => {
-                                          selection.value = {
-                                            kind: 'column',
-                                            bandIndex,
-                                            rowIndex,
-                                            colIndex,
-                                          };
-                                        }}
-                                      >
-                                        {translateApp(props.lang, 'pages.column')} {colIndex + 1} ·{' '}
-                                        {effective}/12
-                                      </button>
+                                      <div class="mb-1 flex flex-wrap items-center gap-1">
+                                        <button
+                                          type="button"
+                                          class="min-w-0 flex-1 truncate text-start text-[11px] font-medium text-gray-600 dark:text-gray-300"
+                                          onClick$={() => {
+                                            selection.value = {
+                                              kind: 'column',
+                                              bandIndex,
+                                              rowIndex,
+                                              colIndex,
+                                            };
+                                          }}
+                                        >
+                                          {translateApp(props.lang, 'pages.column')} {colIndex + 1} ·{' '}
+                                          {effective}/12
+                                        </button>
+                                        <button
+                                          type="button"
+                                          class="rounded border border-gray-300 px-1.5 py-0.5 text-[11px] text-gray-700 hover:border-primary-400 hover:text-primary-700 dark:border-gray-600 dark:text-gray-200"
+                                          title={translateApp(props.lang, 'pages.editColumn')}
+                                          aria-label={translateApp(props.lang, 'pages.editColumn')}
+                                          onClick$={() => {
+                                            selection.value = {
+                                              kind: 'column',
+                                              bandIndex,
+                                              rowIndex,
+                                              colIndex,
+                                            };
+                                          }}
+                                        >
+                                          ✎
+                                        </button>
+                                        <button
+                                          type="button"
+                                          class="rounded border border-red-300 px-1.5 py-0.5 text-[11px] text-red-600 disabled:opacity-40 dark:border-red-800"
+                                          title={translateApp(props.lang, 'pages.removeColumn')}
+                                          aria-label={translateApp(props.lang, 'pages.removeColumn')}
+                                          disabled={row.columns.length <= 1}
+                                          onClick$={async () => {
+                                            if (row.columns.length <= 1) return;
+                                            selection.value = null;
+                                            const next = bands.map((b, bi) => {
+                                              if (bi !== bandIndex) return b;
+                                              return {
+                                                ...b,
+                                                rows: b.rows.map((r, ri) => {
+                                                  if (ri !== rowIndex) return r;
+                                                  return {
+                                                    ...r,
+                                                    columns: r.columns.filter(
+                                                      (_, ci) => ci !== colIndex,
+                                                    ),
+                                                  };
+                                                }),
+                                              };
+                                            });
+                                            await commit$(next);
+                                          }}
+                                        >
+                                          ×
+                                        </button>
+                                      </div>
                                       <ul class="min-h-[3rem] space-y-1">
                                         {col.blocks.length === 0 ? (
                                           <li class="rounded border border-dashed border-gray-300 px-2 py-3 text-center text-[11px] text-gray-400 dark:border-gray-600">
@@ -620,7 +667,7 @@ export const PageBuilderWorkspace = component$<PageBuilderWorkspaceProps>((props
                                               key={block.id}
                                               draggable={true}
                                               class={[
-                                                'cursor-grab rounded border px-2 py-1.5 text-xs font-medium active:cursor-grabbing',
+                                                'flex cursor-grab items-center gap-1 rounded border px-2 py-1.5 text-xs font-medium active:cursor-grabbing',
                                                 blockSelected
                                                   ? 'border-primary-500 bg-primary-600 text-white'
                                                   : 'border-gray-200 bg-white text-gray-800 dark:border-gray-700 dark:bg-slate-900 dark:text-gray-100',
@@ -698,11 +745,63 @@ export const PageBuilderWorkspace = component$<PageBuilderWorkspaceProps>((props
                                                 };
                                               }}
                                             >
-                                              {appearanceSectionLabel(
-                                                props.lang,
-                                                block.type,
-                                                entry?.label || block.type,
-                                              )}
+                                              <span class="min-w-0 flex-1 truncate">
+                                                {appearanceSectionLabel(
+                                                  props.lang,
+                                                  block.type,
+                                                  entry?.label || block.type,
+                                                )}
+                                              </span>
+                                              <button
+                                                type="button"
+                                                class={[
+                                                  'shrink-0 rounded px-1.5 py-0.5 text-[11px] leading-none',
+                                                  blockSelected
+                                                    ? 'bg-white/20 text-white hover:bg-white/30'
+                                                    : 'border border-red-300 text-red-600 hover:bg-red-50 dark:border-red-800 dark:hover:bg-red-950/40',
+                                                ].join(' ')}
+                                                title={translateApp(props.lang, 'pages.removeWidget')}
+                                                aria-label={translateApp(
+                                                  props.lang,
+                                                  'pages.removeWidget',
+                                                )}
+                                                onClick$={async (e) => {
+                                                  e.stopPropagation();
+                                                  const next = bands.map((b, bi) => {
+                                                    if (bi !== bandIndex) return b;
+                                                    return {
+                                                      ...b,
+                                                      rows: b.rows.map((r, ri) => {
+                                                        if (ri !== rowIndex) return r;
+                                                        return {
+                                                          ...r,
+                                                          columns: r.columns.map((c, ci) => {
+                                                            if (ci !== colIndex) return c;
+                                                            return {
+                                                              ...c,
+                                                              blocks: c.blocks.filter(
+                                                                (_, i) => i !== blockIndex,
+                                                              ),
+                                                            };
+                                                          }),
+                                                        };
+                                                      }),
+                                                    };
+                                                  });
+                                                  if (
+                                                    selection.value?.kind === 'block' &&
+                                                    selection.value.bandIndex === bandIndex &&
+                                                    selection.value.rowIndex === rowIndex &&
+                                                    selection.value.colIndex === colIndex &&
+                                                    selection.value.blockIndex === blockIndex
+                                                  ) {
+                                                    selection.value = null;
+                                                  }
+                                                  await commit$(next);
+                                                }}
+                                              >
+                                                ×
+                                              </button>
                                             </li>
                                           );
                                         })}
@@ -816,57 +915,110 @@ export const PageBuilderWorkspace = component$<PageBuilderWorkspaceProps>((props
                 <p class="text-sm font-medium">
                   {translateApp(props.lang, 'pages.column')} {selection.value.colIndex + 1}
                 </p>
-                <label class="block text-xs font-medium text-gray-600 dark:text-gray-300">
-                  {translateApp(props.lang, 'pages.span')} (
-                  {translateApp(props.lang, `pages.device.${previewDevice.value}`)})
-                  <input
-                    type="number"
-                    min={1}
-                    max={12}
-                    class="mt-1 w-full rounded border border-gray-300 px-2 py-1.5 text-sm dark:border-gray-600 dark:bg-slate-950"
-                    value={
-                      normalizeColumnSpans(
-                        bands[selection.value.bandIndex]?.rows[selection.value.rowIndex]
-                          ?.columns[selection.value.colIndex]?.span,
-                      )[previewDevice.value]
-                    }
-                    onInput$={async (e) => {
-                      const n = Number((e.target as HTMLInputElement).value);
-                      const { bandIndex, rowIndex, colIndex } = selection.value as {
-                        bandIndex: number;
-                        rowIndex: number;
-                        colIndex: number;
-                      };
-                      await commit$(
-                        bands.map((b, bi) => {
-                          if (bi !== bandIndex) return b;
-                          return {
-                            ...b,
-                            rows: b.rows.map((r, ri) => {
-                              if (ri !== rowIndex) return r;
+                <div>
+                  <p class="mb-1.5 text-xs font-medium text-gray-600 dark:text-gray-300">
+                    {translateApp(props.lang, 'pages.spanPresets')} (
+                    {translateApp(props.lang, `pages.device.${previewDevice.value}`)})
+                  </p>
+                  <div class="flex flex-wrap gap-1">
+                    {([12, 8, 6, 4, 3] as const).map((preset) => (
+                      <button
+                        key={preset}
+                        type="button"
+                        class="rounded border border-gray-300 px-2 py-1 text-[11px] font-medium text-gray-700 hover:border-primary-400 hover:text-primary-700 dark:border-gray-600 dark:text-gray-200"
+                        onClick$={async () => {
+                          const { bandIndex, rowIndex, colIndex } = selection.value as {
+                            bandIndex: number;
+                            rowIndex: number;
+                            colIndex: number;
+                          };
+                          await commit$(
+                            bands.map((b, bi) => {
+                              if (bi !== bandIndex) return b;
                               return {
-                                ...r,
-                                columns: r.columns.map((c, ci) => {
-                                  if (ci !== colIndex) return c;
+                                ...b,
+                                rows: b.rows.map((r, ri) => {
+                                  if (ri !== rowIndex) return r;
                                   return {
-                                    ...c,
-                                    span: {
-                                      ...normalizeColumnSpans(c.span),
-                                      [previewDevice.value]: Math.min(
-                                        12,
-                                        Math.max(1, Math.round(n) || 1),
-                                      ),
-                                    },
+                                    ...r,
+                                    columns: r.columns.map((c, ci) => {
+                                      if (ci !== colIndex) return c;
+                                      return {
+                                        ...c,
+                                        span: {
+                                          ...normalizeColumnSpans(c.span),
+                                          [previewDevice.value]: preset,
+                                        },
+                                      };
+                                    }),
                                   };
                                 }),
                               };
                             }),
-                          };
-                        }),
-                      );
-                    }}
-                  />
-                </label>
+                          );
+                        }}
+                      >
+                        {preset}/12
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                {(['mobile', 'tablet', 'desktop'] as LayoutBreakpoint[]).map((device) => (
+                  <label
+                    key={device}
+                    class="block text-xs font-medium text-gray-600 dark:text-gray-300"
+                  >
+                    {translateApp(props.lang, 'pages.span')} (
+                    {translateApp(props.lang, `pages.device.${device}`)})
+                    <input
+                      type="number"
+                      min={1}
+                      max={12}
+                      class="mt-1 w-full rounded border border-gray-300 px-2 py-1.5 text-sm dark:border-gray-600 dark:bg-slate-950"
+                      value={
+                        normalizeColumnSpans(
+                          bands[selection.value.bandIndex]?.rows[selection.value.rowIndex]
+                            ?.columns[selection.value.colIndex]?.span,
+                        )[device]
+                      }
+                      onInput$={async (e) => {
+                        const n = Number((e.target as HTMLInputElement).value);
+                        const { bandIndex, rowIndex, colIndex } = selection.value as {
+                          bandIndex: number;
+                          rowIndex: number;
+                          colIndex: number;
+                        };
+                        await commit$(
+                          bands.map((b, bi) => {
+                            if (bi !== bandIndex) return b;
+                            return {
+                              ...b,
+                              rows: b.rows.map((r, ri) => {
+                                if (ri !== rowIndex) return r;
+                                return {
+                                  ...r,
+                                  columns: r.columns.map((c, ci) => {
+                                    if (ci !== colIndex) return c;
+                                    return {
+                                      ...c,
+                                      span: {
+                                        ...normalizeColumnSpans(c.span),
+                                        [device]: Math.min(
+                                          12,
+                                          Math.max(1, Math.round(n) || 1),
+                                        ),
+                                      },
+                                    };
+                                  }),
+                                };
+                              }),
+                            };
+                          }),
+                        );
+                      }}
+                    />
+                  </label>
+                ))}
               </div>
             ) : null}
 
