@@ -129,7 +129,7 @@ function uniqueMenuSlug(base: string, existing: readonly MenuRow[]): string {
 const STATIC_ROUTE_OPTIONS: Array<{ value: string; label: string }> = [
   { value: 'home', label: 'Home' },
   { value: 'services', label: 'Services' },
-  { value: 'work', label: 'Work' },
+  { value: 'portfolio', label: 'Portfolio' },
   { value: 'about', label: 'About' },
   { value: 'pricing', label: 'Pricing' },
   { value: 'blog', label: 'Blog' },

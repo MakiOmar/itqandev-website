@@ -49,7 +49,7 @@
     "phone": "الهاتف"
   },
   "portfolioPage": {
-    "title": "أعمالنا",
+    "title": "المحفظة",
     "eyebrow": "المحفظة",
     "subtitle": "مشاريع مختارة عبر الويب والموبايل ومنصات المنتجات.",
     "filters": "التصنيفات",
@@ -594,8 +594,8 @@
     "taxonomyEmpty": "لا يوجد شيء.",
     "addSelectedCategories": "إضافة التصنيفات المحددة",
     "addSelectedSkills": "إضافة المهارات المحددة",
-    "typeCategory": "تصنيف (تصفية الأعمال)",
-    "typeSkill": "مهارة (تصفية الأعمال)",
+    "typeCategory": "تصنيف (تصفية المحفظة)",
+    "typeSkill": "مهارة (تصفية المحفظة)",
     "typePage": "صفحة",
     "pickCategory": "التصنيف",
     "pickSkill": "المهارة",

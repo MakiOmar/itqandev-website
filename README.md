@@ -91,7 +91,7 @@ src/
 │   ├── constants/       # Constants (roles, routes)
 │   └── utils/           # Utility functions
 ├── routes/
-│   ├── (public)/        # Marketing pages (/, /services, /work, /blog, etc.)
+│   ├── (public)/        # Marketing pages (/, /services, /portfolio, /blog, etc.)
 │   ├── admin/           # Dashboard (e.g. /admin, /admin/login)
 │   ├── sitemap.xml/     # Dynamic sitemap
 │   └── layout.tsx       # Root layout
@@ -113,7 +113,7 @@ To analyze bundle size, run `npm run build` and inspect the output in `dist/` or
 
 The app includes a public marketing site (agency-style) under the `(public)` route group. It does not require authentication.
 
-**Routes:** `/` (home), `/services`, `/work`, `/work/[slug]`, `/about`, `/pricing`, `/contact`, `/blog`, `/blog/[slug]`.  
+**Routes:** `/` (home), `/services`, `/portfolio`, `/portfolio/[slug]`, `/about`, `/pricing`, `/contact`, `/blog`, `/blog/[slug]` (legacy `/work` redirects to `/portfolio`).  
 **Dashboard** remains at `/admin/*` (e.g. `/admin/login`).
 
 **Run commands:** Same as above — `npm run dev` from `website/` and open `http://localhost:5173`. The marketing site is the default at `/`; use the header “Login” to go to the dashboard.

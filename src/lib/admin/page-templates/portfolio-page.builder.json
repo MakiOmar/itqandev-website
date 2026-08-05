@@ -2,25 +2,25 @@
     "format": "credocode.builder-export",
     "version": 1,
     "builder": "page",
-    "exported_at": "2026-08-05T18:21:21+00:00",
+    "exported_at": "2026-08-05T18:37:38+00:00",
     "document": {
         "sections": [
             {
-                "id": "band_work_header",
+                "id": "band_portfolio_header",
                 "type": "layout",
                 "enabled": true,
                 "layout_width": "boxed",
                 "settings": {
-                    "layout_revision": 1
+                    "layout_revision": 2
                 },
                 "rows": [
                     {
-                        "id": "row_work_header",
+                        "id": "row_portfolio_header",
                         "stack_below": "none",
                         "gap": 4,
                         "columns": [
                             {
-                                "id": "col_work_header",
+                                "id": "col_portfolio_header",
                                 "span": {
                                     "mobile": 12,
                                     "tablet": 12,
@@ -28,7 +28,7 @@
                                 },
                                 "blocks": [
                                     {
-                                        "id": "kit_work_page_header",
+                                        "id": "kit_portfolio_page_header",
                                         "kind": "kit",
                                         "type": "page_header",
                                         "enabled": true,
@@ -36,15 +36,15 @@
                                             "show_breadcrumbs": true,
                                             "show_title": true,
                                             "home_label": "Home",
-                                            "eyebrow": "Portfolio",
-                                            "title_override": "Our work",
+                                            "eyebrow": "Selected projects",
+                                            "title_override": "Portfolio",
                                             "subtitle": "Selected projects across web, mobile, and product platforms.",
                                             "extra_crumbs": [],
                                             "translations": {
                                                 "ar": {
                                                     "home_label": "الرئيسية",
-                                                    "eyebrow": "المحفظة",
-                                                    "title_override": "أعمالنا",
+                                                    "eyebrow": "مشاريع مختارة",
+                                                    "title_override": "المحفظة",
                                                     "subtitle": "مشاريع مختارة عبر الويب والموبايل ومنصات المنتجات."
                                                 }
                                             }
@@ -57,19 +57,19 @@
                 ]
             },
             {
-                "id": "band_work_projects",
+                "id": "band_portfolio_projects",
                 "type": "layout",
                 "enabled": true,
                 "layout_width": "boxed",
                 "settings": [],
                 "rows": [
                     {
-                        "id": "row_work_projects",
+                        "id": "row_portfolio_projects",
                         "stack_below": "none",
                         "gap": 4,
                         "columns": [
                             {
-                                "id": "col_work_projects",
+                                "id": "col_portfolio_projects",
                                 "span": {
                                     "mobile": 12,
                                     "tablet": 12,
@@ -77,7 +77,7 @@
                                 },
                                 "blocks": [
                                     {
-                                        "id": "kit_work_projects_list",
+                                        "id": "kit_portfolio_projects_list",
                                         "kind": "kit",
                                         "type": "projects_list",
                                         "enabled": true,
@@ -92,19 +92,19 @@
                 ]
             },
             {
-                "id": "band_work_cta",
+                "id": "band_portfolio_cta",
                 "type": "layout",
                 "enabled": true,
                 "layout_width": "boxed",
                 "settings": [],
                 "rows": [
                     {
-                        "id": "row_work_cta",
+                        "id": "row_portfolio_cta",
                         "stack_below": "none",
                         "gap": 4,
                         "columns": [
                             {
-                                "id": "col_work_cta",
+                                "id": "col_portfolio_cta",
                                 "span": {
                                     "mobile": 12,
                                     "tablet": 12,
@@ -112,7 +112,7 @@
                                 },
                                 "blocks": [
                                     {
-                                        "id": "kit_work_cta",
+                                        "id": "kit_portfolio_cta",
                                         "kind": "kit",
                                         "type": "cta",
                                         "enabled": true,

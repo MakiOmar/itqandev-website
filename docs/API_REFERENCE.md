@@ -611,7 +611,7 @@ Returns localized marketing blocks from `marketing_site_content` in project sett
 
 ### GET `/api/public/projects`
 
-Published portfolio cards for `/{lang}/work/`. Requires `features.modules.projects`.
+Published portfolio cards for `/{lang}/portfolio/`. Requires `features.modules.projects`.
 
 **Query:** `page` (default `1`), `per_page` (1–48, default `12`), `featured` (boolean), `category_slug`, `skill_slug`.
 
@@ -698,7 +698,7 @@ Requires `Authorization: Bearer` and the **`manage menus`** permission (or a rol
 | PUT | `/api/v1/menu-items/{id}` | Update item |
 | DELETE | `/api/v1/menu-items/{id}` | Delete item |
 
-**`item_type` values:** `custom_link` (requires `url`), `static_route` (requires `static_route_key`: `home`, `services`, `work`, `about`, `pricing`, `blog`, `contact`), `project`, `blog_post`, `service`, `category`, `skill`, `page` (each content type requires `reference_id`). Published `page` items resolve to `/{locale}/pages/{slug}/`.
+**`item_type` values:** `custom_link` (requires `url`), `static_route` (requires `static_route_key`: `home`, `services`, `portfolio`, `about`, `pricing`, `blog`, `contact`; legacy `work` still resolves to `/portfolio/`), `project`, `blog_post`, `service`, `category`, `skill`, `page` (each content type requires `reference_id`). Published `page` items resolve to `/{locale}/pages/{slug}/`.
 
 ## Authenticated + public CMS pages (`feature.module:pages`)
 
@@ -719,7 +719,7 @@ Seeded slug **`contact`** (`ContactPageSeeder`) is the page-builder layout for t
 
 Seeded slug **`about`** (`AboutPageSeeder`) is the page-builder layout for the marketing about experience (intro, stats, vertical journey timeline since 2014, values, process, CTA). Public `/{lang}/about/` loads that CMS page when the pages module is enabled; otherwise it uses the legacy `site.json` about block. Importable template: `website/src/lib/admin/page-templates/about-page.builder.json`.
 
-Seeded slug **`work`** (`WorkPageSeeder`) is the page-builder layout for the marketing portfolio. Public `/{lang}/work/` loads that CMS page when the pages module is enabled (`page_header` + `projects_list` + CTA); otherwise it uses the legacy hard-coded listing. The **`projects_list`** kit renders live projects with category side filters and pagination (`category_slug`, `page`). Importable template: `website/src/lib/admin/page-templates/work-page.builder.json`.
+Seeded slug **`portfolio`** (`PortfolioPageSeeder`) is the page-builder layout for the marketing portfolio. Public `/{lang}/portfolio/` loads that CMS page when the pages module is enabled (`page_header` + `projects_list` + CTA); otherwise it uses the legacy hard-coded listing. The **`projects_list`** kit renders live projects with category side filters and pagination (`category_slug`, `page`). Importable template: `website/src/lib/admin/page-templates/portfolio-page.builder.json`. Legacy `/{lang}/work/` redirects to portfolio.
 | GET | `/api/public/forms/{slug}` | Published form definition (layout, settings, captcha site key); `feature.module:forms`; `X-Content-Locale` |
 | POST | `/api/public/forms/{slug}/submit` | Submit form field values (+ optional `captcha_token`); runs enabled actions in order; `throttle:form-submit` |
 

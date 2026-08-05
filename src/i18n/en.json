@@ -49,7 +49,7 @@
     "phone": "Phone"
   },
   "portfolioPage": {
-    "title": "Our work",
+    "title": "Portfolio",
     "eyebrow": "Portfolio",
     "subtitle": "Selected projects across web, mobile, and product platforms.",
     "filters": "Categories",
@@ -594,8 +594,8 @@
     "taxonomyEmpty": "None available.",
     "addSelectedCategories": "Add selected categories",
     "addSelectedSkills": "Add selected skills",
-    "typeCategory": "Category (work filter)",
-    "typeSkill": "Skill (work filter)",
+    "typeCategory": "Category (portfolio filter)",
+    "typeSkill": "Skill (portfolio filter)",
     "typePage": "Page",
     "pickCategory": "Category",
     "pickSkill": "Skill",

@@ -110,7 +110,7 @@ export type HomepageSectionsRendererProps = {
   siteContact?: ContactInfo | null;
   /** Skip kit Section/Container when rendering inside layout columns. */
   embedKits?: boolean;
-  /** SSR payload for `projects_list` kit (portfolio / work page). */
+  /** SSR payload for `projects_list` kit (portfolio page). */
   portfolioList?: CaseStudyListResult | null;
   portfolioCategories?: PortfolioCategory[] | null;
   portfolioCategorySlug?: string | null;

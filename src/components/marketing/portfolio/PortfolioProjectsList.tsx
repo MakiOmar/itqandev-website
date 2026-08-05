@@ -14,11 +14,11 @@ import type { CaseStudy } from '~/lib/marketing/types';
 
 export const PORTFOLIO_PER_PAGE = 12;
 
-export function buildWorkHref(
+export function buildPortfolioHref(
   uiLocale: string,
   opts: { categorySlug?: string | null; page?: number; skillSlug?: string | null },
 ): string {
-  const base = withUiLocale(uiLocale, '/work/');
+  const base = withUiLocale(uiLocale, '/portfolio/');
   const q = new URLSearchParams();
   if (opts.categorySlug) {
     q.set('category_slug', opts.categorySlug);
@@ -32,6 +32,9 @@ export function buildWorkHref(
   const qs = q.toString();
   return qs ? `${base}?${qs}` : base;
 }
+
+/** @deprecated Use `buildPortfolioHref` */
+export const buildWorkHref = buildPortfolioHref;
 
 export type PortfolioProjectsListProps = {
   uiLocale: string;
@@ -47,7 +50,7 @@ export type PortfolioProjectsListProps = {
 
 /**
  * Live portfolio grid with optional category side filters and pagination.
- * Used by the `projects_list` page-builder kit and the legacy /work fallback.
+ * Used by the `projects_list` page-builder kit and the legacy /portfolio fallback.
  */
 export const PortfolioProjectsList = component$<PortfolioProjectsListProps>((props) => {
   const loc = useLocation();
@@ -118,7 +121,7 @@ export const PortfolioProjectsList = component$<PortfolioProjectsListProps>((pro
           <p class="text-slate-600 dark:text-slate-400">{t('portfolioPage.empty')}</p>
           {activeCategory.value ? (
             <Link
-              href={buildWorkHref(uiLocale, { skillSlug: skillSlug.value })}
+              href={buildPortfolioHref(uiLocale, { skillSlug: skillSlug.value })}
               class="mt-4 inline-flex text-sm font-medium text-primary-600 hover:text-primary-700 dark:text-primary-400"
             >
               {t('portfolioPage.allProjects')}
@@ -154,7 +157,7 @@ export const PortfolioProjectsList = component$<PortfolioProjectsListProps>((pro
           <div class="flex items-center gap-3">
             {meta.current_page > 1 ? (
               <Link
-                href={buildWorkHref(uiLocale, {
+                href={buildPortfolioHref(uiLocale, {
                   categorySlug: activeCategory.value,
                   skillSlug: skillSlug.value,
                   page: meta.current_page - 1,
@@ -170,7 +173,7 @@ export const PortfolioProjectsList = component$<PortfolioProjectsListProps>((pro
             )}
             {meta.current_page < meta.last_page ? (
               <Link
-                href={buildWorkHref(uiLocale, {
+                href={buildPortfolioHref(uiLocale, {
                   categorySlug: activeCategory.value,
                   skillSlug: skillSlug.value,
                   page: meta.current_page + 1,
@@ -202,7 +205,7 @@ export const PortfolioProjectsList = component$<PortfolioProjectsListProps>((pro
               <ul class="mt-4 space-y-1" role="list">
                 <li>
                   <Link
-                    href={buildWorkHref(uiLocale, { skillSlug: skillSlug.value })}
+                    href={buildPortfolioHref(uiLocale, { skillSlug: skillSlug.value })}
                     class={[
                       'flex items-center justify-between rounded-lg px-3 py-2 text-sm transition',
                       !activeCategory.value
@@ -222,7 +225,7 @@ export const PortfolioProjectsList = component$<PortfolioProjectsListProps>((pro
                   return (
                     <li key={cat.id}>
                       <Link
-                        href={buildWorkHref(uiLocale, {
+                        href={buildPortfolioHref(uiLocale, {
                           categorySlug: cat.slug,
                           skillSlug: skillSlug.value,
                         })}

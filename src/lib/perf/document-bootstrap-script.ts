@@ -33,7 +33,7 @@ export function buildDocumentBootstrapScript(uiLocaleBootstrapJson: string): str
   if (logical.charAt(0) !== '/') logical = '/' + logical;
   var isPublicRoute =
     logical === '/' || logical === '' ||
-    logical.indexOf('/services') === 0 || logical.indexOf('/work') === 0 ||
+    logical.indexOf('/services') === 0 || logical.indexOf('/portfolio') === 0 || logical.indexOf('/work') === 0 ||
     logical.indexOf('/about') === 0 || logical.indexOf('/pricing') === 0 ||
     logical.indexOf('/contact') === 0 || logical.indexOf('/blog') === 0;
 

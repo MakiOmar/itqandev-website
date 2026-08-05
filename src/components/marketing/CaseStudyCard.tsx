@@ -15,7 +15,7 @@ export interface CaseStudyCardProps {
 export const CaseStudyCard = component$<CaseStudyCardProps>(({ caseStudy, featured }) => {
   const locale = useSpeakLocale();
   const MR = marketingRoutes(locale.lang);
-  const href = MR.workSlug(caseStudy.slug);
+  const href = MR.portfolioSlug(caseStudy.slug);
 
   return (
     <Link href={href} class="block h-full focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 rounded-xl">

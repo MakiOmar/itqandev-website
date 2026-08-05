@@ -247,7 +247,7 @@ export function buildTypographyBootstrapScript(typographyJson: string): string {
   var __uiLocales = window.__uiLocales || null;
   function isPublicRoute(logical) {
     return logical === '/' || logical === '' ||
-      logical.indexOf('/services') === 0 || logical.indexOf('/work') === 0 ||
+      logical.indexOf('/services') === 0 || logical.indexOf('/portfolio') === 0 || logical.indexOf('/work') === 0 ||
       logical.indexOf('/about') === 0 || logical.indexOf('/pricing') === 0 ||
       logical.indexOf('/contact') === 0 || logical.indexOf('/blog') === 0;
   }

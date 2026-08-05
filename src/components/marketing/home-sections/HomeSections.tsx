@@ -52,7 +52,7 @@ export const HeroHomeSection = component$<HomeSectionSharedProps>(({ settings, u
     'From MVPs to enterprise products. Modern stack, clear process, and long-term support.',
   );
   const primaryCta = settingString(settings, 'primary_cta_label', 'Get in touch');
-  const secondaryCta = settingString(settings, 'secondary_cta_label', 'View our work');
+  const secondaryCta = settingString(settings, 'secondary_cta_label', 'View our portfolio');
   const imageRaw = settingString(settings, 'image', '/hero-banner.webp');
   const imageMobileRaw = settingString(settings, 'image_mobile', '/hero-banner-mobile.webp');
   const image = resolveLaravelMediaUrl(imageRaw) || imageRaw;
@@ -136,7 +136,7 @@ export const HeroHomeSection = component$<HomeSectionSharedProps>(({ settings, u
                 <Button href={routes.contact} variant="primary" class="min-w-[180px]">
                   {primaryCta}
                 </Button>
-                <Button href={routes.work} variant="outline" class="min-w-[180px]">
+                <Button href={routes.portfolio} variant="outline" class="min-w-[180px]">
                   {secondaryCta}
                 </Button>
               </div>
@@ -313,7 +313,7 @@ export const CaseStudiesHomeSection = component$<
 >(({ settings, uiLocale, caseStudies }) => {
   if (caseStudies.length === 0) return null;
   const routes = marketingRoutes(uiLocale);
-  const title = settingString(settings, 'title', 'Selected work');
+  const title = settingString(settings, 'title', 'Selected portfolio');
   const subtitle = settingString(settings, 'subtitle', 'Recent projects we are proud of.');
 
   return (
@@ -328,7 +328,7 @@ export const CaseStudiesHomeSection = component$<
               <p class="mt-2 text-lg text-slate-600 dark:text-slate-400">{subtitle}</p>
             </div>
             <Link
-              href={routes.work}
+              href={routes.portfolio}
               class="hidden shrink-0 text-sm font-medium text-primary-600 hover:text-primary-700 dark:text-primary-400 sm:block"
             >
               View all
@@ -345,8 +345,8 @@ export const CaseStudiesHomeSection = component$<
           ))}
         </ul>
         <div class="mt-8 text-center sm:hidden">
-          <Button href={routes.work} variant="outline">
-            View all work
+          <Button href={routes.portfolio} variant="outline">
+            View portfolio
           </Button>
         </div>
       </Container>

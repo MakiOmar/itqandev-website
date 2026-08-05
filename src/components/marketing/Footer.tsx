@@ -150,7 +150,7 @@ export const Footer = component$<FooterProps>(({ contact, branding, footer }) =>
 
   const footerLinks = [
     { label: 'Services', href: MR.services },
-    { label: 'Work', href: MR.work },
+    { label: 'Portfolio', href: MR.portfolio },
     { label: 'About', href: MR.about },
     { label: 'Pricing', href: MR.pricing },
     { label: 'Blog', href: MR.blog },

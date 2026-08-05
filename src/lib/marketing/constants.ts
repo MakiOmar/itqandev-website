@@ -9,8 +9,12 @@ export const MARKETING_ROUTES = {
   home: '/',
   services: '/services/',
   serviceSlug: (slug: string) => `/services/${slug}/`,
-  work: '/work/',
-  workSlug: (slug: string) => `/work/${slug}/`,
+  portfolio: '/portfolio/',
+  portfolioSlug: (slug: string) => `/portfolio/${slug}/`,
+  /** @deprecated Use `portfolio` */
+  work: '/portfolio/',
+  /** @deprecated Use `portfolioSlug` */
+  workSlug: (slug: string) => `/portfolio/${slug}/`,
   about: '/about/',
   pricing: '/pricing/',
   contact: '/contact/',
@@ -24,8 +28,12 @@ export function marketingRoutes(lang: string) {
     home: withUiLocale(lang, MARKETING_ROUTES.home),
     services: withUiLocale(lang, MARKETING_ROUTES.services),
     serviceSlug: (slug: string) => withUiLocale(lang, MARKETING_ROUTES.serviceSlug(slug)),
-    work: withUiLocale(lang, MARKETING_ROUTES.work),
-    workSlug: (slug: string) => withUiLocale(lang, MARKETING_ROUTES.workSlug(slug)),
+    portfolio: withUiLocale(lang, MARKETING_ROUTES.portfolio),
+    portfolioSlug: (slug: string) => withUiLocale(lang, MARKETING_ROUTES.portfolioSlug(slug)),
+    /** @deprecated Use `portfolio` */
+    work: withUiLocale(lang, MARKETING_ROUTES.portfolio),
+    /** @deprecated Use `portfolioSlug` */
+    workSlug: (slug: string) => withUiLocale(lang, MARKETING_ROUTES.portfolioSlug(slug)),
     about: withUiLocale(lang, MARKETING_ROUTES.about),
     pricing: withUiLocale(lang, MARKETING_ROUTES.pricing),
     contact: withUiLocale(lang, MARKETING_ROUTES.contact),

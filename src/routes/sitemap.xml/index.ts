@@ -23,15 +23,15 @@ export const onGet: RequestHandler = async ({ send }) => {
   const staticPaths = [
     { loc: '/', priority: '1.0' },
     { loc: '/services', priority: '0.9' },
-    { loc: '/work', priority: '0.9' },
+    { loc: '/portfolio', priority: '0.9' },
     { loc: '/about', priority: '0.8' },
     { loc: '/pricing', priority: '0.8' },
     { loc: '/contact', priority: '0.8' },
     { loc: '/blog', priority: '0.9' },
   ];
 
-  const workUrls = caseStudies.map((c) => ({
-    loc: `/work/${escapeXml(c.slug)}`,
+  const portfolioUrls = caseStudies.map((c) => ({
+    loc: `/portfolio/${escapeXml(c.slug)}`,
     priority: '0.8',
   }));
 
@@ -40,7 +40,7 @@ export const onGet: RequestHandler = async ({ send }) => {
     priority: '0.7',
   }));
 
-  const urls = [...staticPaths, ...workUrls, ...blogUrls];
+  const urls = [...staticPaths, ...portfolioUrls, ...blogUrls];
   const xml = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 ${urls

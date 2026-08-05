@@ -16,7 +16,7 @@ function slugSegment(slug: string): string | null {
 }
 
 /**
- * Site-relative path: /{lang}/blog/{slug}, /{lang}/services/{slug}, /{lang}/work/{slug}, /{lang}/pages/{slug}/, /{lang}/forms/{slug}/.
+ * Site-relative path: /{lang}/blog/{slug}, /{lang}/services/{slug}, /{lang}/portfolio/{slug}, /{lang}/pages/{slug}/, /{lang}/forms/{slug}/.
  */
 export function adminPublicDetailPath(lang: string, kind: AdminPublicDetailKind, slug: string): string | null {
   const code = String(lang ?? '').trim() || 'en';
@@ -31,7 +31,7 @@ export function adminPublicDetailPath(lang: string, kind: AdminPublicDetailKind,
     case 'services':
       return `/${langSeg}/services/${seg}`;
     case 'projects':
-      return `/${langSeg}/work/${seg}`;
+      return `/${langSeg}/portfolio/${seg}`;
     case 'pages':
       // Canonical marketing contact URL (hard-coded route prefers this slug).
       if (String(slug ?? '').trim().toLowerCase() === 'contact') {

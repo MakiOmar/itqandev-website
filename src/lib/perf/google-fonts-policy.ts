@@ -2,6 +2,7 @@ import { stripUiLocaleFromPathname } from '~/lib/i18n/ui-locale-path';
 
 const PUBLIC_MARKETING_PREFIXES = [
   '/services',
+  '/portfolio',
   '/work',
   '/about',
   '/pricing',

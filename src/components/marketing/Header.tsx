@@ -60,7 +60,7 @@ export const Header = component$<HeaderProps>((props) => {
   const defaultNav: PublicNavItem[] = [
     { label: 'Home', href: MR.home, open_in_new_tab: false },
     { label: 'Services', href: MR.services, open_in_new_tab: false },
-    { label: 'Work', href: MR.work, open_in_new_tab: false },
+    { label: 'Portfolio', href: MR.portfolio, open_in_new_tab: false },
     { label: 'About', href: MR.about, open_in_new_tab: false },
     { label: 'Pricing', href: MR.pricing, open_in_new_tab: false },
     { label: 'Blog', href: MR.blog, open_in_new_tab: false },

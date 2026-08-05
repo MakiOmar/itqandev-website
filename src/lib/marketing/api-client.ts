@@ -66,7 +66,7 @@ function sanctumSsrOriginAndReferer(forwardDocumentUrl: string): { origin: strin
  * Laravel session cookies are **host + scheme scoped** — port is not stored in cookie domain, so e.g.
  * `http://itqandev.com:5173` and `http://itqandev.com` share cookies as long as the **hostname matches**
  * the API hostname. SSR can forward cookies in that case; only unrelated hosts (localhost vs vhost alias,
- * apex vs stray hostname) require a browser retry (`/work/[slug]` deferred loader).
+ * apex vs stray hostname) require a browser retry (`/portfolio/[slug]` deferred loader).
  *
  * Requests where **scheme** or **hostname** differ remain cross-origin for this check.
  */
