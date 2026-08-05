@@ -6,7 +6,7 @@
 
 import type { CaseStudy, BlogPost, Testimonial, SiteContent, Service } from './types';
 import { mapMarketingSeoMetaFromApi } from './seo-snippet';
-import { getMarketingApiBaseUrl, marketingGet, type MarketingFetchContext } from './api-client';
+import { getMarketingApiBaseUrl, marketingFetch, marketingGet, type MarketingFetchContext } from './api-client';
 import { MARKETING_ENDPOINTS } from './endpoints';
 import { isDevSsrMarketingFetchFailure } from './ssr-api-reachability';
 
@@ -154,6 +154,115 @@ function mapPublicTestimonialRecord(raw: Record<string, unknown>): Testimonial {
   };
 }
 
+export type CaseStudyListFilters = {
+  categorySlug?: string;
+  skillSlug?: string;
+  page?: number;
+  perPage?: number;
+};
+
+export type PortfolioListMeta = {
+  current_page: number;
+  last_page: number;
+  per_page: number;
+  total: number;
+  from: number | null;
+  to: number | null;
+};
+
+export type CaseStudyListResult = {
+  items: CaseStudy[];
+  meta: PortfolioListMeta;
+};
+
+export type PortfolioCategory = {
+  id: number;
+  name: string;
+  slug: string;
+  projects_count: number;
+};
+
+function emptyPortfolioMeta(page = 1, perPage = 12): PortfolioListMeta {
+  return {
+    current_page: page,
+    last_page: 1,
+    per_page: perPage,
+    total: 0,
+    from: null,
+    to: null,
+  };
+}
+
+function parsePortfolioMeta(raw: unknown, fallbackPage: number, fallbackPerPage: number): PortfolioListMeta {
+  const meta =
+    raw && typeof raw === 'object' && (raw as { meta?: unknown }).meta && typeof (raw as { meta: unknown }).meta === 'object'
+      ? ((raw as { meta: Record<string, unknown> }).meta)
+      : null;
+  if (!meta) {
+    return emptyPortfolioMeta(fallbackPage, fallbackPerPage);
+  }
+  const current = Number(meta.current_page) || fallbackPage;
+  const last = Number(meta.last_page) || 1;
+  const per = Number(meta.per_page) || fallbackPerPage;
+  const total = Number(meta.total) || 0;
+  return {
+    current_page: current,
+    last_page: Math.max(1, last),
+    per_page: per,
+    total,
+    from: meta.from == null ? null : Number(meta.from),
+    to: meta.to == null ? null : Number(meta.to),
+  };
+}
+
+async function fetchPublishedProjectsPageFromApi(
+  options: {
+    featured?: boolean;
+    per_page: number;
+    page: number;
+    locale?: string;
+    categorySlug?: string;
+    skillSlug?: string;
+  },
+  fetchContext?: MarketingFetchContext,
+): Promise<CaseStudyListResult | null> {
+  if (!hasMarketingApiBase(fetchContext)) {
+    return null;
+  }
+  try {
+    const q = new URLSearchParams();
+    if (options.featured) {
+      q.set('featured', '1');
+    }
+    q.set('per_page', String(options.per_page));
+    q.set('page', String(Math.max(1, options.page)));
+    if (options.categorySlug?.trim()) {
+      q.set('category_slug', options.categorySlug.trim());
+    }
+    if (options.skillSlug?.trim()) {
+      q.set('skill_slug', options.skillSlug.trim());
+    }
+    const path = `${MARKETING_ENDPOINTS.caseStudies}?${q.toString()}`;
+    const payload = await marketingFetch<unknown>(path, {
+      method: 'GET',
+      locale: options.locale,
+      fullBody: true,
+      ...fetchContext,
+    });
+    const records = unwrapMarketingListRecords(payload);
+    const items = records.map(mapPublicProjectToCaseStudy).filter((c) => c.slug.length > 0);
+    return {
+      items,
+      meta: parsePortfolioMeta(payload, options.page, options.per_page),
+    };
+  } catch (e) {
+    if (!isDevSsrMarketingFetchFailure(e)) {
+      console.warn('[marketing] fetch public projects page failed', e);
+    }
+    return null;
+  }
+}
+
 async function fetchPublishedProjectsFromApi(
   options: {
     featured?: boolean;
@@ -164,40 +273,82 @@ async function fetchPublishedProjectsFromApi(
   },
   fetchContext?: MarketingFetchContext,
 ): Promise<CaseStudy[]> {
+  const page = await fetchPublishedProjectsPageFromApi(
+    { ...options, page: 1 },
+    fetchContext,
+  );
+  return page?.items ?? [];
+}
+
+/** Paginated portfolio listing (API when configured; local JSON fallback). */
+export async function getCaseStudiesPage(
+  locale?: string,
+  filters?: CaseStudyListFilters,
+  fetchContext?: MarketingFetchContext,
+): Promise<CaseStudyListResult> {
+  const page = Math.max(1, Number(filters?.page) || 1);
+  const perPage = Math.min(48, Math.max(1, Number(filters?.perPage) || 12));
+  const live = await fetchPublishedProjectsPageFromApi(
+    {
+      per_page: perPage,
+      page,
+      locale,
+      categorySlug: filters?.categorySlug,
+      skillSlug: filters?.skillSlug,
+    },
+    fetchContext,
+  );
+  if (live) {
+    return live;
+  }
+  if (hasMarketingApiBase(fetchContext)) {
+    return { items: [], meta: emptyPortfolioMeta(page, perPage) };
+  }
+
+  const all = await getCaseStudies(locale, filters, fetchContext);
+  const lastPage = Math.max(1, Math.ceil(all.length / perPage) || 1);
+  const safePage = Math.min(page, lastPage);
+  const start = (safePage - 1) * perPage;
+  const items = all.slice(start, start + perPage);
+  return {
+    items,
+    meta: {
+      current_page: safePage,
+      last_page: lastPage,
+      per_page: perPage,
+      total: all.length,
+      from: items.length ? start + 1 : null,
+      to: items.length ? start + items.length : null,
+    },
+  };
+}
+
+/** Categories that have published projects (for portfolio side filters). */
+export async function getPortfolioCategories(
+  locale?: string,
+  fetchContext?: MarketingFetchContext,
+): Promise<PortfolioCategory[]> {
   if (!hasMarketingApiBase(fetchContext)) {
     return [];
   }
   try {
-    const q = new URLSearchParams();
-    if (options.featured) {
-      q.set('featured', '1');
-    }
-    q.set('per_page', String(options.per_page));
-    if (options.categorySlug?.trim()) {
-      q.set('category_slug', options.categorySlug.trim());
-    }
-    if (options.skillSlug?.trim()) {
-      q.set('skill_slug', options.skillSlug.trim());
-    }
-    const path = `${MARKETING_ENDPOINTS.caseStudies}?${q.toString()}`;
-    const payload = await marketingGet<unknown>(path, options.locale, fetchContext);
+    const payload = await marketingGet<unknown>(MARKETING_ENDPOINTS.categories, locale, fetchContext);
     const records = unwrapMarketingListRecords(payload);
-    const mapped = records
-      .map(mapPublicProjectToCaseStudy)
-      .filter((c) => c.slug.length > 0);
-    return mapped;
+    return records
+      .map((row) => ({
+        id: Number(row.id) || 0,
+        name: String(row.name ?? ''),
+        slug: String(row.slug ?? ''),
+        projects_count: Number(row.projects_count) || 0,
+      }))
+      .filter((c) => c.slug.length > 0 && c.name.length > 0);
   } catch (e) {
     if (!isDevSsrMarketingFetchFailure(e)) {
-      console.warn('[marketing] fetch public projects failed', e);
+      console.warn('[marketing] fetch public categories failed', e);
     }
     return [];
   }
 }
-
-export type CaseStudyListFilters = {
-  categorySlug?: string;
-  skillSlug?: string;
-};
 
 /** Get all case studies (portfolio). Optional filters apply to API-backed lists only. */
 export async function getCaseStudies(

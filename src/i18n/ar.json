@@ -48,6 +48,20 @@
     "email": "البريد الإلكتروني",
     "phone": "الهاتف"
   },
+  "portfolioPage": {
+    "title": "أعمالنا",
+    "eyebrow": "المحفظة",
+    "subtitle": "مشاريع مختارة عبر الويب والموبايل ومنصات المنتجات.",
+    "filters": "التصنيفات",
+    "allProjects": "كل المشاريع",
+    "empty": "لا توجد مشاريع تطابق هذا التصفية.",
+    "showing": "عرض {{from}}–{{to}} من {{total}}",
+    "page": "صفحة {{current}} من {{last}}",
+    "previous": "السابق",
+    "next": "التالي",
+    "projectsCount": "{{count}} مشاريع",
+    "homeCrumb": "الرئيسية"
+  },
   "builderExport": {
     "export": "تصدير",
     "import": "استيراد",

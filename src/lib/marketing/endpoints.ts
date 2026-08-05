@@ -9,10 +9,12 @@
 export const MARKETING_ENDPOINTS = {
   /** GET Laravel reachability + DB status (no auth; use to verify API / Vite proxy) */
   ping: '/public/ping',
-  /** GET list of published projects (public; supports ?featured=1&per_page=) */
+  /** GET list of published projects (public; supports ?featured=1&per_page=&page=&category_slug=) */
   caseStudies: '/public/projects',
   /** GET single case study by id or slug */
   caseStudy: (idOrSlug: string | number) => `/public/projects/${idOrSlug}`,
+  /** GET project categories for portfolio filters (localized via X-Content-Locale) */
+  categories: '/public/categories',
   /** GET list of blog posts (public) */
   blogPosts: '/public/blog-posts',
   /** GET single blog post by id or slug */

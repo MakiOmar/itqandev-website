@@ -609,6 +609,24 @@ Returns localized marketing blocks from `marketing_site_content` in project sett
 
 **Locale:** `locale` query and/or `X-Content-Locale`. Merges `settings_translations.{locale}.marketing_site_content` onto primary content with primary fallback for missing fields. Cached per locale (~300s).
 
+### GET `/api/public/projects`
+
+Published portfolio cards for `/{lang}/work/`. Requires `features.modules.projects`.
+
+**Query:** `page` (default `1`), `per_page` (1–48, default `12`), `featured` (boolean), `category_slug`, `skill_slug`.
+
+**Locale:** `X-Content-Locale` (strict listing — no primary fallback for missing translations).
+
+**Success (200):** Laravel paginator envelope `{ data: PublicProjectCard[], links, meta }`.
+
+### GET `/api/public/categories`
+
+Categories that have at least one published project — used as portfolio side filters. Requires `features.modules.categories`.
+
+**Locale:** `X-Content-Locale` (strict; Arabic overlays from `category_translations`).
+
+**Success (200):** `{ "data": [ { "id", "name", "slug", "projects_count" } ] }`.
+
 ### Locale behavior for public listings
 
 When a locale is provided (for example via `X-Content-Locale` header or the menus `locale` query), listing responses are strict by locale:

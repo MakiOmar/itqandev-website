@@ -141,9 +141,14 @@ function optionalBrowserBearerHeaders(): Record<string, string> {
 export async function marketingFetch<T>(
   path: string,
   options: RequestInit &
-    MarketingFetchContext & { locale?: string | null } = {},
+    MarketingFetchContext & {
+      locale?: string | null;
+      /** When true, return the full JSON body (keeps Laravel pagination `meta` / `links`). */
+      fullBody?: boolean;
+    } = {},
 ): Promise<T> {
-  const { locale, forwardCookies, forwardAuthorization, forwardDocumentUrl, ...fetchInit } = options;
+  const { locale, forwardCookies, forwardAuthorization, forwardDocumentUrl, fullBody, ...fetchInit } =
+    options;
   const base = getBaseUrl(forwardDocumentUrl).replace(/\/$/, '');
   let url = path.startsWith('http') ? path : `${base}${path.startsWith('/') ? path : `/${path}`}`;
   if (!/^https?:\/\//i.test(url)) {
@@ -230,6 +235,9 @@ export async function marketingFetch<T>(
   if (!isJson) return undefined as T;
 
   const json = await res.json();
+  if (fullBody) {
+    return json as T;
+  }
   if (json?.data !== undefined) return json.data as T;
   return json as T;
 }
