@@ -918,6 +918,8 @@
     "backupWarning": "الاستعادة تستبدل قاعدة البيانات الحالية. أنشئ نسخة جديدة قبل التجربة. ملفات الوسائط على القرص غير مشمولة.",
     "backupDriver": "الاتصال: {{driver}}",
     "backupRetention": "الاحتفاظ بآخر {{count}} نسخ",
+    "backupScheduleOff": "النسخ التلقائي متوقف (اضبط DB_BACKUP_INTERVAL في ملف .env للخادم).",
+    "backupScheduleOn": "النسخ التلقائي: {{interval}} (الوقت {{at}}). يتطلب تشغيل schedule:run على الخادم.",
     "backupListTitle": "النسخ المخزّنة",
     "backupEmpty": "لا توجد نسخ بعد. أنشئ واحدة للبدء.",
     "backupFilename": "الملف",

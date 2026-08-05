@@ -86,7 +86,7 @@ Requires the same ability as system health (`manageSystemCache`). SQL dumps are 
 
 | Method | Path | Purpose |
 |--------|------|---------|
-| `GET` | `/api/v1/system/backups` | List stored backups + `meta.confirm_phrase` |
+| `GET` | `/api/v1/system/backups` | List stored backups + `meta.confirm_phrase` + `meta.schedule` |
 | `POST` | `/api/v1/system/backups` | Create a new `.sql` dump |
 | `GET` | `/api/v1/system/backups/{filename}` | Download a dump (`filename` must end in `.sql`) |
 | `DELETE` | `/api/v1/system/backups/{filename}` | Delete a stored dump |

@@ -12,6 +12,12 @@ export type DatabaseBackupListResponse = {
     confirm_phrase: string;
     driver: string;
     max_files: number;
+    schedule?: {
+      interval: string;
+      at: string;
+      weekly_day: number;
+      enabled: boolean;
+    };
   };
 };
 

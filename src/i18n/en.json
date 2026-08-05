@@ -918,6 +918,8 @@
     "backupWarning": "Restoring overwrites the current database. Create a fresh backup before experimenting. Media files on disk are not included.",
     "backupDriver": "Connection: {{driver}}",
     "backupRetention": "Keep last {{count}} backups",
+    "backupScheduleOff": "Automatic backups are off (set DB_BACKUP_INTERVAL in backend .env).",
+    "backupScheduleOn": "Automatic backups: {{interval}} (time {{at}}). Requires schedule:run on the server.",
     "backupListTitle": "Stored backups",
     "backupEmpty": "No backups yet. Create one to get started.",
     "backupFilename": "File",

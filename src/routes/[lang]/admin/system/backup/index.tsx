@@ -56,6 +56,9 @@ export default component$(() => {
   const confirmPhrase = useSignal('CONFIRM');
   const driver = useSignal('');
   const maxFiles = useSignal(20);
+  const scheduleEnabled = useSignal(false);
+  const scheduleInterval = useSignal('disabled');
+  const scheduleAt = useSignal('02:00');
 
   // eslint-disable-next-line qwik/no-use-visible-task
   useVisibleTask$(async () => {
@@ -66,6 +69,9 @@ export default component$(() => {
       confirmPhrase.value = res.meta?.confirm_phrase || 'CONFIRM';
       driver.value = res.meta?.driver || '';
       maxFiles.value = res.meta?.max_files ?? 20;
+      scheduleEnabled.value = !!res.meta?.schedule?.enabled;
+      scheduleInterval.value = res.meta?.schedule?.interval || 'disabled';
+      scheduleAt.value = res.meta?.schedule?.at || '02:00';
     } catch (e) {
       await showError(translateApp(lang, 'common.error'), {
         text: e instanceof Error ? e.message : translateApp(lang, 'system.backupLoadFailed'),
@@ -251,6 +257,14 @@ export default component$(() => {
             {translateApp(lang, 'system.backupRetention', { count: String(maxFiles.value) })}
           </p>
         ) : null}
+        <p class="mt-1 text-xs opacity-80">
+          {scheduleEnabled.value
+            ? translateApp(lang, 'system.backupScheduleOn', {
+                interval: scheduleInterval.value,
+                at: scheduleAt.value,
+              })
+            : translateApp(lang, 'system.backupScheduleOff')}
+        </p>
       </div>
 
       <section class="rounded-lg border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-800 dark:bg-gray-800">
