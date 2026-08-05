@@ -22,8 +22,10 @@ import { canInsertType, countByType, newBlockId, newColumnId } from './appearanc
 export {
   clampSpan,
   columnSpanClassNames,
+  effectiveSpanForDevice,
   isPageLayoutBand,
   normalizeColumnSpans,
+  previewColSpanClass,
 } from '../marketing/page-layout-utils';
 
 export function newRowId(): string {

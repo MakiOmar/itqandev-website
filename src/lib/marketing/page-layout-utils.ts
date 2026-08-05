@@ -4,6 +4,7 @@
 
 import type {
   ColumnSpans,
+  LayoutBreakpoint,
   PageLayoutBand,
   PageLayoutStackBelow,
   PageSectionNode,
@@ -105,4 +106,27 @@ export function columnSpanClassNames(
   }
 
   return [COL_SPAN[mobileSpan], MD_COL_SPAN[tabletSpan], LG_COL_SPAN[desktop]].join(' ');
+}
+
+/**
+ * Span used for a single preview device (builder mock device + stack_below rules).
+ */
+export function effectiveSpanForDevice(
+  span: ColumnSpans | unknown,
+  stackBelow: PageLayoutStackBelow = 'none',
+  device: LayoutBreakpoint,
+): number {
+  const normalized = normalizeColumnSpans(span);
+  if (stackBelow === 'desktop' && (device === 'mobile' || device === 'tablet')) {
+    return 12;
+  }
+  if (stackBelow === 'tablet' && device === 'mobile') {
+    return 12;
+  }
+  return clampSpan(normalized[device]);
+}
+
+/** Static Tailwind class for a single span (builder device preview — no responsive prefixes). */
+export function previewColSpanClass(span: number): string {
+  return COL_SPAN[clampSpan(span)] ?? 'col-span-12';
 }
