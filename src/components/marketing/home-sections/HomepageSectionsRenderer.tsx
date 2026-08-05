@@ -9,6 +9,7 @@ import {
   TestimonialsHomeSection,
 } from '~/components/marketing/home-sections/HomeSections';
 import { FormRenderer } from '~/components/marketing/forms/FormRenderer';
+import { PortfolioProjectsList } from '~/components/marketing/portfolio/PortfolioProjectsList';
 import { AtomicWidgetView } from '~/components/marketing/widgets/AtomicWidgetView';
 import { ContentKitView } from '~/components/marketing/kits/ContentKitView';
 import { isFeatureModuleEnabled } from '~/lib/api/project-settings';
@@ -24,6 +25,10 @@ import {
   type PageSectionNode,
 } from '~/lib/marketing/appearance-types';
 import type { CaseStudy, Testimonial, BlogPost, Service, ContactInfo } from '~/lib/marketing/types';
+import type {
+  CaseStudyListResult,
+  PortfolioCategory,
+} from '~/lib/marketing/content-layer';
 import type { PublicBrandingState } from '~/lib/marketing/public-shell';
 import { getConfig } from '~/lib/config';
 import { getPublicSiteBaseUrl } from '~/lib/seo/canonical-url';
@@ -105,6 +110,11 @@ export type HomepageSectionsRendererProps = {
   siteContact?: ContactInfo | null;
   /** Skip kit Section/Container when rendering inside layout columns. */
   embedKits?: boolean;
+  /** SSR payload for `projects_list` kit (portfolio / work page). */
+  portfolioList?: CaseStudyListResult | null;
+  portfolioCategories?: PortfolioCategory[] | null;
+  portfolioCategorySlug?: string | null;
+  portfolioSkillSlug?: string | null;
 };
 
 function renderBlock(
@@ -217,6 +227,47 @@ function renderBlock(
       return (
         <section key={key} class="py-10">
           {form}
+        </section>
+      );
+    }
+    case 'projects_list': {
+      if (!showProjectsModule) return null;
+      const showFilters =
+        settings.show_filters === true ||
+        settings.show_filters === 'true' ||
+        settings.show_filters === 1 ||
+        settings.show_filters === undefined;
+      const emptyList: CaseStudyListResult = {
+        items: [],
+        meta: {
+          current_page: 1,
+          last_page: 1,
+          per_page: 12,
+          total: 0,
+          from: null,
+          to: null,
+        },
+      };
+      const list = (
+        <PortfolioProjectsList
+          uiLocale={props.uiLocale}
+          initialList={props.portfolioList ?? emptyList}
+          initialCategories={props.portfolioCategories ?? []}
+          initialCategorySlug={props.portfolioCategorySlug ?? null}
+          initialSkillSlug={props.portfolioSkillSlug ?? null}
+          showFilters={showFilters}
+        />
+      );
+      if (props.embedKits) {
+        return (
+          <div key={key} class="w-full">
+            {list}
+          </div>
+        );
+      }
+      return (
+        <section key={key} class="py-10">
+          {list}
         </section>
       );
     }
