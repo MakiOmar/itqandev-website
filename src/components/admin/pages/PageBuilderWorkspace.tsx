@@ -69,7 +69,24 @@ type BlockPath = {
   blockIndex: number;
 };
 
+type RowPath = { bandIndex: number; rowIndex: number };
+
 /** Module-level so `$` handlers do not capture non-serializable closures. */
+function usedSpanInRow(
+  row: {
+    columns: Array<{ span: unknown }>;
+    stack_below?: PageLayoutStackBelow;
+  },
+  device: LayoutBreakpoint,
+): number {
+  const stackBelow = row.stack_below || 'none';
+  return row.columns.reduce(
+    (sum, col) =>
+      sum + effectiveSpanForDevice(normalizeColumnSpans(col.span), stackBelow, device),
+    0,
+  );
+}
+
 function insertWidgetIntoColumn(
   bands: PageLayoutBand[],
   registry: AppearanceRegistryEntry[],
@@ -189,6 +206,131 @@ function moveBlockToColumn(
   return { bands: next, blockIndex: insertAt ?? 0 };
 }
 
+/** Create a column in the free span of a row and place a new widget inside. */
+function insertWidgetIntoRemaining(
+  bands: PageLayoutBand[],
+  registry: AppearanceRegistryEntry[],
+  type: string,
+  bandIndex: number,
+  rowIndex: number,
+  device: LayoutBreakpoint,
+): { bands: PageLayoutBand[]; colIndex: number; blockIndex: number } | null {
+  if (!canInsertBlockType(bands, registry, type)) return null;
+  const entry = registry.find((r) => r.type === type);
+  if (!entry) return null;
+  const row = bands[bandIndex]?.rows[rowIndex];
+  if (!row) return null;
+  const remaining = Math.max(0, 12 - usedSpanInRow(row, device));
+  if (remaining <= 0) {
+    const lastCol = Math.max(0, row.columns.length - 1);
+    const inserted = insertWidgetIntoColumn(
+      bands,
+      registry,
+      type,
+      bandIndex,
+      rowIndex,
+      lastCol,
+    );
+    if (!inserted) return null;
+    return { bands: inserted.bands, colIndex: lastCol, blockIndex: inserted.blockIndex };
+  }
+  const span = remaining;
+  const block: PageLayoutBlock = {
+    id: newBlockId(type),
+    type,
+    enabled: true,
+    settings: { ...(entry.default_settings ?? {}) },
+  };
+  const col = createEmptyColumn(span);
+  col.blocks = [block];
+  const next = bands.map((b, bi) => {
+    if (bi !== bandIndex) return b;
+    return {
+      ...b,
+      rows: b.rows.map((r, ri) => {
+        if (ri !== rowIndex) return r;
+        return { ...r, columns: [...r.columns, col] };
+      }),
+    };
+  });
+  const colIndex = (next[bandIndex]?.rows[rowIndex]?.columns.length ?? 1) - 1;
+  return { bands: next, colIndex: Math.max(0, colIndex), blockIndex: 0 };
+}
+
+/** Move an existing block into a new column that fills the row's free span. */
+function moveBlockIntoRemaining(
+  bands: PageLayoutBand[],
+  from: BlockPath,
+  bandIndex: number,
+  rowIndex: number,
+  device: LayoutBreakpoint,
+): { bands: PageLayoutBand[]; colIndex: number; blockIndex: number } | null {
+  const sourceCol = bands[from.bandIndex]?.rows[from.rowIndex]?.columns[from.colIndex];
+  const block = sourceCol?.blocks[from.blockIndex];
+  if (!block) return null;
+  const row = bands[bandIndex]?.rows[rowIndex];
+  if (!row) return null;
+  const remaining = Math.max(0, 12 - usedSpanInRow(row, device));
+  if (remaining <= 0) {
+    const lastCol = Math.max(0, row.columns.length - 1);
+    const moved = moveBlockToColumn(bands, from, bandIndex, rowIndex, lastCol);
+    if (!moved) return null;
+    return { bands: moved.bands, colIndex: lastCol, blockIndex: moved.blockIndex };
+  }
+
+  const stripped = bands.map((b, bi) => {
+    if (bi !== from.bandIndex) return b;
+    return {
+      ...b,
+      rows: b.rows.map((r, ri) => {
+        if (ri !== from.rowIndex) return r;
+        return {
+          ...r,
+          columns: r.columns.map((c, ci) => {
+            if (ci !== from.colIndex) return c;
+            return { ...c, blocks: c.blocks.filter((_, i) => i !== from.blockIndex) };
+          }),
+        };
+      }),
+    };
+  });
+
+  const col = createEmptyColumn(remaining);
+  col.blocks = [block];
+  const next = stripped.map((b, bi) => {
+    if (bi !== bandIndex) return b;
+    return {
+      ...b,
+      rows: b.rows.map((r, ri) => {
+        if (ri !== rowIndex) return r;
+        return { ...r, columns: [...r.columns, col] };
+      }),
+    };
+  });
+  const colIndex = (next[bandIndex]?.rows[rowIndex]?.columns.length ?? 1) - 1;
+  return { bands: next, colIndex: Math.max(0, colIndex), blockIndex: 0 };
+}
+
+function findRowWithRemaining(
+  bands: PageLayoutBand[],
+  device: LayoutBreakpoint,
+  prefer: RowPath | null,
+): RowPath | null {
+  if (prefer) {
+    const row = bands[prefer.bandIndex]?.rows[prefer.rowIndex];
+    if (row && 12 - usedSpanInRow(row, device) > 0) return prefer;
+  }
+  for (let bandIndex = 0; bandIndex < bands.length; bandIndex++) {
+    const rows = bands[bandIndex]?.rows ?? [];
+    for (let rowIndex = 0; rowIndex < rows.length; rowIndex++) {
+      if (12 - usedSpanInRow(rows[rowIndex], device) > 0) {
+        return { bandIndex, rowIndex };
+      }
+    }
+  }
+  return null;
+}
+
 function previewFrameClass(device: LayoutBreakpoint): string {
   if (device === 'mobile') return 'mx-auto w-full max-w-[390px]';
   if (device === 'tablet') return 'mx-auto w-full max-w-[820px]';
@@ -204,6 +346,14 @@ export const PageBuilderWorkspace = component$<PageBuilderWorkspaceProps>((props
   const dragBlock = useSignal<BlockPath | null>(null);
   const dragWidgetType = useSignal<string | null>(null);
   const dropColumnKey = useSignal<string | null>(null);
+  const dropRowKey = useSignal<string | null>(null);
+
+  const clearDrag$ = $(() => {
+    dragBlock.value = null;
+    dragWidgetType.value = null;
+    dropColumnKey.value = null;
+    dropRowKey.value = null;
+  });
 
   const commit$ = $(async (next: PageLayoutBand[]) => {
     props.sections.value = next;
@@ -219,12 +369,6 @@ export const PageBuilderWorkspace = component$<PageBuilderWorkspaceProps>((props
           selection.value.colIndex
         ]?.blocks[selection.value.blockIndex]
       : null;
-
-  const clearDrag$ = $(() => {
-    dragBlock.value = null;
-    dragWidgetType.value = null;
-    dropColumnKey.value = null;
-  });
 
   return (
     <div class="flex h-full min-h-0 flex-col">
@@ -315,6 +459,55 @@ export const PageBuilderWorkspace = component$<PageBuilderWorkspaceProps>((props
                 }}
                 onDragEnd$={clearDrag$}
                 onClick$={async () => {
+                  // Prefer selected column; else row remaining span; else new band.
+                  const sel = selection.value;
+                  if (sel?.kind === 'column' || sel?.kind === 'block') {
+                    const inserted = insertWidgetIntoColumn(
+                      bands,
+                      props.registry.value,
+                      entry.type,
+                      sel.bandIndex,
+                      sel.rowIndex,
+                      sel.colIndex,
+                    );
+                    if (!inserted) return;
+                    await commit$(inserted.bands);
+                    selection.value = {
+                      kind: 'block',
+                      bandIndex: sel.bandIndex,
+                      rowIndex: sel.rowIndex,
+                      colIndex: sel.colIndex,
+                      blockIndex: inserted.blockIndex,
+                    };
+                    return;
+                  }
+                  const preferRow: RowPath | null =
+                    sel?.kind === 'row'
+                      ? { bandIndex: sel.bandIndex, rowIndex: sel.rowIndex }
+                      : sel?.kind === 'band'
+                        ? { bandIndex: sel.bandIndex, rowIndex: 0 }
+                        : null;
+                  const target = findRowWithRemaining(bands, previewDevice.value, preferRow);
+                  if (target) {
+                    const inserted = insertWidgetIntoRemaining(
+                      bands,
+                      props.registry.value,
+                      entry.type,
+                      target.bandIndex,
+                      target.rowIndex,
+                      previewDevice.value,
+                    );
+                    if (!inserted) return;
+                    await commit$(inserted.bands);
+                    selection.value = {
+                      kind: 'block',
+                      bandIndex: target.bandIndex,
+                      rowIndex: target.rowIndex,
+                      colIndex: inserted.colIndex,
+                      blockIndex: inserted.blockIndex,
+                    };
+                    return;
+                  }
                   const band = createBandWithBlock(props.registry.value, entry.type);
                   if (!band) return;
                   const next = [...bands, band];
@@ -450,15 +643,88 @@ export const PageBuilderWorkspace = component$<PageBuilderWorkspaceProps>((props
                             selection.value.bandIndex === bandIndex &&
                             selection.value.rowIndex === rowIndex;
                           const stackBelow = row.stack_below || 'none';
+                          const usedSpan = usedSpanInRow(row, previewDevice.value);
+                          const remaining = Math.max(0, 12 - usedSpan);
+                          const rowKey = `${bandIndex}-${rowIndex}`;
+                          const isRowDropTarget = dropRowKey.value === rowKey;
                           return (
                             <li
                               key={row.id}
                               class={[
                                 'rounded-lg border border-dashed p-2',
-                                rowSelected
-                                  ? 'border-primary-500 bg-primary-50/40 dark:bg-primary-950/20'
-                                  : 'border-gray-300 dark:border-gray-600',
+                                isRowDropTarget
+                                  ? 'border-primary-500 ring-2 ring-primary-500/40 bg-primary-50/40 dark:bg-primary-950/20'
+                                  : rowSelected
+                                    ? 'border-primary-500 bg-primary-50/40 dark:bg-primary-950/20'
+                                    : 'border-gray-300 dark:border-gray-600',
                               ].join(' ')}
+                              onDragOver$={(e) => {
+                                if (dragWidgetType.value || dragBlock.value) {
+                                  e.preventDefault();
+                                  dropRowKey.value = rowKey;
+                                }
+                              }}
+                              onDragLeave$={() => {
+                                if (dropRowKey.value === rowKey) {
+                                  dropRowKey.value = null;
+                                }
+                              }}
+                              onDrop$={async (e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                const widgetType =
+                                  dragWidgetType.value ||
+                                  e.dataTransfer?.getData(WIDGET_DND) ||
+                                  null;
+                                const from = dragBlock.value;
+                                dropColumnKey.value = null;
+                                dropRowKey.value = null;
+                                dragWidgetType.value = null;
+                                dragBlock.value = null;
+
+                                if (from) {
+                                  const moved = moveBlockIntoRemaining(
+                                    bands,
+                                    from,
+                                    bandIndex,
+                                    rowIndex,
+                                    previewDevice.value,
+                                  );
+                                  if (!moved) return;
+                                  await commit$(moved.bands);
+                                  selection.value = {
+                                    kind: 'block',
+                                    bandIndex,
+                                    rowIndex,
+                                    colIndex: moved.colIndex,
+                                    blockIndex: moved.blockIndex,
+                                  };
+                                  return;
+                                }
+
+                                if (
+                                  widgetType &&
+                                  props.registry.value.some((r) => r.type === widgetType)
+                                ) {
+                                  const inserted = insertWidgetIntoRemaining(
+                                    bands,
+                                    props.registry.value,
+                                    widgetType,
+                                    bandIndex,
+                                    rowIndex,
+                                    previewDevice.value,
+                                  );
+                                  if (!inserted) return;
+                                  await commit$(inserted.bands);
+                                  selection.value = {
+                                    kind: 'block',
+                                    bandIndex,
+                                    rowIndex,
+                                    colIndex: inserted.colIndex,
+                                    blockIndex: inserted.blockIndex,
+                                  };
+                                }
+                              }}
                             >
                               <div class="mb-2 flex flex-wrap items-center gap-2">
                                 <button
@@ -470,10 +736,21 @@ export const PageBuilderWorkspace = component$<PageBuilderWorkspaceProps>((props
                                 >
                                   {translateApp(props.lang, 'pages.row')} {rowIndex + 1}
                                 </button>
+                                <span class="text-[11px] text-gray-400">
+                                  {usedSpan}/12
+                                  {remaining > 0
+                                    ? ` · ${translateApp(props.lang, 'pages.remainingSpan')} ${remaining}`
+                                    : ''}
+                                </span>
                                 <button
                                   type="button"
                                   class="rounded border px-2 py-0.5 text-[11px] dark:border-gray-600"
                                   onClick$={async () => {
+                                    const free = Math.max(
+                                      0,
+                                      12 - usedSpanInRow(row, previewDevice.value),
+                                    );
+                                    const span = free > 0 ? free : 6;
                                     const next = bands.map((b, bi) => {
                                       if (bi !== bandIndex) return b;
                                       return {
@@ -482,7 +759,10 @@ export const PageBuilderWorkspace = component$<PageBuilderWorkspaceProps>((props
                                           ri === rowIndex
                                             ? {
                                                 ...r,
-                                                columns: [...r.columns, createEmptyColumn(6)],
+                                                columns: [
+                                                  ...r.columns,
+                                                  createEmptyColumn(span),
+                                                ],
                                               }
                                             : r,
                                         ),
@@ -526,7 +806,9 @@ export const PageBuilderWorkspace = component$<PageBuilderWorkspaceProps>((props
                                       onDragOver$={(e) => {
                                         if (dragWidgetType.value || dragBlock.value) {
                                           e.preventDefault();
+                                          e.stopPropagation();
                                           dropColumnKey.value = colKey;
+                                          dropRowKey.value = null;
                                         }
                                       }}
                                       onDragLeave$={() => {
@@ -544,6 +826,7 @@ export const PageBuilderWorkspace = component$<PageBuilderWorkspaceProps>((props
                                           null;
                                         const from = dragBlock.value;
                                         dropColumnKey.value = null;
+                                        dropRowKey.value = null;
                                         dragWidgetType.value = null;
                                         dragBlock.value = null;
 
@@ -816,6 +1099,83 @@ export const PageBuilderWorkspace = component$<PageBuilderWorkspaceProps>((props
                                     </div>
                                   );
                                 })}
+                                {remaining > 0 ? (
+                                  <div
+                                    class={[
+                                      previewColSpanClass(remaining),
+                                      'flex min-h-[4.5rem] items-center justify-center rounded-md border border-dashed border-primary-400/60 bg-primary-50/30 px-2 text-center text-[11px] text-primary-700 dark:border-primary-500/50 dark:bg-primary-950/20 dark:text-primary-300',
+                                      isRowDropTarget && !dropColumnKey.value
+                                        ? 'ring-2 ring-primary-500/40'
+                                        : '',
+                                    ].join(' ')}
+                                    onDragOver$={(e) => {
+                                      if (dragWidgetType.value || dragBlock.value) {
+                                        e.preventDefault();
+                                        e.stopPropagation();
+                                        dropRowKey.value = rowKey;
+                                        dropColumnKey.value = null;
+                                      }
+                                    }}
+                                    onDrop$={async (e) => {
+                                      e.preventDefault();
+                                      e.stopPropagation();
+                                      const widgetType =
+                                        dragWidgetType.value ||
+                                        e.dataTransfer?.getData(WIDGET_DND) ||
+                                        null;
+                                      const from = dragBlock.value;
+                                      dropColumnKey.value = null;
+                                      dropRowKey.value = null;
+                                      dragWidgetType.value = null;
+                                      dragBlock.value = null;
+
+                                      if (from) {
+                                        const moved = moveBlockIntoRemaining(
+                                          bands,
+                                          from,
+                                          bandIndex,
+                                          rowIndex,
+                                          previewDevice.value,
+                                        );
+                                        if (!moved) return;
+                                        await commit$(moved.bands);
+                                        selection.value = {
+                                          kind: 'block',
+                                          bandIndex,
+                                          rowIndex,
+                                          colIndex: moved.colIndex,
+                                          blockIndex: moved.blockIndex,
+                                        };
+                                        return;
+                                      }
+
+                                      if (
+                                        widgetType &&
+                                        props.registry.value.some((r) => r.type === widgetType)
+                                      ) {
+                                        const inserted = insertWidgetIntoRemaining(
+                                          bands,
+                                          props.registry.value,
+                                          widgetType,
+                                          bandIndex,
+                                          rowIndex,
+                                          previewDevice.value,
+                                        );
+                                        if (!inserted) return;
+                                        await commit$(inserted.bands);
+                                        selection.value = {
+                                          kind: 'block',
+                                          bandIndex,
+                                          rowIndex,
+                                          colIndex: inserted.colIndex,
+                                          blockIndex: inserted.blockIndex,
+                                        };
+                                      }
+                                    }}
+                                  >
+                                    {translateApp(props.lang, 'pages.dropWidgetHere')}
+                                  </div>
+                                ) : null}
                               </div>
                             </li>
                           );
