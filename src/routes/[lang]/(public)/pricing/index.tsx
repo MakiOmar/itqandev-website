@@ -1,119 +1,116 @@
 import { component$ } from '@builder.io/qwik';
 import type { DocumentHead } from '@builder.io/qwik-city';
-import { Link, useLocation } from '@builder.io/qwik-city';
+import { routeLoader$, useLocation } from '@builder.io/qwik-city';
 import { publicListPageHead } from '~/lib/marketing/public-page-head';
 import { usePublicShell } from '../layout';
-import { marketingRoutes } from '~/lib/marketing/constants';
-import { uiLangFromUrlPathname } from '~/lib/i18n/ui-locale-path';
-import { Container } from '~/components/marketing/Container';
-import { Section } from '~/components/marketing/Section';
-import { AnimatedReveal } from '~/components/marketing/AnimatedReveal';
-import { Button } from '~/components/marketing/Button';
-import { Card } from '~/components/marketing/Card';
-import { FAQ } from '~/components/marketing/FAQ';
-import type { PricingTier } from '~/lib/marketing/types';
+import { HomepageSectionsRenderer } from '~/components/marketing/home-sections/HomepageSectionsRenderer';
+import { uiLocaleFromPublicRoute, uiLangFromUrlPathname } from '~/lib/i18n/ui-locale-path';
+import { getFeaturedCaseStudies, getTestimonials, getBlogPosts } from '~/lib/marketing/content-layer';
+import { resolveMarketingApiBaseUrl } from '~/lib/marketing/resolve-api-base';
+import { API_ENDPOINTS } from '~/lib/api/endpoints';
+import { isFeatureModuleEnabled } from '~/lib/api/project-settings';
+import type { PageSectionNode } from '~/lib/marketing/appearance-types';
+import type { PublicPageDetail } from '~/types/page';
+
+const PRICING_PAGE_SLUG = 'pricing';
+
+function parsePublicPageDetail(json: PublicPageDetail & { data?: unknown }): PublicPageDetail | null {
+  if (json && typeof json === 'object' && Array.isArray(json.sections)) {
+    return json;
+  }
+  if (json && typeof json === 'object' && json.data && typeof json.data === 'object') {
+    return json.data as PublicPageDetail;
+  }
+  return null;
+}
+
+export const usePricingCmsPage = routeLoader$(async ({ request, params, error, resolveValue }) => {
+  const shell = await resolveValue(usePublicShell);
+  if (!isFeatureModuleEnabled(shell.branding.features, 'pages')) {
+    throw error(404, 'Not found');
+  }
+
+  const cookie = request.headers.get('cookie') || '';
+  const uiLocale = uiLocaleFromPublicRoute(cookie, params.lang, request.url);
+  const base = resolveMarketingApiBaseUrl(request.url);
+  let page: PublicPageDetail | null = null;
+  try {
+    const res = await fetch(`${base}${API_ENDPOINTS.PUBLIC_PAGES.GET(PRICING_PAGE_SLUG)}`, {
+      headers: {
+        Accept: 'application/json',
+        'X-Content-Locale': uiLocale,
+        Cookie: cookie,
+      },
+    });
+    if (res.ok) {
+      const json = (await res.json()) as PublicPageDetail & { data?: unknown };
+      page = parsePublicPageDetail(json);
+    }
+  } catch {
+    page = null;
+  }
+  if (!page || typeof page.slug !== 'string' || !Array.isArray(page.sections)) {
+    throw error(404, 'Not found');
+  }
+  return page;
+});
+
+export const usePricingSupportingData = routeLoader$(async ({ request, params }) => {
+  const cookie = request.headers.get('cookie') || '';
+  const uiLocale = uiLocaleFromPublicRoute(cookie, params.lang, request.url);
+  const fetchContext = { forwardDocumentUrl: request.url };
+  const [caseStudies, testimonials, blogPosts] = await Promise.all([
+    getFeaturedCaseStudies(6, uiLocale, fetchContext),
+    getTestimonials(uiLocale, fetchContext),
+    getBlogPosts(),
+  ]);
+  return { caseStudies, testimonials, blogPosts: blogPosts.slice(0, 3) };
+});
 
 export default component$(() => {
   const loc = useLocation();
-  const MR = marketingRoutes(uiLangFromUrlPathname(loc.url.pathname));
+  const uiLocale = uiLangFromUrlPathname(loc.url.pathname);
   const shell = usePublicShell();
-  const tiers = shell.value.siteContent?.pricingTiers ?? [];
-  const faq = shell.value.siteContent?.faq ?? [];
+  const page = usePricingCmsPage().value;
+  const support = usePricingSupportingData();
 
   return (
-    <>
-      <Section>
-        <Container>
-          <AnimatedReveal>
-            <div class="mx-auto max-w-2xl text-center">
-              <h1 class="text-4xl font-bold tracking-tight text-slate-900 dark:text-white sm:text-5xl">
-                Pricing
-              </h1>
-              <p class="mt-4 text-lg text-slate-600 dark:text-slate-400">
-                Transparent packages. Custom quotes for larger scope.
-              </p>
-            </div>
-          </AnimatedReveal>
-
-          <div class="mx-auto mt-16 grid max-w-5xl gap-8 lg:grid-cols-3">
-            {tiers.map((tier: PricingTier, i: number) => (
-              <AnimatedReveal key={tier.id} delay={i * 80}>
-                <Card
-                  class={`relative flex flex-col ${
-                    tier.highlighted
-                      ? 'border-2 border-primary-500 shadow-lg dark:border-primary-500'
-                      : ''
-                  }`}
-                  padding="none"
-                >
-                  {tier.highlighted && (
-                    <p class="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-primary-600 px-3 py-0.5 text-xs font-medium text-white dark:bg-primary-500">
-                      Popular
-                    </p>
-                  )}
-                  <div class="p-6 sm:p-8">
-                    <h2 class="text-lg font-semibold text-slate-900 dark:text-white">
-                      {tier.name}
-                    </h2>
-                    <p class="mt-2 text-2xl font-bold text-slate-900 dark:text-white">
-                      {tier.price}
-                      {tier.period && (
-                        <span class="text-sm font-normal text-slate-500 dark:text-slate-400">
-                          {' '}/ {tier.period}
-                        </span>
-                      )}
-                    </p>
-                    <p class="mt-2 text-sm text-slate-600 dark:text-slate-400">
-                      {tier.description}
-                    </p>
-                    <ul class="mt-6 space-y-3" role="list">
-                      {tier.features.map((f: string, j: number) => (
-                        <li key={j} class="flex items-start gap-2 text-sm text-slate-700 dark:text-slate-300">
-                          <svg class="mt-0.5 h-5 w-5 shrink-0 text-primary-500" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
-                            <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
-                          </svg>
-                          {f}
-                        </li>
-                      ))}
-                    </ul>
-                    <div class="mt-8">
-                      <Button
-                        href={MR.contact}
-                        variant={tier.highlighted ? 'primary' : 'outline'}
-                        class="w-full justify-center"
-                      >
-                        {tier.cta}
-                      </Button>
-                    </div>
-                  </div>
-                </Card>
-              </AnimatedReveal>
-            ))}
-          </div>
-
-          <p class="mt-12 text-center text-sm text-slate-600 dark:text-slate-400">
-            Need something different?{' '}
-            <Link href={MR.contact} class="font-medium text-primary-600 hover:text-primary-700 dark:text-primary-400">
-              Request a custom quote
-            </Link>
-          </p>
-        </Container>
-      </Section>
-
-      {faq.length > 0 && (
-        <Section variant="muted">
-          <FAQ items={faq} />
-        </Section>
-      )}
-    </>
+    <HomepageSectionsRenderer
+      sections={(page.sections || []) as PageSectionNode[]}
+      uiLocale={uiLocale}
+      services={shell.value.siteContent?.services ?? []}
+      caseStudies={support.value.caseStudies}
+      testimonials={support.value.testimonials}
+      blogPosts={support.value.blogPosts}
+      techStack={shell.value.siteContent?.techStack ?? []}
+      branding={shell.value.branding}
+      siteContact={shell.value.siteContent?.contact}
+      layoutAware={true}
+      allowDefaultSections={false}
+      pageContext={{ title: page.title || 'Pricing', slug: page.slug }}
+    />
   );
 });
 
-export const head: DocumentHead = ({ resolveValue, url }) =>
-  publicListPageHead({
-    page: 'Pricing',
-    description: 'Transparent pricing for web and mobile development. Custom quotes available.',
+export const head: DocumentHead = ({ resolveValue, url }) => {
+  let pageTitle = 'Pricing';
+  let description = 'Transparent pricing for web and mobile development. Custom quotes available.';
+  try {
+    const page = resolveValue(usePricingCmsPage) as PublicPageDetail;
+    if (page && typeof page.title === 'string' && page.title.trim()) {
+      pageTitle = page.title.trim();
+      if (typeof page.excerpt === 'string' && page.excerpt.trim()) {
+        description = page.excerpt.trim();
+      }
+    }
+  } catch {
+    /* loader unavailable during head — keep defaults */
+  }
+  return publicListPageHead({
+    page: pageTitle,
+    description,
     resolveValue,
     usePublicShell,
     url,
   });
+};

@@ -63,7 +63,6 @@ interface PickerTax {
 
 type MenuItemType =
   | 'custom_link'
-  | 'static_route'
   | 'project'
   | 'blog_post'
   | 'service'
@@ -126,16 +125,6 @@ function uniqueMenuSlug(base: string, existing: readonly MenuRow[]): string {
   }
   return `${base.slice(0, 20)}-${Date.now()}`;
 }
-
-const STATIC_ROUTE_OPTIONS: Array<{ value: string; label: string }> = [
-  { value: 'home', label: 'Home' },
-  { value: 'services', label: 'Services' },
-  { value: 'portfolio', label: 'Portfolio' },
-  { value: 'about', label: 'About' },
-  { value: 'pricing', label: 'Pricing' },
-  { value: 'blog', label: 'Blog' },
-  { value: 'contact', label: 'Contact' },
-];
 
 function canManageMenus(session: AuthSession | null): boolean {
   if (!session?.user) {
@@ -238,9 +227,8 @@ export default component$(() => {
     id: null as number | null,
     parent_id: null as number | null,
     sort_order: 0,
-    item_type: 'static_route' as MenuItemType,
+    item_type: 'page' as MenuItemType,
     url: '',
-    static_route_key: 'home',
     reference_id: '',
     label: '',
     label_ar: '',
@@ -251,9 +239,8 @@ export default component$(() => {
     form.id = null;
     form.parent_id = null;
     form.sort_order = 0;
-    form.item_type = 'static_route' as MenuItemType;
+    form.item_type = 'page' as MenuItemType;
     form.url = '';
-    form.static_route_key = 'home';
     form.reference_id = '';
     form.label = '';
     form.label_ar = '';
@@ -449,9 +436,6 @@ export default component$(() => {
       if (form.item_type === 'custom_link') {
         payload.url = form.url.trim();
       }
-      if (form.item_type === 'static_route') {
-        payload.static_route_key = form.static_route_key;
-      }
       if (['project', 'blog_post', 'service', 'category', 'skill', 'page'].includes(form.item_type)) {
         payload.reference_id = parseInt(String(form.reference_id), 10);
       }
@@ -478,9 +462,8 @@ export default component$(() => {
     form.label = item.label || '';
     form.label_ar =
       item.translations?.find((t) => t.locale === 'ar')?.label?.trim() || '';
-    form.item_type = item.item_type as MenuItemType;
+    form.item_type = (item.item_type === 'static_route' ? 'page' : item.item_type) as MenuItemType;
     form.url = item.url || '';
-    form.static_route_key = item.static_route_key || 'home';
     form.reference_id = item.reference_id != null ? String(item.reference_id) : '';
     form.open_in_new_tab = !!item.open_in_new_tab;
   });
@@ -947,14 +930,13 @@ export default component$(() => {
                       form.item_type = (e.target as HTMLSelectElement).value as MenuItemType;
                     }}
                   >
+                    <option value="page">{String(translateApp(lang, 'menusPage.typePage'))}</option>
                     <option value="custom_link">{String(translateApp(lang, 'menusPage.typeCustom'))}</option>
-                    <option value="static_route">{String(translateApp(lang, 'menusPage.typeStatic'))}</option>
                     <option value="project">{String(translateApp(lang, 'menusPage.typeProject'))}</option>
                     <option value="blog_post">{String(translateApp(lang, 'menusPage.typeBlog'))}</option>
                     <option value="service">{String(translateApp(lang, 'menusPage.typeService'))}</option>
                     <option value="category">{String(translateApp(lang, 'menusPage.typeCategory'))}</option>
                     <option value="skill">{String(translateApp(lang, 'menusPage.typeSkill'))}</option>
-                    <option value="page">{String(translateApp(lang, 'menusPage.typePage'))}</option>
                   </select>
                 </div>
 
@@ -970,25 +952,6 @@ export default component$(() => {
                         form.url = (e.target as HTMLInputElement).value;
                       }}
                     />
-                  </div>
-                )}
-
-                {form.item_type === 'static_route' && (
-                  <div class="md:col-span-2">
-                    <label class={labelClass}>{String(translateApp(lang, 'menusPage.staticPage'))}</label>
-                    <select
-                      class={inputClass}
-                      value={form.static_route_key}
-                      onInput$={(e) => {
-                        form.static_route_key = (e.target as HTMLSelectElement).value;
-                      }}
-                    >
-                      {STATIC_ROUTE_OPTIONS.map((o) => (
-                        <option key={o.value} value={o.value}>
-                          {o.label}
-                        </option>
-                      ))}
-                    </select>
                   </div>
                 )}
 
@@ -1267,10 +1230,6 @@ function rowLabelSync(
 ): string {
   if (item.label?.trim()) {
     return item.label.trim();
-  }
-  if (item.item_type === 'static_route' && item.static_route_key) {
-    const m = STATIC_ROUTE_OPTIONS.find((x) => x.value === item.static_route_key);
-    return m?.label ?? item.static_route_key;
   }
   if (item.item_type === 'custom_link') {
     return item.url || String(translateApp(lang, 'menusPage.typeCustom'));

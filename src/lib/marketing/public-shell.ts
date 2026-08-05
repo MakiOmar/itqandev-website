@@ -21,7 +21,7 @@ import {
   type HomepageSectionInstance,
   type PageSectionNode,
 } from './appearance-types';
-
+import { defaultFooterSections, defaultHeaderSections } from './chrome-defaults';
 const localBase = siteData as SiteContent;
 
 export type PublicBrandingState = {
@@ -53,20 +53,19 @@ type PublicShellApiData = {
   footer?: FooterPublicPayload;
 };
 
-function emptyChrome(): { sections: PageSectionNode[] } {
-  return { sections: [] };
-}
-
-function normalizeChromePayload(raw: unknown): { sections: PageSectionNode[] } {
+function normalizeChromePayload(
+  raw: unknown,
+  fallback: () => PageSectionNode[],
+): { sections: PageSectionNode[] } {
   if (!raw || typeof raw !== 'object') {
-    return emptyChrome();
+    return { sections: fallback() };
   }
   const sections = (raw as { sections?: unknown }).sections;
-  return {
-    sections: Array.isArray(sections) ? (sections as PageSectionNode[]) : [],
-  };
+  if (Array.isArray(sections) && sections.length > 0) {
+    return { sections: sections as PageSectionNode[] };
+  }
+  return { sections: fallback() };
 }
-
 function normalizeServiceFromPublicApi(raw: Record<string, unknown>): Service {
   return {
     id: String(raw.id ?? ''),
@@ -141,8 +140,8 @@ function localShellFallback(): PublicShellState {
     primaryMenu: [],
     siteContent: base,
     homepageSections: defaultHomepageSections(),
-    header: emptyChrome(),
-    footer: emptyChrome(),
+    header: { sections: defaultHeaderSections([]) },
+    footer: { sections: defaultFooterSections() },
   };
 }
 
@@ -162,11 +161,10 @@ function mapShellApiPayload(data: PublicShellApiData, fallbackName: string): Pub
     primaryMenu: menuItems,
     siteContent: mergeShellServicesIntoSiteContent(base, data.services),
     homepageSections,
-    header: normalizeChromePayload(data.header),
-    footer: normalizeChromePayload(data.footer),
+    header: normalizeChromePayload(data.header, () => defaultHeaderSections(menuItems)),
+    footer: normalizeChromePayload(data.footer, () => defaultFooterSections()),
   };
 }
-
 /**
  * Fetch layout shell from Laravel (or local fallback when API base is unset).
  */

@@ -703,7 +703,7 @@ Requires `Authorization: Bearer` and the **`manage menus`** permission (or a rol
 | PUT | `/api/v1/menu-items/{id}` | Update item |
 | DELETE | `/api/v1/menu-items/{id}` | Delete item |
 
-**`item_type` values:** `custom_link` (requires `url`), `static_route` (requires `static_route_key`: `home`, `services`, `portfolio`, `about`, `pricing`, `blog`, `contact`; legacy `work` still resolves to `/portfolio/`), `project`, `blog_post`, `service`, `category`, `skill`, `page` (each content type requires `reference_id`). Published `page` items resolve to `/{locale}/pages/{slug}/`.
+**`item_type` values:** `custom_link` (requires `url`), `project`, `blog_post`, `service`, `category`, `skill`, `page` (each content type requires `reference_id`). Published `page` items resolve via `CmsPublicPaths` to pretty URLs when known (`about` → `/{locale}/about/`, `articles` → `/{locale}/blog/`, …) otherwise `/{locale}/pages/{slug}/`. Legacy `static_route` items are migrated to CMS pages / custom links and are no longer accepted by the API.
 
 ## Authenticated + public CMS pages (`feature.module:pages`)
 
