@@ -23,7 +23,7 @@ import {
   type PageLayoutBand,
   type PageSectionNode,
 } from '~/lib/marketing/appearance-types';
-import type { CaseStudy, Testimonial, BlogPost, Service } from '~/lib/marketing/types';
+import type { CaseStudy, Testimonial, BlogPost, Service, ContactInfo } from '~/lib/marketing/types';
 import type { PublicBrandingState } from '~/lib/marketing/public-shell';
 import { getConfig } from '~/lib/config';
 import { getPublicSiteBaseUrl } from '~/lib/seo/canonical-url';
@@ -101,6 +101,10 @@ export type HomepageSectionsRendererProps = {
   layoutAware?: boolean;
   /** Current CMS page identity for page_header kit (title / crumbs). */
   pageContext?: { title: string; slug?: string };
+  /** Site contact for contact_info `use_site_contact`. */
+  siteContact?: ContactInfo | null;
+  /** Skip kit Section/Container when rendering inside layout columns. */
+  embedKits?: boolean;
 };
 
 function renderBlock(
@@ -129,6 +133,8 @@ function renderBlock(
         settings={settings}
         uiLocale={props.uiLocale}
         pageContext={props.pageContext}
+        embedded={props.embedKits === true}
+        siteContact={props.siteContact}
       />
     );
   }
@@ -202,6 +208,7 @@ function renderBlock(
 }
 
 function renderLayoutBand(band: PageLayoutBand, props: HomepageSectionsRendererProps) {
+  const bandProps: HomepageSectionsRendererProps = { ...props, embedKits: true };
   const inner = (
     <div class="space-y-6 py-8">
       {(band.rows ?? []).map((row) => {
@@ -218,7 +225,7 @@ function renderLayoutBand(band: PageLayoutBand, props: HomepageSectionsRendererP
                   <div class="space-y-6">
                     {(col.blocks ?? [])
                       .filter((b) => b.enabled !== false)
-                      .map((block) => renderBlock(block, props))}
+                      .map((block) => renderBlock(block, bandProps))}
                   </div>
                 </div>
               );

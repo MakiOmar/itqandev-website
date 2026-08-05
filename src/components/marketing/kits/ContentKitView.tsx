@@ -7,17 +7,27 @@ import { Container } from '~/components/marketing/Container';
 import { Section } from '~/components/marketing/Section';
 import { AnimatedReveal } from '~/components/marketing/AnimatedReveal';
 import { marketingRoutes } from '~/lib/marketing/constants';
+import type { ContactInfo } from '~/lib/marketing/types';
 
 export type ContentKitProps = {
   type: string;
   settings: Record<string, unknown>;
   uiLocale: string;
   pageContext?: { title: string; slug?: string };
+  /** When true (CMS page layout columns), skip outer Section/Container wrappers. */
+  embedded?: boolean;
+  /** Site-wide contact block for `use_site_contact` on contact_info kit. */
+  siteContact?: ContactInfo | null;
 };
 
 function str(s: Record<string, unknown>, key: string, fallback = ''): string {
   const v = s[key];
   return typeof v === 'string' ? v : v != null ? String(v) : fallback;
+}
+
+function truthySetting(v: unknown, defaultTrue = false): boolean {
+  if (v === undefined || v === null || v === '') return defaultTrue;
+  return v === true || v === 'true' || v === 1 || v === '1';
 }
 
 function youtubeEmbed(url: string): string | null {
@@ -50,6 +60,39 @@ export const ContentKitView = component$<ContentKitProps>((props) => {
             answer: String(it.answer ?? ''),
           }))
         : [];
+      if (props.embedded) {
+        if (!items.length) return null;
+        const title = str(s, 'title', 'Frequently asked questions');
+        return (
+          <div aria-labelledby="faq-heading-embedded">
+            <h2
+              id="faq-heading-embedded"
+              class="text-2xl font-bold tracking-tight text-slate-900 dark:text-white sm:text-3xl"
+            >
+              {title}
+            </h2>
+            <ul class="mt-8 space-y-4" role="list">
+              {items.map((item, i) => (
+                <li key={i}>
+                  <details class="group rounded-lg border border-slate-200 bg-white/80 backdrop-blur-md dark:border-slate-700 dark:bg-slate-800/50 dark:backdrop-blur-none">
+                    <summary class="flex cursor-pointer list-none items-center justify-between px-4 py-4 font-medium text-slate-900 dark:text-white [&::-webkit-details-marker]:hidden">
+                      <span>{item.question}</span>
+                      <span class="ml-2 shrink-0 transition-transform group-open:rotate-180" aria-hidden="true">
+                        <svg class="h-5 w-5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                        </svg>
+                      </span>
+                    </summary>
+                    <div class="border-t border-slate-200 px-4 py-3 text-slate-600 dark:border-slate-700 dark:text-slate-400">
+                      {item.answer}
+                    </div>
+                  </details>
+                </li>
+              ))}
+            </ul>
+          </div>
+        );
+      }
       return <FAQ items={items} title={str(s, 'title', 'Frequently asked questions')} />;
     }
     case 'stats': {
@@ -139,48 +182,96 @@ export const ContentKitView = component$<ContentKitProps>((props) => {
       );
     }
     case 'contact_info': {
-      const email = str(s, 'email');
-      const phone = str(s, 'phone');
-      const cal = str(s, 'calendar_link');
+      const useSite = truthySetting(s.use_site_contact, true);
+      const site = props.siteContact;
+      const email = str(s, 'email') || (useSite ? String(site?.email || '') : '');
+      const phone = str(s, 'phone') || (useSite ? String(site?.phone || '') : '');
+      const address = str(s, 'address') || (useSite ? String(site?.address || '') : '');
+      const cal =
+        str(s, 'calendar_link') || (useSite ? String(site?.calendarLink || '') : '');
+      const socialsFromSettings = Array.isArray(s.socials)
+        ? (s.socials as Array<Record<string, unknown>>)
+            .map((row) => ({
+              label: String(row.label ?? row.name ?? '').trim(),
+              url: String(row.url ?? '').trim(),
+            }))
+            .filter((row) => row.url)
+        : [];
+      const socials =
+        socialsFromSettings.length > 0
+          ? socialsFromSettings
+          : useSite && Array.isArray(site?.socials)
+            ? site!.socials!
+                .map((row) => ({
+                  label: String(row.name || '').trim(),
+                  url: String(row.url || '').trim(),
+                }))
+                .filter((row) => row.url)
+            : [];
+      const card = (
+        <Card>
+          <div class="space-y-3 p-6 sm:p-8">
+            <h3 class="text-lg font-semibold text-slate-900 dark:text-white">
+              {str(s, 'office_heading', 'Office')}
+            </h3>
+            {address ? (
+              <p class="whitespace-pre-wrap text-sm text-slate-600 dark:text-slate-300">{address}</p>
+            ) : null}
+            {email ? (
+              <p>
+                <a
+                  class="font-medium text-primary-600 hover:underline dark:text-primary-400"
+                  href={`mailto:${email}`}
+                  dir="ltr"
+                >
+                  {email}
+                </a>
+              </p>
+            ) : null}
+            {phone ? (
+              <p>
+                <a
+                  class="font-medium text-slate-700 hover:underline dark:text-slate-300"
+                  href={`tel:${phone.replace(/\s+/g, '')}`}
+                  dir="ltr"
+                >
+                  {phone}
+                </a>
+              </p>
+            ) : null}
+            {cal ? (
+              <div class="pt-2">
+                <Button href={cal} variant="outline">
+                  {str(s, 'calendar_label', 'Book a call')}
+                </Button>
+              </div>
+            ) : null}
+            {socials.length > 0 ? (
+              <ul class="flex flex-wrap gap-4 pt-2" role="list">
+                {socials.map((item) => (
+                  <li key={item.url}>
+                    <a
+                      href={item.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      class="text-sm font-medium text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"
+                      aria-label={item.label || item.url}
+                    >
+                      {item.label || item.url}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            ) : null}
+          </div>
+        </Card>
+      );
+      if (props.embedded) {
+        return card;
+      }
       return (
         <Section variant="muted">
-          <Container>
-            <Card>
-              <div class="space-y-3 p-6">
-                <h3 class="text-lg font-semibold text-slate-900 dark:text-white">
-                  {str(s, 'office_heading', 'Office')}
-                </h3>
-                {str(s, 'address') ? (
-                  <p class="whitespace-pre-wrap text-sm text-slate-600 dark:text-slate-300">
-                    {str(s, 'address')}
-                  </p>
-                ) : null}
-                {email ? (
-                  <p>
-                    <a class="text-primary-600 hover:underline dark:text-primary-400" href={`mailto:${email}`} dir="ltr">
-                      {email}
-                    </a>
-                  </p>
-                ) : null}
-                {phone ? (
-                  <p>
-                    <a
-                      class="text-primary-600 hover:underline dark:text-primary-400"
-                      href={`tel:${phone.replace(/\s+/g, '')}`}
-                      dir="ltr"
-                    >
-                      {phone}
-                    </a>
-                  </p>
-                ) : null}
-                {cal ? (
-                  <Button href={cal} variant="outline">
-                    {str(s, 'calendar_label', 'Book a call')}
-                  </Button>
-                ) : null}
-              </div>
-            </Card>
-          </Container>
+          <Container>{card}</Container>
         </Section>
       );
     }
@@ -437,45 +528,55 @@ export const ContentKitView = component$<ContentKitProps>((props) => {
           })),
         { label: pageTitle },
       ];
+      const body = (
+        <>
+          {showCrumbs ? (
+            <nav aria-label="Breadcrumb" class="mb-4">
+              <ol class="flex flex-wrap items-center gap-1 text-sm text-slate-500 dark:text-slate-400">
+                {crumbs.map((c, i) => (
+                  <li key={i} class="flex items-center gap-1">
+                    {i > 0 ? <span aria-hidden="true">/</span> : null}
+                    {c.href && i < crumbs.length - 1 ? (
+                      <a href={c.href} class="hover:text-primary-600 dark:hover:text-primary-400">
+                        {c.label}
+                      </a>
+                    ) : (
+                      <span
+                        class={
+                          i === crumbs.length - 1
+                            ? 'font-medium text-slate-800 dark:text-slate-100'
+                            : undefined
+                        }
+                        aria-current={i === crumbs.length - 1 ? 'page' : undefined}
+                      >
+                        {c.label}
+                      </span>
+                    )}
+                  </li>
+                ))}
+              </ol>
+            </nav>
+          ) : null}
+          {showTitle ? (
+            <h1 class="text-3xl font-bold tracking-tight text-slate-900 dark:text-white sm:text-4xl lg:text-5xl">
+              {pageTitle}
+            </h1>
+          ) : null}
+          {str(s, 'subtitle') ? (
+            <p class="mt-3 max-w-2xl text-lg text-slate-600 dark:text-slate-300">{str(s, 'subtitle')}</p>
+          ) : null}
+        </>
+      );
+      if (props.embedded) {
+        return (
+          <div class="rounded-2xl bg-slate-100/50 px-6 py-8 backdrop-blur-md dark:bg-slate-800/50 dark:backdrop-blur-none sm:px-8">
+            {body}
+          </div>
+        );
+      }
       return (
         <Section variant="muted">
-          <Container>
-            {showCrumbs ? (
-              <nav aria-label="Breadcrumb" class="mb-4">
-                <ol class="flex flex-wrap items-center gap-1 text-sm text-slate-500 dark:text-slate-400">
-                  {crumbs.map((c, i) => (
-                    <li key={i} class="flex items-center gap-1">
-                      {i > 0 ? <span aria-hidden="true">/</span> : null}
-                      {c.href && i < crumbs.length - 1 ? (
-                        <a href={c.href} class="hover:text-primary-600 dark:hover:text-primary-400">
-                          {c.label}
-                        </a>
-                      ) : (
-                        <span
-                          class={
-                            i === crumbs.length - 1
-                              ? 'font-medium text-slate-800 dark:text-slate-100'
-                              : undefined
-                          }
-                          aria-current={i === crumbs.length - 1 ? 'page' : undefined}
-                        >
-                          {c.label}
-                        </span>
-                      )}
-                    </li>
-                  ))}
-                </ol>
-              </nav>
-            ) : null}
-            {showTitle ? (
-              <h1 class="text-3xl font-bold tracking-tight text-slate-900 dark:text-white sm:text-4xl">
-                {pageTitle}
-              </h1>
-            ) : null}
-            {str(s, 'subtitle') ? (
-              <p class="mt-3 max-w-2xl text-slate-600 dark:text-slate-300">{str(s, 'subtitle')}</p>
-            ) : null}
-          </Container>
+          <Container>{body}</Container>
         </Section>
       );
     }

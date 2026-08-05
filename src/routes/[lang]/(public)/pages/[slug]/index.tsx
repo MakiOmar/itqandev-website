@@ -85,6 +85,7 @@ export default component$(() => {
       blogPosts={support.value.blogPosts}
       techStack={shell.value.siteContent?.techStack ?? []}
       branding={shell.value.branding}
+      siteContact={shell.value.siteContent?.contact}
       layoutAware={true}
       allowDefaultSections={false}
       pageContext={{ title: page.title, slug: page.slug }}
