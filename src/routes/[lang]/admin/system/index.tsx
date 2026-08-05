@@ -1,13 +1,14 @@
 import { component$ } from '@builder.io/qwik';
 import type { DocumentHead } from '@builder.io/qwik-city';
-import { routeLoader$ } from '@builder.io/qwik-city';
+import { routeLoader$, Link } from '@builder.io/qwik-city';
 import { PageHeader } from '../../../../components/common/PageHeader';
 import { useTranslate, translateApp } from '../../../../lib/i18n/useTranslate';
 import { StatCard } from '../../../../components/common/StatCard';
 import { auth } from '../../../../lib/auth';
-import { routesFromPreferredCookie } from '../../../../lib/constants/routes';
+import { getLocalizedRoutes, routesFromPreferredCookie } from '../../../../lib/constants/routes';
 import { extractCookieHeader, getApiClient } from '../../../../lib/api/client';
 import { ServerIcon, DatabaseIcon, QueueIcon } from '../../../../components/dashboard/icons';
+import { ADMIN_BACK_BUTTON_CLASS } from '../../../../lib/admin/native-select-classes';
 
 interface SystemHealthApi {
   app_env: string;
@@ -26,7 +27,7 @@ function canAccessSystemHealth(session: { user: { permissions?: string[]; role: 
   if (perms.includes('manage system')) {
     return true;
   }
-  return session.user.role === 'super_admin';
+  return session.user.role === 'super_admin' || session.user.role === 'admin';
 }
 
 export const useSystemHealth = routeLoader$(async ({ cookie, request, redirect: redirectFn }) => {
@@ -54,6 +55,7 @@ export const useSystemHealth = routeLoader$(async ({ cookie, request, redirect: 
 export default component$(() => {
   const health = useSystemHealth();
   const { lang } = useTranslate();
+  const R = getLocalizedRoutes(lang);
 
   if (health.value.error || !('data' in health.value) || !health.value.data) {
     return (
@@ -100,6 +102,12 @@ export default component$(() => {
             Database check: {d.database.error}
           </div>
         )}
+
+        <div class="mt-8">
+          <Link href={R.ADMIN.SYSTEM_BACKUP} class={ADMIN_BACK_BUTTON_CLASS}>
+            {translateApp(lang, 'system.backupOpen')}
+          </Link>
+        </div>
 
         <p class="mt-8 text-xs text-gray-500 dark:text-gray-500">Data from GET /api/v1/system/health</p>
       </div>

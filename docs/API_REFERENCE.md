@@ -80,6 +80,20 @@ The `token` is a Sanctum personal access token. The Qwik client stores it and se
 
 Requires `Authorization` as above. Responds **403** if the user cannot run system diagnostics (`manage system` permission or `admin` / `super_admin` role). Returns app, PHP, Laravel versions, database ping status, default cache store, and queue connection name.
 
+### Database backups (`/api/v1/system/backups`)
+
+Requires the same ability as system health (`manageSystemCache`). SQL dumps are stored under `storage/app/private/backups` (configurable via `DB_BACKUP_*` — see `docs/CONFIGURATION.md`). Supports **MySQL/MariaDB** and **SQLite**.
+
+| Method | Path | Purpose |
+|--------|------|---------|
+| `GET` | `/api/v1/system/backups` | List stored backups + `meta.confirm_phrase` |
+| `POST` | `/api/v1/system/backups` | Create a new `.sql` dump |
+| `GET` | `/api/v1/system/backups/{filename}` | Download a dump (`filename` must end in `.sql`) |
+| `DELETE` | `/api/v1/system/backups/{filename}` | Delete a stored dump |
+| `POST` | `/api/v1/system/backups/restore` | Restore from `filename` **or** uploaded `file`; body must include `confirmation` equal to `meta.confirm_phrase` (default `CONFIRM`) |
+
+Restore is destructive (overwrites the live DB). Media files on disk are **not** included.
+
 **Error Response (401):**
 ```json
 {

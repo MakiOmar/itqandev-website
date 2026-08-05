@@ -256,10 +256,15 @@ export const Sidebar = component$<SidebarProps>((props) => {
       icon: NotificationsIcon,
     },
     {
-      label: translateApp(lang, 'sidebar.systemHealth'),
-      href: R.ADMIN.SYSTEM,
+      label: translateApp(lang, 'sidebar.system'),
       icon: SystemHealthIcon,
       permission: 'manage system',
+      menuManagementAccess: true,
+      menuManagementRoles: ['super_admin', 'admin'],
+      children: [
+        { label: translateApp(lang, 'sidebar.systemHealth'), href: R.ADMIN.SYSTEM },
+        { label: translateApp(lang, 'sidebar.systemBackup'), href: R.ADMIN.SYSTEM_BACKUP },
+      ],
     },
   ];
 
@@ -282,7 +287,12 @@ export const Sidebar = component$<SidebarProps>((props) => {
       if (item.href === R.ADMIN.NOTIFICATIONS && dashFeatures.notifications === false) {
         return false;
       }
-      if (item.href === R.ADMIN.SYSTEM && dashFeatures.systemHealth === false) {
+      if (
+        dashFeatures.systemHealth === false &&
+        item.children?.some(
+          (ch) => ch.href === R.ADMIN.SYSTEM || ch.href === R.ADMIN.SYSTEM_BACKUP,
+        )
+      ) {
         return false;
       }
       if (item.featureModule && !isFeatureModuleEnabled(featureFlags, item.featureModule)) {

@@ -54,7 +54,10 @@ export const API_ENDPOINTS = {
   },
   // System
   SYSTEM: {
-    HEALTH: '/system/health',
+    HEALTH: '/v1/system/health',
+    BACKUPS: '/v1/system/backups',
+    BACKUP: (filename: string) => `/v1/system/backups/${encodeURIComponent(filename)}`,
+    BACKUP_RESTORE: '/v1/system/backups/restore',
     STATS: '/system/stats',
   },
   /** Authenticated helpers (admin UI); server enforces uniqueness on the owning table. */

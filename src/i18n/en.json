@@ -758,6 +758,8 @@
     "activityLogs": "Activity Logs",
     "notifications": "Notifications",
     "systemHealth": "System Health",
+    "system": "System",
+    "systemBackup": "Backup & Restore",
     "closeSidebar": "Close sidebar"
   },
   "appearance": {
@@ -891,6 +893,37 @@
   },
   "system": {
     "title": "System Health",
-    "subtitle": "Monitor system status and performance"
+    "subtitle": "Monitor system status and performance",
+    "backupOpen": "Database backup & restore",
+    "backupTitle": "Database backup & restore",
+    "backupSubtitle": "Create SQL dumps, download them, or restore with a confirmation phrase.",
+    "backupBackToHealth": "Back to System Health",
+    "backupCreate": "Create backup",
+    "backupCreated": "Database backup created.",
+    "backupCreateFailed": "Could not create the database backup.",
+    "backupLoadFailed": "Could not load backups.",
+    "backupDownload": "Download",
+    "backupDownloadFailed": "Could not download the backup.",
+    "backupDeleteConfirm": "Delete backup {{filename}}?",
+    "backupDeleted": "Backup deleted.",
+    "backupDeleteFailed": "Could not delete the backup.",
+    "backupRestore": "Restore",
+    "backupRestoreTitle": "Restore database",
+    "backupRestoreConfirmText": "This replaces the live database. Type {{phrase}} to continue.",
+    "backupRestoreMismatch": "Type {{phrase}} exactly to confirm.",
+    "backupRestored": "Database restored successfully.",
+    "backupRestoreFailed": "Database restore failed.",
+    "backupWarning": "Restoring overwrites the current database. Create a fresh backup before experimenting. Media files on disk are not included.",
+    "backupDriver": "Connection: {{driver}}",
+    "backupRetention": "Keep last {{count}} backups",
+    "backupListTitle": "Stored backups",
+    "backupEmpty": "No backups yet. Create one to get started.",
+    "backupFilename": "File",
+    "backupSize": "Size",
+    "backupCreatedAt": "Created",
+    "backupUploadTitle": "Restore from uploaded SQL",
+    "backupUploadHelp": "Choose a .sql dump. You will be asked to type {{phrase}} before the restore runs.",
+    "backupChooseFile": "SQL file",
+    "backupConfirmLabel": "Type {{phrase}} to enable restore"
   }
 }

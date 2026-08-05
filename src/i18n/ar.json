@@ -758,6 +758,8 @@
     "activityLogs": "سجل الأنشطة",
     "notifications": "الإشعارات",
     "systemHealth": "صحة النظام",
+    "system": "النظام",
+    "systemBackup": "النسخ الاحتياطي والاستعادة",
     "closeSidebar": "إغلاق القائمة"
   },
   "appearance": {
@@ -891,6 +893,37 @@
   },
   "system": {
     "title": "صحة النظام",
-    "subtitle": "مراقبة حالة النظام والأداء"
+    "subtitle": "مراقبة حالة النظام والأداء",
+    "backupOpen": "النسخ الاحتياطي واستعادة قاعدة البيانات",
+    "backupTitle": "النسخ الاحتياطي واستعادة قاعدة البيانات",
+    "backupSubtitle": "أنشئ نسخ SQL، نزّلها، أو استعد مع عبارة تأكيد.",
+    "backupBackToHealth": "العودة إلى صحة النظام",
+    "backupCreate": "إنشاء نسخة احتياطية",
+    "backupCreated": "تم إنشاء النسخة الاحتياطية.",
+    "backupCreateFailed": "تعذّر إنشاء النسخة الاحتياطية.",
+    "backupLoadFailed": "تعذّر تحميل النسخ الاحتياطية.",
+    "backupDownload": "تنزيل",
+    "backupDownloadFailed": "تعذّر تنزيل النسخة الاحتياطية.",
+    "backupDeleteConfirm": "حذف النسخة {{filename}}؟",
+    "backupDeleted": "تم حذف النسخة الاحتياطية.",
+    "backupDeleteFailed": "تعذّر حذف النسخة الاحتياطية.",
+    "backupRestore": "استعادة",
+    "backupRestoreTitle": "استعادة قاعدة البيانات",
+    "backupRestoreConfirmText": "سيستبدل هذا قاعدة البيانات الحالية. اكتب {{phrase}} للمتابعة.",
+    "backupRestoreMismatch": "اكتب {{phrase}} تماماً للتأكيد.",
+    "backupRestored": "تمت استعادة قاعدة البيانات بنجاح.",
+    "backupRestoreFailed": "فشلت استعادة قاعدة البيانات.",
+    "backupWarning": "الاستعادة تستبدل قاعدة البيانات الحالية. أنشئ نسخة جديدة قبل التجربة. ملفات الوسائط على القرص غير مشمولة.",
+    "backupDriver": "الاتصال: {{driver}}",
+    "backupRetention": "الاحتفاظ بآخر {{count}} نسخ",
+    "backupListTitle": "النسخ المخزّنة",
+    "backupEmpty": "لا توجد نسخ بعد. أنشئ واحدة للبدء.",
+    "backupFilename": "الملف",
+    "backupSize": "الحجم",
+    "backupCreatedAt": "تاريخ الإنشاء",
+    "backupUploadTitle": "استعادة من ملف SQL",
+    "backupUploadHelp": "اختر ملف .sql. سيُطلب منك كتابة {{phrase}} قبل تنفيذ الاستعادة.",
+    "backupChooseFile": "ملف SQL",
+    "backupConfirmLabel": "اكتب {{phrase}} لتمكين الاستعادة"
   }
 }
