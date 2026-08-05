@@ -191,14 +191,32 @@ function renderBlock(
       if (!formSlug) return null;
       const title = String(settings.title ?? '').trim();
       const subtitle = String(settings.subtitle ?? '').trim();
+      const form = (
+        <FormRenderer
+          slug={formSlug}
+          contentLocale={props.uiLocale}
+          title={title || undefined}
+          subtitle={subtitle || undefined}
+          class="w-full"
+        />
+      );
+      if (props.embedKits) {
+        return (
+          <div
+            key={key}
+            class="relative overflow-hidden rounded-2xl border border-slate-200/80 bg-white/85 p-6 shadow-sm shadow-primary-500/5 backdrop-blur-md dark:border-slate-700/80 dark:bg-slate-800/55 dark:backdrop-blur-none sm:p-8"
+          >
+            <div
+              class="pointer-events-none absolute -left-20 top-0 h-40 w-40 rounded-full bg-sky-300/20 blur-3xl dark:bg-sky-900/20"
+              aria-hidden="true"
+            />
+            <div class="relative">{form}</div>
+          </div>
+        );
+      }
       return (
         <section key={key} class="py-10">
-          <FormRenderer
-            slug={formSlug}
-            contentLocale={props.uiLocale}
-            title={title || undefined}
-            subtitle={subtitle || undefined}
-          />
+          {form}
         </section>
       );
     }
@@ -210,7 +228,7 @@ function renderBlock(
 function renderLayoutBand(band: PageLayoutBand, props: HomepageSectionsRendererProps) {
   const bandProps: HomepageSectionsRendererProps = { ...props, embedKits: true };
   const inner = (
-    <div class="space-y-6 py-8">
+    <div class="space-y-8 py-6 sm:space-y-10 sm:py-8 lg:py-10">
       {(band.rows ?? []).map((row) => {
         const gap = typeof row.gap === 'number' ? row.gap : 4;
         const gapClass = GAP_CLASS[gap] ?? 'gap-4';

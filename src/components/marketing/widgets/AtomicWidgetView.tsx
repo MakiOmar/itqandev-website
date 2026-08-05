@@ -286,14 +286,16 @@ export const AtomicWidgetView = component$<AtomicWidgetProps>((props) => {
       const url = str(s, 'embed_url');
       if (!url) return null;
       return (
-        <iframe
-          src={url}
-          title="Map"
-          class="w-full rounded-lg border-0"
-          style={{ height: `${num(s, 'height', 320)}px` }}
-          loading="lazy"
-          referrerPolicy="no-referrer-when-downgrade"
-        />
+        <div class="overflow-hidden rounded-2xl border border-slate-200/80 shadow-sm ring-1 ring-slate-900/5 dark:border-slate-700/80 dark:ring-white/5">
+          <iframe
+            src={url}
+            title="Map"
+            class="w-full border-0"
+            style={{ height: `${num(s, 'height', 360)}px` }}
+            loading="lazy"
+            referrerPolicy="no-referrer-when-downgrade"
+          />
+        </div>
       );
     }
     case 'social_links': {

@@ -43,6 +43,11 @@
     "viewSite": "View site",
     "viewPublicPage": "View public page"
   },
+  "contactPage": {
+    "address": "Address",
+    "email": "Email",
+    "phone": "Phone"
+  },
   "builderExport": {
     "export": "Export",
     "import": "Import",

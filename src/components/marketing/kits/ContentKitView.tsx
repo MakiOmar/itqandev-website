@@ -8,6 +8,7 @@ import { Section } from '~/components/marketing/Section';
 import { AnimatedReveal } from '~/components/marketing/AnimatedReveal';
 import { marketingRoutes } from '~/lib/marketing/constants';
 import type { ContactInfo } from '~/lib/marketing/types';
+import { translateApp } from '~/lib/i18n/useTranslate';
 
 export type ContentKitProps = {
   type: string;
@@ -64,33 +65,38 @@ export const ContentKitView = component$<ContentKitProps>((props) => {
         if (!items.length) return null;
         const title = str(s, 'title', 'Frequently asked questions');
         return (
-          <div aria-labelledby="faq-heading-embedded">
-            <h2
-              id="faq-heading-embedded"
-              class="text-2xl font-bold tracking-tight text-slate-900 dark:text-white sm:text-3xl"
+          <AnimatedReveal>
+            <div
+              class="rounded-3xl border border-slate-200/70 bg-slate-50/60 p-6 backdrop-blur-md dark:border-slate-700/70 dark:bg-slate-800/40 dark:backdrop-blur-none sm:p-8"
+              aria-labelledby="faq-heading-embedded"
             >
-              {title}
-            </h2>
-            <ul class="mt-8 space-y-4" role="list">
-              {items.map((item, i) => (
-                <li key={i}>
-                  <details class="group rounded-lg border border-slate-200 bg-white/80 backdrop-blur-md dark:border-slate-700 dark:bg-slate-800/50 dark:backdrop-blur-none">
-                    <summary class="flex cursor-pointer list-none items-center justify-between px-4 py-4 font-medium text-slate-900 dark:text-white [&::-webkit-details-marker]:hidden">
-                      <span>{item.question}</span>
-                      <span class="ml-2 shrink-0 transition-transform group-open:rotate-180" aria-hidden="true">
-                        <svg class="h-5 w-5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-                        </svg>
-                      </span>
-                    </summary>
-                    <div class="border-t border-slate-200 px-4 py-3 text-slate-600 dark:border-slate-700 dark:text-slate-400">
-                      {item.answer}
-                    </div>
-                  </details>
-                </li>
-              ))}
-            </ul>
-          </div>
+              <h2
+                id="faq-heading-embedded"
+                class="text-2xl font-bold tracking-tight text-slate-900 dark:text-white sm:text-3xl"
+              >
+                {title}
+              </h2>
+              <ul class="mt-8 space-y-3" role="list">
+                {items.map((item, i) => (
+                  <li key={i}>
+                    <details class="group rounded-xl border border-slate-200/80 bg-white/90 shadow-sm backdrop-blur-md transition open:shadow-md dark:border-slate-700 dark:bg-slate-900/60 dark:backdrop-blur-none">
+                      <summary class="flex cursor-pointer list-none items-center justify-between gap-3 px-5 py-4 font-medium text-slate-900 dark:text-white [&::-webkit-details-marker]:hidden">
+                        <span>{item.question}</span>
+                        <span class="ml-2 shrink-0 text-primary-600 transition-transform group-open:rotate-180 dark:text-primary-400" aria-hidden="true">
+                          <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                          </svg>
+                        </span>
+                      </summary>
+                      <div class="border-t border-slate-100 px-5 py-4 text-slate-600 dark:border-slate-700 dark:text-slate-300">
+                        {item.answer}
+                      </div>
+                    </details>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </AnimatedReveal>
         );
       }
       return <FAQ items={items} title={str(s, 'title', 'Frequently asked questions')} />;
@@ -208,53 +214,103 @@ export const ContentKitView = component$<ContentKitProps>((props) => {
                 }))
                 .filter((row) => row.url)
             : [];
+
+      const iconWell =
+        'flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-primary-50 to-sky-50 text-primary-600 shadow-inner ring-1 ring-primary-200/50 dark:from-primary-950/60 dark:to-slate-900 dark:text-primary-300 dark:ring-primary-500/25';
+
       const card = (
-        <Card>
-          <div class="space-y-3 p-6 sm:p-8">
-            <h3 class="text-lg font-semibold text-slate-900 dark:text-white">
-              {str(s, 'office_heading', 'Office')}
-            </h3>
-            {address ? (
-              <p class="whitespace-pre-wrap text-sm text-slate-600 dark:text-slate-300">{address}</p>
-            ) : null}
-            {email ? (
-              <p>
-                <a
-                  class="font-medium text-primary-600 hover:underline dark:text-primary-400"
-                  href={`mailto:${email}`}
-                  dir="ltr"
-                >
-                  {email}
-                </a>
-              </p>
-            ) : null}
-            {phone ? (
-              <p>
-                <a
-                  class="font-medium text-slate-700 hover:underline dark:text-slate-300"
-                  href={`tel:${phone.replace(/\s+/g, '')}`}
-                  dir="ltr"
-                >
-                  {phone}
-                </a>
-              </p>
-            ) : null}
+        <div class="relative overflow-hidden rounded-2xl border border-slate-200/80 bg-white/80 shadow-sm shadow-primary-500/5 backdrop-blur-md dark:border-slate-700/80 dark:bg-slate-800/60 dark:backdrop-blur-none">
+          <div
+            class="pointer-events-none absolute -right-16 -top-16 h-40 w-40 rounded-full bg-primary-400/15 blur-3xl dark:bg-primary-500/10"
+            aria-hidden="true"
+          />
+          <div class="relative space-y-6 p-6 sm:p-8">
+            <div>
+              <h3 class="text-xl font-semibold tracking-tight text-slate-900 dark:text-white">
+                {str(s, 'office_heading', 'Office')}
+              </h3>
+            </div>
+
+            <ul class="space-y-4" role="list">
+              {address ? (
+                <li class="flex gap-3">
+                  <span class={iconWell} aria-hidden="true">
+                    <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                    </svg>
+                  </span>
+                  <div class="min-w-0">
+                    <p class="text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                      {translateApp(props.uiLocale, 'contactPage.address')}
+                    </p>
+                    <p class="mt-0.5 whitespace-pre-wrap text-sm leading-relaxed text-slate-700 dark:text-slate-300">
+                      {address}
+                    </p>
+                  </div>
+                </li>
+              ) : null}
+              {email ? (
+                <li class="flex gap-3">
+                  <span class={iconWell} aria-hidden="true">
+                    <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                    </svg>
+                  </span>
+                  <div class="min-w-0">
+                    <p class="text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                      {translateApp(props.uiLocale, 'contactPage.email')}
+                    </p>
+                    <a
+                      class="mt-0.5 block break-words font-medium text-slate-800 hover:text-primary-600 dark:text-slate-100 dark:hover:text-primary-300"
+                      href={`mailto:${email}`}
+                      dir="ltr"
+                    >
+                      {email}
+                    </a>
+                  </div>
+                </li>
+              ) : null}
+              {phone ? (
+                <li class="flex gap-3">
+                  <span class={iconWell} aria-hidden="true">
+                    <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                    </svg>
+                  </span>
+                  <div class="min-w-0">
+                    <p class="text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                      {translateApp(props.uiLocale, 'contactPage.phone')}
+                    </p>
+                    <a
+                      class="mt-0.5 block font-medium text-slate-800 hover:text-primary-600 dark:text-slate-100 dark:hover:text-primary-300"
+                      href={`tel:${phone.replace(/\s+/g, '')}`}
+                      dir="ltr"
+                    >
+                      {phone}
+                    </a>
+                  </div>
+                </li>
+              ) : null}
+            </ul>
+
             {cal ? (
-              <div class="pt-2">
-                <Button href={cal} variant="outline">
+              <div class="pt-1">
+                <Button href={cal} variant="primary" class="w-full sm:w-auto">
                   {str(s, 'calendar_label', 'Book a call')}
                 </Button>
               </div>
             ) : null}
+
             {socials.length > 0 ? (
-              <ul class="flex flex-wrap gap-4 pt-2" role="list">
+              <ul class="flex flex-wrap gap-2 border-t border-slate-200/80 pt-5 dark:border-slate-700/80" role="list">
                 {socials.map((item) => (
                   <li key={item.url}>
                     <a
                       href={item.url}
                       target="_blank"
                       rel="noopener noreferrer"
-                      class="text-sm font-medium text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"
+                      class="inline-flex items-center rounded-full border border-slate-200 bg-slate-50/80 px-3 py-1.5 text-xs font-medium text-slate-700 transition hover:border-primary-300 hover:bg-primary-50 hover:text-primary-800 dark:border-slate-600 dark:bg-slate-900/50 dark:text-slate-300 dark:hover:border-primary-500 dark:hover:bg-primary-950/40 dark:hover:text-primary-200"
                       aria-label={item.label || item.url}
                     >
                       {item.label || item.url}
@@ -264,14 +320,17 @@ export const ContentKitView = component$<ContentKitProps>((props) => {
               </ul>
             ) : null}
           </div>
-        </Card>
+        </div>
       );
+
       if (props.embedded) {
-        return card;
+        return <AnimatedReveal delay={120}>{card}</AnimatedReveal>;
       }
       return (
         <Section variant="muted">
-          <Container>{card}</Container>
+          <Container>
+            <AnimatedReveal>{card}</AnimatedReveal>
+          </Container>
         </Section>
       );
     }
@@ -515,6 +574,7 @@ export const ContentKitView = component$<ContentKitProps>((props) => {
         str(s, 'title').trim() ||
         'Page';
       const homeLabel = str(s, 'home_label', 'Home');
+      const eyebrow = str(s, 'eyebrow').trim();
       const extras = Array.isArray(s.extra_crumbs)
         ? (s.extra_crumbs as Array<Record<string, unknown>>)
         : [];
@@ -528,55 +588,82 @@ export const ContentKitView = component$<ContentKitProps>((props) => {
           })),
         { label: pageTitle },
       ];
-      const body = (
+      const crumbsNav = showCrumbs ? (
+        <nav aria-label="Breadcrumb" class="mb-5">
+          <ol class="flex flex-wrap items-center gap-1.5 text-sm text-slate-500 dark:text-slate-400">
+            {crumbs.map((c, i) => (
+              <li key={i} class="flex items-center gap-1.5">
+                {i > 0 ? <span class="text-slate-300 dark:text-slate-600" aria-hidden="true">/</span> : null}
+                {c.href && i < crumbs.length - 1 ? (
+                  <a href={c.href} class="transition hover:text-primary-600 dark:hover:text-primary-400">
+                    {c.label}
+                  </a>
+                ) : (
+                  <span
+                    class={
+                      i === crumbs.length - 1
+                        ? 'font-medium text-slate-800 dark:text-slate-100'
+                        : undefined
+                    }
+                    aria-current={i === crumbs.length - 1 ? 'page' : undefined}
+                  >
+                    {c.label}
+                  </span>
+                )}
+              </li>
+            ))}
+          </ol>
+        </nav>
+      ) : null;
+
+      const headingBlock = (
         <>
-          {showCrumbs ? (
-            <nav aria-label="Breadcrumb" class="mb-4">
-              <ol class="flex flex-wrap items-center gap-1 text-sm text-slate-500 dark:text-slate-400">
-                {crumbs.map((c, i) => (
-                  <li key={i} class="flex items-center gap-1">
-                    {i > 0 ? <span aria-hidden="true">/</span> : null}
-                    {c.href && i < crumbs.length - 1 ? (
-                      <a href={c.href} class="hover:text-primary-600 dark:hover:text-primary-400">
-                        {c.label}
-                      </a>
-                    ) : (
-                      <span
-                        class={
-                          i === crumbs.length - 1
-                            ? 'font-medium text-slate-800 dark:text-slate-100'
-                            : undefined
-                        }
-                        aria-current={i === crumbs.length - 1 ? 'page' : undefined}
-                      >
-                        {c.label}
-                      </span>
-                    )}
-                  </li>
-                ))}
-              </ol>
-            </nav>
+          {eyebrow ? (
+            <p class="mb-3 text-xs font-semibold uppercase tracking-widest text-primary-600 dark:text-primary-400">
+              {eyebrow}
+            </p>
           ) : null}
           {showTitle ? (
-            <h1 class="text-3xl font-bold tracking-tight text-slate-900 dark:text-white sm:text-4xl lg:text-5xl">
+            <h1 class="max-w-3xl text-4xl font-bold tracking-tight text-slate-900 dark:text-white sm:text-5xl lg:text-6xl">
               {pageTitle}
             </h1>
           ) : null}
           {str(s, 'subtitle') ? (
-            <p class="mt-3 max-w-2xl text-lg text-slate-600 dark:text-slate-300">{str(s, 'subtitle')}</p>
+            <p class="mt-4 max-w-2xl text-lg leading-relaxed text-slate-600 dark:text-slate-300 sm:text-xl">
+              {str(s, 'subtitle')}
+            </p>
           ) : null}
         </>
       );
+
       if (props.embedded) {
         return (
-          <div class="rounded-2xl bg-slate-100/50 px-6 py-8 backdrop-blur-md dark:bg-slate-800/50 dark:backdrop-blur-none sm:px-8">
-            {body}
+          <div class="relative overflow-hidden rounded-3xl border border-slate-200/60 bg-gradient-to-b from-primary-50/70 via-white/90 to-white px-6 py-10 shadow-sm dark:border-slate-700/60 dark:from-primary-950/30 dark:via-slate-900 dark:to-slate-900 sm:px-10 sm:py-14">
+            <div
+              class="pointer-events-none absolute -right-24 -top-24 h-72 w-72 rounded-full bg-primary-400/25 blur-3xl dark:bg-primary-500/15"
+              aria-hidden="true"
+            />
+            <div
+              class="pointer-events-none absolute -bottom-40 -left-24 h-80 w-80 rounded-full bg-sky-300/20 blur-3xl dark:bg-sky-900/25"
+              aria-hidden="true"
+            />
+            <div class="relative">
+              <AnimatedReveal>
+                {crumbsNav}
+                {headingBlock}
+              </AnimatedReveal>
+            </div>
           </div>
         );
       }
       return (
         <Section variant="muted">
-          <Container>{body}</Container>
+          <Container>
+            <AnimatedReveal>
+              {crumbsNav}
+              {headingBlock}
+            </AnimatedReveal>
+          </Container>
         </Section>
       );
     }

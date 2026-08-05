@@ -43,6 +43,11 @@
     "viewSite": "عرض الموقع",
     "viewPublicPage": "عرض الصفحة العامة"
   },
+  "contactPage": {
+    "address": "العنوان",
+    "email": "البريد الإلكتروني",
+    "phone": "الهاتف"
+  },
   "builderExport": {
     "export": "تصدير",
     "import": "استيراد",

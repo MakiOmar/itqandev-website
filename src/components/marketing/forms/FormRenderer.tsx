@@ -502,11 +502,11 @@ export const FormRenderer = component$<FormRendererProps>((props) => {
   return (
     <div class={props.class || 'mx-auto w-full max-w-3xl'}>
       {heading ? (
-        <h2 class="mb-2 text-2xl font-semibold tracking-tight text-gray-900 dark:text-gray-100">
+        <h2 class="mb-2 text-2xl font-semibold tracking-tight text-slate-900 dark:text-slate-100">
           {heading}
         </h2>
       ) : null}
-      {intro ? <p class="mb-6 text-sm text-gray-600 dark:text-gray-400">{intro}</p> : null}
+      {intro ? <p class="mb-6 text-sm leading-relaxed text-slate-600 dark:text-slate-400">{intro}</p> : null}
 
       <form class="space-y-4" preventdefault:submit onSubmit$={onSubmit$}>
         {layout.rows.map((row) => (
@@ -534,7 +534,7 @@ export const FormRenderer = component$<FormRendererProps>((props) => {
             <input type="hidden" id="form-captcha-token" name="captcha_token" value="" />
             <div id="form-captcha-mount" class="min-h-[1.5rem]" />
             {!captchaReady.value ? (
-              <p class="text-xs text-gray-500">Loading captcha…</p>
+              <p class="text-xs text-slate-500">Loading captcha…</p>
             ) : null}
           </div>
         ) : null}
@@ -548,7 +548,7 @@ export const FormRenderer = component$<FormRendererProps>((props) => {
         <button
           type="submit"
           disabled={submitting.value}
-          class="inline-flex items-center justify-center rounded-lg bg-primary-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-primary-700 disabled:opacity-60"
+          class="inline-flex items-center justify-center rounded-lg border border-primary-300 bg-primary-100 px-5 py-2.5 text-sm font-semibold text-primary-900 transition hover:bg-primary-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 disabled:opacity-60 dark:border-primary-400 dark:bg-primary-100 dark:text-primary-900 dark:hover:bg-primary-200"
         >
           {submitting.value ? '…' : settings.submit_label || 'Submit'}
         </button>
