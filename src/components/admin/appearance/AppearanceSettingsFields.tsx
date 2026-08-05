@@ -119,6 +119,318 @@ const AppearanceSettingFieldControl = component$<FieldControlProps>((props) => {
     );
   }
 
+  if (field.type === 'select') {
+    const options = field.options ?? [];
+    return (
+      <div>
+        <label class="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-300">{label}</label>
+        <select
+          class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm dark:border-gray-600 dark:bg-slate-900"
+          value={asString(raw)}
+          onChange$={async (e) => {
+            await props.onSettingsChange$(
+              writeAppearanceSettingValue(
+                props.values,
+                field.key,
+                (e.target as HTMLSelectElement).value,
+                props.activeLocale,
+                props.defaultLocale,
+                translatable,
+              ),
+            );
+          }}
+        >
+          {options.map((opt) => (
+            <option key={opt.value} value={opt.value}>
+              {opt.label}
+            </option>
+          ))}
+        </select>
+      </div>
+    );
+  }
+
+  if (field.type === 'url' || field.type === 'video' || field.type === 'link') {
+    return (
+      <div class="md:col-span-2">
+        <label class="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-300">{label}</label>
+        <input
+          type="url"
+          class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm dark:border-gray-600 dark:bg-slate-900"
+          value={asString(raw)}
+          dir="ltr"
+          placeholder={field.type === 'video' ? 'https://youtube.com/…' : 'https://'}
+          onInput$={async (e) => {
+            await props.onSettingsChange$(
+              writeAppearanceSettingValue(
+                props.values,
+                field.key,
+                (e.target as HTMLInputElement).value,
+                props.activeLocale,
+                props.defaultLocale,
+                translatable,
+              ),
+            );
+          }}
+        />
+      </div>
+    );
+  }
+
+  if (field.type === 'icon') {
+    return (
+      <div>
+        <label class="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-300">{label}</label>
+        <input
+          type="text"
+          class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm dark:border-gray-600 dark:bg-slate-900"
+          value={asString(raw)}
+          placeholder="star | check | heart"
+          onInput$={async (e) => {
+            await props.onSettingsChange$(
+              writeAppearanceSettingValue(
+                props.values,
+                field.key,
+                (e.target as HTMLInputElement).value,
+                props.activeLocale,
+                props.defaultLocale,
+                translatable,
+              ),
+            );
+          }}
+        />
+      </div>
+    );
+  }
+
+  if (field.type === 'richtext') {
+    return (
+      <div class="md:col-span-2">
+        <label class="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-300">{label}</label>
+        <textarea
+          class="min-h-[8rem] w-full rounded-lg border border-gray-300 bg-white px-3 py-2 font-mono text-sm dark:border-gray-600 dark:bg-slate-900"
+          value={asString(raw)}
+          onInput$={async (e) => {
+            await props.onSettingsChange$(
+              writeAppearanceSettingValue(
+                props.values,
+                field.key,
+                (e.target as HTMLTextAreaElement).value,
+                props.activeLocale,
+                props.defaultLocale,
+                translatable,
+              ),
+            );
+          }}
+        />
+        <p class="mt-1 text-[11px] text-gray-500">HTML allowed</p>
+      </div>
+    );
+  }
+
+  if (field.type === 'repeater') {
+    const rows = Array.isArray(raw) ? (raw as Record<string, unknown>[]) : [];
+    const itemFields = field.item_fields ?? [];
+    return (
+      <div class="md:col-span-2 space-y-3 rounded-lg border border-gray-200 p-3 dark:border-gray-700">
+        <div class="flex items-center justify-between">
+          <span class="text-xs font-medium text-gray-600 dark:text-gray-300">{label}</span>
+          <button
+            type="button"
+            class="rounded border border-gray-300 px-2 py-1 text-xs hover:bg-gray-50 dark:border-gray-600 dark:hover:bg-slate-800"
+            onClick$={async () => {
+              const blank: Record<string, unknown> = {};
+              for (const f of itemFields) blank[f.key] = f.type === 'boolean' ? false : f.type === 'number' ? 0 : f.type === 'repeater' ? [] : '';
+              await props.onSettingsChange$(
+                writeAppearanceSettingValue(
+                  props.values,
+                  field.key,
+                  [...rows, blank],
+                  props.activeLocale,
+                  props.defaultLocale,
+                  translatable,
+                ),
+              );
+            }}
+          >
+            + Add
+          </button>
+        </div>
+        {rows.map((row, rowIndex) => (
+          <div
+            key={rowIndex}
+            class="space-y-2 rounded border border-gray-100 bg-gray-50 p-2 dark:border-gray-800 dark:bg-slate-950"
+          >
+            <div class="flex justify-end">
+              <button
+                type="button"
+                class="text-xs text-red-600"
+                onClick$={async () => {
+                  const next = rows.filter((_, i) => i !== rowIndex);
+                  await props.onSettingsChange$(
+                    writeAppearanceSettingValue(
+                      props.values,
+                      field.key,
+                      next,
+                      props.activeLocale,
+                      props.defaultLocale,
+                      translatable,
+                    ),
+                  );
+                }}
+              >
+                Remove
+              </button>
+            </div>
+            <div class="grid gap-2 md:grid-cols-2">
+              {itemFields.map((sub) => {
+                const subVal = row[sub.key];
+                if (sub.type === 'boolean') {
+                  const checked =
+                    subVal === true || subVal === 'true' || subVal === 1 || subVal === '1';
+                  return (
+                    <div key={sub.key} class="md:col-span-2">
+                      <AdminSwitch
+                        checked={checked}
+                        label={sub.label}
+                        onChange$={async (next) => {
+                          const copy = rows.map((r, i) =>
+                            i === rowIndex ? { ...r, [sub.key]: next } : r,
+                          );
+                          await props.onSettingsChange$(
+                            writeAppearanceSettingValue(
+                              props.values,
+                              field.key,
+                              copy,
+                              props.activeLocale,
+                              props.defaultLocale,
+                              translatable,
+                            ),
+                          );
+                        }}
+                      />
+                    </div>
+                  );
+                }
+                if (sub.type === 'media') {
+                  return (
+                    <div key={sub.key} class="md:col-span-2">
+                      <label class="mb-1 block text-[11px] text-gray-500">{sub.label}</label>
+                      <button
+                        type="button"
+                        class="rounded bg-primary-600 px-2 py-1 text-xs text-white"
+                        onClick$={async () => {
+                          // Nested media uses composite key: parent.rowIndex.subKey via pick handler convention.
+                          await props.onPickMedia$(`${field.key}.${rowIndex}.${sub.key}`, sub.accept);
+                        }}
+                      >
+                        Pick media
+                      </button>
+                      <span class="ms-2 text-xs text-gray-500">
+                        {asString(subVal) || '—'}
+                      </span>
+                    </div>
+                  );
+                }
+                if (sub.type === 'textarea') {
+                  return (
+                    <div key={sub.key} class="md:col-span-2">
+                      <label class="mb-1 block text-[11px] text-gray-500">{sub.label}</label>
+                      <textarea
+                        class="w-full rounded border border-gray-300 bg-white px-2 py-1 text-sm dark:border-gray-600 dark:bg-slate-900"
+                        value={asString(subVal)}
+                        onInput$={async (e) => {
+                          const copy = rows.map((r, i) =>
+                            i === rowIndex
+                              ? { ...r, [sub.key]: (e.target as HTMLTextAreaElement).value }
+                              : r,
+                          );
+                          await props.onSettingsChange$(
+                            writeAppearanceSettingValue(
+                              props.values,
+                              field.key,
+                              copy,
+                              props.activeLocale,
+                              props.defaultLocale,
+                              translatable,
+                            ),
+                          );
+                        }}
+                      />
+                    </div>
+                  );
+                }
+                if (sub.type === 'select') {
+                  return (
+                    <div key={sub.key}>
+                      <label class="mb-1 block text-[11px] text-gray-500">{sub.label}</label>
+                      <select
+                        class="w-full rounded border border-gray-300 bg-white px-2 py-1 text-sm dark:border-gray-600 dark:bg-slate-900"
+                        value={asString(subVal)}
+                        onChange$={async (e) => {
+                          const copy = rows.map((r, i) =>
+                            i === rowIndex
+                              ? { ...r, [sub.key]: (e.target as HTMLSelectElement).value }
+                              : r,
+                          );
+                          await props.onSettingsChange$(
+                            writeAppearanceSettingValue(
+                              props.values,
+                              field.key,
+                              copy,
+                              props.activeLocale,
+                              props.defaultLocale,
+                              translatable,
+                            ),
+                          );
+                        }}
+                      >
+                        {(sub.options ?? []).map((opt) => (
+                          <option key={opt.value} value={opt.value}>
+                            {opt.label}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  );
+                }
+                return (
+                  <div key={sub.key}>
+                    <label class="mb-1 block text-[11px] text-gray-500">{sub.label}</label>
+                    <input
+                      type={sub.type === 'number' ? 'number' : sub.type === 'url' || sub.type === 'video' ? 'url' : 'text'}
+                      class="w-full rounded border border-gray-300 bg-white px-2 py-1 text-sm dark:border-gray-600 dark:bg-slate-900"
+                      value={asString(subVal)}
+                      onInput$={async (e) => {
+                        const v =
+                          sub.type === 'number'
+                            ? Number((e.target as HTMLInputElement).value)
+                            : (e.target as HTMLInputElement).value;
+                        const copy = rows.map((r, i) =>
+                          i === rowIndex ? { ...r, [sub.key]: v } : r,
+                        );
+                        await props.onSettingsChange$(
+                          writeAppearanceSettingValue(
+                            props.values,
+                            field.key,
+                            copy,
+                            props.activeLocale,
+                            props.defaultLocale,
+                            translatable,
+                          ),
+                        );
+                      }}
+                    />
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        ))}
+      </div>
+    );
+  }
+
   if (field.type === 'boolean') {
     const checked = raw === true || raw === 'true' || raw === 1 || raw === '1';
     return (

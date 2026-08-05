@@ -456,6 +456,7 @@ export const CtaHomeSection = component$<HomeSectionSharedProps>(({ settings, ui
     "Tell us about your idea. We'll get back within 24 hours.",
   );
   const buttonLabel = settingString(settings, 'button_label', 'Get in touch');
+  const buttonUrl = settingString(settings, 'button_url', '').trim() || routes.contact;
 
   return (
     <Section>
@@ -466,7 +467,7 @@ export const CtaHomeSection = component$<HomeSectionSharedProps>(({ settings, ui
             <p class="mt-4 text-primary-100">{subtitle}</p>
             <div class="mt-8">
               <Button
-                href={routes.contact}
+                href={buttonUrl}
                 variant="secondary"
                 class="bg-white text-primary-600 hover:bg-primary-50 dark:bg-white dark:text-primary-700 dark:hover:bg-primary-100"
               >

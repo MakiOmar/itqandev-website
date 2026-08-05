@@ -25,6 +25,8 @@ function formatError(err: unknown): string {
 }
 
 export async function fetchAppearanceRegistriesFromBrowser(): Promise<{
+  widgets: AppearanceRegistryEntry[];
+  kits: AppearanceRegistryEntry[];
   homepage_sections: AppearanceRegistryEntry[];
   footer_blocks: AppearanceRegistryEntry[];
   form_fields: FormFieldRegistryEntry[];
@@ -32,13 +34,19 @@ export async function fetchAppearanceRegistriesFromBrowser(): Promise<{
 }> {
   const api = getApiClient(null);
   const res = await api.get<{
+    widgets?: AppearanceRegistryEntry[];
+    kits?: AppearanceRegistryEntry[];
     homepage_sections: AppearanceRegistryEntry[];
     footer_blocks: AppearanceRegistryEntry[];
     form_fields: FormFieldRegistryEntry[];
     form_actions: FormActionRegistryEntry[];
   }>(API_ENDPOINTS.APPEARANCE.REGISTRIES);
+  const kits = res.data?.kits ?? res.data?.homepage_sections ?? [];
+  const widgets = res.data?.widgets ?? [];
   return {
-    homepage_sections: res.data?.homepage_sections ?? [],
+    widgets,
+    kits,
+    homepage_sections: res.data?.homepage_sections ?? kits,
     footer_blocks: res.data?.footer_blocks ?? [],
     form_fields: res.data?.form_fields ?? [],
     form_actions: res.data?.form_actions ?? [],

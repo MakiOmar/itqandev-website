@@ -64,7 +64,7 @@ export default component$(() => {
   useVisibleTask$(async () => {
     try {
       const regs = await fetchAppearanceRegistriesFromBrowser();
-      registry.value = regs.homepage_sections ?? [];
+      registry.value = [...(regs.widgets ?? []), ...(regs.kits ?? regs.homepage_sections ?? [])];
     } catch {
       registry.value = [];
     }

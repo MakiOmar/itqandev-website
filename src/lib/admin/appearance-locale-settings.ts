@@ -1,11 +1,16 @@
 import type { AppearanceSettingField } from '../marketing/appearance-types';
 
-/** Text/textarea are translatable unless explicitly marked false. */
+/** Text/textarea/richtext/repeater are translatable unless explicitly marked false. */
 export function isAppearanceFieldTranslatable(field: AppearanceSettingField): boolean {
   if (typeof field.translatable === 'boolean') {
     return field.translatable;
   }
-  return field.type === 'text' || field.type === 'textarea';
+  return (
+    field.type === 'text' ||
+    field.type === 'textarea' ||
+    field.type === 'richtext' ||
+    field.type === 'repeater'
+  );
 }
 
 export function readAppearanceSettingValue(

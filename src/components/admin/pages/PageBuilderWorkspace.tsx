@@ -20,8 +20,10 @@ import {
 } from '~/lib/marketing/page-layout-utils';
 import {
   isAppearanceFieldTranslatable,
+  readAppearanceSettingValue,
   writeAppearanceSettingValue,
 } from '~/lib/admin/appearance-locale-settings';
+import { HomepageSectionsRenderer } from '~/components/marketing/home-sections/HomepageSectionsRenderer';
 import { appearanceSectionLabel } from '~/lib/i18n/appearance-labels';
 import { translateApp } from '~/lib/i18n/useTranslate';
 import {
@@ -100,6 +102,7 @@ function insertWidgetIntoColumn(
   if (!entry) return null;
   const block: PageLayoutBlock = {
     id: newBlockId(type),
+    kind: entry.kind || 'kit',
     type,
     enabled: true,
     settings: { ...(entry.default_settings ?? {}) },
@@ -237,6 +240,7 @@ function insertWidgetIntoRemaining(
   const span = remaining;
   const block: PageLayoutBlock = {
     id: newBlockId(type),
+    kind: entry.kind || 'kit',
     type,
     enabled: true,
     settings: { ...(entry.default_settings ?? {}) },
@@ -347,6 +351,9 @@ export const PageBuilderWorkspace = component$<PageBuilderWorkspaceProps>((props
   const dragWidgetType = useSignal<string | null>(null);
   const dropColumnKey = useSignal<string | null>(null);
   const dropRowKey = useSignal<string | null>(null);
+  const paletteTab = useSignal<'widgets' | 'kits'>('widgets');
+  const paletteSearch = useSignal('');
+  const showLivePreview = useSignal(false);
 
   const clearDrag$ = $(() => {
     dragBlock.value = null;
@@ -359,9 +366,30 @@ export const PageBuilderWorkspace = component$<PageBuilderWorkspaceProps>((props
     props.sections.value = next;
   });
 
-  const insertable = props.registry.value.filter((entry) =>
-    canInsertBlockType(bands, props.registry.value, entry.type),
-  );
+  const searchQ = paletteSearch.value.trim().toLowerCase();
+  const insertable = props.registry.value
+    .filter((entry) => {
+      const kind = entry.kind || 'kit';
+      if (paletteTab.value === 'widgets' && kind !== 'widget') return false;
+      if (paletteTab.value === 'kits' && kind !== 'kit') return false;
+      if (searchQ) {
+        const hay = `${entry.label} ${entry.type} ${entry.category || ''}`.toLowerCase();
+        if (!hay.includes(searchQ)) return false;
+      }
+      return canInsertBlockType(bands, props.registry.value, entry.type, entry.kind);
+    })
+    .slice();
+
+  const insertableByCategory = (() => {
+    const map = new Map<string, AppearanceRegistryEntry[]>();
+    for (const entry of insertable) {
+      const cat = entry.category || 'General';
+      const list = map.get(cat) || [];
+      list.push(entry);
+      map.set(cat, list);
+    }
+    return Array.from(map.entries());
+  })();
 
   const selectedBlock =
     selection.value?.kind === 'block'
@@ -409,6 +437,20 @@ export const PageBuilderWorkspace = component$<PageBuilderWorkspaceProps>((props
         </div>
         <button
           type="button"
+          class={[
+            'rounded-lg border px-3 py-1.5 text-xs font-medium',
+            showLivePreview.value
+              ? 'border-primary-500 bg-primary-50 text-primary-800 dark:bg-primary-950 dark:text-primary-200'
+              : 'border-gray-300 text-gray-700 dark:border-gray-600 dark:text-gray-200',
+          ].join(' ')}
+          onClick$={() => {
+            showLivePreview.value = !showLivePreview.value;
+          }}
+        >
+          {translateApp(props.lang, 'pages.livePreview')}
+        </button>
+        <button
+          type="button"
           class={ADMIN_PRIMARY_BUTTON_CLASS}
           disabled={props.saving.value}
           onClick$={props.onSave$}
@@ -420,10 +462,48 @@ export const PageBuilderWorkspace = component$<PageBuilderWorkspaceProps>((props
       </header>
 
       <div class="flex min-h-0 flex-1">
-        {/* Widget palette */}
-        <aside class="flex w-64 flex-shrink-0 flex-col border-e border-gray-200 bg-white dark:border-gray-800 dark:bg-slate-900">
-          <div class="border-b border-gray-200 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-gray-500 dark:border-gray-800">
-            {translateApp(props.lang, 'pages.widgets')}
+        {/* Widget / Kits palette */}
+        <aside class="flex w-72 flex-shrink-0 flex-col border-e border-gray-200 bg-white dark:border-gray-800 dark:bg-slate-900">
+          <div class="border-b border-gray-200 px-3 py-2 dark:border-gray-800">
+            <div class="inline-flex w-full rounded-lg border border-gray-300 p-0.5 dark:border-gray-600">
+              <button
+                type="button"
+                class={[
+                  'flex-1 rounded-md px-2 py-1 text-xs font-semibold',
+                  paletteTab.value === 'widgets'
+                    ? 'bg-primary-600 text-white'
+                    : 'text-gray-600 dark:text-gray-300',
+                ].join(' ')}
+                onClick$={() => {
+                  paletteTab.value = 'widgets';
+                }}
+              >
+                {translateApp(props.lang, 'pages.widgetsTab')}
+              </button>
+              <button
+                type="button"
+                class={[
+                  'flex-1 rounded-md px-2 py-1 text-xs font-semibold',
+                  paletteTab.value === 'kits'
+                    ? 'bg-primary-600 text-white'
+                    : 'text-gray-600 dark:text-gray-300',
+                ].join(' ')}
+                onClick$={() => {
+                  paletteTab.value = 'kits';
+                }}
+              >
+                {translateApp(props.lang, 'pages.kitsTab')}
+              </button>
+            </div>
+            <input
+              type="search"
+              class="mt-2 w-full rounded-lg border border-gray-300 bg-white px-2 py-1.5 text-xs dark:border-gray-600 dark:bg-slate-950"
+              placeholder={translateApp(props.lang, 'pages.paletteSearch')}
+              value={paletteSearch.value}
+              onInput$={(e) => {
+                paletteSearch.value = (e.target as HTMLInputElement).value;
+              }}
+            />
           </div>
           <div class="space-y-2 overflow-y-auto p-3">
             <button
@@ -435,15 +515,17 @@ export const PageBuilderWorkspace = component$<PageBuilderWorkspaceProps>((props
             >
               {translateApp(props.lang, 'pages.addBand')}
             </button>
-            <p class="pt-1 text-[11px] font-medium uppercase text-gray-400">
-              {translateApp(props.lang, 'pages.blockWidgets')}
-            </p>
             <p class="text-[11px] text-gray-500 dark:text-gray-400">
               {translateApp(props.lang, 'pages.dragWidgetsHint')}
             </p>
-            {insertable.map((entry) => (
+            {insertableByCategory.map(([category, entries]) => (
+              <div key={category} class="space-y-1.5">
+                <p class="pt-2 text-[10px] font-semibold uppercase tracking-wide text-gray-400">
+                  {category}
+                </p>
+                {entries.map((entry) => (
               <button
-                key={entry.type}
+                key={`${entry.kind || 'kit'}:${entry.type}`}
                 type="button"
                 draggable={true}
                 class="w-full cursor-grab rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-start text-sm font-medium text-gray-800 hover:border-primary-400 hover:bg-primary-50 hover:text-primary-950 active:cursor-grabbing dark:border-gray-700 dark:bg-slate-950 dark:text-gray-100 dark:hover:border-primary-400 dark:hover:bg-slate-800 dark:hover:text-white"
@@ -523,6 +605,8 @@ export const PageBuilderWorkspace = component$<PageBuilderWorkspaceProps>((props
               >
                 {appearanceSectionLabel(props.lang, entry.type, entry.label)}
               </button>
+                ))}
+              </div>
             ))}
           </div>
         </aside>
@@ -539,6 +623,30 @@ export const PageBuilderWorkspace = component$<PageBuilderWorkspaceProps>((props
               {translateApp(props.lang, `pages.device.${previewDevice.value}`)}{' '}
               {translateApp(props.lang, 'pages.previewFrame')}
             </p>
+
+            {showLivePreview.value ? (
+              <div class="mb-4 overflow-hidden rounded-lg border border-primary-200 bg-white dark:border-primary-800 dark:bg-slate-950">
+                <HomepageSectionsRenderer
+                  sections={bands}
+                  uiLocale={props.activeLocale.value || props.defaultLocale}
+                  services={[]}
+                  caseStudies={[]}
+                  testimonials={[]}
+                  blogPosts={[]}
+                  techStack={[]}
+                  branding={{
+                    name: props.pageTitle || 'Preview',
+                    logo: '',
+                    logoDark: '',
+                    logoLight: '',
+                    site_languages: [],
+                    features: {},
+                  }}
+                  allowDefaultSections={false}
+                  layoutAware={true}
+                />
+              </div>
+            ) : null}
 
             {bands.length === 0 ? (
               <div
@@ -1343,10 +1451,13 @@ export const PageBuilderWorkspace = component$<PageBuilderWorkspaceProps>((props
                       max={12}
                       class="mt-1 w-full rounded border border-gray-300 px-2 py-1.5 text-sm dark:border-gray-600 dark:bg-slate-950"
                       value={
-                        normalizeColumnSpans(
-                          bands[selection.value.bandIndex]?.rows[selection.value.rowIndex]
-                            ?.columns[selection.value.colIndex]?.span,
-                        )[device]
+                        selection.value &&
+                        (selection.value.kind === 'column' || selection.value.kind === 'block')
+                          ? normalizeColumnSpans(
+                              bands[selection.value.bandIndex]?.rows[selection.value.rowIndex]
+                                ?.columns[selection.value.colIndex]?.span,
+                            )[device]
+                          : 12
                       }
                       onInput$={async (e) => {
                         const n = Number((e.target as HTMLInputElement).value);
@@ -1463,6 +1574,42 @@ export const PageBuilderWorkspace = component$<PageBuilderWorkspaceProps>((props
             const current = ensurePageLayoutBands(props.sections.value);
             const block = findBlockInBands(current, target.blockId);
             const entry = props.registry.value.find((r) => r.type === block?.type);
+            const nested = /^([a-zA-Z0-9_]+)\.(\d+)\.([a-zA-Z0-9_]+)$/.exec(target.key);
+            if (nested) {
+              const [, parentKey, idxStr, childKey] = nested;
+              const parentField = entry?.settings_fields?.find((f) => f.key === parentKey);
+              const translatable = parentField ? isAppearanceFieldTranslatable(parentField) : false;
+              const locale = props.activeLocale.value;
+              const def = props.defaultLocale;
+              props.sections.value = updateBlockInBands(current, target.blockId, (blk) => {
+                const settings = { ...(blk.settings ?? {}) };
+                const rawRows = readAppearanceSettingValue(
+                  settings,
+                  parentKey,
+                  locale,
+                  def,
+                  translatable,
+                );
+                const rows = Array.isArray(rawRows)
+                  ? (rawRows as Record<string, unknown>[]).map((r) => ({ ...r }))
+                  : [];
+                const idx = Number(idxStr);
+                while (rows.length <= idx) rows.push({});
+                rows[idx] = { ...rows[idx], [childKey]: media.id };
+                return {
+                  ...blk,
+                  settings: writeAppearanceSettingValue(
+                    settings,
+                    parentKey,
+                    rows,
+                    locale,
+                    def,
+                    translatable,
+                  ),
+                };
+              });
+              return;
+            }
             const field = entry?.settings_fields?.find((f) => f.key === target.key);
             const translatable = field ? isAppearanceFieldTranslatable(field) : false;
             props.sections.value = updateBlockInBands(current, target.blockId, (blk) => ({

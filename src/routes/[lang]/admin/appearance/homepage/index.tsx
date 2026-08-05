@@ -55,10 +55,10 @@ export default component$(() => {
         fetchAppearanceRegistriesFromBrowser(),
         fetchHomepageBuilderFromBrowser(),
       ]);
-      registry.value = regs.homepage_sections;
+      registry.value = regs.kits ?? regs.homepage_sections ?? [];
       sections.value = home.sections;
-      if (regs.homepage_sections[0]) {
-        insertType.value = regs.homepage_sections[0].type;
+      if (registry.value[0]) {
+        insertType.value = registry.value[0].type;
       }
       const ids = collectAppearanceMediaIdsFromSections(home.sections);
       if (ids.length > 0) {

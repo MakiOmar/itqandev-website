@@ -565,7 +565,7 @@ Require `Authorization: Bearer` and the `manageSettings` gate (`admin` / `super_
 
 | Method | Path | Body / notes |
 |--------|------|----------------|
-| `GET` | `/api/appearance/registries` | Catalogs with `type`, `label`, `max_instances`, `default_settings`, and typed `settings_fields` (`text` \| `textarea` \| `number` \| `boolean` \| `media` \| `json` \| `color` \| `floating_icons` \| `form`, plus `translatable`). Translatable fields (text/textarea by default; media when flagged, e.g. hero `image` / `image_mobile`) store secondary locales under `settings.translations.{locale}`. Media field values are a **media library id** (int) or a legacy URL/path string. `form` fields store a **published form slug** (string) for the Form section widget. |
+| `GET` | `/api/appearance/registries` | Catalogs: `widgets` (atomic), `kits` (composites), plus alias `homepage_sections` (= kits for one release), `footer_blocks`, `form_fields`, `form_actions`. Each entry has `type`, `kind` (`widget`\|`kit`), `category`, `label`, `max_instances`, `default_settings`, and typed `settings_fields` (`text` \| `textarea` \| `number` \| `boolean` \| `media` \| `json` \| `color` \| `floating_icons` \| `form` \| `select` \| `url` \| `video` \| `richtext` \| `repeater` \| `icon`, plus `translatable` / `options` / `item_fields`). Translatable fields store secondary locales under `settings.translations.{locale}`. Media values are a **media library id** or legacy URL. `form` fields store a **published form slug**. CMS page layout leaves include `kind` on each block. |
 | `GET` | `/api/appearance/homepage` | Full `homepage_builder` document |
 | `PUT` | `/api/appearance/homepage` | `{ "sections": [ … ] }` |
 | `GET` | `/api/appearance/footer` | Full `footer_builder` document |

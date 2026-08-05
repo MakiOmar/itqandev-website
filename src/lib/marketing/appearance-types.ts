@@ -33,6 +33,7 @@ export type PageLayoutStackBelow = 'none' | 'tablet' | 'desktop';
 
 export type PageLayoutBlock = {
   id: string;
+  kind?: 'widget' | 'kit';
   type: HomepageSectionType | string;
   enabled?: boolean;
   settings?: Record<string, unknown>;
@@ -119,7 +120,16 @@ export type AppearanceSettingFieldType =
   | 'json'
   | 'floating_icons'
   | 'color'
-  | 'form';
+  | 'form'
+  | 'select'
+  | 'url'
+  | 'link'
+  | 'video'
+  | 'richtext'
+  | 'repeater'
+  | 'icon'
+  | 'page'
+  | 'menu';
 
 export type AppearanceSettingField = {
   key: string;
@@ -130,6 +140,8 @@ export type AppearanceSettingField = {
   max?: number;
   /** When true, edited per language tab into settings.translations.{locale}. */
   translatable?: boolean;
+  options?: Array<{ value: string; label: string }>;
+  item_fields?: AppearanceSettingField[];
 };
 
 /** Floating ornament icons around the hero media (admin stores media_id; public gets url). */
@@ -151,7 +163,9 @@ export type HeroFloatingIcon = {
 
 export type AppearanceRegistryEntry = {
   type: string;
+  kind?: 'widget' | 'kit';
   label: string;
+  category?: string;
   max_instances: number | null;
   default_settings?: Record<string, unknown>;
   settings_fields?: AppearanceSettingField[];

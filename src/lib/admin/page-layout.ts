@@ -8,6 +8,8 @@ import type {
   HomepageSectionInstance,
   PageLayoutBand,
   PageLayoutBlock,
+  PageLayoutColumn,
+  PageLayoutRow,
   PageSectionNode,
 } from '../marketing/appearance-types';
 import { FULL_COLUMN_SPANS } from '../marketing/appearance-types';
@@ -17,7 +19,7 @@ import {
   normalizeColumnSpans,
 } from '../marketing/page-layout-utils';
 import { collectAppearanceMediaIdsFromSettings } from './appearance-media-ref';
-import { canInsertType, countByType, newBlockId, newColumnId } from './appearance-actions';
+import { canInsertType, newBlockId, newColumnId } from './appearance-actions';
 
 export {
   clampSpan,
@@ -75,6 +77,7 @@ export function wrapLegacySectionAsBand(section: HomepageSectionInstance): PageL
             blocks: [
               {
                 id: section.id || newBlockId(String(section.type)),
+                kind: 'kit',
                 type: section.type,
                 enabled: section.enabled !== false,
                 settings: { ...(section.settings ?? {}) },
@@ -90,9 +93,13 @@ export function wrapLegacySectionAsBand(section: HomepageSectionInstance): PageL
 export function createBandWithBlock(
   registry: AppearanceRegistryEntry[],
   type: string,
+  kind?: 'widget' | 'kit',
 ): PageLayoutBand | null {
-  const entry = registry.find((r) => r.type === type);
+  const entry = registry.find(
+    (r) => r.type === type && (!kind || !r.kind || r.kind === kind),
+  );
   if (!entry) return null;
+  const leafKind = entry.kind || kind || 'kit';
   return {
     id: newBandId(),
     type: 'layout',
@@ -111,6 +118,7 @@ export function createBandWithBlock(
             blocks: [
               {
                 id: newBlockId(type),
+                kind: leafKind,
                 type,
                 enabled: true,
                 settings: { ...(entry.default_settings ?? {}) },
@@ -168,27 +176,37 @@ export function createEmptyRow(columnCount = 2): PageLayoutRow {
 }
 
 export function countBlocksByType(bands: PageLayoutBand[]): Record<string, number> {
-  const blocks: { type: string }[] = [];
+  const counts: Record<string, number> = {};
   for (const band of bands) {
     for (const row of band.rows ?? []) {
       for (const col of row.columns ?? []) {
         for (const block of col.blocks ?? []) {
-          blocks.push(block);
+          const kind = block.kind || 'kit';
+          const key = `${kind}:${block.type}`;
+          counts[key] = (counts[key] ?? 0) + 1;
+          // Legacy type-only key for older callers.
+          counts[block.type] = (counts[block.type] ?? 0) + 1;
         }
       }
     }
   }
-  return countByType(blocks);
+  return counts;
 }
 
 export function canInsertBlockType(
   bands: PageLayoutBand[],
   registry: AppearanceRegistryEntry[],
   type: string,
+  kind?: 'widget' | 'kit',
 ): boolean {
-  const entry = registry.find((r) => r.type === type);
+  const entry = registry.find(
+    (r) => r.type === type && (!kind || !r.kind || r.kind === kind),
+  );
   if (!entry) return false;
-  return canInsertType(type, countBlocksByType(bands), entry.max_instances);
+  const leafKind = entry.kind || kind || 'kit';
+  const counts = countBlocksByType(bands);
+  const used = counts[`${leafKind}:${type}`] ?? counts[type] ?? 0;
+  return canInsertType(type, { [type]: used }, entry.max_instances);
 }
 
 export function mapPageLayoutBands(

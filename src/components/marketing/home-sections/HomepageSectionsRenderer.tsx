@@ -9,6 +9,8 @@ import {
   TestimonialsHomeSection,
 } from '~/components/marketing/home-sections/HomeSections';
 import { FormRenderer } from '~/components/marketing/forms/FormRenderer';
+import { AtomicWidgetView } from '~/components/marketing/widgets/AtomicWidgetView';
+import { ContentKitView } from '~/components/marketing/kits/ContentKitView';
 import { isFeatureModuleEnabled } from '~/lib/api/project-settings';
 import {
   columnSpanClassNames,
@@ -40,6 +42,42 @@ const GAP_CLASS: Record<number, string> = {
   16: 'gap-16',
 };
 
+const WIDGET_TYPES = new Set([
+  'heading',
+  'text',
+  'rich_text',
+  'image',
+  'button',
+  'video',
+  'spacer',
+  'divider',
+  'list',
+  'quote',
+  'badge',
+  'gallery',
+  'icon',
+  'embed',
+  'button_group',
+  'anchor',
+  'map',
+  'social_links',
+]);
+
+const CONTENT_KITS = new Set([
+  'faq',
+  'stats',
+  'pricing',
+  'contact_info',
+  'image_text',
+  'timeline',
+  'team',
+  'feature_grid',
+  'logo_cloud',
+  'accordion_content',
+  'tabs_content',
+  'video_cta',
+]);
+
 export type HomepageSectionsRendererProps = {
   sections?: HomepageSectionInstance[] | PageSectionNode[] | null;
   uiLocale: string;
@@ -62,18 +100,34 @@ export type HomepageSectionsRendererProps = {
 };
 
 function renderBlock(
-  block: { id?: string; type: string; settings?: Record<string, unknown> },
+  block: { id?: string; kind?: string; type: string; settings?: Record<string, unknown> },
   props: HomepageSectionsRendererProps,
 ) {
   const key = block.id || block.type;
   const settings = block.settings ?? {};
   const showTestimonialsModule = isFeatureModuleEnabled(props.branding.features, 'testimonials');
   const showFormsModule = isFeatureModuleEnabled(props.branding.features, 'forms');
+  const showBlogModule = isFeatureModuleEnabled(props.branding.features, 'blog');
+  const showServicesModule = isFeatureModuleEnabled(props.branding.features, 'services');
+  const showProjectsModule = isFeatureModuleEnabled(props.branding.features, 'projects');
+  const kind = block.kind || (WIDGET_TYPES.has(block.type) ? 'widget' : 'kit');
+
+  if (kind === 'widget' || WIDGET_TYPES.has(block.type)) {
+    return (
+      <AtomicWidgetView key={key} type={block.type} settings={settings} uiLocale={props.uiLocale} />
+    );
+  }
+  if (CONTENT_KITS.has(block.type)) {
+    return (
+      <ContentKitView key={key} type={block.type} settings={settings} uiLocale={props.uiLocale} />
+    );
+  }
 
   switch (block.type) {
     case 'hero':
       return <HeroHomeSection key={key} settings={settings} uiLocale={props.uiLocale} />;
     case 'services_teaser':
+      if (!showServicesModule) return null;
       return (
         <ServicesTeaserHomeSection
           key={key}
@@ -83,6 +137,7 @@ function renderBlock(
         />
       );
     case 'case_studies':
+      if (!showProjectsModule) return null;
       return (
         <CaseStudiesHomeSection
           key={key}
@@ -103,6 +158,7 @@ function renderBlock(
     case 'tech_stack':
       return <TechStackHomeSection key={key} settings={settings} techStack={props.techStack} />;
     case 'blog_preview':
+      if (!showBlogModule) return null;
       return (
         <BlogPreviewHomeSection
           key={key}
