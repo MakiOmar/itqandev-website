@@ -57,20 +57,17 @@ export default component$(() => {
   const driver = useSignal('');
   const maxFiles = useSignal(20);
 
-  const reload$ = $(async () => {
-    const res = await fetchDatabaseBackupsFromBrowser();
-    items.value = res.data ?? [];
-    confirmPhrase.value = res.meta?.confirm_phrase || 'CONFIRM';
-    driver.value = res.meta?.driver || '';
-    maxFiles.value = res.meta?.max_files ?? 20;
-  });
-
   // eslint-disable-next-line qwik/no-use-visible-task
   useVisibleTask$(async () => {
     try {
-      await reload$();
+      // Call the plain async helper directly (avoid nested QRL await on first paint).
+      const res = await fetchDatabaseBackupsFromBrowser();
+      items.value = res.data ?? [];
+      confirmPhrase.value = res.meta?.confirm_phrase || 'CONFIRM';
+      driver.value = res.meta?.driver || '';
+      maxFiles.value = res.meta?.max_files ?? 20;
     } catch (e) {
-      showError(translateApp(lang, 'common.error'), {
+      await showError(translateApp(lang, 'common.error'), {
         text: e instanceof Error ? e.message : translateApp(lang, 'system.backupLoadFailed'),
       });
     } finally {
@@ -82,7 +79,8 @@ export default component$(() => {
     busy.value = true;
     try {
       await createDatabaseBackupFromBrowser();
-      await reload$();
+      const res = await fetchDatabaseBackupsFromBrowser();
+      items.value = res.data ?? [];
       await success(translateApp(lang, 'common.success'), {
         text: translateApp(lang, 'system.backupCreated'),
       });
@@ -95,7 +93,11 @@ export default component$(() => {
     }
   });
 
-  const onDownload$ = $(async (filename: string) => {
+  const onDownload$ = $(async (event: Event) => {
+    const filename = (event.currentTarget as HTMLElement | null)?.getAttribute('data-filename');
+    if (!filename) {
+      return;
+    }
     busy.value = true;
     try {
       await downloadDatabaseBackupFromBrowser(filename);
@@ -108,7 +110,11 @@ export default component$(() => {
     }
   });
 
-  const onDelete$ = $(async (filename: string) => {
+  const onDelete$ = $(async (event: Event) => {
+    const filename = (event.currentTarget as HTMLElement | null)?.getAttribute('data-filename');
+    if (!filename) {
+      return;
+    }
     const result = await confirm(translateApp(lang, 'system.backupDeleteConfirm', { filename }), {
       title: translateApp(lang, 'common.confirm'),
       icon: 'warning',
@@ -119,7 +125,8 @@ export default component$(() => {
     busy.value = true;
     try {
       await deleteDatabaseBackupFromBrowser(filename);
-      await reload$();
+      const res = await fetchDatabaseBackupsFromBrowser();
+      items.value = res.data ?? [];
       await success(translateApp(lang, 'common.success'), {
         text: translateApp(lang, 'system.backupDeleted'),
       });
@@ -132,30 +139,27 @@ export default component$(() => {
     }
   });
 
-  const promptRestoreConfirmation$ = $(async (): Promise<string | null> => {
+  const onRestoreStored$ = $(async (event: Event) => {
+    const filename = (event.currentTarget as HTMLElement | null)?.getAttribute('data-filename');
+    if (!filename) {
+      return;
+    }
     const phrase = confirmPhrase.value || 'CONFIRM';
-    const result = await confirm(translateApp(lang, 'system.backupRestoreConfirmText', { phrase }), {
+    const prompt = await confirm(translateApp(lang, 'system.backupRestoreConfirmText', { phrase }), {
       title: translateApp(lang, 'system.backupRestoreTitle'),
       icon: 'warning',
       confirmText: translateApp(lang, 'system.backupRestore'),
       input: 'text',
       inputPlaceholder: phrase,
-      inputValidator: (value: string) => {
-        if (String(value || '') !== phrase) {
-          return translateApp(lang, 'system.backupRestoreMismatch', { phrase });
-        }
-        return null;
-      },
     });
-    if (!result.isConfirmed) {
-      return null;
+    if (!prompt.isConfirmed) {
+      return;
     }
-    return String(result.value || '');
-  });
-
-  const onRestoreStored$ = $(async (filename: string) => {
-    const confirmation = await promptRestoreConfirmation$();
-    if (confirmation === null) {
+    const confirmation = String(prompt.value || '');
+    if (confirmation !== phrase) {
+      await showError(translateApp(lang, 'common.error'), {
+        text: translateApp(lang, 'system.backupRestoreMismatch', { phrase }),
+      });
       return;
     }
     busy.value = true;
@@ -181,8 +185,22 @@ export default component$(() => {
       return;
     }
 
-    const confirmation = await promptRestoreConfirmation$();
-    if (confirmation === null) {
+    const phrase = confirmPhrase.value || 'CONFIRM';
+    const prompt = await confirm(translateApp(lang, 'system.backupRestoreConfirmText', { phrase }), {
+      title: translateApp(lang, 'system.backupRestoreTitle'),
+      icon: 'warning',
+      confirmText: translateApp(lang, 'system.backupRestore'),
+      input: 'text',
+      inputPlaceholder: phrase,
+    });
+    if (!prompt.isConfirmed) {
+      return;
+    }
+    const confirmation = String(prompt.value || '');
+    if (confirmation !== phrase) {
+      await showError(translateApp(lang, 'common.error'), {
+        text: translateApp(lang, 'system.backupRestoreMismatch', { phrase }),
+      });
       return;
     }
 
@@ -275,7 +293,8 @@ export default component$(() => {
                           type="button"
                           class="rounded-lg border border-gray-300 px-2 py-1 text-xs font-medium hover:bg-gray-50 dark:border-gray-600 dark:hover:bg-gray-700"
                           disabled={busy.value}
-                          onClick$={() => onDownload$(item.filename)}
+                          data-filename={item.filename}
+                          onClick$={onDownload$}
                         >
                           {translateApp(lang, 'system.backupDownload')}
                         </button>
@@ -283,7 +302,8 @@ export default component$(() => {
                           type="button"
                           class="rounded-lg border border-amber-400 px-2 py-1 text-xs font-medium text-amber-800 hover:bg-amber-50 dark:text-amber-200 dark:hover:bg-amber-950/40"
                           disabled={busy.value}
-                          onClick$={() => onRestoreStored$(item.filename)}
+                          data-filename={item.filename}
+                          onClick$={onRestoreStored$}
                         >
                           {translateApp(lang, 'system.backupRestore')}
                         </button>
@@ -291,7 +311,8 @@ export default component$(() => {
                           type="button"
                           class="rounded-lg border border-red-300 px-2 py-1 text-xs font-medium text-red-700 hover:bg-red-50 dark:border-red-800 dark:text-red-300 dark:hover:bg-red-950/40"
                           disabled={busy.value}
-                          onClick$={() => onDelete$(item.filename)}
+                          data-filename={item.filename}
+                          onClick$={onDelete$}
                         >
                           {translateApp(lang, 'common.delete')}
                         </button>

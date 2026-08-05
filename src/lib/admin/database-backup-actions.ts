@@ -49,6 +49,27 @@ async function backupFetch(endpoint: string, init: RequestInit = {}): Promise<Re
   const token = getBearerToken();
   if (token) {
     headers[config.auth.tokenHeader] = `Bearer ${token}`;
+  } else if (typeof document !== 'undefined') {
+    // Sanctum cookie sessions need CSRF on mutating requests.
+    const method = (init.method || 'GET').toUpperCase();
+    if (['POST', 'PUT', 'PATCH', 'DELETE'].includes(method)) {
+      const meta = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+      const fromCookie = document.cookie
+        .split(';')
+        .map((c) => c.trim())
+        .find((c) => c.startsWith('XSRF-TOKEN='));
+      const csrf = meta || (fromCookie ? decodeURIComponent(fromCookie.slice('XSRF-TOKEN='.length)) : null);
+      if (csrf) {
+        headers['X-CSRF-TOKEN'] = csrf;
+        headers['X-XSRF-TOKEN'] = csrf;
+      }
+    }
+  }
+
+  // Never force Content-Type for FormData — the browser must set the multipart boundary.
+  if (init.body instanceof FormData) {
+    delete headers['Content-Type'];
+    delete headers['content-type'];
   }
 
   return fetch(url, {
