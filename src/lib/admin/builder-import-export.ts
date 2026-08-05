@@ -4,15 +4,18 @@ import {
   ensureFormSettings,
 } from './form-layout';
 import { ensurePageLayoutBands } from './page-layout';
-import type { HomepageSectionInstance, PageSectionNode } from '~/lib/marketing/appearance-types';
+import type {
+  ChromeBuilderDocument,
+  HomepageSectionInstance,
+  PageSectionNode,
+} from '~/lib/marketing/appearance-types';
 import type { FormActionNode, FormLayoutDocument, FormSettings } from '~/types/form';
-import type { FooterBuilderDocument } from '~/lib/marketing/appearance-types';
 
-/** Shared envelope for every admin visual builder (page, form, homepage, footer, …). */
+/** Shared envelope for every admin visual builder (page, form, homepage, header, footer, …). */
 export const BUILDER_EXPORT_FORMAT = 'credocode.builder-export';
 export const BUILDER_EXPORT_VERSION = 1;
 
-export type BuilderKind = 'page' | 'form' | 'homepage' | 'footer';
+export type BuilderKind = 'page' | 'form' | 'homepage' | 'header' | 'footer';
 
 export type BuilderExportEnvelope<T = unknown> = {
   format: typeof BUILDER_EXPORT_FORMAT;
@@ -29,7 +32,8 @@ export type FormBuilderDocument = {
   settings: FormSettings;
 };
 export type HomepageBuilderDocument = { sections: HomepageSectionInstance[] };
-export type FooterBuilderExportDocument = FooterBuilderDocument;
+export type FooterBuilderExportDocument = ChromeBuilderDocument;
+export type HeaderBuilderExportDocument = ChromeBuilderDocument;
 
 export type BuilderImportErrorCode =
   | 'INVALID_JSON'
@@ -39,7 +43,8 @@ export type BuilderImportErrorCode =
   | 'INVALID_PAGE_DOCUMENT'
   | 'INVALID_FORM_DOCUMENT'
   | 'INVALID_HOMEPAGE_DOCUMENT'
-  | 'INVALID_FOOTER_DOCUMENT';
+  | 'INVALID_FOOTER_DOCUMENT'
+  | 'INVALID_HEADER_DOCUMENT';
 
 export class BuilderImportError extends Error {
   readonly code: BuilderImportErrorCode;
@@ -159,20 +164,16 @@ export function normalizeBuilderDocument(builder: BuilderKind, document: unknown
         sections: normalizeHomepageSections(sections),
       } satisfies HomepageBuilderDocument;
     }
-    case 'footer': {
-      if (!document || typeof document !== 'object' || Array.isArray(document)) {
-        throw new BuilderImportError('INVALID_FOOTER_DOCUMENT');
-      }
-      const d = document as Record<string, unknown>;
-      if (d.mode !== 'hardcoded' && d.mode !== 'builder') {
-        throw new BuilderImportError('INVALID_FOOTER_DOCUMENT');
-      }
-      if (!d.zones || typeof d.zones !== 'object' || Array.isArray(d.zones)) {
-        throw new BuilderImportError('INVALID_FOOTER_DOCUMENT');
+    case 'footer':
+    case 'header': {
+      const sections = asSectionsArray(document);
+      if (!sections) {
+        throw new BuilderImportError(
+          builder === 'header' ? 'INVALID_HEADER_DOCUMENT' : 'INVALID_FOOTER_DOCUMENT',
+        );
       }
       return {
-        mode: d.mode,
-        zones: d.zones,
+        sections: ensurePageLayoutBands(sections as PageSectionNode[]),
       } satisfies FooterBuilderExportDocument;
     }
     default:
@@ -185,7 +186,7 @@ export function normalizeBuilderDocument(builder: BuilderKind, document: unknown
  * Returns the normalized document (not the envelope).
  */
 export function extractBuilderDocument(data: unknown, expectedBuilder: BuilderKind): unknown {
-  if (Array.isArray(data) && (expectedBuilder === 'page' || expectedBuilder === 'homepage')) {
+  if (Array.isArray(data) && (expectedBuilder === 'page' || expectedBuilder === 'homepage' || expectedBuilder === 'header' || expectedBuilder === 'footer')) {
     return normalizeBuilderDocument(expectedBuilder, { sections: data });
   }
 

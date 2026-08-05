@@ -66,50 +66,16 @@ export type PageSectionNode = PageLayoutBand | HomepageSectionInstance;
 
 export const FULL_COLUMN_SPANS: ColumnSpans = { mobile: 12, tablet: 12, desktop: 12 };
 
-export type FooterMode = 'hardcoded' | 'builder';
-
-export type FooterBlockType =
-  | 'brand'
-  | 'contact'
-  | 'social'
-  | 'menu'
-  | 'links'
-  | 'rich_text'
-  | 'cta';
-
-export type FooterBlockInstance = {
-  id: string;
-  type: FooterBlockType | string;
-  enabled?: boolean;
-  settings?: Record<string, unknown>;
+/** Header / footer appearance builder document (page-layout tree). */
+export type ChromeBuilderDocument = {
+  sections: PageSectionNode[];
 };
 
-export type FooterColumnInstance = {
-  id: string;
-  span: number;
-  blocks: FooterBlockInstance[];
-};
+/** @deprecated Alias for ChromeBuilderDocument */
+export type FooterBuilderDocument = ChromeBuilderDocument;
 
-export type FooterZoneInstance = {
-  enabled: boolean;
-  columns: FooterColumnInstance[];
-};
-
-export type FooterBuilderDocument = {
-  mode: FooterMode;
-  zones: {
-    top?: FooterZoneInstance;
-    main?: FooterZoneInstance;
-    bottom?: FooterZoneInstance;
-  };
-};
-
-export type FooterPublicPayload =
-  | { mode: 'hardcoded' }
-  | {
-      mode: 'builder';
-      zones: Partial<Record<'top' | 'main' | 'bottom', FooterZoneInstance>>;
-    };
+export type FooterPublicPayload = ChromeBuilderDocument;
+export type HeaderPublicPayload = ChromeBuilderDocument;
 
 export type AppearanceSettingFieldType =
   | 'text'

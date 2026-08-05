@@ -568,8 +568,11 @@ When `mode` is `custom`, `google_css_href` is omitted and `sources` maps format 
         "settings": {}
       }
     ],
+    "header": {
+      "sections": []
+    },
     "footer": {
-      "mode": "hardcoded"
+      "sections": []
     }
   }
 }
@@ -579,7 +582,7 @@ When `mode` is `custom`, `google_css_href` is omitted and `sources` maps format 
 - `menu` — same shape as `GET /api/public/menus/primary` `data`.
 - `services` — published services array (empty when the `services` feature module is disabled). Same records as `GET /api/public/services`.
 - `homepage_sections` — enabled Appearance builder sections (defaults to the seven marketing homepage types when unset).
-- `footer` — `{ "mode": "hardcoded" }` or `{ "mode": "builder", "zones": { … } }` with enabled zones/columns/blocks. Menu blocks include resolved `settings.items`.
+- `header` / `footer` — page-layout documents `{ "sections": [ … ] }`. Menu kits include resolved `settings.items`.
 
 Cached server-side (~300s) per `locale` + presentation locale key. Legacy endpoints remain available for tools and gradual migration.
 
@@ -589,13 +592,15 @@ Require `Authorization: Bearer` and the `manageSettings` gate (`admin` / `super_
 
 | Method | Path | Body / notes |
 |--------|------|----------------|
-| `GET` | `/api/appearance/registries` | Catalogs: `widgets` (atomic), `kits` (composites), plus alias `homepage_sections` (= kits for one release), `footer_blocks`, `form_fields`, `form_actions`. Each entry has `type`, `kind` (`widget`\|`kit`), `category`, `label`, `max_instances`, `default_settings`, and typed `settings_fields` (`text` \| `textarea` \| `number` \| `boolean` \| `media` \| `json` \| `color` \| `floating_icons` \| `form` \| `select` \| `url` \| `video` \| `richtext` \| `repeater` \| `icon`, plus `translatable` / `options` / `item_fields`). Translatable fields store secondary locales under `settings.translations.{locale}`. Media values are a **media library id** or legacy URL. `form` fields store a **published form slug**. CMS page layout leaves include `kind` on each block. |
+| `GET` | `/api/appearance/registries` | Catalogs: `widgets`, `kits` (includes Header/Footer chrome kits), alias `homepage_sections`, `form_fields`, `form_actions`. |
 | `GET` | `/api/appearance/homepage` | Full `homepage_builder` document |
 | `PUT` | `/api/appearance/homepage` | `{ "sections": [ … ] }` |
-| `GET` | `/api/appearance/footer` | Full `footer_builder` document |
-| `PUT` | `/api/appearance/footer` | `{ "mode": "hardcoded"\|"builder", "zones": { … } }` |
+| `GET` | `/api/appearance/header` | Full `header_builder` document (layout tree) |
+| `PUT` | `/api/appearance/header` | `{ "sections": [ … ] }` |
+| `GET` | `/api/appearance/footer` | Full `footer_builder` document (layout tree; legacy zones migrate on read) |
+| `PUT` | `/api/appearance/footer` | `{ "sections": [ … ] }` |
 
-Persisted under `project-settings.json` keys `homepage_builder` / `footer_builder`. See `docs/CONFIGURATION.md` (Appearance builders).
+Persisted under `project-settings.json` keys `homepage_builder` / `header_builder` / `footer_builder`. See `docs/CONFIGURATION.md` (Appearance builders).
 
 Public shell presentation resolves media fields to URL strings and adds `{key}_alt` from the media library (locale-aware, primary fallback). Legacy URL/path values are kept as URLs with `null` alt (frontend may fall back to headline).
 

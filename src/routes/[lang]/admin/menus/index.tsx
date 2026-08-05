@@ -29,6 +29,7 @@ interface MenuItemNode {
   static_route_key: string | null;
   reference_id: number | null;
   open_in_new_tab: boolean;
+  translations?: Array<{ locale: string; label: string | null }>;
   children: MenuItemNode[];
 }
 
@@ -242,6 +243,7 @@ export default component$(() => {
     static_route_key: 'home',
     reference_id: '',
     label: '',
+    label_ar: '',
     open_in_new_tab: false,
   });
 
@@ -254,6 +256,7 @@ export default component$(() => {
     form.static_route_key = 'home';
     form.reference_id = '';
     form.label = '';
+    form.label_ar = '';
     form.open_in_new_tab = false;
   });
 
@@ -441,6 +444,7 @@ export default component$(() => {
         label: form.label.trim() || null,
         item_type: form.item_type,
         open_in_new_tab: form.open_in_new_tab,
+        translations: [{ locale: 'ar', label: form.label_ar.trim() || null }],
       };
       if (form.item_type === 'custom_link') {
         payload.url = form.url.trim();
@@ -472,6 +476,8 @@ export default component$(() => {
     form.parent_id = item.parent_id;
     form.sort_order = item.sort_order;
     form.label = item.label || '';
+    form.label_ar =
+      item.translations?.find((t) => t.locale === 'ar')?.label?.trim() || '';
     form.item_type = item.item_type as MenuItemType;
     form.url = item.url || '';
     form.static_route_key = item.static_route_key || 'home';
@@ -1114,6 +1120,21 @@ export default component$(() => {
                     value={form.label}
                     onInput$={(e) => {
                       form.label = (e.target as HTMLInputElement).value;
+                    }}
+                  />
+                </div>
+
+                <div class="md:col-span-2">
+                  <label class={labelClass}>
+                    {String(translateApp(lang, 'menusPage.optionalLabel'))} (AR)
+                  </label>
+                  <input
+                    class={inputClass}
+                    type="text"
+                    dir="rtl"
+                    value={form.label_ar}
+                    onInput$={(e) => {
+                      form.label_ar = (e.target as HTMLInputElement).value;
                     }}
                   />
                 </div>

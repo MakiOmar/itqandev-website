@@ -1,19 +1,22 @@
-import { component$, useSignal, useVisibleTask$, $ } from '@builder.io/qwik';
+import { component$, useSignal, useVisibleTask$ } from '@builder.io/qwik';
 import { useLocation } from '@builder.io/qwik-city';
-import { MarketingLink } from '~/components/marketing/MarketingLink';
-import { getConfig } from '~/lib/config';
-import { getLocalizedRoutes } from '~/lib/constants/routes';
-import { marketingRoutes } from '~/lib/marketing/constants';
-import { uiLangFromUrlPathname } from '~/lib/i18n/ui-locale-path';
-import { ThemeToggle } from '~/components/marketing/ThemeToggle';
-import { Button } from '~/components/marketing/Button';
 import { Container } from '~/components/marketing/Container';
-import { UserDropdown } from '~/components/common/UserDropdown';
-import { SiteLanguageSwitcher } from '~/components/common/SiteLanguageSwitcher';
+import { ChromeLayoutRenderer } from '~/components/marketing/chrome/ChromeLayoutRenderer';
+import { uiLangFromUrlPathname } from '~/lib/i18n/ui-locale-path';
 import type { AuthSession } from '~/lib/auth/types';
 import type { PublicNavItem } from '~/lib/marketing/public-menu';
 import type { SiteLanguageRow } from '~/types/site-language';
-import { isFeatureModuleEnabled, type FeatureModuleKey } from '~/lib/api/project-settings';
+import type { FeatureModuleKey } from '~/lib/api/project-settings';
+import type { PageSectionNode } from '~/lib/marketing/appearance-types';
+import { MarketingLink } from '~/components/marketing/MarketingLink';
+import { getConfig } from '~/lib/config';
+import { marketingRoutes } from '~/lib/marketing/constants';
+import { ThemeToggle } from '~/components/marketing/ThemeToggle';
+import { Button } from '~/components/marketing/Button';
+import { SiteLanguageSwitcher } from '~/components/common/SiteLanguageSwitcher';
+import { UserDropdown } from '~/components/common/UserDropdown';
+import { getLocalizedRoutes } from '~/lib/constants/routes';
+import { isFeatureModuleEnabled } from '~/lib/api/project-settings';
 import { getFeatureModuleForPublicHref } from '~/lib/admin/feature-module-routes';
 import { resolveLaravelMediaUrl } from '~/lib/marketing/resolve-laravel-media-url';
 
@@ -22,41 +25,119 @@ interface HeaderBranding {
   logo?: string;
   logoDark?: string;
   logoLight?: string;
-  /** From settings API; used to show the language switcher when multiple UI locales are available */
   site_languages?: SiteLanguageRow[];
 }
 
 interface HeaderProps {
   session?: AuthSession | null;
   branding?: HeaderBranding | null;
-  /** When non-empty, replaces the default marketing nav (from GET /api/public/menus/primary). */
   navItems?: PublicNavItem[] | null;
-  /** Module toggles from GET /api/public/site-meta */
   features?: Partial<Record<FeatureModuleKey, boolean>> & Record<string, boolean>;
-  /**
-   * When true (full-viewport homepage hero), sit over the hero instead of sticky in document flow.
-   */
   overlayNav?: boolean;
+  /** Page-layout document from shell `header.sections`. */
+  headerSections?: PageSectionNode[] | null;
 }
 
 export const Header = component$<HeaderProps>((props) => {
   const menuOpen = useSignal(false);
   const isDarkMode = useSignal(false);
-  const config = getConfig();
   const loc = useLocation();
   const uiLang = uiLangFromUrlPathname(loc.url.pathname);
+  const sections = props.headerSections || [];
+  const useBuilder = sections.length > 0;
+
+  // eslint-disable-next-line qwik/no-use-visible-task
+  useVisibleTask$(({ cleanup }) => {
+    const updateTheme = () => {
+      if (typeof document === 'undefined') return;
+      isDarkMode.value = document.documentElement.classList.contains('dark');
+    };
+    updateTheme();
+    if (typeof document !== 'undefined') {
+      const observer = new MutationObserver(updateTheme);
+      observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
+      cleanup(() => observer.disconnect());
+    }
+  });
+
+  const barClass = props.overlayNav
+    ? 'absolute inset-x-0 top-0 z-40 border-b border-transparent bg-transparent'
+    : 'sticky top-0 z-40 border-b border-slate-200/80 bg-white/90 backdrop-blur dark:border-slate-700/80 dark:bg-slate-900/90';
+
+  if (useBuilder) {
+    const mobileNav = (props.navItems?.length ? props.navItems : []).filter((item) => {
+      const mod = getFeatureModuleForPublicHref(item.href);
+      if (!mod) return true;
+      return isFeatureModuleEnabled(props.features, mod);
+    });
+
+    return (
+      <header class={barClass} data-site-header>
+        <div class="relative py-3">
+          <div class="flex items-center gap-2 px-4 sm:px-6 lg:px-8">
+            <div class="min-w-0 flex-1">
+              <ChromeLayoutRenderer
+                sections={sections}
+                uiLocale={uiLang}
+                branding={props.branding}
+                session={props.session}
+                features={props.features}
+                isDarkMode={isDarkMode.value}
+                bandClass="flex items-center"
+              />
+            </div>
+            {mobileNav.length > 0 ? (
+              <button
+                type="button"
+                class="shrink-0 rounded-lg p-2 text-slate-700 lg:hidden dark:text-slate-200"
+                aria-expanded={menuOpen.value}
+                aria-label="Menu"
+                onClick$={() => {
+                  menuOpen.value = !menuOpen.value;
+                }}
+              >
+                Menu
+              </button>
+            ) : null}
+          </div>
+          {menuOpen.value && mobileNav.length > 0 ? (
+            <nav
+              class="border-t border-slate-200 bg-white/95 px-4 py-3 lg:hidden dark:border-slate-700 dark:bg-slate-900/95"
+              aria-label="Mobile"
+            >
+              <ul class="space-y-1">
+                {mobileNav.map((item) => (
+                  <li key={item.href + item.label}>
+                    <MarketingLink
+                      href={item.href}
+                      class="block rounded-lg px-3 py-2 text-sm text-slate-800 dark:text-slate-200"
+                      onClick$={() => {
+                        menuOpen.value = false;
+                      }}
+                    >
+                      {item.label}
+                    </MarketingLink>
+                  </li>
+                ))}
+              </ul>
+            </nav>
+          ) : null}
+        </div>
+      </header>
+    );
+  }
+
+  // Legacy fallback when shell has no header document.
+  const config = getConfig();
   const MR = marketingRoutes(uiLang);
   const appRoutes = getLocalizedRoutes(uiLang);
-  const loginHref = appRoutes.ADMIN.LOGIN;
-  const user = props.session?.user;
   const brandName = props.branding?.name || config.branding.name;
   const defaultLogo = resolveLaravelMediaUrl(props.branding?.logo || '');
   const lightLogo = resolveLaravelMediaUrl(props.branding?.logoLight || defaultLogo);
   const darkLogo = resolveLaravelMediaUrl(props.branding?.logoDark || defaultLogo);
   const activeLogo = isDarkMode.value
-    ? (darkLogo || lightLogo || defaultLogo)
-    : (lightLogo || darkLogo || defaultLogo);
-
+    ? darkLogo || lightLogo || defaultLogo
+    : lightLogo || darkLogo || defaultLogo;
   const defaultNav: PublicNavItem[] = [
     { label: 'Home', href: MR.home, open_in_new_tab: false },
     { label: 'Services', href: MR.services, open_in_new_tab: false },
@@ -66,217 +147,81 @@ export const Header = component$<HeaderProps>((props) => {
     { label: 'Blog', href: MR.blog, open_in_new_tab: false },
     { label: 'Contact', href: MR.contact, open_in_new_tab: false },
   ];
-
-  const filterByFeatures = (items: PublicNavItem[]) =>
-    items.filter((item) => {
-      const mod = getFeatureModuleForPublicHref(item.href);
-      if (!mod) {
-        return true;
-      }
-      return isFeatureModuleEnabled(props.features, mod);
-    });
-
-  const navLinks = filterByFeatures(
-    props.navItems && props.navItems.length > 0 ? props.navItems : defaultNav,
-  );
-
-  const linkClass =
-    'rounded-lg px-3 py-2 text-sm font-medium light:text-slate-900 light:hover:bg-slate-100 light:hover:text-slate-950 dark:text-slate-200 dark:hover:bg-slate-800 dark:hover:text-white';
-
-  const isExternal = (href: string) => /^https?:\/\//i.test(href);
-
-  // eslint-disable-next-line qwik/no-use-visible-task
-  useVisibleTask$(({ cleanup }) => {
-    const updateTheme = () => {
-      if (typeof document === 'undefined') return;
-      isDarkMode.value = document.documentElement.classList.contains('dark');
-    };
-
-    updateTheme();
-
-    if (typeof document !== 'undefined') {
-      const observer = new MutationObserver(updateTheme);
-      observer.observe(document.documentElement, {
-        attributes: true,
-        attributeFilter: ['class'],
-      });
-
-      cleanup(() => observer.disconnect());
-    }
-  });
-
-  const closeMenu = $(() => {
-    menuOpen.value = false;
+  const navLinks = (props.navItems?.length ? props.navItems : defaultNav).filter((item) => {
+    const mod = getFeatureModuleForPublicHref(item.href);
+    if (!mod) return true;
+    return isFeatureModuleEnabled(props.features, mod);
   });
 
   return (
-    <header
-      class={[
-        'z-40 w-full border-b text-slate-900 backdrop-blur-md light:border-slate-200/80 light:bg-white/80 light:text-slate-900 dark:border-slate-700/80 dark:bg-slate-900/80 dark:text-slate-100',
-        props.overlayNav
-          ? 'absolute inset-x-0 top-0 border-transparent bg-white/70 dark:bg-slate-900/70'
-          : 'sticky top-0 border-slate-200/80 bg-white/80',
-      ].join(' ')}
-      role="banner"
-      data-overlay-nav={props.overlayNav ? 'true' : undefined}
-    >
-      <Container class="flex h-16 w-full items-center justify-between gap-3 md:justify-start sm:h-18">
-        {/* Logo — keep away from main nav cluster */}
-        <MarketingLink
-          href={MR.home}
-          class="inline-flex shrink-0 items-center gap-2 text-xl font-bold light:text-slate-900 dark:text-white"
-          aria-label="Home"
-        >
-          {activeLogo && (
-            <img
-              src={activeLogo}
-              alt={brandName}
-              width={120}
-              height={32}
-              loading="eager"
-              fetchPriority="high"
-              decoding="async"
-              class="h-8 max-w-logo object-contain"
-            />
-          )}
-          {activeLogo ? <span class="sr-only">{brandName}</span> : <span>{brandName}</span>}
-        </MarketingLink>
-
-        {/* Main menu — centered in the middle column on desktop only */}
-        <div class="hidden min-w-0 flex-1 md:flex md:justify-center">
-          <nav class="flex flex-wrap items-center justify-center gap-1" aria-label="Main">
-            {navLinks.map((item, i) => (
-              <span key={`${item.href}-${i}`}>
-                {isExternal(item.href) ? (
-                  <a
-                    href={item.href}
-                    class={linkClass}
-                    target={item.open_in_new_tab ? '_blank' : undefined}
-                    rel={item.open_in_new_tab ? 'noopener noreferrer' : undefined}
-                  >
-                    {item.label}
-                  </a>
-                ) : (
-                  <MarketingLink href={item.href} class={linkClass}>
-                    {item.label}
-                  </MarketingLink>
-                )}
-              </span>
+    <header class={barClass} data-site-header>
+      <Container>
+        <div class="flex h-16 items-center justify-between gap-4">
+          <MarketingLink href={MR.home} class="inline-flex items-center gap-2">
+            {activeLogo ? (
+              <img src={activeLogo} alt={brandName} class="h-8 w-auto" width={120} height={32} />
+            ) : (
+              <span class="text-lg font-bold text-slate-900 dark:text-white">{brandName}</span>
+            )}
+          </MarketingLink>
+          <nav class="hidden items-center gap-1 lg:flex" aria-label="Main">
+            {navLinks.map((item) => (
+              <MarketingLink
+                key={item.href}
+                href={item.href}
+                class="rounded-lg px-3 py-2 text-sm font-medium text-slate-900 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800"
+              >
+                {item.label}
+              </MarketingLink>
             ))}
           </nav>
-        </div>
-
-        {/* Theme, CTA, user menu — language switcher last (furthest from main nav) */}
-        <div class="flex shrink-0 items-center gap-2 md:ml-auto">
-          <ThemeToggle />
-          <div class="hidden sm:flex sm:items-center sm:gap-2">
-            <Button href={MR.contact} variant="primary">
-              Get in touch
-            </Button>
-            {user ? (
-              <UserDropdown user={user} />
+          <div class="flex items-center gap-2">
+            <ThemeToggle />
+            {(props.branding?.site_languages?.length || 0) > 1 ? (
+              <SiteLanguageSwitcher languages={props.branding?.site_languages || []} />
+            ) : null}
+            {props.session?.user ? (
+              <UserDropdown session={props.session} />
             ) : (
-              <Button href={loginHref} variant="outline">
+              <Button href={appRoutes.ADMIN.LOGIN} variant="outline" class="text-sm">
                 Login
               </Button>
             )}
+            <Button href={MR.contact} class="hidden text-sm sm:inline-flex">
+              Get in touch
+            </Button>
+            <button
+              type="button"
+              class="lg:hidden rounded-lg p-2 text-slate-700 dark:text-slate-200"
+              aria-expanded={menuOpen.value}
+              onClick$={() => {
+                menuOpen.value = !menuOpen.value;
+              }}
+            >
+              Menu
+            </button>
           </div>
-          <SiteLanguageSwitcher languages={props.branding?.site_languages} />
-
-          {/* Mobile menu button */}
-          <button
-            type="button"
-            class="rounded-lg p-2 light:text-slate-700 light:hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-700 md:hidden"
-            aria-label="Open menu"
-            aria-expanded={menuOpen.value}
-            onClick$={() => (menuOpen.value = !menuOpen.value)}
-          >
-            <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-              {menuOpen.value ? (
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-              ) : (
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
-              )}
-            </svg>
-          </button>
         </div>
-      </Container>
-
-      {/* Mobile menu */}
-      {menuOpen.value && (
-        <div
-          class="border-t border-slate-200 bg-white/90 backdrop-blur-md light:border-slate-200 light:bg-white/90 light:text-slate-900 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:backdrop-blur-none md:hidden"
-          role="dialog"
-          aria-label="Mobile menu"
-        >
-          <nav class="flex flex-col px-4 py-4" aria-label="Main mobile">
-            {navLinks.map((item, i) => (
-              <div key={`m-${item.href}-${i}`} class="flex flex-col">
-                {isExternal(item.href) ? (
-                  <a
-                    href={item.href}
-                    class="rounded-lg px-3 py-2.5 text-sm font-medium light:text-slate-900 light:hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800"
-                    target={item.open_in_new_tab ? '_blank' : undefined}
-                    rel={item.open_in_new_tab ? 'noopener noreferrer' : undefined}
-                    onClick$={closeMenu}
-                  >
-                    {item.label}
-                  </a>
-                ) : (
+        {menuOpen.value ? (
+          <nav class="border-t border-slate-200 py-3 lg:hidden dark:border-slate-700" aria-label="Mobile">
+            <ul class="space-y-1">
+              {navLinks.map((item) => (
+                <li key={item.href}>
                   <MarketingLink
                     href={item.href}
-                    class="rounded-lg px-3 py-2.5 text-sm font-medium light:text-slate-900 light:hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800"
-                    onClick$={closeMenu}
+                    class="block rounded-lg px-3 py-2 text-sm text-slate-800 dark:text-slate-200"
+                    onClick$={() => {
+                      menuOpen.value = false;
+                    }}
                   >
                     {item.label}
                   </MarketingLink>
-                )}
-                {item.children && item.children.length > 0 ? (
-                  <ul class="ml-3 border-l border-slate-200 py-1 pl-3 dark:border-slate-700">
-                    {item.children.map((child, j) => (
-                      <li key={`mc-${child.href}-${j}`}>
-                        {isExternal(child.href) ? (
-                          <a
-                            href={child.href}
-                            class="block rounded-lg px-3 py-2 text-sm light:text-slate-700 light:hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
-                            target={child.open_in_new_tab ? '_blank' : undefined}
-                            rel={child.open_in_new_tab ? 'noopener noreferrer' : undefined}
-                            onClick$={closeMenu}
-                          >
-                            {child.label}
-                          </a>
-                        ) : (
-                          <MarketingLink
-                            href={child.href}
-                            class="block rounded-lg px-3 py-2 text-sm light:text-slate-700 light:hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
-                            onClick$={closeMenu}
-                          >
-                            {child.label}
-                          </MarketingLink>
-                        )}
-                      </li>
-                    ))}
-                  </ul>
-                ) : null}
-              </div>
-            ))}
-            <div class="mt-4 flex flex-col gap-2 border-t border-slate-200 pt-4 dark:border-slate-700">
-              <Button href={MR.contact} variant="primary" class="w-full justify-center">
-                Get in touch
-              </Button>
-              {user ? (
-                <div class="flex justify-center">
-                  <UserDropdown user={user} />
-                </div>
-              ) : (
-                <Button href={loginHref} variant="outline" class="w-full justify-center">
-                  Login
-                </Button>
-              )}
-            </div>
+                </li>
+              ))}
+            </ul>
           </nav>
-        </div>
-      )}
+        ) : null}
+      </Container>
     </header>
   );
 });

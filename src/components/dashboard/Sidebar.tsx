@@ -236,6 +236,7 @@ export const Sidebar = component$<SidebarProps>((props) => {
       icon: SettingsIcon,
       children: [
         { label: translateApp(lang, 'sidebar.appearanceHomepage'), href: R.ADMIN.APPEARANCE_HOMEPAGE },
+        { label: translateApp(lang, 'sidebar.appearanceHeader'), href: R.ADMIN.APPEARANCE_HEADER },
         { label: translateApp(lang, 'sidebar.appearanceFooter'), href: R.ADMIN.APPEARANCE_FOOTER },
       ],
       roles: ['admin', 'super_admin'],

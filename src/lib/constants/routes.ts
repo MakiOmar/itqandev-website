@@ -24,6 +24,7 @@ export function getLocalizedRoutes(lang: string) {
       SETTINGS_TYPOGRAPHY: L(`${p}/settings/typography`),
       SETTINGS_MARKETING: L(`${p}/settings/marketing`),
       APPEARANCE_HOMEPAGE: L(`${p}/appearance/homepage`),
+      APPEARANCE_HEADER: L(`${p}/appearance/header`),
       APPEARANCE_FOOTER: L(`${p}/appearance/footer`),
       FONTS: L(`${p}/fonts`),
       FONTS_NEW: L(`${p}/fonts/new`),

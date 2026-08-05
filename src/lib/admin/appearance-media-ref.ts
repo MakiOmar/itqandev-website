@@ -94,7 +94,16 @@ export function collectAppearanceMediaIdsFromSections(
   return Array.from(ids);
 }
 
+/** Collect media ids from chrome layout docs (`sections` tree or legacy `zones`). */
 export function collectAppearanceMediaIdsFromFooterDoc(doc: {
+  sections?: Array<{
+    settings?: Record<string, unknown>;
+    rows?: Array<{
+      columns?: Array<{
+        blocks?: Array<{ settings?: Record<string, unknown> }>;
+      }>;
+    }>;
+  }>;
   zones?: Partial<
     Record<
       string,
@@ -107,6 +116,23 @@ export function collectAppearanceMediaIdsFromFooterDoc(doc: {
   >;
 } | null | undefined): number[] {
   const ids = new Set<number>();
+  if (Array.isArray(doc?.sections) && doc.sections.length > 0) {
+    for (const band of doc.sections) {
+      for (const id of collectAppearanceMediaIdsFromSettings(band?.settings)) {
+        ids.add(id);
+      }
+      for (const row of band?.rows ?? []) {
+        for (const col of row.columns ?? []) {
+          for (const block of col.blocks ?? []) {
+            for (const id of collectAppearanceMediaIdsFromSettings(block.settings)) {
+              ids.add(id);
+            }
+          }
+        }
+      }
+    }
+    return Array.from(ids);
+  }
   if (!doc?.zones) return [];
   for (const zone of Object.values(doc.zones)) {
     if (!zone?.columns) continue;

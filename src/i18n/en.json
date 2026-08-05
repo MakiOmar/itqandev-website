@@ -88,7 +88,8 @@
       "INVALID_PAGE_DOCUMENT": "Invalid page builder layout in this file.",
       "INVALID_FORM_DOCUMENT": "Invalid form builder layout in this file.",
       "INVALID_HOMEPAGE_DOCUMENT": "Invalid homepage builder layout in this file.",
-      "INVALID_FOOTER_DOCUMENT": "Invalid footer builder layout in this file."
+      "INVALID_FOOTER_DOCUMENT": "Invalid footer builder layout in this file.",
+      "INVALID_HEADER_DOCUMENT": "Invalid header builder layout in this file."
     }
   },
   "contentExport": {
@@ -785,6 +786,7 @@
     "settings": "Settings",
     "appearance": "Appearance",
     "appearanceHomepage": "Homepage",
+    "appearanceHeader": "Header",
     "appearanceFooter": "Footer",
     "profile": "Profile",
     "activityLogs": "Activity Logs",

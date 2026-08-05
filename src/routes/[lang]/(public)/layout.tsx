@@ -90,6 +90,7 @@ export default component$(() => {
             navItems={primaryMenu.value}
             features={branding.value?.features}
             overlayNav={overlayNav}
+            headerSections={shellLoader.value.header?.sections ?? []}
           />
           <main class="flex-1 overflow-y-auto">
             <Slot />

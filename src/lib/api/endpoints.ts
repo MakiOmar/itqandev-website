@@ -26,6 +26,7 @@ export const API_ENDPOINTS = {
   APPEARANCE: {
     REGISTRIES: '/appearance/registries',
     HOMEPAGE: '/appearance/homepage',
+    HEADER: '/appearance/header',
     FOOTER: '/appearance/footer',
   },
   // Fonts (self-hosted typography library)

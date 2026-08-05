@@ -17,7 +17,9 @@ import { isDevSsrMarketingFetchFailure } from './ssr-api-reachability';
 import {
   defaultHomepageSections,
   type FooterPublicPayload,
+  type HeaderPublicPayload,
   type HomepageSectionInstance,
+  type PageSectionNode,
 } from './appearance-types';
 
 const localBase = siteData as SiteContent;
@@ -38,6 +40,7 @@ export type PublicShellState = {
   primaryMenu: PublicNavItem[];
   siteContent: SiteContent;
   homepageSections: HomepageSectionInstance[];
+  header: HeaderPublicPayload;
   footer: FooterPublicPayload;
 };
 
@@ -46,8 +49,23 @@ type PublicShellApiData = {
   menu?: { items?: PublicNavItem[] };
   services?: Record<string, unknown>[];
   homepage_sections?: HomepageSectionInstance[];
+  header?: HeaderPublicPayload;
   footer?: FooterPublicPayload;
 };
+
+function emptyChrome(): { sections: PageSectionNode[] } {
+  return { sections: [] };
+}
+
+function normalizeChromePayload(raw: unknown): { sections: PageSectionNode[] } {
+  if (!raw || typeof raw !== 'object') {
+    return emptyChrome();
+  }
+  const sections = (raw as { sections?: unknown }).sections;
+  return {
+    sections: Array.isArray(sections) ? (sections as PageSectionNode[]) : [],
+  };
+}
 
 function normalizeServiceFromPublicApi(raw: Record<string, unknown>): Service {
   return {
@@ -123,7 +141,8 @@ function localShellFallback(): PublicShellState {
     primaryMenu: [],
     siteContent: base,
     homepageSections: defaultHomepageSections(),
-    footer: { mode: 'hardcoded' },
+    header: emptyChrome(),
+    footer: emptyChrome(),
   };
 }
 
@@ -137,17 +156,14 @@ function mapShellApiPayload(data: PublicShellApiData, fallbackName: string): Pub
   const homepageSections = Array.isArray(data.homepage_sections) && data.homepage_sections.length > 0
     ? data.homepage_sections
     : defaultHomepageSections();
-  const footer: FooterPublicPayload =
-    data.footer && typeof data.footer === 'object' && data.footer.mode === 'builder'
-      ? data.footer
-      : { mode: 'hardcoded' };
 
   return {
     branding: brandingFromSiteMeta(siteMeta, fallbackName),
     primaryMenu: menuItems,
     siteContent: mergeShellServicesIntoSiteContent(base, data.services),
     homepageSections,
-    footer,
+    header: normalizeChromePayload(data.header),
+    footer: normalizeChromePayload(data.footer),
   };
 }
 

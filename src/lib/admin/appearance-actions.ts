@@ -2,11 +2,13 @@ import { getApiClient } from '../api/client';
 import { API_ENDPOINTS } from '../api/endpoints';
 import type {
   AppearanceRegistryEntry,
-  FooterBuilderDocument,
+  ChromeBuilderDocument,
   HomepageSectionInstance,
+  PageSectionNode,
 } from '../marketing/appearance-types';
 import type { FormActionRegistryEntry, FormFieldRegistryEntry } from '../../types/form';
 import { appearanceMediaId } from './appearance-media-ref';
+import { ensurePageLayoutBands } from './page-layout';
 
 /** Prefer Laravel/ApiError `.message` (plain objects), then Error, then fallback. */
 export function formatAppearanceError(err: unknown, fallback = 'Request failed'): string {
@@ -28,7 +30,6 @@ export async function fetchAppearanceRegistriesFromBrowser(): Promise<{
   widgets: AppearanceRegistryEntry[];
   kits: AppearanceRegistryEntry[];
   homepage_sections: AppearanceRegistryEntry[];
-  footer_blocks: AppearanceRegistryEntry[];
   form_fields: FormFieldRegistryEntry[];
   form_actions: FormActionRegistryEntry[];
 }> {
@@ -37,7 +38,6 @@ export async function fetchAppearanceRegistriesFromBrowser(): Promise<{
     widgets?: AppearanceRegistryEntry[];
     kits?: AppearanceRegistryEntry[];
     homepage_sections: AppearanceRegistryEntry[];
-    footer_blocks: AppearanceRegistryEntry[];
     form_fields: FormFieldRegistryEntry[];
     form_actions: FormActionRegistryEntry[];
   }>(API_ENDPOINTS.APPEARANCE.REGISTRIES);
@@ -47,7 +47,6 @@ export async function fetchAppearanceRegistriesFromBrowser(): Promise<{
     widgets,
     kits,
     homepage_sections: res.data?.homepage_sections ?? kits,
-    footer_blocks: res.data?.footer_blocks ?? [],
     form_fields: res.data?.form_fields ?? [],
     form_actions: res.data?.form_actions ?? [],
   };
@@ -82,30 +81,49 @@ export async function saveHomepageBuilderFromBrowser(
   }
 }
 
-export async function fetchFooterBuilderFromBrowser(): Promise<FooterBuilderDocument> {
+export async function fetchFooterBuilderFromBrowser(): Promise<ChromeBuilderDocument> {
   const api = getApiClient(null);
-  const res = await api.get<FooterBuilderDocument>(API_ENDPOINTS.APPEARANCE.FOOTER);
-  return (
-    res.data ?? {
-      mode: 'hardcoded',
-      zones: {
-        top: { enabled: false, columns: [] },
-        main: { enabled: true, columns: [] },
-        bottom: { enabled: true, columns: [] },
-      },
-    }
-  );
+  const res = await api.get<ChromeBuilderDocument>(API_ENDPOINTS.APPEARANCE.FOOTER);
+  const sections = ensurePageLayoutBands((res.data?.sections ?? []) as PageSectionNode[]);
+  return { sections };
 }
 
 export async function saveFooterBuilderFromBrowser(
-  doc: FooterBuilderDocument,
-): Promise<{ success: boolean; message?: string; error?: string; data?: FooterBuilderDocument }> {
+  doc: ChromeBuilderDocument,
+): Promise<{ success: boolean; message?: string; error?: string; data?: ChromeBuilderDocument }> {
   try {
     const api = getApiClient(null);
-    const res = await api.put<FooterBuilderDocument>(API_ENDPOINTS.APPEARANCE.FOOTER, doc);
+    const res = await api.put<ChromeBuilderDocument>(API_ENDPOINTS.APPEARANCE.FOOTER, {
+      sections: doc.sections,
+    });
     return {
       success: true,
       message: (res as { message?: string }).message || 'Footer layout saved.',
+      data: res.data,
+    };
+  } catch (err) {
+    return { success: false, error: formatError(err) };
+  }
+}
+
+export async function fetchHeaderBuilderFromBrowser(): Promise<ChromeBuilderDocument> {
+  const api = getApiClient(null);
+  const res = await api.get<ChromeBuilderDocument>(API_ENDPOINTS.APPEARANCE.HEADER);
+  const sections = ensurePageLayoutBands((res.data?.sections ?? []) as PageSectionNode[]);
+  return { sections };
+}
+
+export async function saveHeaderBuilderFromBrowser(
+  doc: ChromeBuilderDocument,
+): Promise<{ success: boolean; message?: string; error?: string; data?: ChromeBuilderDocument }> {
+  try {
+    const api = getApiClient(null);
+    const res = await api.put<ChromeBuilderDocument>(API_ENDPOINTS.APPEARANCE.HEADER, {
+      sections: doc.sections,
+    });
+    return {
+      success: true,
+      message: (res as { message?: string }).message || 'Header layout saved.',
       data: res.data,
     };
   } catch (err) {
