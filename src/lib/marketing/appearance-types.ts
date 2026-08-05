@@ -9,7 +9,8 @@ export type HomepageSectionType =
   | 'testimonials'
   | 'tech_stack'
   | 'blog_preview'
-  | 'cta';
+  | 'cta'
+  | 'form';
 
 export type HomepageSectionInstance = {
   id: string;
@@ -117,7 +118,8 @@ export type AppearanceSettingFieldType =
   | 'media'
   | 'json'
   | 'floating_icons'
-  | 'color';
+  | 'color'
+  | 'form';
 
 export type AppearanceSettingField = {
   key: string;

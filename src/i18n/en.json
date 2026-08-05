@@ -774,7 +774,8 @@
       "testimonials": "Testimonials",
       "tech_stack": "Tech stack",
       "blog_preview": "Blog preview",
-      "cta": "Call to action"
+      "cta": "Call to action",
+      "form": "Form"
     },
     "fields": {
       "headline": "Headline",
@@ -788,6 +789,7 @@
       "subtitle": "Subtitle",
       "limit": "Limit",
       "button_label": "Button label",
+      "form_slug": "Form",
       "full_viewport": "Full viewport height (100vh)",
       "nav_top_space": "Top space under nav (px)",
       "watermark_enabled": "Faded background text",
@@ -813,6 +815,12 @@
     "floatingSize": "Size (px)",
     "noImage": "No image",
     "selectFromLibrary": "Select from library",
+    "selectForm": "Select a form…",
+    "formsLoading": "Loading forms…",
+    "formsLoadFailed": "Could not load forms.",
+    "noPublishedForms": "No published forms yet. Publish a form in Forms, then refresh.",
+    "formUnavailable": "not in list",
+    "formNotPublished": "draft",
     "clear": "Clear",
     "orPasteUrl": "Or paste URL",
     "language": "Language",

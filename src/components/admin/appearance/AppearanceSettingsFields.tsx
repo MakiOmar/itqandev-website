@@ -1,5 +1,6 @@
 import { component$, type QRL } from '@builder.io/qwik';
 import { AdminSwitch } from './AdminSwitch';
+import { FormSlugSelectField } from './FormSlugSelectField';
 import { HeroFloatingIconsEditor } from './HeroFloatingIconsEditor';
 import {
   isAppearanceFieldTranslatable,
@@ -93,6 +94,28 @@ const AppearanceSettingFieldControl = component$<FieldControlProps>((props) => {
           onPreviewUrl$={props.onMediaPreview$}
         />
       </div>
+    );
+  }
+
+  if (field.type === 'form') {
+    return (
+      <FormSlugSelectField
+        lang={props.lang}
+        label={label}
+        value={asString(raw)}
+        onChange$={async (slug) => {
+          await props.onSettingsChange$(
+            writeAppearanceSettingValue(
+              props.values,
+              field.key,
+              slug,
+              props.activeLocale,
+              props.defaultLocale,
+              translatable,
+            ),
+          );
+        }}
+      />
     );
   }
 

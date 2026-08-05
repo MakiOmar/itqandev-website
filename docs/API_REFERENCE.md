@@ -565,7 +565,7 @@ Require `Authorization: Bearer` and the `manageSettings` gate (`admin` / `super_
 
 | Method | Path | Body / notes |
 |--------|------|----------------|
-| `GET` | `/api/appearance/registries` | Catalogs with `type`, `label`, `max_instances`, `default_settings`, and typed `settings_fields` (`text` \| `textarea` \| `number` \| `boolean` \| `media` \| `json`, plus `translatable`). Translatable fields (text/textarea by default; media when flagged, e.g. hero `image` / `image_mobile`) store secondary locales under `settings.translations.{locale}`. Media field values are a **media library id** (int) or a legacy URL/path string. |
+| `GET` | `/api/appearance/registries` | Catalogs with `type`, `label`, `max_instances`, `default_settings`, and typed `settings_fields` (`text` \| `textarea` \| `number` \| `boolean` \| `media` \| `json` \| `color` \| `floating_icons` \| `form`, plus `translatable`). Translatable fields (text/textarea by default; media when flagged, e.g. hero `image` / `image_mobile`) store secondary locales under `settings.translations.{locale}`. Media field values are a **media library id** (int) or a legacy URL/path string. `form` fields store a **published form slug** (string) for the Form section widget. |
 | `GET` | `/api/appearance/homepage` | Full `homepage_builder` document |
 | `PUT` | `/api/appearance/homepage` | `{ "sections": [ … ] }` |
 | `GET` | `/api/appearance/footer` | Full `footer_builder` document |

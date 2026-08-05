@@ -774,7 +774,8 @@
       "testimonials": "الشهادات",
       "tech_stack": "التقنيات",
       "blog_preview": "معاينة المدونة",
-      "cta": "دعوة لاتخاذ إجراء"
+      "cta": "دعوة لاتخاذ إجراء",
+      "form": "نموذج"
     },
     "fields": {
       "headline": "العنوان الرئيسي",
@@ -788,6 +789,7 @@
       "subtitle": "الوصف",
       "limit": "الحد",
       "button_label": "نص الزر",
+      "form_slug": "النموذج",
       "full_viewport": "ارتفاع الشاشة بالكامل (100vh)",
       "nav_top_space": "مسافة علوية تحت الشريط (بكسل)",
       "watermark_enabled": "نص باهت في الخلفية",
@@ -813,6 +815,12 @@
     "floatingSize": "الحجم (بكسل)",
     "noImage": "لا توجد صورة",
     "selectFromLibrary": "اختر من المكتبة",
+    "selectForm": "اختر نموذجاً…",
+    "formsLoading": "جاري تحميل النماذج…",
+    "formsLoadFailed": "تعذّر تحميل النماذج.",
+    "noPublishedForms": "لا توجد نماذج منشورة بعد. انشر نموذجاً من النماذج ثم حدّث الصفحة.",
+    "formUnavailable": "غير موجود في القائمة",
+    "formNotPublished": "مسودة",
     "clear": "مسح",
     "orPasteUrl": "أو الصق رابطاً",
     "language": "اللغة",
