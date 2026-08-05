@@ -7,6 +7,10 @@ import {
   ensureFormSettings,
   previewFieldSpanClass,
 } from '~/lib/admin/form-layout';
+import {
+  fieldUsesWesternDigits,
+  normalizeWesternDigits,
+} from '~/lib/forms/western-digits';
 import type {
   FormFieldNode,
   FormFieldSpan,
@@ -14,6 +18,15 @@ import type {
   FormSettings,
   PublicFormDefinition,
 } from '~/types/form';
+
+/** Convert Eastern/Persian digits as the user types into email/tel fields. */
+const onWesternDigitsInput$ = $((e: Event) => {
+  const el = e.target as HTMLInputElement;
+  const next = normalizeWesternDigits(el.value);
+  if (next !== el.value) {
+    el.value = next;
+  }
+});
 
 export type FormRendererProps = {
   /** Public form slug */
@@ -259,10 +272,13 @@ function renderFieldControl(field: FormFieldNode) {
               ? 'date'
               : 'text';
 
+  const westernDigits = fieldUsesWesternDigits(field.type);
+
   return (
     <label class="block text-sm font-medium text-gray-800 dark:text-gray-200">
       {label}
       {required ? ' *' : ''}
+      {/* Email/tel stay LTR with Western digits even on RTL pages. */}
       <input
         class={inputClass}
         type={inputType}
@@ -271,6 +287,11 @@ function renderFieldControl(field: FormFieldNode) {
         required={required}
         min={s.min != null ? String(s.min) : undefined}
         max={s.max != null ? String(s.max) : undefined}
+        dir={westernDigits ? 'ltr' : undefined}
+        inputMode={
+          field.type === 'email' ? 'email' : field.type === 'tel' ? 'tel' : undefined
+        }
+        onInput$={westernDigits ? onWesternDigitsInput$ : undefined}
       />
       {help ? <span class="mt-1 block text-xs text-gray-500">{help}</span> : null}
     </label>
