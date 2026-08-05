@@ -2,6 +2,7 @@
 import { component$, useSignal, $, type QRL } from '@builder.io/qwik';
 import { LoadingSpinner } from './LoadingSpinner';
 import { EmptyState } from './EmptyState';
+import { ADMIN_CHECKBOX_CLASS } from '../lib/admin/native-select-classes';
 
 export interface Column<T> {
   key: keyof T | string;
@@ -167,7 +168,7 @@ export const DataTable = component$<DataTableProps<any>>((props) => {
                       const getId = props.selection.getId;
                       handleSelectAll(checked, data, selected, selectionOnSelect, getId);
                     }}
-                    class="rounded border-gray-300 dark:border-gray-600"
+                    class={ADMIN_CHECKBOX_CLASS}
                   />
                 </th>
               )}
@@ -217,7 +218,7 @@ export const DataTable = component$<DataTableProps<any>>((props) => {
                         const selected = props.selection.selected;
                         handleSelectItem(id, checked, selected, selectionOnSelect);
                       }}
-                      class="rounded border-gray-300 dark:border-gray-600"
+                      class={ADMIN_CHECKBOX_CLASS}
                     />
                   </td>
                 )}

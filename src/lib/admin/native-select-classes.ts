@@ -36,3 +36,14 @@ export const ADMIN_BACK_BUTTON_CLASS =
 
 export const ADMIN_PRIMARY_BUTTON_CLASS =
   'rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-primary-700 disabled:opacity-60';
+
+/**
+ * Native checkbox — border always visible; filled primary when checked.
+ * Pair with ADMIN_CHECKBOX_LABEL_CLASS. Global admin/site CSS also styles bare checkboxes.
+ */
+export const ADMIN_CHECKBOX_CLASS =
+  'h-4 w-4 shrink-0 cursor-pointer rounded border border-slate-400 bg-white text-primary-600 [color-scheme:light] checked:border-primary-600 checked:bg-primary-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-300 disabled:cursor-not-allowed disabled:opacity-45 dark:border-slate-400 dark:bg-slate-800 dark:[color-scheme:dark] dark:checked:border-primary-500 dark:checked:bg-primary-500';
+
+/** Inline label wrapping a checkbox + text. */
+export const ADMIN_CHECKBOX_LABEL_CLASS =
+  'inline-flex cursor-pointer items-center gap-2 text-sm text-gray-800 select-none dark:text-gray-200';

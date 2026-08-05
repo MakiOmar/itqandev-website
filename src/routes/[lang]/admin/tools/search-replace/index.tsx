@@ -7,6 +7,8 @@ import { auth } from '../../../../../lib/auth';
 import { routesFromPreferredCookie } from '../../../../../lib/constants/routes';
 import { useSwal } from '../../../../../lib/hooks/useSwal';
 import {
+  ADMIN_CHECKBOX_CLASS,
+  ADMIN_CHECKBOX_LABEL_CLASS,
   ADMIN_FORM_INPUT_CLASS,
   ADMIN_FORM_LABEL_CLASS,
   ADMIN_PRIMARY_BUTTON_CLASS,
@@ -255,7 +257,7 @@ export default component$(() => {
               >
                 <input
                   type="checkbox"
-                  class="mt-0.5"
+                  class={`mt-0.5 ${ADMIN_CHECKBOX_CLASS}`}
                   checked={!!selected.value[t.name]}
                   onChange$={(e) => {
                     selected.value = {
@@ -313,10 +315,11 @@ export default component$(() => {
           </div>
         </div>
 
-        <div class="mt-4 flex flex-wrap gap-4 text-sm text-gray-800 dark:text-gray-200">
-          <label class="inline-flex items-center gap-2">
+        <div class="mt-4 flex flex-wrap gap-4">
+          <label class={ADMIN_CHECKBOX_LABEL_CLASS}>
             <input
               type="checkbox"
+              class={ADMIN_CHECKBOX_CLASS}
               checked={dryRun.value}
               onChange$={(e) => {
                 dryRun.value = (e.target as HTMLInputElement).checked;
@@ -324,9 +327,10 @@ export default component$(() => {
             />
             {translateApp(lang, 'tools.searchReplace.dryRun')}
           </label>
-          <label class="inline-flex items-center gap-2">
+          <label class={ADMIN_CHECKBOX_LABEL_CLASS}>
             <input
               type="checkbox"
+              class={ADMIN_CHECKBOX_CLASS}
               checked={caseSensitive.value}
               onChange$={(e) => {
                 caseSensitive.value = (e.target as HTMLInputElement).checked;
@@ -334,9 +338,10 @@ export default component$(() => {
             />
             {translateApp(lang, 'tools.searchReplace.caseSensitive')}
           </label>
-          <label class="inline-flex items-center gap-2">
+          <label class={ADMIN_CHECKBOX_LABEL_CLASS}>
             <input
               type="checkbox"
+              class={ADMIN_CHECKBOX_CLASS}
               checked={ignoreSlugs.value}
               onChange$={(e) => {
                 ignoreSlugs.value = (e.target as HTMLInputElement).checked;
