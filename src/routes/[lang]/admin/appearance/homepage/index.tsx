@@ -24,6 +24,8 @@ import {
   writeAppearanceSettingValue,
 } from '~/lib/admin/appearance-locale-settings';
 import { collectAppearanceMediaIdsFromSections } from '~/lib/admin/appearance-media-ref';
+import { BuilderImportExportButtons } from '~/components/admin/BuilderImportExportButtons';
+import type { HomepageBuilderDocument } from '~/lib/admin/builder-import-export';
 import type {
   AppearanceRegistryEntry,
   HomepageSectionInstance,
@@ -128,14 +130,35 @@ export default component$(() => {
             {translateApp(lang, 'appearance.homepageSubtitle')}
           </p>
         </div>
-        <button
-          type="button"
-          disabled={saving.value || loading.value}
-          onClick$={save}
-          class="rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white hover:bg-primary-700 disabled:opacity-50"
-        >
-          {saving.value ? translateApp(lang, 'common.loading') : translateApp(lang, 'common.save')}
-        </button>
+        <div class="flex flex-wrap items-center gap-2">
+          <BuilderImportExportButtons
+            lang={lang}
+            builder="homepage"
+            filenameBase="homepage"
+            disabled={saving.value || loading.value}
+            getDocument$={$(() => ({ sections: sections.value }))}
+            applyDocument$={$(async (document) => {
+              const doc = document as HomepageBuilderDocument;
+              sections.value = doc.sections;
+              expandedId.value = null;
+              const ids = collectAppearanceMediaIdsFromSections(doc.sections);
+              if (ids.length > 0) {
+                mediaPreviewById.value = await hydrateAppearanceMediaPreviews(
+                  ids,
+                  mediaPreviewById.value,
+                );
+              }
+            })}
+          />
+          <button
+            type="button"
+            disabled={saving.value || loading.value}
+            onClick$={save}
+            class="rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white hover:bg-primary-700 disabled:opacity-50"
+          >
+            {saving.value ? translateApp(lang, 'common.loading') : translateApp(lang, 'common.save')}
+          </button>
+        </div>
       </div>
 
       {loading.value ? (

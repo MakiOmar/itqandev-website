@@ -11,6 +11,8 @@ import {
   saveFooterBuilderFromBrowser,
 } from '~/lib/admin/appearance-actions';
 import { AdminSwitch } from '~/components/admin/appearance/AdminSwitch';
+import { BuilderImportExportButtons } from '~/components/admin/BuilderImportExportButtons';
+import type { FooterBuilderExportDocument } from '~/lib/admin/builder-import-export';
 import type { FooterBuilderDocument, FooterMode } from '~/lib/marketing/appearance-types';
 
 const ZONE_KEYS = ['top', 'main', 'bottom'] as const;
@@ -64,14 +66,26 @@ export default component$(() => {
             {translateApp(lang, 'appearance.footerSubtitle')}
           </p>
         </div>
-        <button
-          type="button"
-          disabled={saving.value || loading.value || !doc.value}
-          onClick$={save}
-          class="rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white hover:bg-primary-700 disabled:opacity-50"
-        >
-          {saving.value ? translateApp(lang, 'common.loading') : translateApp(lang, 'common.save')}
-        </button>
+        <div class="flex flex-wrap items-center gap-2">
+          <BuilderImportExportButtons
+            lang={lang}
+            builder="footer"
+            filenameBase="footer"
+            disabled={saving.value || loading.value || !doc.value}
+            getDocument$={$(() => doc.value)}
+            applyDocument$={$((document) => {
+              doc.value = document as FooterBuilderExportDocument;
+            })}
+          />
+          <button
+            type="button"
+            disabled={saving.value || loading.value || !doc.value}
+            onClick$={save}
+            class="rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white hover:bg-primary-700 disabled:opacity-50"
+          >
+            {saving.value ? translateApp(lang, 'common.loading') : translateApp(lang, 'common.save')}
+          </button>
+        </div>
       </div>
 
       {loading.value || !doc.value ? (

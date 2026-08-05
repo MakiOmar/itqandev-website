@@ -41,6 +41,24 @@
     "cacheCleared": "تم مسح الذاكرة المؤقتة",
     "viewPublicPage": "عرض الصفحة العامة"
   },
+  "builderExport": {
+    "export": "تصدير",
+    "import": "استيراد",
+    "exportSuccess": "تم تنزيل ملف JSON للبناء.",
+    "importTitle": "استيراد تخطيط البنّاء",
+    "importConfirmText": "سيستبدل هذا تخطيط البنّاء الحالي في المحرر. ما زلت بحاجة إلى الحفظ للإبقاء عليه. المتابعة؟",
+    "importApplied": "تم استيراد التخطيط إلى المحرر. احفظ عندما تكون جاهزاً.",
+    "errors": {
+      "INVALID_JSON": "الملف ليس JSON صالحاً.",
+      "INVALID_SHAPE": "هذا الملف ليس تصدير بنّاء صالحاً.",
+      "BUILDER_MISMATCH": "هذا التصدير يخص نوع بنّاء مختلفاً.",
+      "MISSING_DOCUMENT": "ملف التصدير يفتقد بيانات المستند.",
+      "INVALID_PAGE_DOCUMENT": "تخطيط بنّاء الصفحة غير صالح في هذا الملف.",
+      "INVALID_FORM_DOCUMENT": "تخطيط بنّاء النموذج غير صالح في هذا الملف.",
+      "INVALID_HOMEPAGE_DOCUMENT": "تخطيط بنّاء الصفحة الرئيسية غير صالح في هذا الملف.",
+      "INVALID_FOOTER_DOCUMENT": "تخطيط بنّاء التذييل غير صالح في هذا الملف."
+    }
+  },
   "contentExport": {
     "exportAll": "تصدير الكل",
     "exportSelected": "تصدير المحدد ({{count}})",

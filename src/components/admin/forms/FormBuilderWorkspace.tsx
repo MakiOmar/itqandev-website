@@ -24,6 +24,8 @@ import {
   ADMIN_NATIVE_SELECT_COMPACT_CLASS,
   ADMIN_PRIMARY_BUTTON_CLASS,
 } from '~/lib/admin/native-select-classes';
+import { BuilderImportExportButtons } from '~/components/admin/BuilderImportExportButtons';
+import type { FormBuilderDocument } from '~/lib/admin/builder-import-export';
 import type {
   FormActionNode,
   FormActionRegistryEntry,
@@ -234,6 +236,24 @@ export const FormBuilderWorkspace = component$<FormBuilderWorkspaceProps>((props
             </button>
           ))}
         </div>
+        <BuilderImportExportButtons
+          lang={props.lang}
+          builder="form"
+          filenameBase={props.formTitle.value || `form-${props.formId}`}
+          disabled={props.saving.value}
+          getDocument$={$(() => ({
+            layout: props.layout.value,
+            actions: props.actions.value,
+            settings: props.settings.value,
+          }))}
+          applyDocument$={$((document) => {
+            const doc = document as FormBuilderDocument;
+            props.layout.value = ensureFormLayout(doc.layout);
+            props.actions.value = ensureFormActions(doc.actions);
+            props.settings.value = ensureFormSettings(doc.settings);
+            selection.value = null;
+          })}
+        />
         <button
           type="button"
           class={ADMIN_PRIMARY_BUTTON_CLASS}

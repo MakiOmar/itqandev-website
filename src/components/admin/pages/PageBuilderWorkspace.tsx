@@ -31,6 +31,8 @@ import {
   ADMIN_NATIVE_SELECT_COMPACT_CLASS,
   ADMIN_PRIMARY_BUTTON_CLASS,
 } from '~/lib/admin/native-select-classes';
+import { BuilderImportExportButtons } from '~/components/admin/BuilderImportExportButtons';
+import type { PageBuilderDocument } from '~/lib/admin/builder-import-export';
 import type {
   AppearanceRegistryEntry,
   LayoutBreakpoint,
@@ -479,6 +481,18 @@ export const PageBuilderWorkspace = component$<PageBuilderWorkspaceProps>((props
         >
           {translateApp(props.lang, 'pages.livePreview')}
         </button>
+        <BuilderImportExportButtons
+          lang={props.lang}
+          builder="page"
+          filenameBase={props.pageTitle || 'page'}
+          disabled={props.saving.value}
+          getDocument$={$(() => ({ sections: props.sections.value }))}
+          applyDocument$={$((document) => {
+            const doc = document as PageBuilderDocument;
+            props.sections.value = ensurePageLayoutBands(doc.sections);
+            selection.value = null;
+          })}
+        />
         <button
           type="button"
           class={ADMIN_PRIMARY_BUTTON_CLASS}

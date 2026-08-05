@@ -41,6 +41,24 @@
     "cacheCleared": "Cache cleared",
     "viewPublicPage": "View public page"
   },
+  "builderExport": {
+    "export": "Export",
+    "import": "Import",
+    "exportSuccess": "Builder JSON downloaded.",
+    "importTitle": "Import builder layout",
+    "importConfirmText": "This replaces the current builder layout in the editor. You still need to Save to persist. Continue?",
+    "importApplied": "Layout imported into the editor. Save when you are ready.",
+    "errors": {
+      "INVALID_JSON": "The file is not valid JSON.",
+      "INVALID_SHAPE": "This file is not a valid builder export.",
+      "BUILDER_MISMATCH": "This export belongs to a different builder type.",
+      "MISSING_DOCUMENT": "The export file is missing its document payload.",
+      "INVALID_PAGE_DOCUMENT": "Invalid page builder layout in this file.",
+      "INVALID_FORM_DOCUMENT": "Invalid form builder layout in this file.",
+      "INVALID_HOMEPAGE_DOCUMENT": "Invalid homepage builder layout in this file.",
+      "INVALID_FOOTER_DOCUMENT": "Invalid footer builder layout in this file."
+    }
+  },
   "contentExport": {
     "exportAll": "Export all",
     "exportSelected": "Export selected ({{count}})",
