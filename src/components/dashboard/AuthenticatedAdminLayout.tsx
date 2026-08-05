@@ -14,7 +14,10 @@ import { AdminSessionContext } from '../../stores/admin-session-context';
 
 function isAdminPageBuilderPath(pathname: string): boolean {
   const logical = stripUiLocaleFromPathname(pathname.replace(/\/+$/, '') || '/');
-  return /^\/admin\/pages\/[^/]+\/builder$/.test(logical);
+  return (
+    /^\/admin\/pages\/[^/]+\/builder$/.test(logical) ||
+    /^\/admin\/forms\/[^/]+\/builder$/.test(logical)
+  );
 }
 
 /**

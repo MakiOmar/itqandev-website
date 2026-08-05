@@ -8,6 +8,7 @@ import {
   TechStackHomeSection,
   TestimonialsHomeSection,
 } from '~/components/marketing/home-sections/HomeSections';
+import { FormRenderer } from '~/components/marketing/forms/FormRenderer';
 import { isFeatureModuleEnabled } from '~/lib/api/project-settings';
 import {
   columnSpanClassNames,
@@ -67,6 +68,7 @@ function renderBlock(
   const key = block.id || block.type;
   const settings = block.settings ?? {};
   const showTestimonialsModule = isFeatureModuleEnabled(props.branding.features, 'testimonials');
+  const showFormsModule = isFeatureModuleEnabled(props.branding.features, 'forms');
 
   switch (block.type) {
     case 'hero':
@@ -111,6 +113,23 @@ function renderBlock(
       );
     case 'cta':
       return <CtaHomeSection key={key} settings={settings} uiLocale={props.uiLocale} />;
+    case 'form': {
+      if (!showFormsModule) return null;
+      const formSlug = String(settings.form_slug ?? '').trim();
+      if (!formSlug) return null;
+      const title = String(settings.title ?? '').trim();
+      const subtitle = String(settings.subtitle ?? '').trim();
+      return (
+        <section key={key} class="py-10">
+          <FormRenderer
+            slug={formSlug}
+            contentLocale={props.uiLocale}
+            title={title || undefined}
+            subtitle={subtitle || undefined}
+          />
+        </section>
+      );
+    }
     default:
       return null;
   }

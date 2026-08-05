@@ -11,6 +11,7 @@ export type FeatureModuleKey =
   | 'testimonials'
   | 'blog'
   | 'pages'
+  | 'forms'
   | 'media'
   | 'users'
   | 'seo';
@@ -24,6 +25,7 @@ export const DEFAULT_FEATURE_MODULES: Record<FeatureModuleKey, boolean> = {
   testimonials: true,
   blog: true,
   pages: true,
+  forms: true,
   media: true,
   users: true,
   seo: true,

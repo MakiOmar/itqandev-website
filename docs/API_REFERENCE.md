@@ -672,6 +672,8 @@ Requires permission **`manage pages`** for admin routes. Public routes are guest
 | POST | `/api/v1/pages/bulk-delete` | Bulk delete `{ "ids": [...] }` |
 | GET | `/api/public/pages` | Published pages list for marketing |
 | GET | `/api/public/pages/{slug}` | Published page detail: localized fields, presented `sections`, `seo_meta` |
+| GET | `/api/public/forms/{slug}` | Published form definition (layout, settings, captcha site key); `feature.module:forms`; `X-Content-Locale` |
+| POST | `/api/public/forms/{slug}/submit` | Submit form field values (+ optional `captcha_token`); runs enabled actions in order; `throttle:form-submit` |
 
 Public marketing URLs: `/{lang}/pages/{slug}/`. Admin visual builder (fullscreen): `/{lang}/admin/pages/{id}/builder/` — classic metadata editor remains at `/{lang}/admin/pages/{id}/`.
 

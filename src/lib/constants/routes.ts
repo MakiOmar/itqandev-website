@@ -44,6 +44,8 @@ export function getLocalizedRoutes(lang: string) {
       BLOG_NEW: L(`${p}/blog/new`),
       PAGES: L(`${p}/pages`),
       PAGES_NEW: L(`${p}/pages/new`),
+      FORMS: L(`${p}/forms`),
+      FORMS_NEW: L(`${p}/forms/new`),
       MEDIA: L(`${p}/media`),
       MENUS: L(`${p}/menus`),
       LOGOUT: L(`${p}/logout`),
@@ -116,6 +118,24 @@ export function adminPageBuilderHref(lang: string, id: string | number): string 
   const config = getConfig();
   const p = config.routes.admin.prefix;
   return withUiLocale(lang, `${p}/pages/${id}/builder`);
+}
+
+export function adminFormEditHref(lang: string, id: string | number): string {
+  const config = getConfig();
+  const p = config.routes.admin.prefix;
+  return withUiLocale(lang, `${p}/forms/${id}`);
+}
+
+export function adminFormBuilderHref(lang: string, id: string | number): string {
+  const config = getConfig();
+  const p = config.routes.admin.prefix;
+  return withUiLocale(lang, `${p}/forms/${id}/builder`);
+}
+
+export function adminFormSubmissionsHref(lang: string, id: string | number): string {
+  const config = getConfig();
+  const p = config.routes.admin.prefix;
+  return withUiLocale(lang, `${p}/forms/${id}/submissions`);
 }
 
 /** Localized routes for the current `preferred-locale` cookie (server loaders/actions). */

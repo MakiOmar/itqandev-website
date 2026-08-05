@@ -159,6 +159,16 @@ export const Sidebar = component$<SidebarProps>((props) => {
       featureModule: 'pages',
     },
     {
+      label: translateApp(lang, 'sidebar.forms'),
+      href: R.ADMIN.FORMS,
+      icon: MenusIcon,
+      activeOnChildPaths: true,
+      permission: 'manage forms',
+      menuManagementAccess: true,
+      menuManagementRoles: ['super_admin', 'admin', 'company', 'editor'],
+      featureModule: 'forms',
+    },
+    {
       label: translateApp(lang, 'sidebar.testimonials'),
       href: R.ADMIN.TESTIMONIALS,
       icon: TestimonialsIcon,

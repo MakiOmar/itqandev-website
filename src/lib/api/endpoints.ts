@@ -118,6 +118,23 @@ export const API_ENDPOINTS = {
     LIST: '/public/pages',
     GET: (slug: string) => `/public/pages/${encodeURIComponent(slug)}`,
   },
+  FORMS: {
+    LIST: '/v1/forms',
+    GET: (id: string | number) => `/v1/forms/${id}`,
+    CREATE: '/v1/forms',
+    UPDATE: (id: string | number) => `/v1/forms/${id}`,
+    DELETE: (id: string | number) => `/v1/forms/${id}`,
+    BULK_DELETE: '/v1/forms/bulk-delete',
+    SUBMISSIONS: (formId: string | number) => `/v1/forms/${formId}/submissions`,
+    SUBMISSION: (formId: string | number, id: string | number) =>
+      `/v1/forms/${formId}/submissions/${id}`,
+    SUBMISSIONS_BULK: (formId: string | number) => `/v1/forms/${formId}/submissions/bulk-update`,
+    SUBMISSIONS_EXPORT: (formId: string | number) => `/v1/forms/${formId}/submissions/export`,
+  },
+  PUBLIC_FORMS: {
+    GET: (slug: string) => `/public/forms/${encodeURIComponent(slug)}`,
+    SUBMIT: (slug: string) => `/public/forms/${encodeURIComponent(slug)}/submit`,
+  },
   // Testimonials
   TESTIMONIALS: {
     LIST: '/v1/testimonials',

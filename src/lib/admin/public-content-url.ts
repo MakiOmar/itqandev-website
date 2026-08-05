@@ -4,7 +4,7 @@
 
 import { parsePublicSiteOriginFromEnv } from '~/lib/seo/canonical-url';
 
-export type AdminPublicDetailKind = 'blog' | 'services' | 'projects' | 'pages';
+export type AdminPublicDetailKind = 'blog' | 'services' | 'projects' | 'pages' | 'forms';
 
 /** URL-encode slug segment safely (hyphenated latin slugs pass through cleanly). */
 function slugSegment(slug: string): string | null {
@@ -16,7 +16,7 @@ function slugSegment(slug: string): string | null {
 }
 
 /**
- * Site-relative path: /{lang}/blog/{slug}, /{lang}/services/{slug}, /{lang}/work/{slug}, /{lang}/pages/{slug}/.
+ * Site-relative path: /{lang}/blog/{slug}, /{lang}/services/{slug}, /{lang}/work/{slug}, /{lang}/pages/{slug}/, /{lang}/forms/{slug}/.
  */
 export function adminPublicDetailPath(lang: string, kind: AdminPublicDetailKind, slug: string): string | null {
   const code = String(lang ?? '').trim() || 'en';
@@ -34,6 +34,8 @@ export function adminPublicDetailPath(lang: string, kind: AdminPublicDetailKind,
       return `/${langSeg}/work/${seg}`;
     case 'pages':
       return `/${langSeg}/pages/${seg}/`;
+    case 'forms':
+      return `/${langSeg}/forms/${seg}/`;
     default:
       return null;
   }

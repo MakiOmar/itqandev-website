@@ -2,7 +2,7 @@ import { $, useSignal, type Signal } from '@builder.io/qwik';
 import { getApiClient } from '../api/client';
 import { API_ENDPOINTS } from '../api/endpoints';
 
-export type ContentSlugEntity = 'projects' | 'blog_posts' | 'services' | 'categories' | 'skills' | 'pages';
+export type ContentSlugEntity = 'projects' | 'blog_posts' | 'services' | 'categories' | 'skills' | 'pages' | 'forms';
 
 export type SuggestSlugOptions = {
   ignoreId?: number;

@@ -5,6 +5,7 @@ import type {
   FooterBuilderDocument,
   HomepageSectionInstance,
 } from '../marketing/appearance-types';
+import type { FormActionRegistryEntry, FormFieldRegistryEntry } from '../../types/form';
 import { appearanceMediaId } from './appearance-media-ref';
 
 /** Prefer Laravel/ApiError `.message` (plain objects), then Error, then fallback. */
@@ -26,15 +27,21 @@ function formatError(err: unknown): string {
 export async function fetchAppearanceRegistriesFromBrowser(): Promise<{
   homepage_sections: AppearanceRegistryEntry[];
   footer_blocks: AppearanceRegistryEntry[];
+  form_fields: FormFieldRegistryEntry[];
+  form_actions: FormActionRegistryEntry[];
 }> {
   const api = getApiClient(null);
   const res = await api.get<{
     homepage_sections: AppearanceRegistryEntry[];
     footer_blocks: AppearanceRegistryEntry[];
+    form_fields: FormFieldRegistryEntry[];
+    form_actions: FormActionRegistryEntry[];
   }>(API_ENDPOINTS.APPEARANCE.REGISTRIES);
   return {
     homepage_sections: res.data?.homepage_sections ?? [],
     footer_blocks: res.data?.footer_blocks ?? [],
+    form_fields: res.data?.form_fields ?? [],
+    form_actions: res.data?.form_actions ?? [],
   };
 }
 
