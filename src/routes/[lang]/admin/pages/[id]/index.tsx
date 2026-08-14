@@ -38,6 +38,7 @@ import {
   ADMIN_NATIVE_SELECT_CLASS,
   ADMIN_PRIMARY_BUTTON_CLASS,
 } from '../../../../../lib/admin/native-select-classes';
+import { ChromeLayoutAssignmentFields } from '../../../../../components/admin/appearance/ChromeLayoutAssignmentFields';
 
 function mapPageFromApi(raw: Record<string, unknown>): AdminPage {
   return {
@@ -48,6 +49,8 @@ function mapPageFromApi(raw: Record<string, unknown>): AdminPage {
     status: String(raw.status ?? 'draft'),
     content_locale: (raw.content_locale as string | null) ?? null,
     published_at: (raw.published_at as string | null) ?? null,
+    header_layout_id: raw.header_layout_id != null ? Number(raw.header_layout_id) : null,
+    footer_layout_id: raw.footer_layout_id != null ? Number(raw.footer_layout_id) : null,
     sections: Array.isArray(raw.sections) ? (raw.sections as PageSectionNode[]) : [],
     translations: Array.isArray(raw.translations)
       ? (raw.translations as AdminPage['translations'])
@@ -92,6 +95,8 @@ export default component$(() => {
   const canonicalTitle = useSignal(page.title);
   const canonicalExcerpt = useSignal(page.excerpt || '');
   const translationsJson = useSignal(JSON.stringify(page.translations || []));
+  const headerLayoutId = useSignal<number | null>(page.header_layout_id ?? null);
+  const footerLayoutId = useSignal<number | null>(page.footer_layout_id ?? null);
   const sectionCount = Array.isArray(page.sections) ? page.sections.length : 0;
   const saving = useSignal(false);
 
@@ -151,6 +156,8 @@ export default component$(() => {
         canonical_title: canonicalTitle.value,
         canonical_excerpt: canonicalExcerpt.value,
         translations_json: translationsJson.value,
+        header_layout_id: headerLayoutId.value,
+        footer_layout_id: footerLayoutId.value,
       });
       if (result.success) {
         await success(translateApp(lang, 'common.updated'));
@@ -239,6 +246,10 @@ export default component$(() => {
                   />
                 </div>
               </div>
+            </div>
+
+            <div class={ADMIN_FORM_CARD_CLASS}>
+              <ChromeLayoutAssignmentFields headerId={headerLayoutId} footerId={footerLayoutId} />
             </div>
 
             <div class={ADMIN_FORM_CARD_CLASS}>

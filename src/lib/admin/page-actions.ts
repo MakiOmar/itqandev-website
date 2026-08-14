@@ -112,6 +112,16 @@ function buildPageBody(data: Record<string, unknown>): Record<string, unknown> {
   if (translationsOut) {
     body.translations = translationsOut;
   }
+  if (data.header_layout_id !== undefined) {
+    const raw = data.header_layout_id;
+    body.header_layout_id =
+      raw === null || raw === '' || raw === undefined ? null : Number(raw);
+  }
+  if (data.footer_layout_id !== undefined) {
+    const raw = data.footer_layout_id;
+    body.footer_layout_id =
+      raw === null || raw === '' || raw === undefined ? null : Number(raw);
+  }
   return body;
 }
 

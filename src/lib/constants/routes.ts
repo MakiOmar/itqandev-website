@@ -25,7 +25,10 @@ export function getLocalizedRoutes(lang: string) {
       SETTINGS_MARKETING: L(`${p}/settings/marketing`),
       APPEARANCE_HOMEPAGE: L(`${p}/appearance/homepage`),
       APPEARANCE_HEADER: L(`${p}/appearance/header`),
+      APPEARANCE_HEADER_NEW: L(`${p}/appearance/header/new`),
       APPEARANCE_FOOTER: L(`${p}/appearance/footer`),
+      APPEARANCE_FOOTER_NEW: L(`${p}/appearance/footer/new`),
+      APPEARANCE_CHROME_DEFAULTS: L(`${p}/appearance/chrome-defaults`),
       FONTS: L(`${p}/fonts`),
       FONTS_NEW: L(`${p}/fonts/new`),
       ACTIVITY: L(`${p}/activity`),
@@ -139,6 +142,30 @@ export function adminFormSubmissionsHref(lang: string, id: string | number): str
   const config = getConfig();
   const p = config.routes.admin.prefix;
   return withUiLocale(lang, `${p}/forms/${id}/submissions`);
+}
+
+export function adminHeaderEditHref(lang: string, id: string | number): string {
+  const config = getConfig();
+  const p = config.routes.admin.prefix;
+  return withUiLocale(lang, `${p}/appearance/header/${id}`);
+}
+
+export function adminHeaderBuilderHref(lang: string, id: string | number): string {
+  const config = getConfig();
+  const p = config.routes.admin.prefix;
+  return withUiLocale(lang, `${p}/appearance/header/${id}/builder`);
+}
+
+export function adminFooterEditHref(lang: string, id: string | number): string {
+  const config = getConfig();
+  const p = config.routes.admin.prefix;
+  return withUiLocale(lang, `${p}/appearance/footer/${id}`);
+}
+
+export function adminFooterBuilderHref(lang: string, id: string | number): string {
+  const config = getConfig();
+  const p = config.routes.admin.prefix;
+  return withUiLocale(lang, `${p}/appearance/footer/${id}/builder`);
 }
 
 /** Localized routes for the current `preferred-locale` cookie (server loaders/actions). */

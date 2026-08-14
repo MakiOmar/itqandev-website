@@ -1,35 +1,42 @@
 /**
- * Shared fullscreen layout builder for Appearance → Header / Footer.
+ * Shared fullscreen layout builder for Appearance → Header / Footer (by layout id).
  */
 import { component$, useSignal, useVisibleTask$, $ } from '@builder.io/qwik';
 import { PageBuilderWorkspace } from '~/components/admin/pages/PageBuilderWorkspace';
 import { usePublicSiteMeta } from '../../../routes/[lang]/admin/layout';
 import { useTranslate, translateApp } from '~/lib/i18n/useTranslate';
 import { useSwal } from '~/lib/hooks/useSwal';
-import { getLocalizedRoutes } from '~/lib/constants/routes';
+import {
+  adminFooterEditHref,
+  adminHeaderEditHref,
+  getLocalizedRoutes,
+} from '~/lib/constants/routes';
 import {
   fetchAppearanceRegistriesFromBrowser,
-  fetchFooterBuilderFromBrowser,
-  fetchHeaderBuilderFromBrowser,
   formatAppearanceError,
-  saveFooterBuilderFromBrowser,
-  saveHeaderBuilderFromBrowser,
 } from '~/lib/admin/appearance-actions';
+import {
+  fetchChromeLayoutFromBrowser,
+  updateChromeLayoutFromBrowser,
+} from '~/lib/admin/chrome-layout-actions';
 import { ensurePageLayoutBands } from '~/lib/admin/page-layout';
 import type { AppearanceRegistryEntry, PageSectionNode } from '~/lib/marketing/appearance-types';
-
-export type ChromeBuilderKind = 'header' | 'footer';
+import type { ChromeLayoutKind } from '~/types/chrome-layout';
 
 const HEADER_CATEGORIES = new Set(['Header']);
 const FOOTER_CATEGORIES = new Set(['Footer']);
 
-export const ChromeAppearanceBuilder = component$<{ kind: ChromeBuilderKind }>(({ kind }) => {
+export const ChromeAppearanceBuilder = component$<{
+  kind: ChromeLayoutKind;
+  layoutId: number;
+}>(({ kind, layoutId }) => {
   const { lang } = useTranslate();
   const R = getLocalizedRoutes(lang);
   const langConfig = usePublicSiteMeta();
   const { success: showSuccess, error: showError } = useSwal();
   const loading = useSignal(true);
   const saving = useSignal(false);
+  const layoutName = useSignal('');
   const sections = useSignal<PageSectionNode[]>([]);
   const registry = useSignal<AppearanceRegistryEntry[]>([]);
   const defaultLocale = (
@@ -42,17 +49,21 @@ export const ChromeAppearanceBuilder = component$<{ kind: ChromeBuilderKind }>((
     kind === 'header'
       ? translateApp(lang, 'sidebar.appearanceHeader')
       : translateApp(lang, 'sidebar.appearanceFooter');
+  const listHref = kind === 'header' ? R.ADMIN.APPEARANCE_HEADER : R.ADMIN.APPEARANCE_FOOTER;
+  const classicHref =
+    kind === 'header' ? adminHeaderEditHref(lang, layoutId) : adminFooterEditHref(lang, layoutId);
 
   // eslint-disable-next-line qwik/no-use-visible-task
   useVisibleTask$(async () => {
     try {
-      const [regs, doc] = await Promise.all([
+      const [regs, layout] = await Promise.all([
         fetchAppearanceRegistriesFromBrowser(),
-        kind === 'header' ? fetchHeaderBuilderFromBrowser() : fetchFooterBuilderFromBrowser(),
+        fetchChromeLayoutFromBrowser(kind, layoutId),
       ]);
       const allow = kind === 'header' ? HEADER_CATEGORIES : FOOTER_CATEGORIES;
       registry.value = (regs.kits ?? []).filter((k) => allow.has(String(k.category || '')));
-      sections.value = ensurePageLayoutBands(doc.sections || []);
+      layoutName.value = layout.name;
+      sections.value = ensurePageLayoutBands((layout.sections || []) as PageSectionNode[]);
     } catch (e) {
       showError(translateApp(lang, 'common.error'), {
         text: formatAppearanceError(e, translateApp(lang, 'common.error')),
@@ -65,17 +76,15 @@ export const ChromeAppearanceBuilder = component$<{ kind: ChromeBuilderKind }>((
   const handleSave$ = $(async () => {
     saving.value = true;
     try {
-      const payload = { sections: sections.value };
-      const res =
-        kind === 'header'
-          ? await saveHeaderBuilderFromBrowser(payload)
-          : await saveFooterBuilderFromBrowser(payload);
+      const res = await updateChromeLayoutFromBrowser(kind, layoutId, {
+        sections: sections.value,
+      });
       if (!res.success) {
         showError(translateApp(lang, 'common.error'), { text: res.error || '' });
         return;
       }
       if (res.data?.sections) {
-        sections.value = ensurePageLayoutBands(res.data.sections);
+        sections.value = ensurePageLayoutBands(res.data.sections as PageSectionNode[]);
       }
       showSuccess(res.message || translateApp(lang, 'common.saved'));
     } finally {
@@ -94,11 +103,12 @@ export const ChromeAppearanceBuilder = component$<{ kind: ChromeBuilderKind }>((
   return (
     <PageBuilderWorkspace
       lang={lang}
-      pageTitle={pageTitle}
-      classicEditHref={R.ADMIN.APPEARANCE_HOMEPAGE}
+      pageTitle={layoutName.value || pageTitle}
+      classicEditHref={classicHref}
       breadcrumbs={[
         { label: translateApp(lang, 'sidebar.appearance'), href: R.ADMIN.APPEARANCE_HOMEPAGE },
-        { label: pageTitle },
+        { label: pageTitle, href: listHref },
+        { label: layoutName.value || String(layoutId) },
       ]}
       sections={sections}
       registry={registry}

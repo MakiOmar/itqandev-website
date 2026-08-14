@@ -25,6 +25,7 @@ import {
   AdminContentLanguageFields,
 } from '../../../../../components/admin/AdminContentLanguageFields';
 import { LazyRichTextEditorField } from '../../../../../components/admin/LazyRichTextEditorField';
+import { ChromeLayoutAssignmentFields } from '../../../../../components/admin/appearance/ChromeLayoutAssignmentFields';
 import { initialTranslationsJson, parseTranslationsJson, secondaryLocalesForContent } from '../../../../../lib/content-translations';
 import {
   mergeProjectFieldsForUiLocale,
@@ -65,6 +66,8 @@ const projectSchema = z.object({
   repo_url: z.union([z.string().url(), z.literal(''), z.literal('#')]).optional(),
   demo_url: z.union([z.string().url(), z.literal(''), z.literal('#')]).optional(),
   published_at: z.string().optional(),
+  header_layout_id: z.string().optional(),
+  footer_layout_id: z.string().optional(),
 });
 
 const normalizeOptionalUrl = (value: unknown): string | undefined => {
@@ -182,6 +185,10 @@ export const useUpdateProject = routeAction$(
         demo_url: normalizeOptionalUrl(data.demo_url),
         published_at: data.published_at || undefined,
       };
+      const headerRaw = String((data as { header_layout_id?: string }).header_layout_id || '').trim();
+      const footerRaw = String((data as { footer_layout_id?: string }).footer_layout_id || '').trim();
+      (payload as Record<string, unknown>).header_layout_id = headerRaw ? Number(headerRaw) : null;
+      (payload as Record<string, unknown>).footer_layout_id = footerRaw ? Number(footerRaw) : null;
       const rawContentLocale = (data as { content_locale?: string }).content_locale?.trim();
       (payload as ProjectUpdateInput & { content_locale?: string | null }).content_locale =
         rawContentLocale && rawContentLocale.length > 0 ? rawContentLocale : null;
@@ -464,6 +471,12 @@ export default component$(() => {
   const slugField = useSignal('');
   const summaryField = useSignal('');
   const descriptionField = useSignal('');
+  const headerLayoutId = useSignal<number | null>(
+    (project.value as { header_layout_id?: number | null })?.header_layout_id ?? null,
+  );
+  const footerLayoutId = useSignal<number | null>(
+    (project.value as { footer_layout_id?: number | null })?.footer_layout_id ?? null,
+  );
 
   const projectSlugAuto = useContentSlugAutosuggestTitleSlugSignals({
     entity: 'projects',
@@ -754,6 +767,10 @@ export default component$(() => {
                   </div>
                   </EditingLocaleFieldsShell>
                 </TranslationsFormRoot>
+
+                <div class="md:col-span-2">
+                  <ChromeLayoutAssignmentFields headerId={headerLayoutId} footerId={footerLayoutId} />
+                </div>
 
                 <EditingLocaleFieldsShell
                   variant="gridContents"

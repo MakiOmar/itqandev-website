@@ -193,6 +193,15 @@ export async function fetchPublicShell(
     if (locale && String(locale).trim() !== '') {
       q.set('locale', String(locale).trim().toLowerCase());
     }
+    const docUrl = fetchContext?.forwardDocumentUrl;
+    if (docUrl && String(docUrl).trim() !== '') {
+      try {
+        const path = new URL(String(docUrl), 'http://local.invalid').pathname;
+        if (path) q.set('path', path);
+      } catch {
+        /* ignore */
+      }
+    }
     const path = q.toString()
       ? `${MARKETING_ENDPOINTS.shell}?${q.toString()}`
       : MARKETING_ENDPOINTS.shell;

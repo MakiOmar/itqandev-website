@@ -595,14 +595,20 @@ Require `Authorization: Bearer` and the `manageSettings` gate (`admin` / `super_
 | `GET` | `/api/appearance/registries` | Catalogs: `widgets`, `kits` (includes Header/Footer chrome kits), alias `homepage_sections`, `form_fields`, `form_actions`. |
 | `GET` | `/api/appearance/homepage` | Full `homepage_builder` document |
 | `PUT` | `/api/appearance/homepage` | `{ "sections": [ … ] }` |
-| `GET` | `/api/appearance/header` | Full `header_builder` document (layout tree) |
-| `PUT` | `/api/appearance/header` | `{ "sections": [ … ] }` |
-| `GET` | `/api/appearance/footer` | Full `footer_builder` document (layout tree; legacy zones migrate on read) |
-| `PUT` | `/api/appearance/footer` | `{ "sections": [ … ] }` |
+| `GET` | `/api/appearance/header` | Site-default header document (compat) |
+| `PUT` | `/api/appearance/header` | `{ "sections": [ … ] }` updates site-default header |
+| `GET` | `/api/appearance/footer` | Site-default footer document (compat) |
+| `PUT` | `/api/appearance/footer` | `{ "sections": [ … ] }` updates site-default footer |
+| `GET` | `/api/appearance/headers` | Paginated header layouts (meta; `?include=document` for sections) |
+| `POST` | `/api/appearance/headers` | Create (`name`, optional `slug`, `status`, `sections`) |
+| `GET/PUT/DELETE` | `/api/appearance/headers/{id}` | Show / update / delete |
+| `POST` | `/api/appearance/headers/{id}/set-site-default` | Published only |
+| `GET/POST/…` | `/api/appearance/footers…` | Same for footers |
+| `GET/PUT` | `/api/appearance/chrome-type-defaults` | Per content-type header/footer ids |
 
-Persisted under `project-settings.json` keys `homepage_builder` / `header_builder` / `footer_builder`. See `docs/CONFIGURATION.md` (Appearance builders).
+Named layouts live in `chrome_layouts`. Homepage remains `homepage_builder` in `project-settings.json`. See `docs/CONFIGURATION.md` (Appearance builders).
 
-Public shell presentation resolves media fields to URL strings and adds `{key}_alt` from the media library (locale-aware, primary fallback). Legacy URL/path values are kept as URLs with `null` alt (frontend may fall back to headline).
+Public shell (`GET /api/public/shell`) resolves header/footer via record → type default → site default (published only). Pass `path` query (document pathname) for route-aware chrome.
 
 ### Media library meta (authenticated)
 

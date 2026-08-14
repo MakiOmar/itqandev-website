@@ -28,6 +28,13 @@ export const API_ENDPOINTS = {
     HOMEPAGE: '/appearance/homepage',
     HEADER: '/appearance/header',
     FOOTER: '/appearance/footer',
+    HEADERS: '/appearance/headers',
+    HEADER_GET: (id: string | number) => `/appearance/headers/${id}`,
+    HEADER_SET_DEFAULT: (id: string | number) => `/appearance/headers/${id}/set-site-default`,
+    FOOTERS: '/appearance/footers',
+    FOOTER_GET: (id: string | number) => `/appearance/footers/${id}`,
+    FOOTER_SET_DEFAULT: (id: string | number) => `/appearance/footers/${id}/set-site-default`,
+    CHROME_TYPE_DEFAULTS: '/appearance/chrome-type-defaults',
   },
   // Fonts (self-hosted typography library)
   FONTS: {

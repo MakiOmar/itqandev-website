@@ -16,6 +16,8 @@ export type AdminPage = {
   published_at: string | null;
   sections: PageSectionNode[];
   translations: PageTranslationRow[];
+  header_layout_id?: number | null;
+  footer_layout_id?: number | null;
   createdAt?: string;
   updatedAt?: string;
 };

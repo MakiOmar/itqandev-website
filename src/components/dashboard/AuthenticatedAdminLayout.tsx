@@ -16,7 +16,8 @@ function isAdminPageBuilderPath(pathname: string): boolean {
   const logical = stripUiLocaleFromPathname(pathname.replace(/\/+$/, '') || '/');
   return (
     /^\/admin\/pages\/[^/]+\/builder$/.test(logical) ||
-    /^\/admin\/forms\/[^/]+\/builder$/.test(logical)
+    /^\/admin\/forms\/[^/]+\/builder$/.test(logical) ||
+    /^\/admin\/appearance\/(header|footer)\/[^/]+\/builder$/.test(logical)
   );
 }
 
