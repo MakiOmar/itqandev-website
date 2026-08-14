@@ -1,6 +1,8 @@
 import '~/styles/site.css';
 import { component$, Slot, useSignal } from '@builder.io/qwik';
 import { routeLoader$, useLocation } from '@builder.io/qwik-city';
+import { detectLayoutBreakpointFromUserAgent } from '~/lib/marketing/device-visibility';
+import { LayoutDeviceProvider } from '~/lib/marketing/layout-device-context';
 import { uiLocaleFromPublicRoute } from '~/lib/i18n/ui-locale-path';
 import { LocaleTransitionProvider } from '~/components/common/LocaleTransitionOverlay';
 import { Header } from '~/components/marketing/Header';
@@ -35,6 +37,14 @@ export type { PublicBrandingState, PublicShellState, SiteContent };
  * Load authenticated user session for public header UI.
  * If auth check fails, keep public pages accessible.
  */
+
+/**
+ * UA-based layout breakpoint for Advanced responsive visibility (SSR omit, not CSS).
+ */
+export const usePublicLayoutDevice = routeLoader$(({ request }) => {
+  return detectLayoutBreakpointFromUserAgent(request.headers.get('user-agent'));
+});
+
 export const usePublicAuth = routeLoader$(async ({ cookie, request }) => {
   try {
     return await auth.getSession(cookie, request.url);
@@ -65,6 +75,7 @@ export default component$(() => {
   const uiLocale = uiLangFromUrlPathname(loc.url.pathname);
   const shellLoader = usePublicShell();
   const authSession = usePublicAuth();
+  const layoutDevice = usePublicLayoutDevice();
   const branding = useSignal<PublicBrandingState>(shellLoader.value.branding);
   const primaryMenu = useSignal<PublicNavItem[]>(shellLoader.value.primaryMenu);
   useDevClientMarketingHydration(branding, primaryMenu, uiLocale);
@@ -83,6 +94,7 @@ export default component$(() => {
         typography={branding.value.typography ?? shellLoader.value.branding?.typography ?? defaultSystemTypography()}
       />
       <LocaleTransitionProvider>
+        <LayoutDeviceProvider device={layoutDevice.value}>
         <div class="relative z-10 flex min-h-screen flex-1 flex-col">
           <Header
             session={authSession.value}
@@ -101,6 +113,7 @@ export default component$(() => {
             footer={shellLoader.value.footer}
           />
         </div>
+        </LayoutDeviceProvider>
       </LocaleTransitionProvider>
     </div>
   );

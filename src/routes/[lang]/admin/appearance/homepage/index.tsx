@@ -25,6 +25,10 @@ import {
 } from '~/lib/admin/appearance-locale-settings';
 import { collectAppearanceMediaIdsFromSections } from '~/lib/admin/appearance-media-ref';
 import { BuilderImportExportButtons } from '~/components/admin/BuilderImportExportButtons';
+import {
+  BuilderResponsiveVisibilityFields,
+} from '~/components/admin/BuilderResponsiveVisibilityFields';
+import { normalizeHideOn, type DeviceHideOn } from '~/lib/marketing/device-visibility';
 import type { HomepageBuilderDocument } from '~/lib/admin/builder-import-export';
 import type {
   AppearanceRegistryEntry,
@@ -314,6 +318,13 @@ export default component$(() => {
                           <option value="full">{translateApp(lang, 'appearance.layoutFull')}</option>
                         </select>
                       </div>
+                      <BuilderResponsiveVisibilityFields
+                        lang={lang}
+                        hideOn={section.hide_on}
+                        onChange$={$(async (next: DeviceHideOn) => {
+                          await patchSection(section.id, { hide_on: normalizeHideOn(next) });
+                        })}
+                      />
                       {(entry?.settings_fields?.length ?? 0) > 0 ? (
                         <AppearanceSettingsFields
                           fields={entry!.settings_fields!}

@@ -1,8 +1,11 @@
 import { component$, Slot } from '@builder.io/qwik';
 import type { RequestHandler } from '@builder.io/qwik-city';
+import { routeLoader$ } from '@builder.io/qwik-city';
 import { speakConfig } from '../../lib/i18n/config';
 import { isUiLocaleRtl } from '../../lib/i18n/ui-locale-segments';
 import { UI_LOCALE_SEGMENTS, stripUiLocaleFromPathname, withUiLocale } from '../../lib/i18n/ui-locale-path';
+import { detectLayoutBreakpointFromUserAgent } from '../../lib/marketing/device-visibility';
+import { LayoutDeviceProvider } from '../../lib/marketing/layout-device-context';
 
 /**
  * URL segment is the source of truth for UI locale (`/en/...`, `/ar/...`).
@@ -34,6 +37,16 @@ export const onRequest: RequestHandler = ({ params, locale, url, cookie, redirec
   });
 };
 
+/** UA → mobile|tablet|desktop for Advanced responsive visibility (SSR omit, not CSS). */
+export const useLangLayoutDevice = routeLoader$(({ request }) => {
+  return detectLayoutBreakpointFromUserAgent(request.headers.get('user-agent'));
+});
+
 export default component$(() => {
-  return <Slot />;
+  const layoutDevice = useLangLayoutDevice();
+  return (
+    <LayoutDeviceProvider device={layoutDevice.value}>
+      <Slot />
+    </LayoutDeviceProvider>
+  );
 });

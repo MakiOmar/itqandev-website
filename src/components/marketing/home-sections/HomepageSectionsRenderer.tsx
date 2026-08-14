@@ -19,6 +19,8 @@ import {
   isPageLayoutBand,
   normalizeColumnSpans,
 } from '~/lib/marketing/page-layout-utils';
+import { filterPageSectionsForDevice } from '~/lib/marketing/device-visibility';
+import { useLayoutDevice } from '~/lib/marketing/layout-device-context';
 import {
   defaultHomepageSections,
   type HomepageSectionInstance,
@@ -362,23 +364,23 @@ function renderLayoutBand(band: PageLayoutBand, props: HomepageSectionsRendererP
 export const HomepageSectionsRenderer = component$<HomepageSectionsRendererProps>((props) => {
   const allowDefaults = props.allowDefaultSections !== false;
   const layoutAware = props.layoutAware === true;
-  const list =
+  const device = useLayoutDevice();
+  const rawList =
     props.sections && props.sections.length > 0
       ? props.sections
       : allowDefaults
         ? defaultHomepageSections()
         : [];
+  const list = filterPageSectionsForDevice(rawList as PageSectionNode[], device);
   const config = getConfig();
 
   return (
     <>
       {list.map((node) => {
         if (layoutAware && isPageLayoutBand(node as PageSectionNode)) {
-          if ((node as PageLayoutBand).enabled === false) return null;
           return renderLayoutBand(node as PageLayoutBand, props);
         }
         const section = node as HomepageSectionInstance;
-        if (section.enabled === false) return null;
         return renderBlock(section, props);
       })}
 

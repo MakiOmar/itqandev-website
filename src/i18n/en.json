@@ -1037,5 +1037,16 @@
       "before": "Before",
       "after": "After"
     }
+  },
+  "builder": {
+    "tabs": {
+      "content": "Content",
+      "advanced": "Advanced"
+    },
+    "advanced": {
+      "responsive": "Responsive",
+      "responsiveHint": "Hide this element on selected devices. Hidden elements are omitted from the HTML for that device (User-Agent detection), not merely CSS-hidden.",
+      "hideOn": "Hide on"
+    }
   }
 }

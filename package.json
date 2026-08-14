@@ -60,6 +60,7 @@
     "@tailwindcss/postcss": "^4.1.18",
     "@tailwindcss/typography": "^0.5.19",
     "@types/node": "20.19.0",
+    "@types/ua-parser-js": "^0.7.39",
     "autoprefixer": "^10.4.23",
     "eslint": "9.32.0",
     "eslint-plugin-qwik": "^1.20.0",
@@ -85,6 +86,7 @@
     "sweetalert2": "^11.26.17",
     "tailwind-merge": "^3.4.0",
     "tinymce": "^8.5.0",
+    "ua-parser-js": "^2.0.10",
     "zod": "^4.3.5"
   },
   "nx": {}

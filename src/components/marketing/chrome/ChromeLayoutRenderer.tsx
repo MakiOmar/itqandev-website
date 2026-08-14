@@ -5,6 +5,8 @@ import {
   normalizeColumnSpans,
 } from '~/lib/marketing/page-layout-utils';
 import type { PageLayoutBand, PageSectionNode } from '~/lib/marketing/appearance-types';
+import { filterPageLayoutBandForDevice } from '~/lib/marketing/device-visibility';
+import { useLayoutDevice } from '~/lib/marketing/layout-device-context';
 import { ChromeKitView, type ChromeKitViewProps } from './ChromeKitView';
 
 const GAP_CLASS: Record<number, string> = {
@@ -32,14 +34,17 @@ export type ChromeLayoutRendererProps = {
 
 /**
  * Renders header/footer page-layout documents (band → row → column → chrome kits).
+ * Respects Advanced → hide_on via UA/layout device (omits nodes; not CSS hide).
  */
 export const ChromeLayoutRenderer = component$<ChromeLayoutRendererProps>((props) => {
-  const bands = (props.sections || []).filter(isPageLayoutBand) as PageLayoutBand[];
+  const device = useLayoutDevice();
+  const bands = ((props.sections || []).filter(isPageLayoutBand) as PageLayoutBand[])
+    .map((band) => filterPageLayoutBandForDevice(band, device))
+    .filter((b): b is PageLayoutBand => b != null);
 
   return (
     <>
       {bands.map((band) => {
-        if (band.enabled === false) return null;
         const boxed = (band.layout_width || 'boxed') !== 'full';
         return (
           <div
@@ -65,22 +70,19 @@ export const ChromeLayoutRenderer = component$<ChromeLayoutRendererProps>((props
                     const spans = normalizeColumnSpans(col.span);
                     return (
                       <div key={col.id} class={columnSpanClassNames(spans)}>
-                        {(col.blocks || []).map((block) => {
-                          if (block.enabled === false) return null;
-                          return (
-                            <ChromeKitView
-                              key={block.id || block.type}
-                              type={block.type}
-                              settings={(block.settings || {}) as Record<string, unknown>}
-                              uiLocale={props.uiLocale}
-                              branding={props.branding}
-                              session={props.session}
-                              features={props.features}
-                              contact={props.contact}
-                              isDarkMode={props.isDarkMode}
-                            />
-                          );
-                        })}
+                        {(col.blocks || []).map((block) => (
+                          <ChromeKitView
+                            key={block.id || block.type}
+                            type={block.type}
+                            settings={(block.settings || {}) as Record<string, unknown>}
+                            uiLocale={props.uiLocale}
+                            branding={props.branding}
+                            session={props.session}
+                            features={props.features}
+                            contact={props.contact}
+                            isDarkMode={props.isDarkMode}
+                          />
+                        ))}
                       </div>
                     );
                   })}

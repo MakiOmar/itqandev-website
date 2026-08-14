@@ -2,6 +2,13 @@
 
 export type HomepageLayoutWidth = 'boxed' | 'full';
 
+/** Advanced → Responsive: hide on device (omit from HTML; not CSS-only). */
+export type DeviceHideOn = {
+  mobile?: boolean;
+  tablet?: boolean;
+  desktop?: boolean;
+};
+
 export type HomepageSectionType =
   | 'hero'
   | 'services_teaser'
@@ -17,6 +24,8 @@ export type HomepageSectionInstance = {
   type: HomepageSectionType | string;
   enabled?: boolean;
   layout_width?: HomepageLayoutWidth;
+  /** When true for a breakpoint, section is not rendered for that device. */
+  hide_on?: DeviceHideOn;
   settings?: Record<string, unknown>;
 };
 
@@ -36,12 +45,15 @@ export type PageLayoutBlock = {
   kind?: 'widget' | 'kit';
   type: HomepageSectionType | string;
   enabled?: boolean;
+  /** When true for a breakpoint, node is not rendered for that device. */
+  hide_on?: DeviceHideOn;
   settings?: Record<string, unknown>;
 };
 
 export type PageLayoutColumn = {
   id: string;
   span: ColumnSpans;
+  hide_on?: DeviceHideOn;
   blocks: PageLayoutBlock[];
 };
 
@@ -49,6 +61,7 @@ export type PageLayoutRow = {
   id: string;
   stack_below?: PageLayoutStackBelow;
   gap?: number;
+  hide_on?: DeviceHideOn;
   columns: PageLayoutColumn[];
 };
 
@@ -57,6 +70,7 @@ export type PageLayoutBand = {
   type: 'layout';
   enabled?: boolean;
   layout_width?: HomepageLayoutWidth;
+  hide_on?: DeviceHideOn;
   settings?: Record<string, unknown>;
   rows: PageLayoutRow[];
 };

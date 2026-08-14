@@ -18,6 +18,8 @@ import type {
   FormSettings,
   PublicFormDefinition,
 } from '~/types/form';
+import { isHiddenOnDevice } from '~/lib/marketing/device-visibility';
+import { useLayoutDevice } from '~/lib/marketing/layout-device-context';
 
 /** Convert Eastern/Persian digits as the user types into email/tel fields. */
 const onWesternDigitsInput$ = $((e: Event) => {
@@ -308,6 +310,7 @@ export const FormRenderer = component$<FormRendererProps>((props) => {
   const successMsg = useSignal('');
   const submitting = useSignal(false);
   const captchaReady = useSignal(false);
+  const layoutDevice = useLayoutDevice();
 
   // eslint-disable-next-line qwik/no-use-visible-task
   useVisibleTask$(async ({ track }) => {
@@ -509,15 +512,20 @@ export const FormRenderer = component$<FormRendererProps>((props) => {
       {intro ? <p class="mb-6 text-sm leading-relaxed text-slate-600 dark:text-slate-400">{intro}</p> : null}
 
       <form class="space-y-4" preventdefault:submit onSubmit$={onSubmit$}>
-        {layout.rows.map((row) => (
+        {layout.rows.map((row) => {
+          if (isHiddenOnDevice(row.hide_on, layoutDevice)) return null;
+          const visibleFields = row.fields.filter((field) => !isHiddenOnDevice(field.hide_on, layoutDevice));
+          if (visibleFields.length === 0) return null;
+          return (
           <div key={row.id} class="grid grid-cols-12 gap-4">
-            {row.fields.map((field) => (
+            {visibleFields.map((field) => (
               <div key={field.id} class={fieldSpanClass(field.span)}>
                 {renderFieldControl(field)}
               </div>
             ))}
           </div>
-        ))}
+          );
+        })}
 
         {/* Honeypot — bots fill this; humans never see it */}
         {settings.honeypot !== false ? (

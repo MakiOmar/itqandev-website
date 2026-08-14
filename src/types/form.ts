@@ -9,11 +9,22 @@ export type FormFieldNode = {
   type: string;
   span: FormFieldSpan;
   settings: Record<string, unknown>;
+  /** When true for a breakpoint, field is not rendered for that device. */
+  hide_on?: {
+    mobile?: boolean;
+    tablet?: boolean;
+    desktop?: boolean;
+  };
 };
 
 export type FormRowNode = {
   id: string;
   fields: FormFieldNode[];
+  hide_on?: {
+    mobile?: boolean;
+    tablet?: boolean;
+    desktop?: boolean;
+  };
 };
 
 export type FormLayoutDocument = {

@@ -1,4 +1,4 @@
-import { component$, useSignal, useVisibleTask$, $, type QRL, type Signal } from '@builder.io/qwik';
+import { component$, useSignal, useTask$, useVisibleTask$, $, type QRL, type Signal } from '@builder.io/qwik';
 import { Link } from '@builder.io/qwik-city';
 import { AppearanceSettingsFields } from '~/components/admin/appearance/AppearanceSettingsFields';
 import { MediaSelector } from '~/components/common/MediaSelector';
@@ -34,6 +34,12 @@ import {
   ADMIN_PRIMARY_BUTTON_CLASS,
 } from '~/lib/admin/native-select-classes';
 import { BuilderImportExportButtons } from '~/components/admin/BuilderImportExportButtons';
+import {
+  BuilderInspectorTabs,
+  BuilderResponsiveVisibilityFields,
+} from '~/components/admin/BuilderResponsiveVisibilityFields';
+import { LayoutDeviceProvider } from '~/lib/marketing/layout-device-context';
+import { normalizeHideOn, type DeviceHideOn } from '~/lib/marketing/device-visibility';
 import type { PageBuilderDocument } from '~/lib/admin/builder-import-export';
 import type {
   AppearanceRegistryEntry,
@@ -395,6 +401,7 @@ const BuilderLivePreviewShell = component$<{
   siteLanguages: SiteLanguageRow[];
   previewBranding?: PageBuilderWorkspaceProps['previewBranding'];
   isDarkMode: boolean;
+  previewDevice: LayoutBreakpoint;
 }>((props) => {
   const visible = props.open.value;
   return (
@@ -406,6 +413,7 @@ const BuilderLivePreviewShell = component$<{
       hidden={!visible}
       aria-hidden={visible ? 'false' : 'true'}
     >
+      <LayoutDeviceProvider device={props.previewDevice}>
       {props.previewSurface === 'chrome' ? (
         <div class="border-b border-slate-200 py-3 dark:border-slate-700">
           {/* Public chrome kits need locale-transition context (language switcher). */}
@@ -448,6 +456,7 @@ const BuilderLivePreviewShell = component$<{
           pageContext={{ title: props.pageTitle || 'Page' }}
         />
       )}
+      </LayoutDeviceProvider>
     </div>
   );
 });
@@ -465,14 +474,21 @@ export const PageBuilderWorkspace = component$<PageBuilderWorkspaceProps>((props
   const paletteTab = useSignal<'widgets' | 'kits'>('widgets');
   const paletteSearch = useSignal('');
   const showLivePreview = useSignal(false);
+  const inspectorTab = useSignal<'content' | 'advanced'>('content');
   /** Keep preview DOM after first open so off is CSS-only (avoids stuck pane). */
   const livePreviewMounted = useSignal(false);
   const previewIsDark = useSignal(false);
+
+  useTask$(({ track }) => {
+    track(() => selection.value);
+    inspectorTab.value = 'content';
+  });
 
   // eslint-disable-next-line qwik/no-use-visible-task
   useVisibleTask$(({ cleanup }) => {
     const sync = () => {
       previewIsDark.value =
+
         typeof document !== 'undefined' && document.documentElement.classList.contains('dark');
     };
     sync();
@@ -804,6 +820,7 @@ export const PageBuilderWorkspace = component$<PageBuilderWorkspaceProps>((props
                 siteLanguages={props.siteLanguages || []}
                 previewBranding={props.previewBranding}
                 isDarkMode={previewIsDark.value}
+                previewDevice={previewDevice.value}
               />
             ) : null}
 
@@ -1466,11 +1483,22 @@ export const PageBuilderWorkspace = component$<PageBuilderWorkspaceProps>((props
               <p class="text-xs text-gray-500">{translateApp(props.lang, 'pages.inspectorEmpty')}</p>
             ) : null}
 
+            {selection.value ? (
+              <BuilderInspectorTabs
+                lang={props.lang}
+                tab={inspectorTab.value}
+                onTab$={$((tab) => {
+                  inspectorTab.value = tab;
+                })}
+              />
+            ) : null}
+
             {selection.value?.kind === 'band' ? (
               <div class="space-y-3">
                 <p class="text-sm font-medium">
                   {translateApp(props.lang, 'pages.band')} #{selection.value.bandIndex + 1}
                 </p>
+                {inspectorTab.value === 'content' ? (
                 <label class="block text-xs font-medium text-gray-600 dark:text-gray-300">
                   {translateApp(props.lang, 'appearance.layoutWidth')}
                   <select
@@ -1494,6 +1522,21 @@ export const PageBuilderWorkspace = component$<PageBuilderWorkspaceProps>((props
                     </option>
                   </select>
                 </label>
+                ) : null}
+                {inspectorTab.value === 'advanced' ? (
+                  <BuilderResponsiveVisibilityFields
+                    lang={props.lang}
+                    hideOn={bands[selection.value.bandIndex]?.hide_on}
+                    onChange$={$(async (next: DeviceHideOn) => {
+                      const bi = selection.value!.bandIndex;
+                      await commit$(
+                        bands.map((b, i) =>
+                          i === bi ? { ...b, hide_on: normalizeHideOn(next) } : b,
+                        ),
+                      );
+                    })}
+                  />
+                ) : null}
               </div>
             ) : null}
 
@@ -1502,6 +1545,7 @@ export const PageBuilderWorkspace = component$<PageBuilderWorkspaceProps>((props
                 <p class="text-sm font-medium">
                   {translateApp(props.lang, 'pages.row')} {selection.value.rowIndex + 1}
                 </p>
+                {inspectorTab.value === 'content' ? (
                 <label class="block text-xs font-medium text-gray-600 dark:text-gray-300">
                   {translateApp(props.lang, 'pages.stackBelow')}
                   <select
@@ -1541,6 +1585,32 @@ export const PageBuilderWorkspace = component$<PageBuilderWorkspaceProps>((props
                     </option>
                   </select>
                 </label>
+                ) : null}
+                {inspectorTab.value === 'advanced' ? (
+                  <BuilderResponsiveVisibilityFields
+                    lang={props.lang}
+                    hideOn={
+                      bands[selection.value.bandIndex]?.rows[selection.value.rowIndex]?.hide_on
+                    }
+                    onChange$={$(async (next: DeviceHideOn) => {
+                      const { bandIndex, rowIndex } = selection.value as {
+                        bandIndex: number;
+                        rowIndex: number;
+                      };
+                      await commit$(
+                        bands.map((b, bi) => {
+                          if (bi !== bandIndex) return b;
+                          return {
+                            ...b,
+                            rows: b.rows.map((r, ri) =>
+                              ri === rowIndex ? { ...r, hide_on: normalizeHideOn(next) } : r,
+                            ),
+                          };
+                        }),
+                      );
+                    })}
+                  />
+                ) : null}
               </div>
             ) : null}
 
@@ -1549,6 +1619,8 @@ export const PageBuilderWorkspace = component$<PageBuilderWorkspaceProps>((props
                 <p class="text-sm font-medium">
                   {translateApp(props.lang, 'pages.column')} {selection.value.colIndex + 1}
                 </p>
+                {inspectorTab.value === 'content' ? (
+                <>
                 <div>
                   <p class="mb-1.5 text-xs font-medium text-gray-600 dark:text-gray-300">
                     {translateApp(props.lang, 'pages.spanPresets')} (
@@ -1656,6 +1728,44 @@ export const PageBuilderWorkspace = component$<PageBuilderWorkspaceProps>((props
                     />
                   </label>
                 ))}
+                </>
+                ) : null}
+                {inspectorTab.value === 'advanced' ? (
+                  <BuilderResponsiveVisibilityFields
+                    lang={props.lang}
+                    hideOn={
+                      bands[selection.value.bandIndex]?.rows[selection.value.rowIndex]?.columns[
+                        selection.value.colIndex
+                      ]?.hide_on
+                    }
+                    onChange$={$(async (next: DeviceHideOn) => {
+                      const { bandIndex, rowIndex, colIndex } = selection.value as {
+                        bandIndex: number;
+                        rowIndex: number;
+                        colIndex: number;
+                      };
+                      await commit$(
+                        bands.map((b, bi) => {
+                          if (bi !== bandIndex) return b;
+                          return {
+                            ...b,
+                            rows: b.rows.map((r, ri) => {
+                              if (ri !== rowIndex) return r;
+                              return {
+                                ...r,
+                                columns: r.columns.map((c, ci) =>
+                                  ci === colIndex
+                                    ? { ...c, hide_on: normalizeHideOn(next) }
+                                    : c,
+                                ),
+                              };
+                            }),
+                          };
+                        }),
+                      );
+                    })}
+                  />
+                ) : null}
               </div>
             ) : null}
 
@@ -1669,6 +1779,8 @@ export const PageBuilderWorkspace = component$<PageBuilderWorkspaceProps>((props
                       selectedBlock.type,
                   )}
                 </p>
+                {inspectorTab.value === 'content' ? (
+                <>
                 {(() => {
                   const entry = props.registry.value.find((r) => r.type === selectedBlock.type);
                   if (!(entry?.settings_fields?.length ?? 0)) {
@@ -1709,6 +1821,44 @@ export const PageBuilderWorkspace = component$<PageBuilderWorkspaceProps>((props
                     />
                   );
                 })()}
+                </>
+                ) : null}
+                {inspectorTab.value === 'advanced' ? (
+                  <BuilderResponsiveVisibilityFields
+                    lang={props.lang}
+                    hideOn={selectedBlock.hide_on}
+                    onChange$={$(async (next: DeviceHideOn) => {
+                      const sel = selection.value;
+                      if (!sel || sel.kind !== 'block') return;
+                      const { bandIndex, rowIndex, colIndex, blockIndex } = sel;
+                      await commit$(
+                        bands.map((b, bi) => {
+                          if (bi !== bandIndex) return b;
+                          return {
+                            ...b,
+                            rows: b.rows.map((r, ri) => {
+                              if (ri !== rowIndex) return r;
+                              return {
+                                ...r,
+                                columns: r.columns.map((c, ci) => {
+                                  if (ci !== colIndex) return c;
+                                  return {
+                                    ...c,
+                                    blocks: c.blocks.map((bl, bli) =>
+                                      bli === blockIndex
+                                        ? { ...bl, hide_on: normalizeHideOn(next) }
+                                        : bl,
+                                    ),
+                                  };
+                                }),
+                              };
+                            }),
+                          };
+                        }),
+                      );
+                    })}
+                  />
+                ) : null}
               </div>
             ) : null}
           </div>

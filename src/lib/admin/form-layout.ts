@@ -52,10 +52,19 @@ export function ensureFormLayout(raw: unknown): FormLayoutDocument {
           f.settings && typeof f.settings === 'object'
             ? (f.settings as Record<string, unknown>)
             : {},
+        ...(f.hide_on && typeof f.hide_on === 'object'
+          ? { hide_on: f.hide_on as FormFieldNode['hide_on'] }
+          : {}),
       });
     }
     if (fields.length === 0) continue;
-    rows.push({ id: String(r.id || newId()), fields });
+    rows.push({
+      id: String(r.id || newId()),
+      fields,
+      ...(r.hide_on && typeof r.hide_on === 'object'
+        ? { hide_on: r.hide_on as FormRowNode['hide_on'] }
+        : {}),
+    });
   }
   if (rows.length === 0) {
     return {

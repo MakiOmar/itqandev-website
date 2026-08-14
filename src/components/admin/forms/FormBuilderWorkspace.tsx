@@ -25,6 +25,11 @@ import {
   ADMIN_PRIMARY_BUTTON_CLASS,
 } from '~/lib/admin/native-select-classes';
 import { BuilderImportExportButtons } from '~/components/admin/BuilderImportExportButtons';
+import {
+  BuilderInspectorTabs,
+  BuilderResponsiveVisibilityFields,
+} from '~/components/admin/BuilderResponsiveVisibilityFields';
+import { normalizeHideOn, type DeviceHideOn } from '~/lib/marketing/device-visibility';
 import type { FormBuilderDocument } from '~/lib/admin/builder-import-export';
 import type {
   FormActionNode,
@@ -48,6 +53,7 @@ const FORM_GENERAL_SETTING_FIELDS: AppearanceSettingField[] = [
 type Device = 'mobile' | 'tablet' | 'desktop';
 type Selection =
   | { kind: 'field'; rowIndex: number; fieldIndex: number }
+  | { kind: 'row'; rowIndex: number }
   | { kind: 'action'; actionIndex: number }
   | null;
 
@@ -133,10 +139,16 @@ export type FormBuilderWorkspaceProps = {
 export const FormBuilderWorkspace = component$<FormBuilderWorkspaceProps>((props) => {
   const device = useSignal<Device>('desktop');
   const selection = useSignal<Selection>(null);
+  const inspectorTab = useSignal<'content' | 'advanced'>('content');
   const tab = useSignal<'fields' | 'actions' | 'settings'>('fields');
   const dragFieldType = useSignal<string | null>(null);
   const dragFieldPath = useSignal<DragFieldPath | null>(null);
   const dropRowIndex = useSignal<number | null>(null);
+
+  useTask$(({ track }) => {
+    track(() => selection.value);
+    inspectorTab.value = 'content';
+  });
 
   useTask$(({ track }) => {
     track(() => props.editingLocale.value);
@@ -649,9 +661,15 @@ export const FormBuilderWorkspace = component$<FormBuilderWorkspaceProps>((props
                   }}
                 >
                   <div class="mb-2 flex items-center gap-2">
-                    <span class="text-xs font-semibold uppercase text-gray-500">
+                    <button
+                      type="button"
+                      class="text-xs font-semibold uppercase text-gray-500 hover:text-primary-600"
+                      onClick$={() => {
+                        selection.value = { kind: 'row', rowIndex };
+                      }}
+                    >
                       {translateApp(props.lang, 'forms.row')} {rowIndex + 1}
-                    </span>
+                    </button>
                     <span class="text-[11px] text-gray-400">
                       {usedSpan}/12
                       {remaining > 0
@@ -770,11 +788,24 @@ export const FormBuilderWorkspace = component$<FormBuilderWorkspaceProps>((props
               <p class="text-xs text-gray-500">{translateApp(props.lang, 'forms.inspectorEmpty')}</p>
             ) : null}
 
-            {selectedField && selection.value?.kind === 'field' ? (
+                        {selection.value ? (
+              <BuilderInspectorTabs
+                lang={props.lang}
+                tab={inspectorTab.value}
+                onTab$={$((tab) => {
+                  inspectorTab.value = tab;
+                })}
+              />
+            ) : null}
+
+{selectedField && selection.value?.kind === 'field' ? (
               <div class="space-y-3">
                 <p class="text-sm font-medium">
                   {String(selectedField.settings.label || selectedField.type)}
                 </p>
+                {inspectorTab.value === 'content' ? (
+                <>
+
                 <div>
                   <p class="mb-1 text-xs font-medium">{translateApp(props.lang, 'forms.spanPresets')}</p>
                   <div class="flex flex-wrap gap-1">
@@ -859,10 +890,53 @@ export const FormBuilderWorkspace = component$<FormBuilderWorkspaceProps>((props
                     />
                   );
                 })()}
+              
+                </>
+                ) : null}
+                {inspectorTab.value === 'advanced' ? (
+                  <BuilderResponsiveVisibilityFields
+                    lang={props.lang}
+                    hideOn={selectedField.hide_on}
+                    onChange$={$(async (next: DeviceHideOn) => {
+                      const { rowIndex, fieldIndex } = selection.value as {
+                        rowIndex: number;
+                        fieldIndex: number;
+                      };
+                      const nextLayout = ensureFormLayout(props.layout.value);
+                      const field = nextLayout.rows[rowIndex]?.fields[fieldIndex];
+                      if (!field) return;
+                      field.hide_on = normalizeHideOn(next);
+                      props.layout.value = { ...nextLayout, rows: [...nextLayout.rows] };
+                    })}
+                  />
+                ) : null}
+</div>
+            ) : null}
+
+            
+            {selection.value?.kind === 'row' ? (
+              <div class="space-y-3">
+                <p class="text-sm font-medium">
+                  {translateApp(props.lang, 'forms.row')} {selection.value.rowIndex + 1}
+                </p>
+                {inspectorTab.value === 'advanced' || inspectorTab.value === 'content' ? (
+                  <BuilderResponsiveVisibilityFields
+                    lang={props.lang}
+                    hideOn={layout.rows[selection.value.rowIndex]?.hide_on}
+                    onChange$={$(async (next: DeviceHideOn) => {
+                      const rowIndex = (selection.value as { rowIndex: number }).rowIndex;
+                      const nextLayout = ensureFormLayout(props.layout.value);
+                      const row = nextLayout.rows[rowIndex];
+                      if (!row) return;
+                      row.hide_on = normalizeHideOn(next);
+                      props.layout.value = { ...nextLayout, rows: [...nextLayout.rows] };
+                    })}
+                  />
+                ) : null}
               </div>
             ) : null}
 
-            {selectedAction && selection.value?.kind === 'action' ? (
+{selectedAction && selection.value?.kind === 'action' ? (
               <div class="space-y-3">
                 <p class="text-sm font-medium">{selectedAction.type}</p>
                 {(() => {
