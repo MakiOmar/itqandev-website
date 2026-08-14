@@ -7,5 +7,8 @@ declare module 'tinymce/plugins/table';
 declare module 'tinymce/plugins/image';
 declare module 'tinymce/plugins/media';
 declare module 'tinymce/plugins/code';
+declare module 'tinymce/plugins/directionality';
 declare module 'tinymce/plugins/fullscreen';
 declare module 'tinymce/plugins/wordcount';
+declare module 'tinymce/skins/ui/oxide/skin.min.css';
+declare module 'tinymce/skins/ui/oxide-dark/skin.min.css';

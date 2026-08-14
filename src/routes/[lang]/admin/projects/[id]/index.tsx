@@ -7,6 +7,7 @@ import { TagInput } from '../../../../../components/common/TagInput';
 import { LoadingSpinner } from '../../../../../components/common/LoadingSpinner';
 import { MediaSelector } from '../../../../../components/common/MediaSelector';
 import { useTranslate, translateApp } from '../../../../../lib/i18n/useTranslate';
+import { isUiLocaleRtl } from '../../../../../lib/i18n/ui-locale-segments';
 import { useSwal } from '../../../../../lib/hooks/useSwal';
 import { getApiClient, extractCookieHeader } from '../../../../../lib/api/client';
 import { API_ENDPOINTS } from '../../../../../lib/api/endpoints';
@@ -744,6 +745,8 @@ export default component$(() => {
                       id="description"
                       name="description"
                       value={descriptionField.value}
+                      dir={isUiLocaleRtl(lang) ? 'rtl' : 'ltr'}
+                      lang={lang}
                       onValueChange$={(value) => {
                         descriptionField.value = value;
                       }}

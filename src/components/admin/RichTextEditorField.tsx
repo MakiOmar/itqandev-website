@@ -6,6 +6,8 @@ type TinyMceEditor = {
   getContent: () => string;
   setContent: (html: string) => void;
   remove: () => void;
+  getBody: () => HTMLElement;
+  getDoc: () => Document;
 };
 
 type TinyMceApi = {
@@ -15,6 +17,21 @@ type TinyMceApi = {
 
 function getGlobalTinyMce(): TinyMceApi | undefined {
   return (globalThis as unknown as { tinymce?: TinyMceApi }).tinymce;
+}
+
+/** Prefer explicit prop; otherwise match the page (`body` / `html`) direction. */
+function resolveEditorDir(propDir: 'ltr' | 'rtl' | undefined): 'ltr' | 'rtl' {
+  if (propDir === 'rtl' || propDir === 'ltr') {
+    return propDir;
+  }
+  if (typeof document === 'undefined') {
+    return 'ltr';
+  }
+  const pageDir =
+    document.body?.getAttribute('dir') ||
+    document.documentElement.getAttribute('dir') ||
+    '';
+  return pageDir.toLowerCase() === 'rtl' ? 'rtl' : 'ltr';
 }
 
 export const RichTextEditorField = component$<{
@@ -29,6 +46,7 @@ export const RichTextEditorField = component$<{
 }>((props) => {
   const mode = useSignal<'visual' | 'source'>('visual');
   const html = useSignal(props.value ?? '');
+  const editorDir = useSignal<'ltr' | 'rtl'>(props.dir ?? 'ltr');
   const editorId = `${props.id}-tinymce`;
   const hiddenInputId = `${props.id}-rich-text-value`;
 
@@ -37,13 +55,30 @@ export const RichTextEditorField = component$<{
     html.value = props.value ?? '';
   });
 
+  useTask$(({ track }) => {
+    track(() => props.dir);
+    if (props.dir === 'rtl' || props.dir === 'ltr') {
+      editorDir.value = props.dir;
+    }
+  });
+
+  // eslint-disable-next-line qwik/no-use-visible-task
+  useVisibleTask$(({ track }) => {
+    track(() => props.dir);
+    editorDir.value = resolveEditorDir(props.dir);
+  });
+
   // eslint-disable-next-line qwik/no-use-visible-task
   useVisibleTask$(async ({ track, cleanup }) => {
     track(() => mode.value);
+    track(() => editorDir.value);
 
     if (mode.value !== 'visual') {
       return;
     }
+
+    const initialHtml = html.value ?? '';
+    const dir = editorDir.value;
 
     const target = document.getElementById(editorId) as HTMLTextAreaElement | null;
     if (!target) {
@@ -69,20 +104,33 @@ export const RichTextEditorField = component$<{
         toolbar:
           'blocks | bold italic underline strikethrough | bullist numlist blockquote | alignleft aligncenter alignright | link unlink | table image media | code fullscreen',
         block_formats: 'Paragraph=p; Heading 2=h2; Heading 3=h3; Heading 4=h4; Preformatted=pre',
-        directionality: props.dir ?? 'ltr',
+        directionality: dir,
         placeholder: props.placeholder,
-        content_style:
-          'body { font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; font-size: 14px; line-height: 1.7; }',
+        // Iframe inherits html.dark color-scheme; without explicit colors, body text is invisible.
+        content_style: [
+          `html { color-scheme: light; background: #fff; direction: ${dir}; }`,
+          'body { font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;',
+          `font-size: 14px; line-height: 1.7; color: #111827; background: #fff; margin: 12px; direction: ${dir};`,
+          dir === 'rtl' ? 'text-align: right;' : 'text-align: left;',
+          '}',
+          'a { color: #2563eb; }',
+        ].join(' '),
         setup: (editor: TinyMceEditor & { on: (ev: string, fn: () => void) => void }) => {
           const syncFromEditor = () => {
+            const next = editor.getContent();
+            html.value = next;
             const hiddenInput = document.getElementById(hiddenInputId) as HTMLInputElement | null;
             if (hiddenInput) {
-              hiddenInput.value = editor.getContent();
+              hiddenInput.value = next;
             }
           };
 
           editor.on('init', () => {
-            editor.setContent(html.value ?? '');
+            const body = editor.getBody();
+            const doc = editor.getDoc();
+            body.setAttribute('dir', dir);
+            doc.documentElement.setAttribute('dir', dir);
+            editor.setContent(initialHtml);
             syncFromEditor();
           });
           editor.on('change keyup input undo redo', syncFromEditor);
@@ -127,7 +175,10 @@ export const RichTextEditorField = component$<{
   });
 
   return (
-    <div class="overflow-hidden rounded-lg border border-gray-300 bg-white shadow-sm focus-within:border-primary-500 focus-within:ring focus-within:ring-primary-200 dark:border-gray-700 dark:bg-gray-900 dark:focus-within:ring-primary-700/40">
+    <div
+      dir={editorDir.value}
+      class="overflow-hidden rounded-lg border border-gray-300 bg-white shadow-sm focus-within:border-primary-500 focus-within:ring focus-within:ring-primary-200 dark:border-gray-700 dark:bg-gray-900 dark:focus-within:ring-primary-700/40"
+    >
       {props.name ? (
         <input id={hiddenInputId} type="hidden" name={props.name} value={html.value} required={props.required} />
       ) : null}
@@ -172,7 +223,7 @@ export const RichTextEditorField = component$<{
           id={editorId}
           value={html.value}
           placeholder={props.placeholder}
-          dir={props.dir}
+          dir={editorDir.value}
           lang={props.lang}
           class="min-h-40 w-full border-0 bg-white px-3 py-2 text-sm text-gray-900 outline-none focus:ring-0 dark:bg-gray-900 dark:text-gray-100"
         />
@@ -181,7 +232,7 @@ export const RichTextEditorField = component$<{
           id={`${props.id}-source`}
           value={html.value}
           placeholder={props.placeholder}
-          dir={props.dir}
+          dir={editorDir.value}
           lang={props.lang}
           class="min-h-40 w-full border-0 bg-white px-3 py-2 font-mono text-sm text-gray-900 outline-none focus:ring-0 dark:bg-gray-900 dark:text-gray-100"
           onInput$={(event) => {

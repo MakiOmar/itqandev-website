@@ -20,6 +20,7 @@ const tinymcePlugins = [
   'image',
   'media',
   'code',
+  'directionality',
   'fullscreen',
   'wordcount',
 ] as const;
@@ -44,8 +45,18 @@ export async function loadTinyMce(): Promise<TinyMceApi> {
   await import('tinymce/plugins/image');
   await import('tinymce/plugins/media');
   await import('tinymce/plugins/code');
+  await import('tinymce/plugins/directionality');
   await import('tinymce/plugins/fullscreen');
   await import('tinymce/plugins/wordcount');
+
+  // Bundled Vite cannot fetch TinyMCE skin URLs; import CSS here (skin: false in init).
+  const isDark =
+    typeof document !== 'undefined' && document.documentElement.classList.contains('dark');
+  if (isDark) {
+    await import('tinymce/skins/ui/oxide-dark/skin.min.css');
+  } else {
+    await import('tinymce/skins/ui/oxide/skin.min.css');
+  }
 
   return tinymce;
 }

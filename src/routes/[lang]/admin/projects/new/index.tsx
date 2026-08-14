@@ -5,6 +5,7 @@ import { Link } from '@builder.io/qwik-city';
 import { PageHeader } from '../../../../../components/common/PageHeader';
 import { TagInput } from '../../../../../components/common/TagInput';
 import { useTranslate, translateApp } from '../../../../../lib/i18n/useTranslate';
+import { isUiLocaleRtl } from '../../../../../lib/i18n/ui-locale-segments';
 import { useSwal } from '../../../../../lib/hooks/useSwal';
 import { getApiClient } from '../../../../../lib/api/client';
 import { API_ENDPOINTS } from '../../../../../lib/api/endpoints';
@@ -566,6 +567,8 @@ export default component$(() => {
                   <LazyRichTextEditorField
                     id="description"
                     name="description"
+                    dir={isUiLocaleRtl(lang) ? 'rtl' : 'ltr'}
+                    lang={lang}
                   />
                 </div>
               </FieldTranslationGlobe>
