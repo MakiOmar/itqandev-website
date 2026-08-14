@@ -1,4 +1,4 @@
-import { component$, useSignal, $, type QRL, type Signal } from '@builder.io/qwik';
+import { component$, useSignal, useVisibleTask$, $, type QRL, type Signal } from '@builder.io/qwik';
 import { Link } from '@builder.io/qwik-city';
 import { AppearanceSettingsFields } from '~/components/admin/appearance/AppearanceSettingsFields';
 import { MediaSelector } from '~/components/common/MediaSelector';
@@ -24,6 +24,8 @@ import {
   writeAppearanceSettingValue,
 } from '~/lib/admin/appearance-locale-settings';
 import { HomepageSectionsRenderer } from '~/components/marketing/home-sections/HomepageSectionsRenderer';
+import { ChromeLayoutRenderer } from '~/components/marketing/chrome/ChromeLayoutRenderer';
+import { LocaleTransitionProvider } from '~/components/common/LocaleTransitionOverlay';
 import { appearanceSectionLabel } from '~/lib/i18n/appearance-labels';
 import { translateApp } from '~/lib/i18n/useTranslate';
 import {
@@ -66,6 +68,15 @@ export type PageBuilderWorkspaceProps = {
   activeLocale: Signal<string>;
   onSave$: QRL<() => Promise<void>>;
   saving: Signal<boolean>;
+  /** Live preview: page widgets vs header/footer chrome kits. */
+  previewSurface?: 'page' | 'chrome';
+  /** Site branding for chrome live preview (logos from settings). */
+  previewBranding?: {
+    name: string;
+    logo?: string;
+    logoDark?: string;
+    logoLight?: string;
+  };
 };
 
 type BlockPath = {
@@ -345,6 +356,102 @@ function previewFrameClass(device: LayoutBreakpoint): string {
   return 'mx-auto w-full max-w-5xl';
 }
 
+/** Admin live preview has no PublicMenuResolver inject — seed sample links when empty. */
+function withChromePreviewMenuSamples(bands: PageLayoutBand[]): PageLayoutBand[] {
+  const sample = [
+    { label: 'Home', href: '/', open_in_new_tab: false, children: [] },
+    { label: 'About', href: '/about/', open_in_new_tab: false, children: [] },
+    { label: 'Contact', href: '/contact/', open_in_new_tab: false, children: [] },
+  ];
+  return bands.map((band) => ({
+    ...band,
+    rows: (band.rows || []).map((row) => ({
+      ...row,
+      columns: (row.columns || []).map((col) => ({
+        ...col,
+        blocks: (col.blocks || []).map((block) => {
+          if (block.type !== 'header_menu' && block.type !== 'footer_menu' && block.type !== 'footer_links') {
+            return block;
+          }
+          const settings = { ...(block.settings || {}) } as Record<string, unknown>;
+          const items = settings.items;
+          if (Array.isArray(items) && items.length > 0) {
+            return block;
+          }
+          return { ...block, settings: { ...settings, items: sample } };
+        }),
+      })),
+    })),
+  }));
+}
+
+/** Isolates live-preview visibility so toggle off cannot leave a stuck pane. */
+const BuilderLivePreviewShell = component$<{
+  open: Signal<boolean>;
+  previewSurface?: 'page' | 'chrome';
+  bands: PageLayoutBand[];
+  uiLocale: string;
+  pageTitle: string;
+  siteLanguages: SiteLanguageRow[];
+  previewBranding?: PageBuilderWorkspaceProps['previewBranding'];
+  isDarkMode: boolean;
+}>((props) => {
+  const visible = props.open.value;
+  return (
+    <div
+      class={[
+        'mb-4 overflow-hidden rounded-lg border border-primary-200 bg-white dark:border-primary-800 dark:bg-slate-950',
+        visible ? '' : 'hidden',
+      ].join(' ')}
+      hidden={!visible}
+      aria-hidden={visible ? 'false' : 'true'}
+    >
+      {props.previewSurface === 'chrome' ? (
+        <div class="border-b border-slate-200 py-3 dark:border-slate-700">
+          {/* Public chrome kits need locale-transition context (language switcher). */}
+          <LocaleTransitionProvider>
+            <ChromeLayoutRenderer
+              sections={withChromePreviewMenuSamples(props.bands)}
+              uiLocale={props.uiLocale}
+              branding={{
+                name: props.previewBranding?.name || props.pageTitle || 'Preview',
+                logo: props.previewBranding?.logo || '',
+                logoDark: props.previewBranding?.logoDark || '',
+                logoLight: props.previewBranding?.logoLight || '',
+                site_languages: props.siteLanguages || [],
+              }}
+              features={{}}
+              isDarkMode={props.isDarkMode}
+              bandClass="flex items-center"
+            />
+          </LocaleTransitionProvider>
+        </div>
+      ) : (
+        <HomepageSectionsRenderer
+          sections={props.bands}
+          uiLocale={props.uiLocale}
+          services={[]}
+          caseStudies={[]}
+          testimonials={[]}
+          blogPosts={[]}
+          techStack={[]}
+          branding={{
+            name: props.pageTitle || 'Preview',
+            logo: '',
+            logoDark: '',
+            logoLight: '',
+            site_languages: [],
+            features: {},
+          }}
+          allowDefaultSections={false}
+          layoutAware={true}
+          pageContext={{ title: props.pageTitle || 'Page' }}
+        />
+      )}
+    </div>
+  );
+});
+
 export const PageBuilderWorkspace = component$<PageBuilderWorkspaceProps>((props) => {
   const bands = ensurePageLayoutBands(props.sections.value);
   const previewDevice = useSignal<LayoutBreakpoint>('desktop');
@@ -358,6 +465,22 @@ export const PageBuilderWorkspace = component$<PageBuilderWorkspaceProps>((props
   const paletteTab = useSignal<'widgets' | 'kits'>('widgets');
   const paletteSearch = useSignal('');
   const showLivePreview = useSignal(false);
+  /** Keep preview DOM after first open so off is CSS-only (avoids stuck pane). */
+  const livePreviewMounted = useSignal(false);
+  const previewIsDark = useSignal(false);
+
+  // eslint-disable-next-line qwik/no-use-visible-task
+  useVisibleTask$(({ cleanup }) => {
+    const sync = () => {
+      previewIsDark.value =
+        typeof document !== 'undefined' && document.documentElement.classList.contains('dark');
+    };
+    sync();
+    if (typeof document === 'undefined') return;
+    const obs = new MutationObserver(sync);
+    obs.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
+    cleanup(() => obs.disconnect());
+  });
 
   const clearDrag$ = $(() => {
     dragBlock.value = null;
@@ -469,6 +592,7 @@ export const PageBuilderWorkspace = component$<PageBuilderWorkspaceProps>((props
         </div>
         <button
           type="button"
+          aria-pressed={showLivePreview.value ? 'true' : 'false'}
           class={[
             'rounded-lg border px-3 py-1.5 text-xs font-medium',
             showLivePreview.value
@@ -476,7 +600,9 @@ export const PageBuilderWorkspace = component$<PageBuilderWorkspaceProps>((props
               : 'border-gray-300 text-gray-700 dark:border-gray-600 dark:text-gray-200',
           ].join(' ')}
           onClick$={() => {
-            showLivePreview.value = !showLivePreview.value;
+            const next = !showLivePreview.value;
+            showLivePreview.value = next;
+            if (next) livePreviewMounted.value = true;
           }}
         >
           {translateApp(props.lang, 'pages.livePreview')}
@@ -668,29 +794,17 @@ export const PageBuilderWorkspace = component$<PageBuilderWorkspaceProps>((props
               {translateApp(props.lang, 'pages.previewFrame')}
             </p>
 
-            {showLivePreview.value ? (
-              <div class="mb-4 overflow-hidden rounded-lg border border-primary-200 bg-white dark:border-primary-800 dark:bg-slate-950">
-                <HomepageSectionsRenderer
-                  sections={bands}
-                  uiLocale={props.activeLocale.value || props.defaultLocale}
-                  services={[]}
-                  caseStudies={[]}
-                  testimonials={[]}
-                  blogPosts={[]}
-                  techStack={[]}
-                  branding={{
-                    name: props.pageTitle || 'Preview',
-                    logo: '',
-                    logoDark: '',
-                    logoLight: '',
-                    site_languages: [],
-                    features: {},
-                  }}
-                  allowDefaultSections={false}
-                  layoutAware={true}
-                  pageContext={{ title: props.pageTitle || 'Page' }}
-                />
-              </div>
+            {livePreviewMounted.value ? (
+              <BuilderLivePreviewShell
+                open={showLivePreview}
+                previewSurface={props.previewSurface}
+                bands={bands}
+                uiLocale={props.activeLocale.value || props.defaultLocale}
+                pageTitle={props.pageTitle || 'Preview'}
+                siteLanguages={props.siteLanguages || []}
+                previewBranding={props.previewBranding}
+                isDarkMode={previewIsDark.value}
+              />
             ) : null}
 
             {bands.length === 0 ? (

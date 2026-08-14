@@ -20,6 +20,9 @@ import {
   updateChromeLayoutFromBrowser,
 } from '~/lib/admin/chrome-layout-actions';
 import { ensurePageLayoutBands } from '~/lib/admin/page-layout';
+import { getApiClient } from '~/lib/api/client';
+import { API_ENDPOINTS } from '~/lib/api/endpoints';
+import { mapPublicBrandingFromApi } from '~/lib/marketing/resolve-laravel-media-url';
 import type { AppearanceRegistryEntry, PageSectionNode } from '~/lib/marketing/appearance-types';
 import type { ChromeLayoutKind } from '~/types/chrome-layout';
 
@@ -39,6 +42,12 @@ export const ChromeAppearanceBuilder = component$<{
   const layoutName = useSignal('');
   const sections = useSignal<PageSectionNode[]>([]);
   const registry = useSignal<AppearanceRegistryEntry[]>([]);
+  const previewBranding = useSignal<{
+    name: string;
+    logo: string;
+    logoDark: string;
+    logoLight: string;
+  }>({ name: '', logo: '', logoDark: '', logoLight: '' });
   const defaultLocale = (
     langConfig.value.content_editing_locale ||
     langConfig.value.default_locale ||
@@ -56,14 +65,27 @@ export const ChromeAppearanceBuilder = component$<{
   // eslint-disable-next-line qwik/no-use-visible-task
   useVisibleTask$(async () => {
     try {
-      const [regs, layout] = await Promise.all([
+      const [regs, layout, settingsRes] = await Promise.all([
         fetchAppearanceRegistriesFromBrowser(),
         fetchChromeLayoutFromBrowser(kind, layoutId),
+        getApiClient(null)
+          .get<Record<string, unknown>>(API_ENDPOINTS.SETTINGS.GET)
+          .catch(() => null),
       ]);
       const allow = kind === 'header' ? HEADER_CATEGORIES : FOOTER_CATEGORIES;
       registry.value = (regs.kits ?? []).filter((k) => allow.has(String(k.category || '')));
       layoutName.value = layout.name;
       sections.value = ensurePageLayoutBands((layout.sections || []) as PageSectionNode[]);
+
+      const settingsPayload =
+        (settingsRes as { data?: Record<string, unknown> } | null)?.data ??
+        (settingsRes as Record<string, unknown> | null) ??
+        {};
+      const mapped = mapPublicBrandingFromApi(
+        settingsPayload,
+        String(settingsPayload.site_name || settingsPayload.name || layout.name || 'Preview'),
+      );
+      previewBranding.value = mapped;
     } catch (e) {
       showError(translateApp(lang, 'common.error'), {
         text: formatAppearanceError(e, translateApp(lang, 'common.error')),
@@ -117,6 +139,8 @@ export const ChromeAppearanceBuilder = component$<{
       activeLocale={activeLocale}
       onSave$={handleSave$}
       saving={saving}
+      previewSurface="chrome"
+      previewBranding={previewBranding.value}
     />
   );
 });
