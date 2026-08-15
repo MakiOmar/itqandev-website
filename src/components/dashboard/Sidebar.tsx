@@ -235,9 +235,11 @@ export const Sidebar = component$<SidebarProps>((props) => {
       label: translateApp(lang, 'sidebar.appearance'),
       icon: SettingsIcon,
       children: [
+        { label: translateApp(lang, 'sidebar.appearanceThemeBuilder'), href: R.ADMIN.APPEARANCE_THEME_BUILDER },
         { label: translateApp(lang, 'sidebar.appearanceHomepage'), href: R.ADMIN.APPEARANCE_HOMEPAGE },
         { label: translateApp(lang, 'sidebar.appearanceHeader'), href: R.ADMIN.APPEARANCE_HEADER },
         { label: translateApp(lang, 'sidebar.appearanceFooter'), href: R.ADMIN.APPEARANCE_FOOTER },
+        { label: translateApp(lang, 'sidebar.appearanceBody'), href: R.ADMIN.APPEARANCE_BODY },
         { label: translateApp(lang, 'chromeLayouts.typeDefaults'), href: R.ADMIN.APPEARANCE_CHROME_DEFAULTS },
       ],
       roles: ['admin', 'super_admin'],

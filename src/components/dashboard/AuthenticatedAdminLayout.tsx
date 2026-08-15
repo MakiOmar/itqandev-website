@@ -17,7 +17,7 @@ function isAdminPageBuilderPath(pathname: string): boolean {
   return (
     /^\/admin\/pages\/[^/]+\/builder$/.test(logical) ||
     /^\/admin\/forms\/[^/]+\/builder$/.test(logical) ||
-    /^\/admin\/appearance\/(header|footer)\/[^/]+\/builder$/.test(logical)
+    /^\/admin\/appearance\/(header|footer|body)\/[^/]+\/builder$/.test(logical)
   );
 }
 

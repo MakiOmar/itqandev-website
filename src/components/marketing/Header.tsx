@@ -68,7 +68,8 @@ export const Header = component$<HeaderProps>((props) => {
   return (
     <header class={barClass} data-site-header>
       <div class="relative py-3">
-        <div class="flex items-center gap-2 px-4 sm:px-6 lg:px-8">
+        {/* Match marketing `Container` default (`max-w-6xl`) — not `max-w-7xl` */}
+        <div class="mx-auto flex w-full max-w-6xl items-center gap-2 px-4 sm:px-6 lg:px-8">
           <div class="min-w-0 flex-1">
             <ChromeLayoutRenderer
               sections={sections}
@@ -78,6 +79,7 @@ export const Header = component$<HeaderProps>((props) => {
               features={props.features}
               isDarkMode={isDarkMode.value}
               bandClass="flex items-center"
+              embedInParent={true}
             />
           </div>
           {mobileNav.length > 0 ? (
@@ -96,7 +98,7 @@ export const Header = component$<HeaderProps>((props) => {
         </div>
         {menuOpen.value && mobileNav.length > 0 ? (
           <nav
-            class="border-t border-slate-200 bg-white/95 px-4 py-3 lg:hidden dark:border-slate-700 dark:bg-slate-900/95"
+            class="mx-auto w-full max-w-6xl border-t border-slate-200 bg-white/95 px-4 py-3 lg:hidden dark:border-slate-700 dark:bg-slate-900/95"
             aria-label="Mobile"
           >
             <ul class="space-y-1">

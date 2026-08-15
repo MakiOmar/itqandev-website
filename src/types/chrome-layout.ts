@@ -1,8 +1,8 @@
 /**
- * Named header/footer chrome layouts (admin).
+ * Named header/footer/body chrome layouts (admin).
  */
 
-export type ChromeLayoutKind = 'header' | 'footer';
+export type ChromeLayoutKind = 'header' | 'footer' | 'body';
 
 export type ChromeLayoutStatus = 'draft' | 'published';
 
@@ -23,3 +23,29 @@ export type ChromeTypeDefaults = Record<
   'homepage' | 'page' | 'project' | 'blog_post' | 'service',
   { header_id: number | null; footer_id: number | null }
 >;
+
+export type ThemeTemplateStatus = 'draft' | 'published';
+
+export type ThemeConditionRule = {
+  include: boolean;
+  group: 'entire' | 'singular' | 'archive' | 'advanced';
+  key: string;
+  value: string | number | null;
+};
+
+export type ThemeTemplateConditionsDoc = {
+  relation: 'and' | 'or';
+  rules: ThemeConditionRule[];
+};
+
+export type ThemeTemplateMeta = {
+  id: number;
+  name: string;
+  status: ThemeTemplateStatus;
+  conditions: ThemeTemplateConditionsDoc;
+  header_layout_id: number | null;
+  footer_layout_id: number | null;
+  body_layout_id: number | null;
+  created_at?: string | null;
+  updated_at?: string | null;
+};

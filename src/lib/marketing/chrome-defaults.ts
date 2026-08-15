@@ -21,7 +21,7 @@ export function defaultHeaderSections(menuItems: PublicNavItem[] = []): PageSect
       id: 'band_header_main',
       type: 'layout',
       enabled: true,
-      layout_width: 'full',
+      layout_width: 'boxed',
       settings: {},
       rows: [
         {

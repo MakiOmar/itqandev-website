@@ -76,6 +76,8 @@ export type PageBuilderWorkspaceProps = {
   saving: Signal<boolean>;
   /** Live preview: page widgets vs header/footer chrome kits. */
   previewSurface?: 'page' | 'chrome';
+  /** Import/export envelope kind (default page). */
+  exportBuilderKind?: 'page' | 'header' | 'footer' | 'body';
   /** Site branding for chrome live preview (logos from settings). */
   previewBranding?: {
     name: string;
@@ -625,7 +627,7 @@ export const PageBuilderWorkspace = component$<PageBuilderWorkspaceProps>((props
         </button>
         <BuilderImportExportButtons
           lang={props.lang}
-          builder="page"
+          builder={props.exportBuilderKind || 'page'}
           filenameBase={props.pageTitle || 'page'}
           disabled={props.saving.value}
           getDocument$={$(() => ({ sections: props.sections.value }))}

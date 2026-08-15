@@ -30,6 +30,11 @@ export type ChromeLayoutRendererProps = {
   isDarkMode?: boolean;
   /** Extra classes on each band wrapper */
   bandClass?: string;
+  /**
+   * When true, skip band max-width/padding — parent already constrains
+   * (e.g. site Header shell matching marketing `Container` `max-w-6xl`).
+   */
+  embedInParent?: boolean;
 };
 
 /**
@@ -46,15 +51,15 @@ export const ChromeLayoutRenderer = component$<ChromeLayoutRendererProps>((props
     <>
       {bands.map((band) => {
         const boxed = (band.layout_width || 'boxed') !== 'full';
+        const widthClass = props.embedInParent
+          ? 'w-full'
+          : boxed
+            ? 'mx-auto w-full max-w-6xl px-4 sm:px-6 lg:px-8'
+            : 'w-full';
         return (
           <div
             key={band.id}
-            class={[
-              boxed ? 'mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8' : 'w-full',
-              props.bandClass || '',
-            ]
-              .filter(Boolean)
-              .join(' ')}
+            class={[widthClass, props.bandClass || ''].filter(Boolean).join(' ')}
           >
             {(band.rows || []).map((row) => {
               const gap = GAP_CLASS[Number(row.gap) || 4] || 'gap-4';

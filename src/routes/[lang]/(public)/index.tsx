@@ -35,7 +35,13 @@ export default component$(() => {
 
   return (
     <HomepageSectionsRenderer
-      sections={shell.value.homepageSections}
+      sections={
+        shell.value.themeBody && shell.value.themeBody.length > 0
+          ? shell.value.themeBody
+          : shell.value.homepageSections
+      }
+      layoutAware={Boolean(shell.value.themeBody && shell.value.themeBody.length > 0)}
+      allowDefaultSections={!shell.value.themeBody?.length}
       uiLocale={uiLocale}
       services={services}
       caseStudies={caseStudies}

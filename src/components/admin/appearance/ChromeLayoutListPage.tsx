@@ -5,6 +5,8 @@ import { EmptyState } from '~/components/common/EmptyState';
 import { useTranslate, translateApp } from '~/lib/i18n/useTranslate';
 import { useSwal } from '~/lib/hooks/useSwal';
 import {
+  adminBodyBuilderHref,
+  adminBodyEditHref,
   adminFooterBuilderHref,
   adminFooterEditHref,
   adminHeaderBuilderHref,
@@ -33,18 +35,33 @@ export const ChromeLayoutListPage = component$<{
   const title =
     kind === 'header'
       ? translateApp(lang, 'sidebar.appearanceHeader')
-      : translateApp(lang, 'sidebar.appearanceFooter');
+      : kind === 'footer'
+        ? translateApp(lang, 'sidebar.appearanceFooter')
+        : translateApp(lang, 'sidebar.appearanceBody');
   const newHref =
-    kind === 'header' ? R.ADMIN.APPEARANCE_HEADER_NEW : R.ADMIN.APPEARANCE_FOOTER_NEW;
+    kind === 'header'
+      ? R.ADMIN.APPEARANCE_HEADER_NEW
+      : kind === 'footer'
+        ? R.ADMIN.APPEARANCE_FOOTER_NEW
+        : R.ADMIN.APPEARANCE_BODY_NEW;
 
   const refetch$ = $(async () => {
     items.value = await fetchChromeLayoutsFromBrowser(kind);
   });
 
   const editHref = (id: number) =>
-    kind === 'header' ? adminHeaderEditHref(lang, id) : adminFooterEditHref(lang, id);
+    kind === 'header'
+      ? adminHeaderEditHref(lang, id)
+      : kind === 'footer'
+        ? adminFooterEditHref(lang, id)
+        : adminBodyEditHref(lang, id);
   const builderHref = (id: number) =>
-    kind === 'header' ? adminHeaderBuilderHref(lang, id) : adminFooterBuilderHref(lang, id);
+    kind === 'header'
+      ? adminHeaderBuilderHref(lang, id)
+      : kind === 'footer'
+        ? adminFooterBuilderHref(lang, id)
+        : adminBodyBuilderHref(lang, id);
+  const showSiteDefault = kind !== 'body';
 
   return (
     <div class="space-y-4">
@@ -73,9 +90,11 @@ export const ChromeLayoutListPage = component$<{
                 <th class="px-4 py-3 text-start font-medium text-gray-600 dark:text-gray-300">
                   {translateApp(lang, 'common.status')}
                 </th>
-                <th class="px-4 py-3 text-start font-medium text-gray-600 dark:text-gray-300">
-                  {translateApp(lang, 'chromeLayouts.siteDefault')}
-                </th>
+                {showSiteDefault ? (
+                  <th class="px-4 py-3 text-start font-medium text-gray-600 dark:text-gray-300">
+                    {translateApp(lang, 'chromeLayouts.siteDefault')}
+                  </th>
+                ) : null}
                 <th class="px-4 py-3 text-end font-medium text-gray-600 dark:text-gray-300">
                   {translateApp(lang, 'common.actions')}
                 </th>
@@ -89,30 +108,32 @@ export const ChromeLayoutListPage = component$<{
                     <div class="text-xs text-gray-500">{row.slug}</div>
                   </td>
                   <td class="px-4 py-3 capitalize text-gray-700 dark:text-gray-300">{row.status}</td>
-                  <td class="px-4 py-3">
-                    {row.is_site_default ? (
-                      <span class="rounded bg-primary-100 px-2 py-0.5 text-xs font-medium text-primary-800 dark:bg-primary-900/40 dark:text-primary-200">
-                        {translateApp(lang, 'chromeLayouts.siteDefault')}
-                      </span>
-                    ) : (
-                      <button
-                        type="button"
-                        class="text-xs text-primary-600 hover:underline dark:text-primary-400"
-                        disabled={row.status !== 'published'}
-                        onClick$={async () => {
-                          const res = await setChromeLayoutSiteDefaultFromBrowser(kind, row.id);
-                          if (!res.success) {
-                            await showError(res.error || translateApp(lang, 'common.error'));
-                            return;
-                          }
-                          await success(translateApp(lang, 'common.saved'));
-                          await refetch$();
-                        }}
-                      >
-                        {translateApp(lang, 'chromeLayouts.makeSiteDefault')}
-                      </button>
-                    )}
-                  </td>
+                  {showSiteDefault ? (
+                    <td class="px-4 py-3">
+                      {row.is_site_default ? (
+                        <span class="rounded bg-primary-100 px-2 py-0.5 text-xs font-medium text-primary-800 dark:bg-primary-900/40 dark:text-primary-200">
+                          {translateApp(lang, 'chromeLayouts.siteDefault')}
+                        </span>
+                      ) : (
+                        <button
+                          type="button"
+                          class="text-xs text-primary-600 hover:underline dark:text-primary-400"
+                          disabled={row.status !== 'published'}
+                          onClick$={async () => {
+                            const res = await setChromeLayoutSiteDefaultFromBrowser(kind, row.id);
+                            if (!res.success) {
+                              await showError(res.error || translateApp(lang, 'common.error'));
+                              return;
+                            }
+                            await success(translateApp(lang, 'common.saved'));
+                            await refetch$();
+                          }}
+                        >
+                          {translateApp(lang, 'chromeLayouts.makeSiteDefault')}
+                        </button>
+                      )}
+                    </td>
+                  ) : null}
                   <td class="px-4 py-3">
                     <div class="flex flex-wrap justify-end gap-2">
                       <Link href={builderHref(row.id)} class="text-primary-600 hover:underline">

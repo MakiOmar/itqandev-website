@@ -34,6 +34,10 @@ export const API_ENDPOINTS = {
     FOOTERS: '/appearance/footers',
     FOOTER_GET: (id: string | number) => `/appearance/footers/${id}`,
     FOOTER_SET_DEFAULT: (id: string | number) => `/appearance/footers/${id}/set-site-default`,
+    BODIES: '/appearance/bodies',
+    BODY_GET: (id: string | number) => `/appearance/bodies/${id}`,
+    THEME_TEMPLATES: '/appearance/theme-templates',
+    THEME_TEMPLATE_GET: (id: string | number) => `/appearance/theme-templates/${id}`,
     CHROME_TYPE_DEFAULTS: '/appearance/chrome-type-defaults',
   },
   // Fonts (self-hosted typography library)

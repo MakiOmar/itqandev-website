@@ -122,13 +122,13 @@ Requires the same ability as system health (`manageSystemCache`). See `docs/CONF
 
 ### POST `/api/v1/content-slugs/suggest`
 
-**Auth:** Required (Sanctum). Authorizes with `viewAny` on the chosen content model.
+**Auth:** Required (Sanctum). Authorizes with `viewAny` on the chosen content model, or `manageSettings` for `chrome_headers` / `chrome_footers` / `chrome_bodies`.
 
 **Body (JSON):**
 
 | Field | Type | Description |
 |-------|------|-------------|
-| `entity` | string | One of: `projects`, `blog_posts`, `services`, `categories`, `skills`, `pages` |
+| `entity` | string | One of: `projects`, `blog_posts`, `services`, `categories`, `skills`, `pages`, `forms`, `chrome_headers`, `chrome_footers`, `chrome_bodies` |
 | `source` | string | Title or provisional slug text (max 255); server runs `Str::slug()` then uniquifies |
 | `ignore_id` | int (optional) | When editing, current record id so its own slug is not treated as a collision |
 
@@ -540,7 +540,7 @@ When `mode` is `custom`, `google_css_href` is omitted and `sources` maps format 
 
 **Preferred for marketing SSR** — one response for layout chrome instead of separate `site-meta`, `menus/primary`, and `services` calls.
 
-**Query:** `locale` — UI locale (e.g. `en`, `ar`). Sends `X-Content-Locale` when the Qwik client passes a presentation locale.
+**Query:** `locale` — UI locale (e.g. `en`, `ar`). Optional `path` (or header `X-Document-Path`) for route-aware chrome. Optional `theme_context` (or `X-Theme-Context`) to force Theme Builder context (`not_found`, `homepage`, …). Sends `X-Content-Locale` when the Qwik client passes a presentation locale.
 
 **Success (200):**
 
@@ -573,7 +573,10 @@ When `mode` is `custom`, `google_css_href` is omitted and `sources` maps format 
     },
     "footer": {
       "sections": []
-    }
+    },
+    "theme_body": null,
+    "theme_context": "homepage",
+    "theme_template_id": null
   }
 }
 ```
@@ -581,10 +584,12 @@ When `mode` is `custom`, `google_css_href` is omitted and `sources` maps format 
 - `site_meta` — same shape as `GET /api/public/site-meta` `data` (localized for the shell’s presentation locale).
 - `menu` — same shape as `GET /api/public/menus/primary` `data`.
 - `services` — published services array (empty when the `services` feature module is disabled). Same records as `GET /api/public/services`.
-- `homepage_sections` — enabled Appearance builder sections (defaults to the seven marketing homepage types when unset).
+- `homepage_sections` — enabled Appearance builder sections (defaults to the seven marketing homepage types when unset). Flat list; when a Theme Builder body matches homepage, the Qwik homepage prefers `theme_body` instead.
 - `header` / `footer` — page-layout documents `{ "sections": [ … ] }`. Menu kits include resolved `settings.items`.
+- `theme_body` — optional band layout from a matching Theme Builder template (homepage / 404 only).
+- `theme_context` / `theme_template_id` — resolved route context and winning published template id.
 
-Cached server-side (~300s) per `locale` + presentation locale key. Legacy endpoints remain available for tools and gradual migration.
+Cached server-side (~300s) per `locale` + presentation locale + path + theme_context key. Legacy endpoints remain available for tools and gradual migration.
 
 ### Appearance builders (authenticated)
 
@@ -604,11 +609,15 @@ Require `Authorization: Bearer` and the `manageSettings` gate (`admin` / `super_
 | `GET/PUT/DELETE` | `/api/appearance/headers/{id}` | Show / update / delete |
 | `POST` | `/api/appearance/headers/{id}/set-site-default` | Published only |
 | `GET/POST/…` | `/api/appearance/footers…` | Same for footers |
+| `GET/POST/…` | `/api/appearance/bodies…` | Same for body layouts (`kind=body`; no set-site-default) |
+| `GET` | `/api/appearance/theme-templates` | Paginated Theme Builder page templates |
+| `POST` | `/api/appearance/theme-templates` | Create (`name`, `status`, `conditions`, slot ids) |
+| `GET/PUT/DELETE` | `/api/appearance/theme-templates/{id}` | Show / update / delete |
 | `GET/PUT` | `/api/appearance/chrome-type-defaults` | Per content-type header/footer ids |
 
-Named layouts live in `chrome_layouts`. Homepage remains `homepage_builder` in `project-settings.json`. See `docs/CONFIGURATION.md` (Appearance builders).
+Named layouts live in `chrome_layouts`. Theme templates live in `theme_templates` (conditions + Header/Body/Footer slot FKs). Homepage remains `homepage_builder` in `project-settings.json`. See `docs/CONFIGURATION.md` (Appearance builders).
 
-Public shell (`GET /api/public/shell`) resolves header/footer via record → type default → site default (published only). Pass `path` query (document pathname) for route-aware chrome.
+Public shell resolves header/footer via **record FK → theme template slot → type default → site default** (published only). Pass `path` for route-aware chrome; unknown paths use `not_found` context.
 
 ### Media library meta (authenticated)
 

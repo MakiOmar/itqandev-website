@@ -15,7 +15,8 @@ import type { FormActionNode, FormLayoutDocument, FormSettings } from '~/types/f
 export const BUILDER_EXPORT_FORMAT = 'credocode.builder-export';
 export const BUILDER_EXPORT_VERSION = 1;
 
-export type BuilderKind = 'page' | 'form' | 'homepage' | 'header' | 'footer';
+export type BuilderKind = 'page' | 'form' | 'homepage' | 'header' | 'footer' | 'body' | 'theme';
+
 
 export type BuilderExportEnvelope<T = unknown> = {
   format: typeof BUILDER_EXPORT_FORMAT;
@@ -44,7 +45,9 @@ export type BuilderImportErrorCode =
   | 'INVALID_FORM_DOCUMENT'
   | 'INVALID_HOMEPAGE_DOCUMENT'
   | 'INVALID_FOOTER_DOCUMENT'
-  | 'INVALID_HEADER_DOCUMENT';
+  | 'INVALID_HEADER_DOCUMENT'
+  | 'INVALID_BODY_DOCUMENT'
+  | 'INVALID_THEME_DOCUMENT';
 
 export class BuilderImportError extends Error {
   readonly code: BuilderImportErrorCode;
@@ -165,16 +168,39 @@ export function normalizeBuilderDocument(builder: BuilderKind, document: unknown
       } satisfies HomepageBuilderDocument;
     }
     case 'footer':
-    case 'header': {
+    case 'header':
+    case 'body': {
       const sections = asSectionsArray(document);
       if (!sections) {
         throw new BuilderImportError(
-          builder === 'header' ? 'INVALID_HEADER_DOCUMENT' : 'INVALID_FOOTER_DOCUMENT',
+          builder === 'header'
+            ? 'INVALID_HEADER_DOCUMENT'
+            : builder === 'footer'
+              ? 'INVALID_FOOTER_DOCUMENT'
+              : 'INVALID_BODY_DOCUMENT',
         );
       }
       return {
         sections: ensurePageLayoutBands(sections as PageSectionNode[]),
       } satisfies FooterBuilderExportDocument;
+    }
+    case 'theme': {
+      if (!document || typeof document !== 'object' || Array.isArray(document)) {
+        throw new BuilderImportError('INVALID_THEME_DOCUMENT');
+      }
+      const d = document as Record<string, unknown>;
+      const conditions =
+        d.conditions && typeof d.conditions === 'object' && !Array.isArray(d.conditions)
+          ? d.conditions
+          : { relation: 'and', rules: [{ include: true, group: 'entire', key: 'site', value: null }] };
+      return {
+        conditions,
+        header_layout_id: d.header_layout_id == null ? null : Number(d.header_layout_id),
+        footer_layout_id: d.footer_layout_id == null ? null : Number(d.footer_layout_id),
+        body_layout_id: d.body_layout_id == null ? null : Number(d.body_layout_id),
+        status: d.status === 'published' ? 'published' : 'draft',
+        name: typeof d.name === 'string' ? d.name : undefined,
+      };
     }
     default:
       throw new BuilderImportError('INVALID_SHAPE');
@@ -186,7 +212,7 @@ export function normalizeBuilderDocument(builder: BuilderKind, document: unknown
  * Returns the normalized document (not the envelope).
  */
 export function extractBuilderDocument(data: unknown, expectedBuilder: BuilderKind): unknown {
-  if (Array.isArray(data) && (expectedBuilder === 'page' || expectedBuilder === 'homepage' || expectedBuilder === 'header' || expectedBuilder === 'footer')) {
+  if (Array.isArray(data) && (expectedBuilder === 'page' || expectedBuilder === 'homepage' || expectedBuilder === 'header' || expectedBuilder === 'footer' || expectedBuilder === 'body')) {
     return normalizeBuilderDocument(expectedBuilder, { sections: data });
   }
 

@@ -1,5 +1,5 @@
 /**
- * Shared fullscreen layout builder for Appearance → Header / Footer (by layout id).
+ * Shared fullscreen layout builder for Appearance → Header / Footer / Body (by layout id).
  */
 import { component$, useSignal, useVisibleTask$, $ } from '@builder.io/qwik';
 import { PageBuilderWorkspace } from '~/components/admin/pages/PageBuilderWorkspace';
@@ -7,6 +7,7 @@ import { usePublicSiteMeta } from '../../../routes/[lang]/admin/layout';
 import { useTranslate, translateApp } from '~/lib/i18n/useTranslate';
 import { useSwal } from '~/lib/hooks/useSwal';
 import {
+  adminBodyEditHref,
   adminFooterEditHref,
   adminHeaderEditHref,
   getLocalizedRoutes,
@@ -57,10 +58,21 @@ export const ChromeAppearanceBuilder = component$<{
   const pageTitle =
     kind === 'header'
       ? translateApp(lang, 'sidebar.appearanceHeader')
-      : translateApp(lang, 'sidebar.appearanceFooter');
-  const listHref = kind === 'header' ? R.ADMIN.APPEARANCE_HEADER : R.ADMIN.APPEARANCE_FOOTER;
+      : kind === 'footer'
+        ? translateApp(lang, 'sidebar.appearanceFooter')
+        : translateApp(lang, 'sidebar.appearanceBody');
+  const listHref =
+    kind === 'header'
+      ? R.ADMIN.APPEARANCE_HEADER
+      : kind === 'footer'
+        ? R.ADMIN.APPEARANCE_FOOTER
+        : R.ADMIN.APPEARANCE_BODY;
   const classicHref =
-    kind === 'header' ? adminHeaderEditHref(lang, layoutId) : adminFooterEditHref(lang, layoutId);
+    kind === 'header'
+      ? adminHeaderEditHref(lang, layoutId)
+      : kind === 'footer'
+        ? adminFooterEditHref(lang, layoutId)
+        : adminBodyEditHref(lang, layoutId);
 
   // eslint-disable-next-line qwik/no-use-visible-task
   useVisibleTask$(async () => {
@@ -72,8 +84,14 @@ export const ChromeAppearanceBuilder = component$<{
           .get<Record<string, unknown>>(API_ENDPOINTS.SETTINGS.GET)
           .catch(() => null),
       ]);
-      const allow = kind === 'header' ? HEADER_CATEGORIES : FOOTER_CATEGORIES;
-      registry.value = (regs.kits ?? []).filter((k) => allow.has(String(k.category || '')));
+      if (kind === 'body') {
+        registry.value = [...(regs.widgets ?? []), ...(regs.kits ?? [])].filter(
+          (k) => !HEADER_CATEGORIES.has(String(k.category || '')) && !FOOTER_CATEGORIES.has(String(k.category || '')),
+        );
+      } else {
+        const allow = kind === 'header' ? HEADER_CATEGORIES : FOOTER_CATEGORIES;
+        registry.value = (regs.kits ?? []).filter((k) => allow.has(String(k.category || '')));
+      }
       layoutName.value = layout.name;
       sections.value = ensurePageLayoutBands((layout.sections || []) as PageSectionNode[]);
 
@@ -139,7 +157,8 @@ export const ChromeAppearanceBuilder = component$<{
       activeLocale={activeLocale}
       onSave$={handleSave$}
       saving={saving}
-      previewSurface="chrome"
+      previewSurface={kind === 'body' ? 'page' : 'chrome'}
+      exportBuilderKind={kind}
       previewBranding={previewBranding.value}
     />
   );

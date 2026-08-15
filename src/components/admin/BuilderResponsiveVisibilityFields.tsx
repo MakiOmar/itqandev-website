@@ -1,7 +1,7 @@
 /**
  * Elementor-style Advanced → Responsive visibility controls for builders.
  */
-import { component$, type QRL } from '@builder.io/qwik';
+import { component$, useSignal, useTask$, $, type QRL } from '@builder.io/qwik';
 import { AdminSwitch } from '~/components/admin/appearance/AdminSwitch';
 import {
   normalizeHideOn,
@@ -10,13 +10,48 @@ import {
 import type { LayoutBreakpoint } from '~/lib/marketing/appearance-types';
 import { translateApp } from '~/lib/i18n/useTranslate';
 
+const DEVICES: LayoutBreakpoint[] = ['mobile', 'tablet', 'desktop'];
+
+/** One row so device id is a prop (avoids Qwik map-closure issues). */
+const DeviceHideSwitchRow = component$<{
+  lang: string;
+  device: LayoutBreakpoint;
+  checked: boolean;
+  onToggle$: QRL<(device: LayoutBreakpoint, checked: boolean) => void | Promise<void>>;
+}>((props) => {
+  return (
+    <div class="flex items-center justify-between gap-2 rounded-md px-1 py-0.5">
+      <span class="text-xs font-medium text-gray-700 dark:text-gray-200">
+        {translateApp(props.lang, 'builder.advanced.hideOn')}{' '}
+        {translateApp(props.lang, `pages.device.${props.device}`)}
+      </span>
+      <AdminSwitch
+        checked={props.checked}
+        ariaLabel={`${translateApp(props.lang, 'builder.advanced.hideOn')} ${translateApp(props.lang, `pages.device.${props.device}`)}`}
+        onChange$={$((checked) => props.onToggle$(props.device, checked))}
+      />
+    </div>
+  );
+});
+
 export const BuilderResponsiveVisibilityFields = component$<{
   lang: string;
   hideOn: DeviceHideOn | null | undefined;
   onChange$: QRL<(next: DeviceHideOn) => void | Promise<void>>;
 }>((props) => {
-  const current = normalizeHideOn(props.hideOn);
-  const devices: LayoutBreakpoint[] = ['mobile', 'tablet', 'desktop'];
+  /** Optimistic UI so switches flip immediately even if parent re-render is slow. */
+  const local = useSignal(normalizeHideOn(props.hideOn));
+
+  useTask$(({ track }) => {
+    const incoming = track(() => props.hideOn);
+    local.value = normalizeHideOn(incoming);
+  });
+
+  const onToggle$ = $(async (device: LayoutBreakpoint, checked: boolean) => {
+    const next = normalizeHideOn({ ...local.value, [device]: checked });
+    local.value = next;
+    await props.onChange$(next);
+  });
 
   return (
     <div class="space-y-3">
@@ -29,25 +64,14 @@ export const BuilderResponsiveVisibilityFields = component$<{
         </p>
       </div>
       <div class="space-y-2 rounded-lg border border-gray-200 p-2.5 dark:border-gray-700">
-        {devices.map((device) => (
-          <div
+        {DEVICES.map((device) => (
+          <DeviceHideSwitchRow
             key={device}
-            class="flex items-center justify-between gap-2 rounded-md px-1 py-0.5"
-          >
-            <span class="text-xs font-medium text-gray-700 dark:text-gray-200">
-              {translateApp(props.lang, 'builder.advanced.hideOn')}{' '}
-              {translateApp(props.lang, `pages.device.${device}`)}
-            </span>
-            <AdminSwitch
-              checked={current[device]}
-              onChange$={async (checked) => {
-                await props.onChange$({
-                  ...current,
-                  [device]: checked,
-                });
-              }}
-            />
-          </div>
+            lang={props.lang}
+            device={device}
+            checked={local.value[device]}
+            onToggle$={onToggle$}
+          />
         ))}
       </div>
     </div>

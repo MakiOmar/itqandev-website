@@ -40,6 +40,9 @@ export type PublicShellState = {
   primaryMenu: PublicNavItem[];
   siteContent: SiteContent;
   homepageSections: HomepageSectionInstance[];
+  /** Theme Builder body (band layout) when matched for homepage / 404. */
+  themeBody: PageSectionNode[] | null;
+  themeContext: string | null;
   header: HeaderPublicPayload;
   footer: FooterPublicPayload;
 };
@@ -49,6 +52,8 @@ type PublicShellApiData = {
   menu?: { items?: PublicNavItem[] };
   services?: Record<string, unknown>[];
   homepage_sections?: HomepageSectionInstance[];
+  theme_body?: { sections?: PageSectionNode[] } | null;
+  theme_context?: string | null;
   header?: HeaderPublicPayload;
   footer?: FooterPublicPayload;
 };
@@ -140,6 +145,8 @@ function localShellFallback(): PublicShellState {
     primaryMenu: [],
     siteContent: base,
     homepageSections: defaultHomepageSections(),
+    themeBody: null,
+    themeContext: null,
     header: { sections: defaultHeaderSections([]) },
     footer: { sections: defaultFooterSections() },
   };
@@ -156,11 +163,21 @@ function mapShellApiPayload(data: PublicShellApiData, fallbackName: string): Pub
     ? data.homepage_sections
     : defaultHomepageSections();
 
+  const themeBodySections =
+    data.theme_body &&
+    typeof data.theme_body === 'object' &&
+    Array.isArray(data.theme_body.sections) &&
+    data.theme_body.sections.length > 0
+      ? (data.theme_body.sections as PageSectionNode[])
+      : null;
+
   return {
     branding: brandingFromSiteMeta(siteMeta, fallbackName),
     primaryMenu: menuItems,
     siteContent: mergeShellServicesIntoSiteContent(base, data.services),
     homepageSections,
+    themeBody: themeBodySections,
+    themeContext: typeof data.theme_context === 'string' ? data.theme_context : null,
     header: normalizeChromePayload(data.header, () => defaultHeaderSections(menuItems)),
     footer: normalizeChromePayload(data.footer, () => defaultFooterSections()),
   };
@@ -201,6 +218,10 @@ export async function fetchPublicShell(
       } catch {
         /* ignore */
       }
+    }
+    const themeCtx = fetchContext?.themeContext;
+    if (themeCtx && String(themeCtx).trim() !== '') {
+      q.set('theme_context', String(themeCtx).trim().toLowerCase());
     }
     const path = q.toString()
       ? `${MARKETING_ENDPOINTS.shell}?${q.toString()}`

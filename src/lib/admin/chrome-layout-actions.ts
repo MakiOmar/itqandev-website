@@ -11,19 +11,20 @@ import type {
 } from '../../types/chrome-layout';
 
 function listEndpoint(kind: ChromeLayoutKind): string {
-  return kind === 'header' ? API_ENDPOINTS.APPEARANCE.HEADERS : API_ENDPOINTS.APPEARANCE.FOOTERS;
+  if (kind === 'footer') return API_ENDPOINTS.APPEARANCE.FOOTERS;
+  if (kind === 'body') return API_ENDPOINTS.APPEARANCE.BODIES;
+  return API_ENDPOINTS.APPEARANCE.HEADERS;
 }
 
 function itemEndpoint(kind: ChromeLayoutKind, id: string | number): string {
-  return kind === 'header'
-    ? API_ENDPOINTS.APPEARANCE.HEADER_GET(id)
-    : API_ENDPOINTS.APPEARANCE.FOOTER_GET(id);
+  if (kind === 'footer') return API_ENDPOINTS.APPEARANCE.FOOTER_GET(id);
+  if (kind === 'body') return API_ENDPOINTS.APPEARANCE.BODY_GET(id);
+  return API_ENDPOINTS.APPEARANCE.HEADER_GET(id);
 }
 
 function setDefaultEndpoint(kind: ChromeLayoutKind, id: string | number): string {
-  return kind === 'header'
-    ? API_ENDPOINTS.APPEARANCE.HEADER_SET_DEFAULT(id)
-    : API_ENDPOINTS.APPEARANCE.FOOTER_SET_DEFAULT(id);
+  if (kind === 'footer') return API_ENDPOINTS.APPEARANCE.FOOTER_SET_DEFAULT(id);
+  return API_ENDPOINTS.APPEARANCE.HEADER_SET_DEFAULT(id);
 }
 
 function mapLayout(raw: Record<string, unknown>): ChromeLayoutMeta {
@@ -33,9 +34,13 @@ function mapLayout(raw: Record<string, unknown>): ChromeLayoutMeta {
       ? ((raw.document as { sections: PageSectionNode[] }).sections)
       : undefined;
 
+  const kindRaw = String(raw.kind ?? 'header');
+  const kind: ChromeLayoutKind =
+    kindRaw === 'footer' ? 'footer' : kindRaw === 'body' ? 'body' : 'header';
+
   return {
     id: Number(raw.id),
-    kind: (raw.kind === 'footer' ? 'footer' : 'header') as ChromeLayoutKind,
+    kind,
     name: String(raw.name ?? ''),
     slug: String(raw.slug ?? ''),
     status: (raw.status === 'published' ? 'published' : 'draft') as ChromeLayoutStatus,

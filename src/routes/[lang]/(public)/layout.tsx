@@ -82,7 +82,11 @@ export default component$(() => {
   const contact = shellLoader.value.siteContent?.contact;
   const overlayNav =
     isPublicHomePath(loc.url.pathname, uiLocale) &&
-    heroWantsOverlayNav(shellLoader.value.homepageSections as HomepageSectionInstance[]);
+    heroWantsOverlayNav(
+      (shellLoader.value.themeBody && shellLoader.value.themeBody.length > 0
+        ? (shellLoader.value.themeBody as unknown as HomepageSectionInstance[])
+        : shellLoader.value.homepageSections) as HomepageSectionInstance[],
+    );
 
   return (
     <div

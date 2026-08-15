@@ -93,6 +93,8 @@ export type MarketingFetchContext = {
    * `SANCTUM_STATEFUL_DOMAINS`; SSR `fetch` does not set those implicitly.
    */
   forwardDocumentUrl?: string | null;
+  /** Force Theme Builder context (e.g. not_found for the global 404 page). */
+  themeContext?: string | null;
 };
 
 export interface MarketingApiResponse<T> {

@@ -28,6 +28,10 @@ export function getLocalizedRoutes(lang: string) {
       APPEARANCE_HEADER_NEW: L(`${p}/appearance/header/new`),
       APPEARANCE_FOOTER: L(`${p}/appearance/footer`),
       APPEARANCE_FOOTER_NEW: L(`${p}/appearance/footer/new`),
+      APPEARANCE_BODY: L(`${p}/appearance/body`),
+      APPEARANCE_BODY_NEW: L(`${p}/appearance/body/new`),
+      APPEARANCE_THEME_BUILDER: L(`${p}/appearance/theme-builder`),
+      APPEARANCE_THEME_BUILDER_NEW: L(`${p}/appearance/theme-builder/new`),
       APPEARANCE_CHROME_DEFAULTS: L(`${p}/appearance/chrome-defaults`),
       FONTS: L(`${p}/fonts`),
       FONTS_NEW: L(`${p}/fonts/new`),
@@ -166,6 +170,24 @@ export function adminFooterBuilderHref(lang: string, id: string | number): strin
   const config = getConfig();
   const p = config.routes.admin.prefix;
   return withUiLocale(lang, `${p}/appearance/footer/${id}/builder`);
+}
+
+export function adminBodyEditHref(lang: string, id: string | number): string {
+  const config = getConfig();
+  const p = config.routes.admin.prefix;
+  return withUiLocale(lang, `${p}/appearance/body/${id}`);
+}
+
+export function adminBodyBuilderHref(lang: string, id: string | number): string {
+  const config = getConfig();
+  const p = config.routes.admin.prefix;
+  return withUiLocale(lang, `${p}/appearance/body/${id}/builder`);
+}
+
+export function adminThemeTemplateEditHref(lang: string, id: string | number): string {
+  const config = getConfig();
+  const p = config.routes.admin.prefix;
+  return withUiLocale(lang, `${p}/appearance/theme-builder/${id}`);
 }
 
 /** Localized routes for the current `preferred-locale` cookie (server loaders/actions). */

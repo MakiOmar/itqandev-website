@@ -4,11 +4,13 @@ import { PageHeader } from '~/components/common/PageHeader';
 import { useTranslate, translateApp } from '~/lib/i18n/useTranslate';
 import { useSwal } from '~/lib/hooks/useSwal';
 import {
+  adminBodyBuilderHref,
   adminFooterBuilderHref,
   adminHeaderBuilderHref,
   getLocalizedRoutes,
 } from '~/lib/constants/routes';
 import { updateChromeLayoutFromBrowser } from '~/lib/admin/chrome-layout-actions';
+import { useContentSlugAutosuggestTitleSlugSignals } from '~/lib/slug/content-slug-auto';
 import type { ChromeLayoutKind, ChromeLayoutMeta, ChromeLayoutStatus } from '~/types/chrome-layout';
 import {
   ADMIN_BACK_BUTTON_CLASS,
@@ -19,6 +21,14 @@ import {
   ADMIN_NATIVE_SELECT_CLASS,
   ADMIN_PRIMARY_BUTTON_CLASS,
 } from '~/lib/admin/native-select-classes';
+
+function chromeSlugEntity(kind: ChromeLayoutKind) {
+  return kind === 'header'
+    ? ('chrome_headers' as const)
+    : kind === 'footer'
+      ? ('chrome_footers' as const)
+      : ('chrome_bodies' as const);
+}
 
 export const ChromeLayoutEditPage = component$<{
   kind: ChromeLayoutKind;
@@ -31,9 +41,24 @@ export const ChromeLayoutEditPage = component$<{
   const slug = useSignal(layout.slug);
   const status = useSignal<ChromeLayoutStatus>(layout.status);
   const saving = useSignal(false);
-  const listHref = kind === 'header' ? R.ADMIN.APPEARANCE_HEADER : R.ADMIN.APPEARANCE_FOOTER;
+  const slugAuto = useContentSlugAutosuggestTitleSlugSignals({
+    entity: chromeSlugEntity(kind),
+    title: name,
+    slug,
+    ignoreRecordId: layout.id,
+  });
+  const listHref =
+    kind === 'header'
+      ? R.ADMIN.APPEARANCE_HEADER
+      : kind === 'footer'
+        ? R.ADMIN.APPEARANCE_FOOTER
+        : R.ADMIN.APPEARANCE_BODY;
   const builderHref =
-    kind === 'header' ? adminHeaderBuilderHref(lang, layout.id) : adminFooterBuilderHref(lang, layout.id);
+    kind === 'header'
+      ? adminHeaderBuilderHref(lang, layout.id)
+      : kind === 'footer'
+        ? adminFooterBuilderHref(lang, layout.id)
+        : adminBodyBuilderHref(lang, layout.id);
 
   const onSave$ = $(async () => {
     if (!name.value.trim()) {
@@ -70,11 +95,24 @@ export const ChromeLayoutEditPage = component$<{
       <div class={`${ADMIN_FORM_CARD_CLASS} space-y-4 p-4`}>
         <label class={ADMIN_FORM_LABEL_CLASS}>
           {translateApp(lang, 'common.name')}
-          <input class={ADMIN_FORM_INPUT_CLASS} value={name.value} onInput$={(e) => (name.value = (e.target as HTMLInputElement).value)} />
+          <input
+            class={ADMIN_FORM_INPUT_CLASS}
+            value={name.value}
+            onInput$={(e) => (name.value = (e.target as HTMLInputElement).value)}
+            onBlur$={slugAuto.onTitleBlurSuggestSlug$}
+          />
         </label>
         <label class={ADMIN_FORM_LABEL_CLASS}>
           {translateApp(lang, 'common.slug')}
-          <input class={ADMIN_FORM_INPUT_CLASS} value={slug.value} onInput$={(e) => (slug.value = (e.target as HTMLInputElement).value)} />
+          <input
+            class={`${ADMIN_FORM_INPUT_CLASS} font-mono text-xs`}
+            value={slug.value}
+            onInput$={(e) => {
+              slugAuto.slugLocked.value = true;
+              slug.value = (e.target as HTMLInputElement).value;
+            }}
+            onBlur$={slugAuto.onSlugBlurEnsureUnique$}
+          />
         </label>
         <label class={ADMIN_FORM_LABEL_CLASS}>
           {translateApp(lang, 'common.status')}
@@ -86,10 +124,10 @@ export const ChromeLayoutEditPage = component$<{
             }}
           >
             <option class={ADMIN_NATIVE_OPTION_CLASS} value="draft">
-              draft
+              {translateApp(lang, 'common.statusDraft')}
             </option>
             <option class={ADMIN_NATIVE_OPTION_CLASS} value="published">
-              published
+              {translateApp(lang, 'common.statusPublished')}
             </option>
           </select>
         </label>
