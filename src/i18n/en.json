@@ -354,8 +354,14 @@
       "title": "Title",
       "slug": "Slug",
       "excerpt": "Excerpt",
-      "status": "Status"
-    }
+      "status": "Status",
+      "parent": "Parent page",
+      "excludeFromSearch": "Exclude from search"
+    },
+    "parentNone": "— No parent (top-level) —",
+    "parentHint": "Nested pages use /pages/parent/child/ and still open from a direct URL.",
+    "excludeFromSearchHint": "Hidden from public listings and the sitemap. Anyone with the URL can still open the page.",
+    "excludeFromSearchBadge": "Hidden from search"
   },
   "forms": {
     "title": "Forms",

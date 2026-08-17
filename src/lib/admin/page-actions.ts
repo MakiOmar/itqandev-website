@@ -66,6 +66,8 @@ export const pageFormSchema = z
     canonical_excerpt: z.string().optional(),
     sections_json: z.string().optional(),
     translations_json: z.string().optional(),
+    parent_id: z.union([z.coerce.number(), z.literal(''), z.null()]).optional(),
+    exclude_from_search: z.union([z.boolean(), z.literal('true'), z.literal('false'), z.literal('1'), z.literal('0'), z.literal(1), z.literal(0)]).optional(),
   })
   .passthrough();
 
@@ -121,6 +123,15 @@ function buildPageBody(data: Record<string, unknown>): Record<string, unknown> {
     const raw = data.footer_layout_id;
     body.footer_layout_id =
       raw === null || raw === '' || raw === undefined ? null : Number(raw);
+  }
+  if (data.parent_id !== undefined) {
+    const raw = data.parent_id;
+    body.parent_id = raw === null || raw === '' || raw === undefined ? null : Number(raw);
+  }
+  if (data.exclude_from_search !== undefined) {
+    const raw = data.exclude_from_search;
+    body.exclude_from_search =
+      raw === true || raw === 'true' || raw === '1' || raw === 1;
   }
   return body;
 }

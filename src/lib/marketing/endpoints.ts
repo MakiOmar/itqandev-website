@@ -33,4 +33,6 @@ export const MARKETING_ENDPOINTS = {
   shell: '/public/shell',
   /** GET resolved menu tree for header/footer (`?locale=` matches UI locale) */
   menuBySlug: (slug: string) => `/public/menus/${encodeURIComponent(slug)}`,
+  /** GET published CMS pages (excludes exclude_from_search) */
+  pages: '/public/pages',
 } as const;

@@ -14,8 +14,51 @@ import { API_ENDPOINTS } from '~/lib/api/endpoints';
 import type { PageSectionNode } from '~/lib/marketing/appearance-types';
 import type { PublicPageDetail } from '~/types/page';
 
-export const usePublicPageDetail = routeLoader$(async ({ params, request, fail }) => {
-  const slug = decodeURIComponent(String(params.slug ?? '').trim());
+function restPathParam(raw: unknown): string {
+  if (Array.isArray(raw)) {
+    return raw
+      .map((part) => decodeURIComponent(String(part)))
+      .map((part) => part.replace(/^\/+|\/+$/g, ''))
+      .filter(Boolean)
+      .join('/');
+  }
+  return decodeURIComponent(String(raw ?? ''))
+    .replace(/^\/+|\/+$/g, '')
+    .trim();
+}
+
+function leafSlug(path: string): string {
+  const parts = path.split('/').filter(Boolean);
+  return parts[parts.length - 1] || '';
+}
+
+function urlMatchesPage(urlPath: string, page: PublicPageDetail): boolean {
+  const url = urlPath.replace(/^\/+|\/+$/g, '');
+  const nested = String(page.path || page.slug || '')
+    .replace(/^\/+|\/+$/g, '');
+  const slug = String(page.slug || '').replace(/^\/+|\/+$/g, '');
+  return url === nested || url === slug;
+}
+
+export const usePublicPageDetail = routeLoader$(async ({ params, request, fail, url }) => {
+  const fromParams = restPathParam(
+    (params as { path?: unknown; slug?: unknown }).path ?? (params as { slug?: unknown }).slug,
+  );
+  const fromUrl = (() => {
+    try {
+      const pathName = (url?.pathname || new URL(request.url).pathname).replace(/\/+$/, '');
+      const marker = '/pages/';
+      const idx = pathName.lastIndexOf(marker) >= 0 ? pathName.indexOf(marker) : -1;
+      if (idx < 0) {
+        return '';
+      }
+      return decodeURIComponent(pathName.slice(idx + marker.length)).replace(/^\/+|\/+$/g, '');
+    } catch {
+      return '';
+    }
+  })();
+  const urlPath = fromParams || fromUrl;
+  const slug = leafSlug(urlPath);
   if (!slug) {
     return fail(404, { message: 'Not found' });
   }
@@ -34,13 +77,21 @@ export const usePublicPageDetail = routeLoader$(async ({ params, request, fail }
       return fail(404, { message: 'Page not found' });
     }
     const json = (await res.json()) as PublicPageDetail & { data?: unknown };
+    let page: PublicPageDetail | null = null;
     if (json && typeof json === 'object' && Array.isArray(json.sections)) {
-      return json;
+      page = json;
+    } else if (json && typeof json === 'object' && json.data && typeof json.data === 'object') {
+      page = json.data as PublicPageDetail;
+    } else {
+      page = json as PublicPageDetail;
     }
-    if (json && typeof json === 'object' && json.data && typeof json.data === 'object') {
-      return json.data as PublicPageDetail;
+    if (!page || typeof page.slug !== 'string') {
+      return fail(404, { message: 'Page not found' });
     }
-    return json as PublicPageDetail;
+    if (!urlMatchesPage(urlPath, page)) {
+      return fail(404, { message: 'Page not found' });
+    }
+    return page;
   } catch {
     return fail(404, { message: 'Page not found' });
   }
@@ -101,7 +152,7 @@ export const head: DocumentHead = ({ resolveValue, url }) => {
       return { title: 'Page' };
     }
     const brandName = publicSiteName(shell.branding);
-    return marketingEntityDetailHead({
+    const result = marketingEntityDetailHead({
       brandName,
       baseUrl: getPublicSiteBaseUrl(url.origin).replace(/\/$/, ''),
       sectionLabel: 'Pages',
@@ -109,7 +160,9 @@ export const head: DocumentHead = ({ resolveValue, url }) => {
       defaultTitle: page.title,
       defaultDescription: page.excerpt || page.title,
       seo: mapMarketingSeoMetaFromApi(page.seo_meta),
+      robots: page.exclude_from_search ? 'noindex, nofollow' : undefined,
     });
+    return result;
   } catch {
     return { title: 'Page' };
   }

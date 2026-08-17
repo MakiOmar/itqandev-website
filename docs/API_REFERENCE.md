@@ -718,7 +718,7 @@ Requires `Authorization: Bearer` and the **`manage menus`** permission (or a rol
 | PUT | `/api/v1/menu-items/{id}` | Update item |
 | DELETE | `/api/v1/menu-items/{id}` | Delete item |
 
-**`item_type` values:** `custom_link` (requires `url`), `project`, `blog_post`, `service`, `category`, `skill`, `page` (each content type requires `reference_id`). Published `page` items resolve via `CmsPublicPaths` to pretty URLs when known (`about` → `/{locale}/about/`, `articles` → `/{locale}/blog/`, …) otherwise `/{locale}/pages/{slug}/`. Legacy `static_route` items are migrated to CMS pages / custom links and are no longer accepted by the API.
+**`item_type` values:** `custom_link` (requires `url`), `project`, `blog_post`, `service`, `category`, `skill`, `page` (each content type requires `reference_id`). Published `page` items resolve via `CmsPublicPaths`: top-level known slugs stay pretty (`about` → `/{locale}/about/`, …); nested pages use `/{locale}/pages/{parent}/{child}/`. Legacy `static_route` items are migrated to CMS pages / custom links and are no longer accepted by the API.
 
 ## Authenticated + public CMS pages (`feature.module:pages`)
 
@@ -726,14 +726,14 @@ Requires permission **`manage pages`** for admin routes. Public routes are guest
 
 | Method | Path | Purpose |
 |--------|------|---------|
-| GET | `/api/v1/pages` | List pages (`X-Content-Locale` filters; no primary fallback for secondary locales) |
-| POST | `/api/v1/pages` | Create page (`title`, `slug`, `excerpt`, `status`, `content_locale`, `sections`, `translations`) |
+| GET | `/api/v1/pages` | List pages (`X-Content-Locale` filters; tree order with `parent_id`, `path`, `depth`) |
+| POST | `/api/v1/pages` | Create page (`title`, `slug`, `excerpt`, `status`, `parent_id`, `exclude_from_search`, `content_locale`, `sections`, `translations`) |
 | GET | `/api/v1/pages/{id}` | Show page with translations + sections |
 | PUT | `/api/v1/pages/{id}` | Update page |
 | DELETE | `/api/v1/pages/{id}` | Delete page |
 | POST | `/api/v1/pages/bulk-delete` | Bulk delete `{ "ids": [...] }` |
-| GET | `/api/public/pages` | Published pages list for marketing |
-| GET | `/api/public/pages/{slug}` | Published page detail: localized fields, presented `sections`, `seo_meta` |
+| GET | `/api/public/pages` | Published pages for marketing (**omits** `exclude_from_search`); includes `path` / `public_path` |
+| GET | `/api/public/pages/{slug}` | Published page detail by unique slug (nested URLs still resolve by leaf slug). Includes `exclude_from_search`. Direct URL works even when excluded from the list. |
 
 Seeded slug **`contact`** (`ContactPageSeeder`) is the page-builder layout for the marketing contact experience. Public `/{lang}/contact/` loads that CMS page when the pages module is enabled; otherwise it uses the legacy hard-coded form + office card.
 
@@ -745,7 +745,7 @@ Seeded slug **`articles`** (`ArticlesPageSeeder`) is the page-builder layout for
 | GET | `/api/public/forms/{slug}` | Published form definition (layout, settings, captcha site key); `feature.module:forms`; `X-Content-Locale` |
 | POST | `/api/public/forms/{slug}/submit` | Submit form field values (+ optional `captcha_token`); runs enabled actions in order; `throttle:form-submit` |
 
-Public marketing URLs: `/{lang}/pages/{slug}/`. Admin visual builder (fullscreen): `/{lang}/admin/pages/{id}/builder/` — classic metadata editor remains at `/{lang}/admin/pages/{id}/`.
+Public marketing URLs: `/{lang}/pages/{slug}/` (nested: `/{lang}/pages/{parent}/{child}/`). Admin visual builder (fullscreen): `/{lang}/admin/pages/{id}/builder/` — classic metadata editor remains at `/{lang}/admin/pages/{id}/`. Set **Parent page** and **Exclude from search** on create/edit. Excluded pages stay reachable by URL, send `noindex`, and are omitted from `GET /api/public/pages` and `sitemap.xml`.
 
 ### Pages `sections` document (layout tree)
 

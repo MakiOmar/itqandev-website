@@ -354,8 +354,14 @@
       "title": "العنوان",
       "slug": "المعرف (slug)",
       "excerpt": "المقتطف",
-      "status": "الحالة"
-    }
+      "status": "الحالة",
+      "parent": "الصفحة الأب",
+      "excludeFromSearch": "استبعاد من البحث"
+    },
+    "parentNone": "— بدون أب (مستوى أعلى) —",
+    "parentHint": "الصفحات المتداخلة تستخدم /pages/parent/child/ ويمكن فتحها من الرابط المباشر.",
+    "excludeFromSearchHint": "تُخفى من القوائم العامة وخريطة الموقع. من يملك الرابط يمكنه فتح الصفحة.",
+    "excludeFromSearchBadge": "مخفية عن البحث"
   },
   "forms": {
     "title": "النماذج",

@@ -2,8 +2,19 @@ import type { RequestHandler } from '@builder.io/qwik-city';
 import { getCaseStudies } from '../../lib/marketing/content-layer';
 import { getBlogPosts } from '../../lib/marketing/content-layer';
 import { getPublicSiteBaseUrl } from '../../lib/seo/canonical-url';
+import { marketingGet } from '../../lib/marketing/api-client';
+import { MARKETING_ENDPOINTS } from '../../lib/marketing/endpoints';
 
 const baseUrl = getPublicSiteBaseUrl();
+
+const PRETTY_PAGE_PATHS = new Set([
+  '/services',
+  '/portfolio',
+  '/about',
+  '/pricing',
+  '/contact',
+  '/blog',
+]);
 
 function escapeXml(s: string): string {
   return s
@@ -14,10 +25,43 @@ function escapeXml(s: string): string {
     .replace(/'/g, '&apos;');
 }
 
+function unwrapList(data: unknown): Record<string, unknown>[] {
+  if (Array.isArray(data)) {
+    return data as Record<string, unknown>[];
+  }
+  if (data && typeof data === 'object' && Array.isArray((data as { data?: unknown }).data)) {
+    return (data as { data: Record<string, unknown>[] }).data;
+  }
+  return [];
+}
+
+async function getCmsPagesForSitemap(): Promise<{ loc: string; priority: string }[]> {
+  try {
+    const data = await marketingGet<unknown>(MARKETING_ENDPOINTS.pages);
+    return unwrapList(data)
+      .map((row) => {
+        const publicPath = String(row.public_path ?? '').replace(/\/+$/, '') || '';
+        if (publicPath && PRETTY_PAGE_PATHS.has(publicPath)) {
+          return null;
+        }
+        const nested = String(row.path || row.slug || '')
+          .replace(/^\/+|\/+$/g, '');
+        if (!nested) {
+          return null;
+        }
+        return { loc: `/pages/${nested}`, priority: '0.6' };
+      })
+      .filter((row): row is { loc: string; priority: string } => row !== null);
+  } catch {
+    return [];
+  }
+}
+
 export const onGet: RequestHandler = async ({ send }) => {
-  const [caseStudies, blogPosts] = await Promise.all([
+  const [caseStudies, blogPosts, cmsPages] = await Promise.all([
     getCaseStudies(),
     getBlogPosts(),
+    getCmsPagesForSitemap(),
   ]);
 
   const staticPaths = [
@@ -40,7 +84,7 @@ export const onGet: RequestHandler = async ({ send }) => {
     priority: '0.7',
   }));
 
-  const urls = [...staticPaths, ...portfolioUrls, ...blogUrls];
+  const urls = [...staticPaths, ...portfolioUrls, ...blogUrls, ...cmsPages];
   const xml = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 ${urls

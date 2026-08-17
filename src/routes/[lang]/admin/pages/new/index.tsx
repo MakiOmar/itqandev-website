@@ -1,8 +1,9 @@
 import { component$, useSignal, $, useVisibleTask$ } from '@builder.io/qwik';
 import type { DocumentHead } from '@builder.io/qwik-city';
-import { Link, useNavigate } from '@builder.io/qwik-city';
+import { Link, useNavigate, routeLoader$ } from '@builder.io/qwik-city';
 import { PageHeader } from '../../../../../components/common/PageHeader';
 import { PageSectionsEditor } from '../../../../../components/admin/pages/PageSectionsEditor';
+import { PageHierarchyFields } from '../../../../../components/admin/pages/PageHierarchyFields';
 import { MediaSelector } from '../../../../../components/common/MediaSelector';
 import { AdminPublicPageLink } from '../../../../../components/admin/AdminPublicPageLink';
 import {
@@ -13,6 +14,10 @@ import { useTranslate, translateApp } from '../../../../../lib/i18n/useTranslate
 import { useSwal } from '../../../../../lib/hooks/useSwal';
 import { usePublicSiteMeta } from '../../layout';
 import { runPageCreateFromBrowser } from '../../../../../lib/admin/page-actions';
+import { adminApiClient } from '../../../../../lib/admin/admin-api-client';
+import { API_ENDPOINTS } from '../../../../../lib/api/endpoints';
+import { nestedPagePath } from '../../../../../lib/admin/page-hierarchy';
+import type { AdminPage } from '../../../../../types/page';
 import { adminPageBuilderHref, useAppRoutes } from '../../../../../lib/constants/routes';
 import {
   suggestUniqueContentSlug,
@@ -40,12 +45,48 @@ import {
   ADMIN_PRIMARY_BUTTON_CLASS,
 } from '../../../../../lib/admin/native-select-classes';
 
+function mapPageFromApi(raw: Record<string, unknown>): AdminPage {
+  return {
+    id: Number(raw.id),
+    title: String(raw.title ?? ''),
+    slug: String(raw.slug ?? ''),
+    excerpt: (raw.excerpt as string | null) ?? '',
+    status: String(raw.status ?? 'draft'),
+    content_locale: (raw.content_locale as string | null) ?? null,
+    published_at: (raw.published_at as string | null) ?? null,
+    parent_id: raw.parent_id != null ? Number(raw.parent_id) : null,
+    path: typeof raw.path === 'string' ? raw.path : null,
+    public_path: typeof raw.public_path === 'string' ? raw.public_path : null,
+    depth: typeof raw.depth === 'number' ? raw.depth : 0,
+    exclude_from_search: Boolean(raw.exclude_from_search),
+    sections: Array.isArray(raw.sections) ? (raw.sections as AdminPage['sections']) : [],
+    translations: Array.isArray(raw.translations)
+      ? (raw.translations as AdminPage['translations'])
+      : [],
+  };
+}
+
+export const useNewPageParents = routeLoader$(async ({ cookie, request, params }) => {
+  try {
+    const api = adminApiClient(cookie, request, params.lang);
+    const response = await api.get(API_ENDPOINTS.PAGES.LIST);
+    const body = (response as { data?: unknown })?.data ?? response;
+    const list = Array.isArray(body) ? body : [];
+    return list.map((row) => mapPageFromApi(row as Record<string, unknown>));
+  } catch {
+    return [] as AdminPage[];
+  }
+});
+
 export default component$(() => {
   const { lang } = useTranslate();
   const R = useAppRoutes();
   const { success, error: showError } = useSwal();
   const navigate = useNavigate();
   const langConfig = usePublicSiteMeta();
+  const parentOptions = useNewPageParents();
+  const parentId = useSignal<number | null>(null);
+  const excludeFromSearch = useSignal(false);
 
   const formData = useSignal({
     title: '',
@@ -113,6 +154,8 @@ export default component$(() => {
         sections_json: JSON.stringify(sections.value || []),
         persist_sections: true,
         translations_json: '[]',
+        parent_id: parentId.value,
+        exclude_from_search: excludeFromSearch.value,
       });
       if (result.success && result.id) {
         await success(translateApp(lang, 'common.created'));
@@ -180,7 +223,16 @@ export default component$(() => {
                   }}
                   onBlur$={pageSlugAuto.onSlugBlurEnsureUnique$}
                 />
-                <AdminPublicPageLink lang={lang} kind="pages" slug={formData.value.slug} />
+                <AdminPublicPageLink
+                  lang={lang}
+                  kind="pages"
+                  slug={formData.value.slug}
+                  parentId={parentId.value}
+                  nestedPath={nestedPagePath(
+                    parentOptions.value.find((p) => p.id === parentId.value)?.path || null,
+                    formData.value.slug,
+                  )}
+                />
               </div>
 
               <div class="md:col-span-2">
@@ -261,6 +313,13 @@ export default component$(() => {
                   </option>
                 </select>
               </div>
+              <PageHierarchyFields
+                lang={lang}
+                idPrefix="page-new"
+                parentId={parentId}
+                excludeFromSearch={excludeFromSearch}
+                parentOptions={parentOptions.value}
+              />
               <div class="flex flex-col gap-2 border-t border-gray-200 pt-3 dark:border-gray-700">
                 <button
                   type="button"

@@ -14,6 +14,11 @@ export type AdminPage = {
   status: 'draft' | 'published' | string;
   content_locale: string | null;
   published_at: string | null;
+  parent_id?: number | null;
+  path?: string | null;
+  public_path?: string | null;
+  depth?: number;
+  exclude_from_search?: boolean;
   sections: PageSectionNode[];
   translations: PageTranslationRow[];
   header_layout_id?: number | null;
@@ -29,6 +34,10 @@ export type PublicPageDetail = {
   excerpt: string | null;
   content_locale?: string | null;
   published_at: string | null;
+  parent_id?: number | null;
+  path?: string | null;
+  public_path?: string | null;
+  exclude_from_search?: boolean;
   sections: PageSectionNode[];
   /** Localized SEO snippet from public API (`SeoMetaPresenter::toPublicSnippet`). */
   seo_meta?: unknown;

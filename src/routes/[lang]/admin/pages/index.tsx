@@ -31,6 +31,11 @@ function mapPageFromApi(raw: Record<string, unknown>): AdminPage {
     status: String(raw.status ?? 'draft'),
     content_locale: (raw.content_locale as string | null) ?? null,
     published_at: (raw.published_at as string | null) ?? null,
+    parent_id: raw.parent_id != null ? Number(raw.parent_id) : null,
+    path: typeof raw.path === 'string' ? raw.path : null,
+    public_path: typeof raw.public_path === 'string' ? raw.public_path : null,
+    depth: typeof raw.depth === 'number' ? raw.depth : 0,
+    exclude_from_search: Boolean(raw.exclude_from_search),
     sections: Array.isArray(raw.sections) ? raw.sections : [],
     translations: Array.isArray(raw.translations)
       ? (raw.translations as AdminPage['translations'])
@@ -177,8 +182,12 @@ export default component$(() => {
               </thead>
               <tbody>
                 {pagesState.value.map((page) => {
-                  const publicPath = adminPublicDetailPath(lang, 'pages', page.slug);
+                  const publicPath = adminPublicDetailPath(lang, 'pages', page.slug, {
+                    parentId: page.parent_id,
+                    nestedPath: page.path,
+                  });
                   const publicHref = publicPath ? adminPublicAbsoluteUrl(publicPath) : null;
+                  const depth = Math.max(0, Number(page.depth ?? 0));
                   return (
                   <tr key={page.id} class="border-t border-gray-100 dark:border-gray-800">
                     <td class="w-10 px-3 py-2 align-middle">
@@ -197,8 +206,17 @@ export default component$(() => {
                         />
                       </div>
                     </td>
-                    <td class="px-3 py-2 align-middle">{page.title}</td>
-                    <td class="px-3 py-2 align-middle font-mono text-xs">{page.slug}</td>
+                    <td class="px-3 py-2 align-middle">
+                      <span style={{ paddingInlineStart: `${depth * 1.25}rem` }} class="inline-flex flex-wrap items-center gap-2">
+                        {page.title}
+                        {page.exclude_from_search ? (
+                          <span class="rounded bg-gray-100 px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wide text-gray-600 dark:bg-gray-800 dark:text-gray-300">
+                            {translateApp(lang, 'pages.excludeFromSearchBadge')}
+                          </span>
+                        ) : null}
+                      </span>
+                    </td>
+                    <td class="px-3 py-2 align-middle font-mono text-xs">{page.path || page.slug}</td>
                     <td class="px-3 py-2 align-middle">{page.status}</td>
                     <td class="px-3 py-2 text-end align-middle space-x-2">
                       {publicHref ? (

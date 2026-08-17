@@ -3,6 +3,7 @@ import type { DocumentHead } from '@builder.io/qwik-city';
 import { Link, routeLoader$ } from '@builder.io/qwik-city';
 import { PageHeader } from '../../../../../components/common/PageHeader';
 import { AdminPublicPageLink } from '../../../../../components/admin/AdminPublicPageLink';
+import { PageHierarchyFields } from '../../../../../components/admin/pages/PageHierarchyFields';
 import { useTranslate, translateApp } from '../../../../../lib/i18n/useTranslate';
 import { useSwal } from '../../../../../lib/hooks/useSwal';
 import { usePublicSiteMeta } from '../../layout';
@@ -39,6 +40,7 @@ import {
   ADMIN_PRIMARY_BUTTON_CLASS,
 } from '../../../../../lib/admin/native-select-classes';
 import { ChromeLayoutAssignmentFields } from '../../../../../components/admin/appearance/ChromeLayoutAssignmentFields';
+import { nestedPagePath, parentSelectOptions } from '../../../../../lib/admin/page-hierarchy';
 
 function mapPageFromApi(raw: Record<string, unknown>): AdminPage {
   return {
@@ -51,6 +53,11 @@ function mapPageFromApi(raw: Record<string, unknown>): AdminPage {
     published_at: (raw.published_at as string | null) ?? null,
     header_layout_id: raw.header_layout_id != null ? Number(raw.header_layout_id) : null,
     footer_layout_id: raw.footer_layout_id != null ? Number(raw.footer_layout_id) : null,
+    parent_id: raw.parent_id != null ? Number(raw.parent_id) : null,
+    path: typeof raw.path === 'string' ? raw.path : null,
+    public_path: typeof raw.public_path === 'string' ? raw.public_path : null,
+    depth: typeof raw.depth === 'number' ? raw.depth : 0,
+    exclude_from_search: Boolean(raw.exclude_from_search),
     sections: Array.isArray(raw.sections) ? (raw.sections as PageSectionNode[]) : [],
     translations: Array.isArray(raw.translations)
       ? (raw.translations as AdminPage['translations'])
@@ -68,9 +75,19 @@ export const usePageEditor = routeLoader$(async ({ params, cookie, request, fail
   }
   try {
     const api = adminApiClient(cookie, request, params.lang);
-    const res = await api.get(API_ENDPOINTS.PAGES.GET(id));
+    const [res, listRes] = await Promise.all([
+      api.get(API_ENDPOINTS.PAGES.GET(id)),
+      api.get(API_ENDPOINTS.PAGES.LIST).catch(() => []),
+    ]);
     const body = ((res as { data?: unknown })?.data ?? res) as Record<string, unknown>;
-    return mapPageFromApi(body);
+    const listBody = (listRes as { data?: unknown })?.data ?? listRes;
+    const list = Array.isArray(listBody)
+      ? listBody.map((row) => mapPageFromApi(row as Record<string, unknown>))
+      : [];
+    return {
+      page: mapPageFromApi(body),
+      parentOptions: parentSelectOptions(list, id),
+    };
   } catch {
     return fail(404, { message: 'Page not found' });
   }
@@ -82,7 +99,8 @@ export default component$(() => {
   const { success, error: showError } = useSwal();
   const langConfig = usePublicSiteMeta();
   const pageLoader = usePageEditor();
-  const page = pageLoader.value as AdminPage;
+  const page = (pageLoader.value as { page: AdminPage }).page;
+  const parentOptions = (pageLoader.value as { parentOptions: AdminPage[] }).parentOptions || [];
 
   const formData = useSignal({
     title: page.title,
@@ -97,6 +115,8 @@ export default component$(() => {
   const translationsJson = useSignal(JSON.stringify(page.translations || []));
   const headerLayoutId = useSignal<number | null>(page.header_layout_id ?? null);
   const footerLayoutId = useSignal<number | null>(page.footer_layout_id ?? null);
+  const parentId = useSignal<number | null>(page.parent_id ?? null);
+  const excludeFromSearch = useSignal(Boolean(page.exclude_from_search));
   const sectionCount = Array.isArray(page.sections) ? page.sections.length : 0;
   const saving = useSignal(false);
 
@@ -158,6 +178,8 @@ export default component$(() => {
         translations_json: translationsJson.value,
         header_layout_id: headerLayoutId.value,
         footer_layout_id: footerLayoutId.value,
+        parent_id: parentId.value,
+        exclude_from_search: excludeFromSearch.value,
       });
       if (result.success) {
         await success(translateApp(lang, 'common.updated'));
@@ -226,7 +248,16 @@ export default component$(() => {
                       formData.value = { ...formData.value, slug: (e.target as HTMLInputElement).value };
                     }}
                   />
-                  <AdminPublicPageLink lang={lang} kind="pages" slug={formData.value.slug} />
+                  <AdminPublicPageLink
+                    lang={lang}
+                    kind="pages"
+                    slug={formData.value.slug}
+                    parentId={parentId.value}
+                    nestedPath={nestedPagePath(
+                      parentOptions.find((p) => p.id === parentId.value)?.path || null,
+                      formData.value.slug,
+                    )}
+                  />
                 </div>
                 <div class="md:col-span-2">
                   <label for="page-edit-excerpt" class={ADMIN_FORM_LABEL_CLASS}>
@@ -310,6 +341,13 @@ export default component$(() => {
                   </option>
                 </select>
               </div>
+              <PageHierarchyFields
+                lang={lang}
+                idPrefix="page-edit"
+                parentId={parentId}
+                excludeFromSearch={excludeFromSearch}
+                parentOptions={parentOptions}
+              />
               <div class="flex flex-col gap-2 border-t border-gray-200 pt-3 dark:border-gray-700">
                 <button
                   type="button"
@@ -333,7 +371,7 @@ export default component$(() => {
 
 export const head: DocumentHead = ({ resolveValue }) => {
   try {
-    const page = resolveValue(usePageEditor) as AdminPage;
+    const page = (resolveValue(usePageEditor) as { page?: AdminPage })?.page;
     return { title: page?.title ? `Edit: ${page.title}` : 'Edit page' };
   } catch {
     return { title: 'Edit page' };

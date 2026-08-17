@@ -12,6 +12,8 @@ export function marketingEntityDetailHead(fields: {
   defaultTitle: string;
   defaultDescription: string;
   seo?: MarketingPublicSeoMeta | undefined;
+  /** When set (e.g. exclude-from-search pages), emit robots meta. */
+  robots?: string;
 }): { title: string; meta: { name?: string; property?: string; content: string }[]; links: { rel: string; href: string }[] } {
   const seo = fields.seo;
   const docTitle = (seo?.metaTitle?.trim() || fields.defaultTitle).trim();
@@ -45,6 +47,9 @@ export function marketingEntityDetailHead(fields: {
   meta.push({ name: 'twitter:description', content: ogDesc });
   if (ogImg) {
     meta.push({ name: 'twitter:image', content: ogImg });
+  }
+  if (fields.robots?.trim()) {
+    meta.push({ name: 'robots', content: fields.robots.trim() });
   }
 
   return {

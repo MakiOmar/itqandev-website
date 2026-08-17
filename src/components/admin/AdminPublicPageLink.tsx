@@ -7,13 +7,18 @@ export type AdminPublicPageLinkProps = {
   lang: string;
   kind: AdminPublicDetailKind;
   slug: string | null | undefined;
+  parentId?: number | null;
+  nestedPath?: string | null;
 };
 
 /**
  * Shown below the slug input: clickable link + URL text for the public detail page when slug is non-empty.
  */
 export const AdminPublicPageLink = component$((props: AdminPublicPageLinkProps) => {
-  const path = adminPublicDetailPath(props.lang, props.kind, props.slug ?? '');
+  const path = adminPublicDetailPath(props.lang, props.kind, props.slug ?? '', {
+    parentId: props.parentId,
+    nestedPath: props.nestedPath,
+  });
   if (!path) {
     return null;
   }

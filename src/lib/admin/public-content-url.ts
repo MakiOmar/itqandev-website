@@ -15,10 +15,20 @@ function slugSegment(slug: string): string | null {
   return encodeURIComponent(t);
 }
 
+export type AdminPublicPagePathOptions = {
+  parentId?: number | null;
+  nestedPath?: string | null;
+};
+
 /**
  * Site-relative path: /{lang}/blog/{slug}, /{lang}/services/{slug}, /{lang}/portfolio/{slug}, /{lang}/pages/{slug}/, /{lang}/forms/{slug}/.
  */
-export function adminPublicDetailPath(lang: string, kind: AdminPublicDetailKind, slug: string): string | null {
+export function adminPublicDetailPath(
+  lang: string,
+  kind: AdminPublicDetailKind,
+  slug: string,
+  options?: AdminPublicPagePathOptions,
+): string | null {
   const code = String(lang ?? '').trim() || 'en';
   const seg = slugSegment(slug);
   if (!seg) {
@@ -33,6 +43,17 @@ export function adminPublicDetailPath(lang: string, kind: AdminPublicDetailKind,
     case 'projects':
       return `/${langSeg}/portfolio/${seg}`;
     case 'pages':
+      // Nested children always live under /pages/{parent}/{child}/.
+      if (options?.parentId && options.nestedPath) {
+        const segs = String(options.nestedPath)
+          .split('/')
+          .map((part) => part.trim())
+          .filter(Boolean)
+          .map((part) => encodeURIComponent(part));
+        if (segs.length > 0) {
+          return `/${langSeg}/pages/${segs.join('/')}/`;
+        }
+      }
       // Canonical marketing contact URL (hard-coded route prefers this slug).
       if (String(slug ?? '').trim().toLowerCase() === 'contact') {
         return `/${langSeg}/contact/`;
