@@ -615,7 +615,7 @@ Require `Authorization: Bearer` and the `manageSettings` gate (`admin` / `super_
 | `GET/PUT/DELETE` | `/api/appearance/theme-templates/{id}` | Show / update / delete |
 | `GET/PUT` | `/api/appearance/chrome-type-defaults` | Per content-type header/footer ids |
 
-Named layouts live in `chrome_layouts`. Theme templates live in `theme_templates` (conditions + Header/Body/Footer slot FKs). Homepage remains `homepage_builder` in `project-settings.json`. See `docs/CONFIGURATION.md` (Appearance builders).
+Named layouts live in `chrome_layouts`. Theme templates live in `theme_templates` (conditions + Header/Body/Footer slot FKs). Homepage remains `homepage_builder` in project settings (`project_settings.payload`). See `docs/CONFIGURATION.md` (Appearance builders).
 
 Public shell resolves header/footer via **record FK → theme template slot → type default → site default** (published only). Pass `path` for route-aware chrome; unknown paths use `not_found` context.
 

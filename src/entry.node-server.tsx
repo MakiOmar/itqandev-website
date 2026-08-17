@@ -19,6 +19,11 @@ const PORT = process.env.PORT ?? 3004;
 const { router, notFound, staticFile } = createQwikCity({
   render,
   qwikCityPlan,
+  // Hostinger/Passenger terminates TLS in Apache; Node sees http:// while the
+  // browser Origin is https://. Strict CSRF then 403s form POSTs and the client
+  // crashes with `loaders is undefined`. lax-proto still blocks other hosts.
+  checkOrigin: "lax-proto",
+  origin: process.env.ORIGIN,
   static: {
     cacheControl: "public, max-age=31536000, immutable",
   },

@@ -80,6 +80,8 @@ If the HTML URL and API URL differ by **hostname or scheme** (**localhost** vs a
 
 **`www` vs apex:** if the hostname in the browser does not match an entry in **`SANCTUM_STATEFUL_DOMAINS`**, set **`VITE_API_PROXY_TARGET`** to an origin **that is** listed (hostname is used for canonical/OG and optional SSR **`Origin` / `Referer`** normalization while preserving the path from `request.url`), or add apex + **`www`** (or a pattern Laravel **`Str::is`** accepts, e.g. **`*.example.com`**) to **`SANCTUM_STATEFUL_DOMAINS`**.
 
+**Node SSR behind HTTPS (Hostinger Passenger):** Apache terminates TLS, so Qwik sees `http://` while the browser `Origin` is `https://`. Strict CSRF then 403s login/admin form POSTs and the client throws `loaders is undefined`. `src/entry.node-server.tsx` uses `checkOrigin: 'lax-proto'` for that scheme mismatch. Also set runtime `ORIGIN=https://your-site.example` (Passenger `SetEnv`) so redirects stay on HTTPS.
+
 **Marketing API behavior in dev:** use `VITE_API_PROXY_TARGET` as the single proxy origin for `/api` and `/sanctum`. The **browser** uses the page origin + `/api` (Vite proxy). **Node SSR** calls `VITE_API_PROXY_TARGET` + `/api` directly (not the Vite dev server — fetching `:5173/api` from SSR stalls). Optional `VITE_SSR_API_BASE_URL` overrides the SSR base. Diagnostics: `/{lang}/api-check` and `GET /api/public/ping` (`server_ms`). `VITE_API_PROXY_HOST` and `VITE_DEV_SSR_SKIP_MARKETING_API` are not used.
 
 ### Branding Configuration
@@ -110,7 +112,7 @@ UI route prefixes (`/en/`, `/ar/`, `/fr/`, …), dashboard `robots.txt` disallow
 2. Add `website/src/i18n/fr.json` for qwik-speak UI strings.
 3. Redeploy — `GET /robots.txt` picks up the new `Disallow: /fr/admin/` automatically.
 
-For **content** translations (API `X-Content-Locale`), also enable the language in admin **Settings → Languages** (`site_languages` in `project-settings.json`). That is separate from the URL/UI list above.
+For **content** translations (API `X-Content-Locale`), also enable the language in admin **Settings → Languages** (`site_languages` in project settings). That is separate from the URL/UI list above.
 
 ---
 
