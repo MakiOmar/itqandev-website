@@ -41,6 +41,7 @@ import {
 } from '../../../../../lib/admin/native-select-classes';
 import { ChromeLayoutAssignmentFields } from '../../../../../components/admin/appearance/ChromeLayoutAssignmentFields';
 import { nestedPagePath, parentSelectOptions } from '../../../../../lib/admin/page-hierarchy';
+import { useContentSlugAutosuggestForm } from '../../../../../lib/slug/content-slug-auto';
 
 function mapPageFromApi(raw: Record<string, unknown>): AdminPage {
   return {
@@ -108,6 +109,13 @@ export default component$(() => {
     excerpt: page.excerpt || '',
     status: (page.status === 'published' ? 'published' : 'draft') as 'draft' | 'published',
   });
+  const pageSlugIgnoreRecordId = useSignal<number | null | undefined>(page.id);
+  const pageSlugAuto = useContentSlugAutosuggestForm(
+    'pages',
+    formData,
+    'title',
+    pageSlugIgnoreRecordId,
+  );
   const contentLocaleDraft = useSignal(page.content_locale || '');
   const editingLocaleDraft = useSignal(langConfig.value.content_editing_locale);
   const canonicalTitle = useSignal(page.title);
@@ -234,6 +242,7 @@ export default component$(() => {
                     onInput$={(e) => {
                       formData.value = { ...formData.value, title: (e.target as HTMLInputElement).value };
                     }}
+                    onBlur$={pageSlugAuto.onTitleBlurSuggestSlug$}
                   />
                 </div>
                 <div>
@@ -245,8 +254,10 @@ export default component$(() => {
                     class={`${ADMIN_FORM_INPUT_CLASS} font-mono text-xs`}
                     value={formData.value.slug}
                     onInput$={(e) => {
+                      pageSlugAuto.slugLocked.value = true;
                       formData.value = { ...formData.value, slug: (e.target as HTMLInputElement).value };
                     }}
+                    onBlur$={pageSlugAuto.onSlugBlurEnsureUnique$}
                   />
                   <AdminPublicPageLink
                     lang={lang}

@@ -21,6 +21,7 @@ import {
   adminPublicDetailPath,
 } from '../../../../lib/admin/public-content-url';
 import { ADMIN_CHECKBOX_CLASS } from '../../../../lib/admin/native-select-classes';
+import { AdminContentImportExportButtons } from '../../../../components/admin/AdminContentImportExportButtons';
 
 function mapPageFromApi(raw: Record<string, unknown>): AdminPage {
   return {
@@ -73,6 +74,8 @@ export default component$(() => {
   const { confirm, success, error: showError } = useSwal();
   const pages = usePagesList();
   const selected = useSignal<number[]>([]);
+  const selectedForExport = useSignal<Set<string | number>>(new Set());
+  const exportImportBusy = useSignal(false);
 
   const { items: pagesState, loading, refetch } = useLocaleAwareList<AdminPage>(
     pages,
@@ -117,6 +120,7 @@ export default component$(() => {
       return;
     }
     selected.value = [];
+    selectedForExport.value = new Set();
     await success(String(translateApp(lang, 'common.deleted')));
     await refetch();
   });
@@ -127,12 +131,25 @@ export default component$(() => {
         title={translateApp(lang, 'pages.title')}
         description={translateApp(lang, 'pages.subtitle')}
       >
-        <Link
-          href={R.ADMIN.PAGES_NEW}
-          class="rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white hover:bg-primary-700"
-        >
-          {translateApp(lang, 'pages.addNew')}
-        </Link>
+        <div class="flex flex-wrap gap-2">
+          <AdminContentImportExportButtons
+            lang={lang}
+            exportEndpoint={API_ENDPOINTS.PAGES.EXPORT}
+            importEndpoint={API_ENDPOINTS.PAGES.IMPORT}
+            filePrefix="pages"
+            selectedIds={selectedForExport}
+            busy={exportImportBusy}
+            onRefetch$={$(async () => {
+              await refetch();
+            })}
+          />
+          <Link
+            href={R.ADMIN.PAGES_NEW}
+            class="rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white hover:bg-primary-700"
+          >
+            {translateApp(lang, 'pages.addNew')}
+          </Link>
+        </div>
       </PageHeader>
 
       {loading.value ? (
@@ -170,6 +187,7 @@ export default component$(() => {
                           selected.value = (e.target as HTMLInputElement).checked
                             ? [...allIds.value]
                             : [];
+                          selectedForExport.value = new Set(selected.value);
                         }}
                       />
                     </div>
@@ -202,6 +220,7 @@ export default component$(() => {
                             selected.value = checked
                               ? [...selected.value, page.id]
                               : selected.value.filter((id) => id !== page.id);
+                            selectedForExport.value = new Set(selected.value);
                           }}
                         />
                       </div>

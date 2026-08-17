@@ -131,6 +131,8 @@ export const API_ENDPOINTS = {
     UPDATE: (id: string | number) => `/v1/pages/${id}`,
     DELETE: (id: string | number) => `/v1/pages/${id}`,
     BULK_DELETE: '/v1/pages/bulk-delete',
+    EXPORT: '/v1/pages/export',
+    IMPORT: '/v1/pages/import',
   },
   PUBLIC_PAGES: {
     LIST: '/public/pages',

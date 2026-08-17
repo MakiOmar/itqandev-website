@@ -142,6 +142,8 @@ Requires the same ability as system health (`manageSystemCache`). See `docs/CONF
 
 **Error (422):** Empty slug after normalization (e.g. only punctuation).
 
+Admin **create/update** for pages, projects, blog posts, services, categories, skills, and forms also runs the same sanitize + unique pipeline (`Str::slug` then `-2`, `-3`, …) before validation, so saves stay consistent even if the client never blurred the slug field. Pass `ignore_id` semantics via the current record on update.
+
 ---
 
 ## User Management Endpoints
@@ -796,6 +798,7 @@ Locale-aware JSON export/import is available for admin translatable types. Each 
 | `services` | `GET /api/v1/services/export` | `POST /api/v1/services/import` | services |
 | `blog_posts` | `GET /api/v1/blog-posts/export` | `POST /api/v1/blog-posts/import` | blog |
 | `testimonials` | `GET /api/v1/testimonials/export` | `POST /api/v1/testimonials/import` | testimonials |
+| `pages` | `GET /api/v1/pages/export` | `POST /api/v1/pages/import` | pages |
 
 **Taxonomies** (`categories`, `skills`): localized `name`, `description`, plus `slug` and `id`. Categories include `is_featured`; skills include `icon_hint`.
 
@@ -805,6 +808,7 @@ Locale-aware JSON export/import is available for admin translatable types. Each 
 - **services:** `name`, `short_description`, `description`, `process[]`, `deliverables[]`, `slug`, `id`
 - **blog_posts:** `title`, `excerpt`, `content`, `featured`, `slug`, `id`
 - **testimonials:** `content`, `client_role`, `company`, `client_name` (primary only), `project_id`, `id` — no `slug`; match by **`id`** on import
+- **pages:** `title`, `excerpt`, `slug`, `id`, `status`, `parent_id`, `parent_slug`, `exclude_from_search`, **`sections`** (full page-builder layout tree). Optional `translations: [{ locale, title, excerpt }]` applies extra title/excerpt locales in one import. Nested pages export parents before children when possible; import resolves `parent_slug` if `parent_id` is missing. **New** pages get a unique `slug` (`privacy-policy`, then `privacy-policy-2`, …) via `UniqueContentSlug`; matching `id` or existing `slug` updates in `upsert` mode.
 
 Export uses the same locale visibility rules as each type’s admin list (`scopeQueryForPresentationLocale` + presenter overlay). Import modes: `upsert` (default) or `translation_only` (query/body `mode`).
 

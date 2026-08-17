@@ -1,0 +1,510 @@
+{
+    "format": "credocode.content-export",
+    "version": 1,
+    "entity": "pages",
+    "locale": "en",
+    "exported_at": "2026-08-17T16:37:21.179Z",
+    "items": [
+        {
+            "slug": "privacy-policy",
+            "title": "Privacy Policy",
+            "excerpt": "Privacy policy for Digital Teacher Notebook (دفتر المعلم الرقمي) by ITQAN Dev. Package com.itqandev.digitalteachernotebook.",
+            "status": "published",
+            "parent_id": null,
+            "parent_slug": null,
+            "exclude_from_search": false,
+            "sections": [
+                {
+                    "id": "band_privacy_header",
+                    "type": "layout",
+                    "enabled": true,
+                    "layout_width": "boxed",
+                    "settings": {
+                        "layout_revision": 3
+                    },
+                    "rows": [
+                        {
+                            "id": "row_privacy_header",
+                            "stack_below": "none",
+                            "gap": 4,
+                            "columns": [
+                                {
+                                    "id": "col_privacy_header",
+                                    "span": {
+                                        "mobile": 12,
+                                        "tablet": 12,
+                                        "desktop": 12
+                                    },
+                                    "blocks": [
+                                        {
+                                            "id": "kit_privacy_page_header",
+                                            "kind": "kit",
+                                            "type": "page_header",
+                                            "enabled": true,
+                                            "settings": {
+                                                "show_breadcrumbs": true,
+                                                "show_title": true,
+                                                "home_label": "Home",
+                                                "eyebrow": "Legal",
+                                                "title_override": "Privacy Policy",
+                                                "subtitle": "Digital Teacher Notebook (دفتر المعلم الرقمي) — com.itqandev.digitalteachernotebook. Last updated: 14 August 2026.",
+                                                "extra_crumbs": [],
+                                                "translations": {
+                                                    "ar": {
+                                                        "home_label": "الرئيسية",
+                                                        "eyebrow": "قانوني",
+                                                        "title_override": "سياسة الخصوصية",
+                                                        "subtitle": "دفتر المعلم الرقمي (Digital Teacher Notebook) — com.itqandev.digitalteachernotebook. آخر تحديث: ١٤ أغسطس ٢٠٢٦."
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    ]
+                                }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "id": "band_privacy_who",
+                    "type": "layout",
+                    "enabled": true,
+                    "layout_width": "boxed",
+                    "settings": [],
+                    "rows": [
+                        {
+                            "id": "row_privacy_who",
+                            "stack_below": "none",
+                            "gap": 6,
+                            "columns": [
+                                {
+                                    "id": "col_privacy_who",
+                                    "span": {
+                                        "mobile": 12,
+                                        "tablet": 12,
+                                        "desktop": 12
+                                    },
+                                    "blocks": [
+                                        {
+                                            "id": "kit_privacy_who",
+                                            "kind": "kit",
+                                            "type": "image_text",
+                                            "enabled": true,
+                                            "settings": {
+                                                "eyebrow": "1",
+                                                "title": "Who we are",
+                                                "body": "<p>This privacy policy applies to the mobile application <strong>Digital Teacher Notebook</strong> (“the App”), published by <strong>ITQAN Dev</strong> (“we”, “us”).</p><p>Contact for privacy requests: <strong>SUPPORT_EMAIL_HERE</strong><br/>(Optional WhatsApp support: <strong>SUPPORT_WHATSAPP_HERE</strong>)</p>",
+                                                "image": null,
+                                                "image_position": "right",
+                                                "button_label": "",
+                                                "button_url": "",
+                                                "translations": {
+                                                    "ar": {
+                                                        "eyebrow": "1",
+                                                        "title": "من نحن",
+                                                        "body": "<p>تنطبق سياسة الخصوصية هذه على تطبيق <strong>دفتر المعلم الرقمي</strong> (“التطبيق”) الصادر عن <strong>ITQAN Dev</strong> (“نحن”).</p><p>للتواصل بخصوص الخصوصية: <strong>SUPPORT_EMAIL_HERE</strong><br/>(واتساب اختياري: <strong>SUPPORT_WHATSAPP_HERE</strong>)</p>"
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    ]
+                                }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "id": "band_privacy_what",
+                    "type": "layout",
+                    "enabled": true,
+                    "layout_width": "boxed",
+                    "settings": [],
+                    "rows": [
+                        {
+                            "id": "row_privacy_what",
+                            "stack_below": "none",
+                            "gap": 6,
+                            "columns": [
+                                {
+                                    "id": "col_privacy_what",
+                                    "span": {
+                                        "mobile": 12,
+                                        "tablet": 12,
+                                        "desktop": 12
+                                    },
+                                    "blocks": [
+                                        {
+                                            "id": "kit_privacy_what",
+                                            "kind": "kit",
+                                            "type": "image_text",
+                                            "enabled": true,
+                                            "settings": {
+                                                "eyebrow": "2",
+                                                "title": "What the App does",
+                                                "body": "<p>The App helps private tutors manage academic years, groups, students, attendance, schedules, and payments. Core teaching data is stored <strong>on the user’s device</strong> (local SQLite database). The App is designed to work primarily offline.</p>",
+                                                "image": null,
+                                                "image_position": "right",
+                                                "button_label": "",
+                                                "button_url": "",
+                                                "translations": {
+                                                    "ar": {
+                                                        "eyebrow": "2",
+                                                        "title": "ماذا يفعل التطبيق؟",
+                                                        "body": "<p>يساعد التطبيق مدرّسي الحصص الخصوصية على إدارة السنوات الدراسية والمجموعات والطلاب والحضور والجداول والمدفوعات. تُحفظ بيانات التدريس الأساسية <strong>على جهاز المستخدم</strong> (قاعدة بيانات محلية). التطبيق مصمم للعمل غالباً دون اتصال.</p>"
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    ]
+                                }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "id": "band_privacy_device_data",
+                    "type": "layout",
+                    "enabled": true,
+                    "layout_width": "boxed",
+                    "settings": [],
+                    "rows": [
+                        {
+                            "id": "row_privacy_device_data",
+                            "stack_below": "none",
+                            "gap": 6,
+                            "columns": [
+                                {
+                                    "id": "col_privacy_device_data",
+                                    "span": {
+                                        "mobile": 12,
+                                        "tablet": 12,
+                                        "desktop": 12
+                                    },
+                                    "blocks": [
+                                        {
+                                            "id": "kit_privacy_device_data",
+                                            "kind": "kit",
+                                            "type": "image_text",
+                                            "enabled": true,
+                                            "settings": {
+                                                "eyebrow": "3.1",
+                                                "title": "Data stored only on your device",
+                                                "body": "<p>You may enter or generate:</p><ul><li>Tutor profile (name, optional profile photo chosen from camera/gallery)</li><li>Academic years, groups, schedules, sessions</li><li>Student names and optional phone numbers (student / parent)</li><li>Attendance records and payments / dues</li><li>App settings (language, currency display, page size, reminders)</li><li>Backup files you export or import</li></ul><p>This information stays on the device unless <strong>you</strong> export a backup or share a file (for example via WhatsApp, Drive, or email). We do <strong>not</strong> operate a cloud account that syncs your students or payments.</p>",
+                                                "image": null,
+                                                "image_position": "right",
+                                                "button_label": "",
+                                                "button_url": "",
+                                                "translations": {
+                                                    "ar": {
+                                                        "eyebrow": "3.1",
+                                                        "title": "بيانات تبقى على جهازك فقط",
+                                                        "body": "<p>قد تُدخل أو تُنشئ:</p><ul><li>الملف الشخصي للمدرس (الاسم، وصورة اختيارية)</li><li>السنوات والمجموعات والجداول والحصص</li><li>أسماء الطلاب وأرقام الهواتف الاختيارية (طالب / ولي أمر)</li><li>سجلات الحضور والمدفوعات والمستحقات</li><li>إعدادات التطبيق (اللغة، العملة، حجم الصفحات، التذكيرات)</li><li>ملفات النسخ الاحتياطي التي تصدّرها أو تستوردها</li></ul><p>تبقى هذه المعلومات على الجهاز ما لم <strong>تقم أنت</strong> بتصدير نسخة احتياطية أو مشاركة ملف. لا نوفر حساب سحابي لمزامنة طلابك أو مدفوعاتك.</p>"
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    ]
+                                }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "id": "band_privacy_license",
+                    "type": "layout",
+                    "enabled": true,
+                    "layout_width": "boxed",
+                    "settings": [],
+                    "rows": [
+                        {
+                            "id": "row_privacy_license",
+                            "stack_below": "none",
+                            "gap": 6,
+                            "columns": [
+                                {
+                                    "id": "col_privacy_license",
+                                    "span": {
+                                        "mobile": 12,
+                                        "tablet": 12,
+                                        "desktop": 12
+                                    },
+                                    "blocks": [
+                                        {
+                                            "id": "kit_privacy_license",
+                                            "kind": "kit",
+                                            "type": "image_text",
+                                            "enabled": true,
+                                            "settings": {
+                                                "eyebrow": "3.2",
+                                                "title": "Data sent to the license server",
+                                                "body": "<p>To activate or validate a license / trial, the App contacts:</p><p><strong><a href=\"https://ulsp.gamesspoteg.com\" rel=\"noopener noreferrer\" target=\"_blank\">https://ulsp.gamesspoteg.com</a></strong> (ULSP license API)</p><p>Typical data sent:</p><ul><li>License key (or trial request)</li><li>Device identifier generated for licensing (<code>device_id</code>)</li><li>Device name / platform (Android/iOS) and app version</li><li>Activation / validation status metadata</li></ul><p>Purpose: license entitlement, anti-abuse (activation limits), trial management.</p><p>License credentials on the device are stored in the OS secure storage (Secure Store), not inside the teaching-data backup file.</p><p>Offline use: after a successful validation, the App may remain unlocked for a limited grace period (currently up to <strong>7 days</strong>) without contacting the server.</p>",
+                                                "image": null,
+                                                "image_position": "right",
+                                                "button_label": "",
+                                                "button_url": "",
+                                                "translations": {
+                                                    "ar": {
+                                                        "eyebrow": "3.2",
+                                                        "title": "بيانات تُرسل إلى خادم الترخيص",
+                                                        "body": "<p>لتفعيل أو التحقق من الترخيص / التجربة، يتصل التطبيق بـ:</p><p><strong><a href=\"https://ulsp.gamesspoteg.com\" rel=\"noopener noreferrer\" target=\"_blank\">https://ulsp.gamesspoteg.com</a></strong></p><p>وقد يُرسل عادةً:</p><ul><li>مفتاح الترخيص (أو طلب تجربة)</li><li>معرّف جهاز لأغراض الترخيص</li><li>اسم الجهاز / المنصة وإصدار التطبيق</li><li>بيانات حالة التفعيل / التحقق</li></ul><p>الغرض: التحقق من أحقيّة الاستخدام، ومنع إساءة الاستخدام، وإدارة الفترة التجريبية.</p><p>تُحفظ بيانات الترخيص على الجهاز في التخزين الآمن للنظام، وليس داخل ملف نسخة بيانات التدريس.</p><p>عند انقطاع الإنترنت بعد تحقق ناجح، قد يبقى التطبيق مفتوحاً لفترة سماح محدودة (حالياً حتى <strong>7 أيام</strong>).</p>"
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    ]
+                                }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "id": "band_privacy_permissions",
+                    "type": "layout",
+                    "enabled": true,
+                    "layout_width": "boxed",
+                    "settings": [],
+                    "rows": [
+                        {
+                            "id": "row_privacy_permissions",
+                            "stack_below": "none",
+                            "gap": 6,
+                            "columns": [
+                                {
+                                    "id": "col_privacy_permissions",
+                                    "span": {
+                                        "mobile": 12,
+                                        "tablet": 12,
+                                        "desktop": 12
+                                    },
+                                    "blocks": [
+                                        {
+                                            "id": "kit_privacy_permissions",
+                                            "kind": "kit",
+                                            "type": "image_text",
+                                            "enabled": true,
+                                            "settings": {
+                                                "eyebrow": "3.3",
+                                                "title": "Optional permissions and why we ask",
+                                                "body": "<div class=\"overflow-x-auto\"><table><thead><tr><th>Permission</th><th>When</th><th>Purpose</th></tr></thead><tbody><tr><td>Internet</td><td>License activate/validate</td><td>Unlock the App</td></tr><tr><td>Contacts</td><td>Only if you tap “Contacts” when adding a student</td><td>Pick a phone number faster (you choose which contact)</td></tr><tr><td>Camera / photos</td><td>Only if you set a tutor profile photo</td><td>Display your profile image on-device</td></tr><tr><td>Notifications</td><td>If you enable reminders</td><td>Session / reminder alerts</td></tr><tr><td>Biometric / device lock</td><td>If you enable App Lock</td><td>Unlock the App with fingerprint/Face/PIN (processed by the device OS; we do not receive biometric templates)</td></tr></tbody></table></div><p>You can deny optional permissions; core offline features still work, except the related feature.</p>",
+                                                "image": null,
+                                                "image_position": "right",
+                                                "button_label": "",
+                                                "button_url": "",
+                                                "translations": {
+                                                    "ar": {
+                                                        "eyebrow": "3.3",
+                                                        "title": "الأذونات الاختيارية",
+                                                        "body": "<div class=\"overflow-x-auto\"><table><thead><tr><th>الإذن</th><th>متى</th><th>الغرض</th></tr></thead><tbody><tr><td>الإنترنت</td><td>تفعيل/التحقق من الترخيص</td><td>فتح التطبيق</td></tr><tr><td>جهات الاتصال</td><td>عند اختيار رقم من جهات الاتصال</td><td>إدخال أسرع لأرقام الطلاب</td></tr><tr><td>الكاميرا / الصور</td><td>عند اختيار صورة الملف الشخصي</td><td>عرض صورتك محلياً</td></tr><tr><td>الإشعارات</td><td>عند تفعيل التذكيرات</td><td>تنبيهات الحصص</td></tr><tr><td>القياسات الحيوية / قفل الجهاز</td><td>عند تفعيل قفل التطبيق</td><td>فتح التطبيق ببصمة/وجه/رمز (يعالجها نظام الجهاز؛ لا نستلم قوالب البصمة)</td></tr></tbody></table></div><p>يمكنك رفض الأذونات الاختيارية؛ تبقى الميزات الأساسية دون اتصال متاحة باستثناء الميزة المرتبطة بالإذن.</p>"
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    ]
+                                }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "id": "band_privacy_not_do",
+                    "type": "layout",
+                    "enabled": true,
+                    "layout_width": "boxed",
+                    "settings": [],
+                    "rows": [
+                        {
+                            "id": "row_privacy_not_do",
+                            "stack_below": "none",
+                            "gap": 6,
+                            "columns": [
+                                {
+                                    "id": "col_privacy_not_do",
+                                    "span": {
+                                        "mobile": 12,
+                                        "tablet": 12,
+                                        "desktop": 12
+                                    },
+                                    "blocks": [
+                                        {
+                                            "id": "kit_privacy_not_do",
+                                            "kind": "kit",
+                                            "type": "image_text",
+                                            "enabled": true,
+                                            "settings": {
+                                                "eyebrow": "4",
+                                                "title": "What we do not do",
+                                                "body": "<ul><li>No advertising SDKs / no ads in the App</li><li>No sale of personal data</li><li>No social login</li><li>No analytics SDK that tracks your students or payments to third-party ad networks</li><li>We do not upload your student lists, attendance, or payment amounts to ITQAN servers for marketing</li></ul>",
+                                                "image": null,
+                                                "image_position": "right",
+                                                "button_label": "",
+                                                "button_url": "",
+                                                "translations": {
+                                                    "ar": {
+                                                        "eyebrow": "4",
+                                                        "title": "ما لا نفعله",
+                                                        "body": "<ul><li>لا إعلانات داخل التطبيق</li><li>لا بيع للبيانات الشخصية</li><li>لا تسجيل دخول عبر شبكات اجتماعية</li><li>لا نرفع قوائم الطلاب أو الحضور أو مبالغ المدفوعات إلى خوادم ITQAN لأغراض تسويقية</li></ul>"
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    ]
+                                }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "id": "band_privacy_sharing",
+                    "type": "layout",
+                    "enabled": true,
+                    "layout_width": "boxed",
+                    "settings": [],
+                    "rows": [
+                        {
+                            "id": "row_privacy_sharing",
+                            "stack_below": "none",
+                            "gap": 6,
+                            "columns": [
+                                {
+                                    "id": "col_privacy_sharing",
+                                    "span": {
+                                        "mobile": 12,
+                                        "tablet": 12,
+                                        "desktop": 12
+                                    },
+                                    "blocks": [
+                                        {
+                                            "id": "kit_privacy_sharing",
+                                            "kind": "kit",
+                                            "type": "image_text",
+                                            "enabled": true,
+                                            "settings": {
+                                                "eyebrow": "5–7",
+                                                "title": "Sharing, retention, and security",
+                                                "body": "<h3>Sharing</h3><ul><li><strong>Teaching data:</strong> not shared by us. Only you can share backups or screenshots.</li><li><strong>License data:</strong> processed by the ULSP service at <code>ulsp.gamesspoteg.com</code> solely for licensing.</li><li><strong>Legal:</strong> we may disclose information if required by applicable law.</li></ul><h3>Retention</h3><ul><li>On-device teaching data: kept until you delete it, clear app data, uninstall, or overwrite via backup restore.</li><li>Backup files: controlled by you (device storage / wherever you saved them).</li><li>License records: retained on the license server according to the ULSP / product licensing rules (activations, expiry, support window).</li></ul><h3>Security</h3><p>We use on-device storage, optional App Lock, and secure storage for license secrets. No method of transmission or storage is 100% secure; protect your device and backups.</p>",
+                                                "image": null,
+                                                "image_position": "right",
+                                                "button_label": "",
+                                                "button_url": "",
+                                                "translations": {
+                                                    "ar": {
+                                                        "eyebrow": "5–7",
+                                                        "title": "المشاركة والاحتفاظ والأمان",
+                                                        "body": "<h3>المشاركة</h3><ul><li><strong>بيانات التدريس:</strong> لا نشاركها. أنت فقط من يمكنه مشاركة النسخ الاحتياطية.</li><li><strong>بيانات الترخيص:</strong> تُعالج عبر خدمة ULSP على النطاق المذكور أعلاه لأغراض الترخيص فقط.</li><li><strong>القانون:</strong> قد نُفصح عند إلزام القانون المعمول به.</li></ul><h3>الاحتفاظ بالبيانات</h3><ul><li>بيانات الجهاز: حتى تحذفها أو تمسح بيانات التطبيق أو تزيل التثبيت أو تستبدلها بنسخة احتياطية.</li><li>ملفات النسخ الاحتياطي: تحت سيطرتك.</li><li>سجلات الترخيص: وفق قواعد نظام ULSP (التفعيلات، الانتهاء، الدعم).</li></ul><h3>الأمان</h3><p>نستخدم التخزين المحلي، وقفل التطبيق الاختياري، والتخزين الآمن لأسرار الترخيص. لا توجد وسيلة نقل أو تخزين آمنة 100٪؛ احمِ جهازك ونسخك الاحتياطية.</p>"
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    ]
+                                }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "id": "band_privacy_children_choices",
+                    "type": "layout",
+                    "enabled": true,
+                    "layout_width": "boxed",
+                    "settings": [],
+                    "rows": [
+                        {
+                            "id": "row_privacy_children_choices",
+                            "stack_below": "none",
+                            "gap": 6,
+                            "columns": [
+                                {
+                                    "id": "col_privacy_children_choices",
+                                    "span": {
+                                        "mobile": 12,
+                                        "tablet": 12,
+                                        "desktop": 12
+                                    },
+                                    "blocks": [
+                                        {
+                                            "id": "kit_privacy_children_choices",
+                                            "kind": "kit",
+                                            "type": "image_text",
+                                            "enabled": true,
+                                            "settings": {
+                                                "eyebrow": "8–10",
+                                                "title": "Children, your choices, and international processing",
+                                                "body": "<h3>Children</h3><p>The App is intended for <strong>adults</strong> (teachers / tutors). It is not directed at children. Student records you enter are under your responsibility as the tutor.</p><h3>Your choices</h3><ul><li>Edit or delete students and records inside the App</li><li>Export or delete backups you created</li><li>Revoke Contacts / Camera / Notification permissions in system settings</li><li>Deactivate the license from the App’s license screen (where available)</li><li>Uninstall the App to remove local data (backups you exported remain where you saved them)</li></ul><h3>International processing</h3><p>License validation may be processed on servers operated for ULSP (see domain above). By activating a license you understand that limited license metadata leaves your device.</p>",
+                                                "image": null,
+                                                "image_position": "right",
+                                                "button_label": "",
+                                                "button_url": "",
+                                                "translations": {
+                                                    "ar": {
+                                                        "eyebrow": "8–9",
+                                                        "title": "الأطفال وخياراتك",
+                                                        "body": "<h3>الأطفال</h3><p>التطبيق موجّه <strong>للبالغين</strong> (المدرسين). مسؤولية بيانات الطلاب التي تُدخلها تقع عليك كمدرّس.</p><h3>خياراتك</h3><p>تعديل أو حذف السجلات داخل التطبيق، تصدير/حذف النسخ الاحتياطية، إلغاء الأذونات من إعدادات النظام، إلغاء تفعيل الترخيص من شاشة الترخيص إن وُجدت، أو إلغاء تثبيت التطبيق.</p>"
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    ]
+                                }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "id": "band_privacy_changes_contact",
+                    "type": "layout",
+                    "enabled": true,
+                    "layout_width": "boxed",
+                    "settings": [],
+                    "rows": [
+                        {
+                            "id": "row_privacy_changes_contact",
+                            "stack_below": "none",
+                            "gap": 6,
+                            "columns": [
+                                {
+                                    "id": "col_privacy_changes_contact",
+                                    "span": {
+                                        "mobile": 12,
+                                        "tablet": 12,
+                                        "desktop": 12
+                                    },
+                                    "blocks": [
+                                        {
+                                            "id": "kit_privacy_changes_contact",
+                                            "kind": "kit",
+                                            "type": "image_text",
+                                            "enabled": true,
+                                            "settings": {
+                                                "eyebrow": "11–12",
+                                                "title": "Changes and contact",
+                                                "body": "<h3>Changes</h3><p>We may update this policy. The “Last updated” date will change. Continued use after an update means you accept the revised policy where permitted by law.</p><h3>Contact</h3><p>Privacy / support: <strong>SUPPORT_EMAIL_HERE</strong></p><p><em>Replace <code>SUPPORT_EMAIL_HERE</code> and <code>SUPPORT_WHATSAPP_HERE</code> before publishing this page for Google Play.</em></p>",
+                                                "image": null,
+                                                "image_position": "right",
+                                                "button_label": "",
+                                                "button_url": "",
+                                                "translations": {
+                                                    "ar": {
+                                                        "eyebrow": "10–11",
+                                                        "title": "التعديلات والتواصل",
+                                                        "body": "<h3>التعديلات</h3><p>قد نحدّث هذه السياسة. تاريخ “آخر تحديث” يتغيّر عندها.</p><h3>التواصل</h3><p><strong>SUPPORT_EMAIL_HERE</strong></p><p><em>استبدل <code>SUPPORT_EMAIL_HERE</code> و<code>SUPPORT_WHATSAPP_HERE</code> قبل نشر هذه الصفحة لـ Google Play.</em></p>"
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    ]
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ],
+            "translations": [
+                {
+                    "locale": "ar",
+                    "title": "سياسة الخصوصية",
+                    "excerpt": "سياسة خصوصية تطبيق دفتر المعلم الرقمي (Digital Teacher Notebook) من ITQAN Dev."
+                }
+            ]
+        }
+    ]
+}
