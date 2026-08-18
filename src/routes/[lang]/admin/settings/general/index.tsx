@@ -1,6 +1,6 @@
 import { component$, useVisibleTask$ } from '@builder.io/qwik';
 import type { DocumentHead } from '@builder.io/qwik-city';
-import { Form } from '@builder.io/qwik-city';
+import { Form, routeLoader$ } from '@builder.io/qwik-city';
 import { useTranslate, translateApp } from '../../../../../lib/i18n/useTranslate';
 import { useSwal } from '../../../../../lib/hooks/useSwal';
 import {
@@ -16,13 +16,42 @@ import {
 import {
   ADMIN_CHECKBOX_CLASS,
   ADMIN_CHECKBOX_LABEL_CLASS,
+  ADMIN_NATIVE_OPTION_CLASS,
+  ADMIN_NATIVE_SELECT_CLASS,
 } from '../../../../../lib/admin/native-select-classes';
+import { adminApiClient } from '../../../../../lib/admin/admin-api-client';
+import { API_ENDPOINTS } from '../../../../../lib/api/endpoints';
+
+type HomepagePageOption = { id: number; title: string; slug: string };
+
+export const useHomepagePageOptions = routeLoader$(async ({ cookie, request, params }) => {
+  try {
+    const apiClient = adminApiClient(cookie, request, params.lang);
+    const response = await apiClient.get(API_ENDPOINTS.PAGES.LIST);
+    const body = (response as { data?: unknown })?.data ?? response;
+    const rows = Array.isArray(body)
+      ? body
+      : body && typeof body === 'object' && Array.isArray((body as { data?: unknown }).data)
+        ? ((body as { data: unknown[] }).data)
+        : [];
+    return (rows as Record<string, unknown>[])
+      .map((row) => ({
+        id: Number(row.id),
+        title: String(row.title ?? ''),
+        slug: String(row.slug ?? ''),
+      }))
+      .filter((row) => Number.isFinite(row.id) && row.id > 0);
+  } catch {
+    return [] as HomepagePageOption[];
+  }
+});
 
 export default component$(() => {
   const { lang } = useTranslate();
   const { success: showSuccess, error: showError } = useSwal();
   const settings = useSettings();
   const updateAction = useUpdateSettings();
+  const pageOptions = useHomepagePageOptions();
 
   const secondaryLocales = secondarySiteLocales(
     settings.value.site_languages,
@@ -137,6 +166,58 @@ export default component$(() => {
             </SettingsFieldGlobe>
           </div>
         </SettingsTranslationsRoot>
+
+        <div class="rounded-lg border border-gray-200 p-4 dark:border-gray-700">
+          <h3 class="mb-1 text-sm font-semibold text-gray-900 dark:text-gray-100">
+            {translateApp(lang, 'settings.homepageDisplays')}
+          </h3>
+          <p class="mb-3 text-xs text-gray-500 dark:text-gray-400">
+            {translateApp(lang, 'settings.homepageDisplaysHint')}
+          </p>
+          <fieldset class="space-y-3">
+            <legend class="sr-only">{translateApp(lang, 'settings.homepageDisplays')}</legend>
+            <label class={ADMIN_CHECKBOX_LABEL_CLASS}>
+              <input
+                type="radio"
+                name="show_on_front"
+                value="builder"
+                checked={settings.value.show_on_front !== 'page'}
+                class={ADMIN_CHECKBOX_CLASS}
+              />
+              <span>{translateApp(lang, 'settings.homepageAppearance')}</span>
+            </label>
+            <label class={ADMIN_CHECKBOX_LABEL_CLASS}>
+              <input
+                type="radio"
+                name="show_on_front"
+                value="page"
+                checked={settings.value.show_on_front === 'page'}
+                class={ADMIN_CHECKBOX_CLASS}
+              />
+              <span>{translateApp(lang, 'settings.homepageStaticPage')}</span>
+            </label>
+            <div class="ps-6">
+              <label class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-200" for="page_on_front">
+                {translateApp(lang, 'settings.homepagePage')}
+              </label>
+              <select
+                id="page_on_front"
+                name="page_on_front"
+                class={ADMIN_NATIVE_SELECT_CLASS}
+                value={settings.value.page_on_front ? String(settings.value.page_on_front) : ''}
+              >
+                <option class={ADMIN_NATIVE_OPTION_CLASS} value="">
+                  {translateApp(lang, 'settings.homepagePageSelect')}
+                </option>
+                {pageOptions.value.map((page) => (
+                  <option key={page.id} class={ADMIN_NATIVE_OPTION_CLASS} value={String(page.id)}>
+                    {page.title} ({page.slug})
+                  </option>
+                ))}
+              </select>
+            </div>
+          </fieldset>
+        </div>
 
         <div class="rounded-lg border border-gray-200 p-4 dark:border-gray-700">
           <input type="hidden" name="search_engine_indexing" value="0" />

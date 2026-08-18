@@ -28,6 +28,8 @@ export interface SettingsFormData {
   upload_max_size: number;
   media_convert_to_webp: boolean;
   search_engine_indexing: boolean;
+  show_on_front: 'builder' | 'page';
+  page_on_front: number | null;
   logo: string;
   logoDark: string;
   logoLight: string;
@@ -56,6 +58,8 @@ export const defaultSettings: SettingsFormData = {
   upload_max_size: 100,
   media_convert_to_webp: true,
   search_engine_indexing: true,
+  show_on_front: 'builder',
+  page_on_front: null,
   logo: '',
   logoDark: '',
   logoLight: '',
@@ -117,6 +121,8 @@ function normalizeSettings(input: Partial<SettingsFormData> | undefined | null):
       (input as any)?.search_engine_indexing,
       defaultSettings.search_engine_indexing,
     ),
+    show_on_front: String((input as any)?.show_on_front || '').trim().toLowerCase() === 'page' ? 'page' : 'builder',
+    page_on_front: normalizeFontId((input as any)?.page_on_front),
     logo: (input as any)?.logo || (input as any)?.site_logo || defaultSettings.logo,
     logoDark:
       (input as any)?.logoDark ||
@@ -266,6 +272,14 @@ export const useUpdateSettings = routeAction$(
         );
       }
 
+      if (has('show_on_front')) {
+        payload.show_on_front =
+          String((data as any).show_on_front || '').trim().toLowerCase() === 'page' ? 'page' : 'builder';
+      }
+      if (has('page_on_front')) {
+        payload.page_on_front = normalizeFontId((data as any).page_on_front);
+      }
+
       if ('site_name' in payload) {
         payload.name = payload.site_name;
       }
@@ -387,6 +401,8 @@ export const useUpdateSettings = routeAction$(
     upload_max_size: z.union([z.string(), z.number()]).optional(),
     media_convert_to_webp: z.union([z.string(), z.boolean(), z.number()]).optional(),
     search_engine_indexing: z.union([z.string(), z.boolean(), z.number()]).optional(),
+    show_on_front: z.string().optional(),
+    page_on_front: z.union([z.string(), z.number()]).optional(),
     logo: z.string().optional(),
     logoDark: z.string().optional(),
     logoLight: z.string().optional(),

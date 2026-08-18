@@ -9,6 +9,11 @@ import { uiLocaleFromPublicRoute } from '~/lib/i18n/ui-locale-path';
 import { uiLangFromUrlPathname } from '~/lib/i18n/ui-locale-path';
 import { HomepageSectionsRenderer } from '~/components/marketing/home-sections/HomepageSectionsRenderer';
 import { maxSectionSettingLimit } from '~/lib/marketing/page-layout-utils';
+import { fetchPublicCmsPage } from '~/lib/marketing/public-cms-page';
+import { isFeatureModuleEnabled } from '~/lib/api/project-settings';
+import { SHOW_ON_FRONT_PAGE } from '~/lib/marketing/static-homepage';
+import type { PageSectionNode } from '~/lib/marketing/appearance-types';
+import type { PublicPageDetail } from '~/types/page';
 import { usePublicShell } from './layout';
 
 export const useHomeData = routeLoader$(async ({ request, params, resolveValue }) => {
@@ -16,8 +21,18 @@ export const useHomeData = routeLoader$(async ({ request, params, resolveValue }
   const uiLocale = uiLocaleFromPublicRoute(cookie, params.lang, request.url);
   const fetchContext = { forwardDocumentUrl: request.url };
   const shell = await resolveValue(usePublicShell);
-  const sections =
-    shell.themeBody && shell.themeBody.length > 0 ? shell.themeBody : shell.homepageSections;
+
+  let cmsPage: PublicPageDetail | null = null;
+  const frontSlug = shell.frontPage?.show_on_front === SHOW_ON_FRONT_PAGE ? shell.frontPage.slug : null;
+  if (frontSlug && isFeatureModuleEnabled(shell.branding.features, 'pages')) {
+    cmsPage = await fetchPublicCmsPage(frontSlug, uiLocale, cookie, request.url);
+  }
+
+  const sections = cmsPage?.sections?.length
+    ? (cmsPage.sections as PageSectionNode[])
+    : shell.themeBody && shell.themeBody.length > 0
+      ? shell.themeBody
+      : shell.homepageSections;
   const caseLimit = maxSectionSettingLimit(sections, 'case_studies', 3);
   const blogLimit = maxSectionSettingLimit(sections, 'blog_preview', 3);
   const [caseStudies, testimonials, blogPosts] = await Promise.all([
@@ -25,7 +40,12 @@ export const useHomeData = routeLoader$(async ({ request, params, resolveValue }
     getTestimonials(uiLocale, fetchContext),
     getBlogPosts(),
   ]);
-  return { caseStudies, testimonials, blogPosts: blogPosts.slice(0, blogLimit) };
+  return {
+    caseStudies,
+    testimonials,
+    blogPosts: blogPosts.slice(0, blogLimit),
+    cmsPage,
+  };
 });
 
 export default component$(() => {
@@ -33,21 +53,24 @@ export default component$(() => {
   const uiLocale = uiLangFromUrlPathname(loc.url.pathname);
   const data = useHomeData();
   const shell = usePublicShell();
-  const { caseStudies, testimonials, blogPosts } = data.value;
+  const { caseStudies, testimonials, blogPosts, cmsPage } = data.value;
   const siteContent = shell.value.siteContent;
   const services = siteContent?.services ?? [];
   const techStack = siteContent?.techStack ?? [];
   const branding = shell.value.branding;
+  const useCmsHome = Boolean(cmsPage?.sections?.length);
 
   return (
     <HomepageSectionsRenderer
       sections={
-        shell.value.themeBody && shell.value.themeBody.length > 0
-          ? shell.value.themeBody
-          : shell.value.homepageSections
+        useCmsHome
+          ? (cmsPage!.sections as PageSectionNode[])
+          : shell.value.themeBody && shell.value.themeBody.length > 0
+            ? shell.value.themeBody
+            : shell.value.homepageSections
       }
-      layoutAware={Boolean(shell.value.themeBody && shell.value.themeBody.length > 0)}
-      allowDefaultSections={!shell.value.themeBody?.length}
+      layoutAware={useCmsHome || Boolean(shell.value.themeBody && shell.value.themeBody.length > 0)}
+      allowDefaultSections={!useCmsHome && !shell.value.themeBody?.length}
       uiLocale={uiLocale}
       services={services}
       caseStudies={caseStudies}
@@ -55,6 +78,12 @@ export default component$(() => {
       blogPosts={blogPosts}
       techStack={techStack}
       branding={branding}
+      siteContact={siteContent?.contact}
+      pageContext={
+        useCmsHome && cmsPage
+          ? { title: cmsPage.title || 'Home', slug: cmsPage.slug }
+          : undefined
+      }
     />
   );
 });
@@ -66,8 +95,16 @@ export const head: DocumentHead = ({ resolveValue, url }) => {
 
   try {
     const shell = resolveValue(usePublicShell);
-    const titleTag = publicHomeTitle(shell.branding);
-    const metaDescription = publicSiteDescription(shell.branding, metaFallback);
+    const home = resolveValue(useHomeData) as { cmsPage?: PublicPageDetail | null };
+    const cms = home?.cmsPage;
+    const titleTag =
+      cms && typeof cms.title === 'string' && cms.title.trim()
+        ? cms.title.trim()
+        : publicHomeTitle(shell.branding);
+    const metaDescription =
+      cms && typeof cms.excerpt === 'string' && cms.excerpt.trim()
+        ? cms.excerpt.trim()
+        : publicSiteDescription(shell.branding, metaFallback);
     return {
       title: titleTag,
       meta: [

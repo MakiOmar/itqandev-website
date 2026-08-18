@@ -556,7 +556,10 @@ When `mode` is `custom`, `google_css_href` is omitted and `sources` maps format 
       "name": "…",
       "site_languages": [],
       "default_locale": "en",
-      "features": { "projects": true, "services": true }
+      "features": { "projects": true, "services": true },
+      "show_on_front": "builder",
+      "page_on_front": null,
+      "front_page_slug": null
     },
     "menu": {
       "slug": "primary",

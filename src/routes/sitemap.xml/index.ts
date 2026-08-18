@@ -74,7 +74,7 @@ async function getCmsPagesForSitemap(): Promise<{ loc: string; priority: string 
     return unwrapList(data)
       .map((row) => {
         const publicPath = String(row.public_path ?? '').replace(/\/+$/, '') || '';
-        if (publicPath && PRETTY_PAGE_PATHS.has(publicPath)) {
+        if (!publicPath || publicPath === '/' || PRETTY_PAGE_PATHS.has(publicPath)) {
           return null;
         }
         const nested = String(row.path || row.slug || '')

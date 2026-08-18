@@ -4,7 +4,7 @@ import type { DocumentHead } from '@builder.io/qwik-city';
 import { routeLoader$, useLocation } from '@builder.io/qwik-city';
 import { detectLayoutBreakpointFromUserAgent } from '~/lib/marketing/device-visibility';
 import { LayoutDeviceProvider } from '~/lib/marketing/layout-device-context';
-import { uiLocaleFromPublicRoute } from '~/lib/i18n/ui-locale-path';
+import { uiLocaleFromPublicRoute, uiLangFromUrlPathname, stripUiLocaleFromPathname } from '~/lib/i18n/ui-locale-path';
 import { LocaleTransitionProvider } from '~/components/common/LocaleTransitionOverlay';
 import { Header } from '~/components/marketing/Header';
 import { Footer } from '~/components/marketing/Footer';
@@ -17,12 +17,12 @@ import {
   type PublicBrandingState,
   type PublicShellState,
 } from '~/lib/marketing/public-shell';
-import { uiLangFromUrlPathname } from '~/lib/i18n/ui-locale-path';
 import { marketingRoutes } from '~/lib/marketing/constants';
 import type { PublicNavItem } from '~/lib/marketing/public-menu';
 import type { SiteContent } from '~/lib/marketing/types';
 import type { HomepageSectionInstance } from '~/lib/marketing/appearance-types';
 import { isSearchEngineIndexingEnabled, publicRobotsContent } from '~/lib/seo/search-engine-indexing';
+import { pathLooksLikeFrontPageAlias } from '~/lib/marketing/static-homepage';
 
 /**
  * One Laravel round-trip for branding, primary menu, and services merged into site content.
@@ -31,6 +31,20 @@ export const usePublicShell = routeLoader$(async ({ request, params }) => {
   const cookie = request.headers.get('cookie') || '';
   const uiLocale = uiLocaleFromPublicRoute(cookie, params.lang, request.url);
   return fetchPublicShell(uiLocale, { forwardDocumentUrl: request.url });
+});
+
+/** Canonical `/` when a CMS page is assigned as the WordPress-style static homepage. */
+export const useFrontPageCanonicalRedirect = routeLoader$(async ({ url, params, redirect, resolveValue }) => {
+  const shell = await resolveValue(usePublicShell);
+  const slug = shell.frontPage?.slug;
+  if (!slug) {
+    return null;
+  }
+  const logical = stripUiLocaleFromPathname(url.pathname);
+  if (!pathLooksLikeFrontPageAlias(logical, slug)) {
+    return null;
+  }
+  throw redirect(301, marketingRoutes(params.lang).home);
 });
 
 export type { PublicBrandingState, PublicShellState, SiteContent };
@@ -76,6 +90,7 @@ export default component$(() => {
   const loc = useLocation();
   const uiLocale = uiLangFromUrlPathname(loc.url.pathname);
   const shellLoader = usePublicShell();
+  useFrontPageCanonicalRedirect();
   const authSession = usePublicAuth();
   const layoutDevice = usePublicLayoutDevice();
   const branding = useSignal<PublicBrandingState>(shellLoader.value.branding);

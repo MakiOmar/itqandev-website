@@ -22,6 +22,7 @@ import {
   adminPublicAbsoluteUrl,
   adminPublicDetailPath,
 } from '../../../../lib/admin/public-content-url';
+import { withUiLocale } from '../../../../lib/i18n/ui-locale-path';
 import { ADMIN_CHECKBOX_CLASS } from '../../../../lib/admin/native-select-classes';
 import { AdminContentImportExportButtons } from '../../../../components/admin/AdminContentImportExportButtons';
 
@@ -234,10 +235,15 @@ export default component$(() => {
               </thead>
               <tbody>
                 {pagesState.value.map((page) => {
-                  const publicPath = adminPublicDetailPath(lang, 'pages', page.slug, {
-                    parentId: page.parent_id,
-                    nestedPath: page.path,
-                  });
+                  const fromApi = typeof page.public_path === 'string' && page.public_path.trim()
+                    ? withUiLocale(lang, page.public_path.trim())
+                    : null;
+                  const publicPath =
+                    fromApi ||
+                    adminPublicDetailPath(lang, 'pages', page.slug, {
+                      parentId: page.parent_id,
+                      nestedPath: page.path,
+                    });
                   const publicHref = publicPath ? adminPublicAbsoluteUrl(publicPath) : null;
                   const depth = Math.max(0, Number(page.depth ?? 0));
                   return (

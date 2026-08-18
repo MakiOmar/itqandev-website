@@ -23,6 +23,10 @@ import {
 } from './appearance-types';
 import { defaultFooterSections, defaultHeaderSections } from './chrome-defaults';
 import { isSearchEngineIndexingEnabled } from '~/lib/seo/search-engine-indexing';
+import {
+  parsePublicFrontPageMeta,
+  type PublicFrontPageMeta,
+} from './static-homepage';
 const localBase = siteData as SiteContent;
 
 export type PublicBrandingState = {
@@ -38,6 +42,8 @@ export type PublicBrandingState = {
   search_engine_indexing?: boolean;
 };
 
+export type { PublicFrontPageMeta };
+
 export type PublicShellState = {
   branding: PublicBrandingState;
   primaryMenu: PublicNavItem[];
@@ -48,6 +54,8 @@ export type PublicShellState = {
   themeContext: string | null;
   header: HeaderPublicPayload;
   footer: FooterPublicPayload;
+  /** WordPress-style static front page from site_meta. */
+  frontPage: PublicFrontPageMeta;
 };
 
 type PublicShellApiData = {
@@ -154,6 +162,7 @@ function localShellFallback(): PublicShellState {
     themeContext: null,
     header: { sections: defaultHeaderSections([]) },
     footer: { sections: defaultFooterSections() },
+    frontPage: parsePublicFrontPageMeta(null),
   };
 }
 
@@ -185,6 +194,7 @@ function mapShellApiPayload(data: PublicShellApiData, fallbackName: string): Pub
     themeContext: typeof data.theme_context === 'string' ? data.theme_context : null,
     header: normalizeChromePayload(data.header, () => defaultHeaderSections(menuItems)),
     footer: normalizeChromePayload(data.footer, () => defaultFooterSections()),
+    frontPage: parsePublicFrontPageMeta(siteMeta),
   };
 }
 /**
