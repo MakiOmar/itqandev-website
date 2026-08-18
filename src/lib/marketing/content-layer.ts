@@ -444,33 +444,52 @@ export async function getCaseStudyBySlug(
   return Promise.resolve(found);
 }
 
-/** Get featured case studies for home page. */
+function mergeCaseStudiesPreferringFeatured(
+  preferred: CaseStudy[],
+  rest: CaseStudy[],
+  limit: number,
+): CaseStudy[] {
+  const seen = new Set<string>();
+  const out: CaseStudy[] = [];
+  for (const item of [...preferred, ...rest]) {
+    const key = String(item.id || item.slug || '');
+    if (!key || seen.has(key)) {
+      continue;
+    }
+    seen.add(key);
+    out.push(item);
+    if (out.length >= limit) {
+      break;
+    }
+  }
+  return out;
+}
+
+/** Get featured case studies for home page (pad with latest published if featured is short). */
 export async function getFeaturedCaseStudies(
   limit = 3,
   locale?: string,
   fetchContext?: MarketingFetchContext,
 ): Promise<CaseStudy[]> {
-  const live = await fetchPublishedProjectsFromApi(
-    { featured: true, per_page: limit, locale },
+  const cap = Math.max(1, Math.min(24, Math.floor(Number(limit) || 3)));
+  const liveFeatured = await fetchPublishedProjectsFromApi(
+    { featured: true, per_page: cap, locale },
     fetchContext,
   );
-  if (live.length > 0) {
-    return live.slice(0, limit);
+  if (liveFeatured.length >= cap) {
+    return liveFeatured.slice(0, cap);
   }
   if (hasMarketingApiBase(fetchContext)) {
     const latest = await fetchPublishedProjectsFromApi(
-      { per_page: limit, locale },
+      { per_page: cap, locale },
       fetchContext,
     );
-    return latest.slice(0, limit);
+    return mergeCaseStudiesPreferringFeatured(liveFeatured, latest, cap);
   }
 
   const all = await getCaseStudies(locale, undefined, fetchContext);
-  const featured = all.filter((c) => c.featured).slice(0, limit);
-  if (featured.length >= limit) {
-    return featured;
-  }
-  return all.slice(0, limit);
+  const featured = all.filter((c) => c.featured);
+  return mergeCaseStudiesPreferringFeatured(featured, all, cap);
 }
 
 /** Get approved testimonials (API when configured, else local JSON). Respects locale via X-Content-Locale when using the API. */

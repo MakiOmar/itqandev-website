@@ -311,7 +311,9 @@ export const ServicesTeaserHomeSection = component$<
 export const CaseStudiesHomeSection = component$<
   HomeSectionSharedProps & { caseStudies: CaseStudy[] }
 >(({ settings, uiLocale, caseStudies }) => {
-  if (caseStudies.length === 0) return null;
+  const limit = settingInt(settings, 'limit', 3);
+  const items = caseStudies.slice(0, limit);
+  if (items.length === 0) return null;
   const routes = marketingRoutes(uiLocale);
   const title = settingString(settings, 'title', 'Selected portfolio');
   const subtitle = settingString(settings, 'subtitle', 'Recent projects we are proud of.');
@@ -336,7 +338,7 @@ export const CaseStudiesHomeSection = component$<
           </div>
         </AnimatedReveal>
         <ul class="mx-auto mt-12 grid max-w-5xl gap-8 sm:grid-cols-2 lg:grid-cols-3" role="list">
-          {caseStudies.map((cs, i) => (
+          {items.map((cs, i) => (
             <li key={cs.id}>
               <AnimatedReveal delay={i * 100}>
                 <CaseStudyCard caseStudy={cs} />
@@ -404,7 +406,9 @@ export const TechStackHomeSection = component$<{
 export const BlogPreviewHomeSection = component$<
   HomeSectionSharedProps & { blogPosts: BlogPost[] }
 >(({ settings, uiLocale, blogPosts }) => {
-  if (blogPosts.length === 0) return null;
+  const limit = settingInt(settings, 'limit', 3);
+  const items = blogPosts.slice(0, limit);
+  if (items.length === 0) return null;
   const routes = marketingRoutes(uiLocale);
   const title = settingString(settings, 'title', 'From the blog');
   const subtitle = settingString(settings, 'subtitle', 'Tips and updates from our team.');
@@ -429,7 +433,7 @@ export const BlogPreviewHomeSection = component$<
           </div>
         </AnimatedReveal>
         <ul class="mx-auto mt-12 grid max-w-5xl gap-8 sm:grid-cols-2 lg:grid-cols-3" role="list">
-          {blogPosts.map((post, i) => (
+          {items.map((post, i) => (
             <li key={post.slug}>
               <AnimatedReveal delay={i * 80}>
                 <BlogCard post={post} />

@@ -130,3 +130,54 @@ export function effectiveSpanForDevice(
 export function previewColSpanClass(span: number): string {
   return COL_SPAN[clampSpan(span)] ?? 'col-span-12';
 }
+
+/** Kit `limit` fields are stored as 1–24 in Appearance / Theme Builder. */
+export const KIT_ITEM_LIMIT_MAX = 24;
+
+export function parseKitItemLimit(raw: unknown, fallback: number, max = KIT_ITEM_LIMIT_MAX): number {
+  const n = typeof raw === 'number' ? raw : Number(raw);
+  if (!Number.isFinite(n) || n <= 0) {
+    return fallback;
+  }
+  return Math.min(max, Math.floor(n));
+}
+
+/**
+ * Highest `settings.limit` for kits of `type` in a flat homepage list or nested page-layout tree.
+ * Used so SSR fetches enough items for Theme Builder / Appearance limits.
+ */
+export function maxSectionSettingLimit(
+  nodes: PageSectionNode[] | null | undefined,
+  type: string,
+  fallback: number,
+  max = KIT_ITEM_LIMIT_MAX,
+): number {
+  let found = 0;
+  const visit = (node: unknown): void => {
+    if (!node || typeof node !== 'object') {
+      return;
+    }
+    const n = node as Record<string, unknown>;
+    if (n.enabled === false) {
+      return;
+    }
+    if (n.type === type) {
+      const settings =
+        n.settings && typeof n.settings === 'object' && !Array.isArray(n.settings)
+          ? (n.settings as Record<string, unknown>)
+          : {};
+      found = Math.max(found, parseKitItemLimit(settings.limit, fallback, max));
+    }
+    if (Array.isArray(n.rows)) {
+      n.rows.forEach(visit);
+    }
+    if (Array.isArray(n.columns)) {
+      n.columns.forEach(visit);
+    }
+    if (Array.isArray(n.blocks)) {
+      n.blocks.forEach(visit);
+    }
+  };
+  (nodes ?? []).forEach(visit);
+  return found > 0 ? found : fallback;
+}

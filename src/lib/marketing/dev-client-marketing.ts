@@ -45,7 +45,10 @@ export function useDevClientMarketingHydration(
   });
 }
 
-export async function fetchHomeDataClient(uiLocale: string): Promise<{
+export async function fetchHomeDataClient(
+  uiLocale: string,
+  limits?: { caseStudies?: number; blogPosts?: number },
+): Promise<{
   caseStudies: CaseStudy[];
   testimonials: Testimonial[];
   blogPosts: BlogPost[];
@@ -53,10 +56,12 @@ export async function fetchHomeDataClient(uiLocale: string): Promise<{
   const fetchContext = {
     forwardDocumentUrl: typeof window !== 'undefined' ? window.location.href : null,
   };
+  const caseLimit = Math.max(1, Math.min(24, Math.floor(Number(limits?.caseStudies) || 3)));
+  const blogLimit = Math.max(1, Math.min(24, Math.floor(Number(limits?.blogPosts) || 3)));
   const [caseStudies, testimonials, blogPosts] = await Promise.all([
-    getFeaturedCaseStudies(3, uiLocale, fetchContext),
+    getFeaturedCaseStudies(caseLimit, uiLocale, fetchContext),
     getTestimonials(uiLocale, fetchContext),
     getBlogPosts(),
   ]);
-  return { caseStudies, testimonials, blogPosts: blogPosts.slice(0, 3) };
+  return { caseStudies, testimonials, blogPosts: blogPosts.slice(0, blogLimit) };
 }

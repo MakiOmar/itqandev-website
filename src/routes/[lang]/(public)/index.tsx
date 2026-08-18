@@ -8,18 +8,24 @@ import { getFeaturedCaseStudies, getTestimonials, getBlogPosts } from '~/lib/mar
 import { uiLocaleFromPublicRoute } from '~/lib/i18n/ui-locale-path';
 import { uiLangFromUrlPathname } from '~/lib/i18n/ui-locale-path';
 import { HomepageSectionsRenderer } from '~/components/marketing/home-sections/HomepageSectionsRenderer';
+import { maxSectionSettingLimit } from '~/lib/marketing/page-layout-utils';
 import { usePublicShell } from './layout';
 
-export const useHomeData = routeLoader$(async ({ request, params }) => {
+export const useHomeData = routeLoader$(async ({ request, params, resolveValue }) => {
   const cookie = request.headers.get('cookie') || '';
   const uiLocale = uiLocaleFromPublicRoute(cookie, params.lang, request.url);
   const fetchContext = { forwardDocumentUrl: request.url };
+  const shell = await resolveValue(usePublicShell);
+  const sections =
+    shell.themeBody && shell.themeBody.length > 0 ? shell.themeBody : shell.homepageSections;
+  const caseLimit = maxSectionSettingLimit(sections, 'case_studies', 3);
+  const blogLimit = maxSectionSettingLimit(sections, 'blog_preview', 3);
   const [caseStudies, testimonials, blogPosts] = await Promise.all([
-    getFeaturedCaseStudies(3, uiLocale, fetchContext),
+    getFeaturedCaseStudies(caseLimit, uiLocale, fetchContext),
     getTestimonials(uiLocale, fetchContext),
     getBlogPosts(),
   ]);
-  return { caseStudies, testimonials, blogPosts: blogPosts.slice(0, 3) };
+  return { caseStudies, testimonials, blogPosts: blogPosts.slice(0, blogLimit) };
 });
 
 export default component$(() => {
