@@ -11,7 +11,9 @@ import { adminApiClient } from '../../../../lib/admin/admin-api-client';
 import { API_ENDPOINTS } from '../../../../lib/api/endpoints';
 import { adminPageEditHref, useAppRoutes } from '../../../../lib/constants/routes';
 import type { AdminPage } from '../../../../types/page';
+import { usePublicSiteMeta } from '../layout';
 import { useLocaleAwareList } from '../../../../lib/hooks/useLocaleAwareList';
+import { primaryLocaleForContent } from '../../../../lib/content-display-locale';
 import {
   runPageBulkDeleteFromBrowser,
   runPageDeleteFromBrowser,
@@ -73,9 +75,41 @@ export default component$(() => {
   const R = useAppRoutes();
   const { confirm, success, error: showError } = useSwal();
   const pages = usePagesList();
+  const langConfig = usePublicSiteMeta();
   const selected = useSignal<number[]>([]);
   const selectedForExport = useSignal<Set<string | number>>(new Set());
   const exportImportBusy = useSignal(false);
+
+  const languageLabelByCode = new Map(
+    langConfig.value.site_languages.map((l) => [String(l.code).toLowerCase(), l.native_label || l.label || l.code]),
+  );
+
+  const mainLocaleLabel = (page: AdminPage): string => {
+    const main = primaryLocaleForContent(
+      langConfig.value.site_languages,
+      langConfig.value.default_locale,
+      page.content_locale ?? null,
+    );
+    return `${languageLabelByCode.get(main) || main} (${main})`;
+  };
+
+  const translationsLabel = (page: AdminPage): string => {
+    const rows = page.translations;
+    const locales = Array.isArray(rows)
+      ? Array.from(
+          new Set(
+            rows
+              .map((r) => String(r?.locale ?? '').trim().toLowerCase())
+              .filter((x) => x.length > 0),
+          ),
+        )
+      : [];
+    if (locales.length === 0) {
+      return translateApp(lang, 'contentTranslations.noSecondaryLanguages') || '—';
+    }
+    const labels = locales.map((code) => `${languageLabelByCode.get(code) || code} (${code})`);
+    return `${locales.length}: ${labels.join(', ')}`;
+  };
 
   const { items: pagesState, loading, refetch } = useLocaleAwareList<AdminPage>(
     pages,
@@ -226,14 +260,27 @@ export default component$(() => {
                       </div>
                     </td>
                     <td class="px-3 py-2 align-middle">
-                      <span style={{ paddingInlineStart: `${depth * 1.25}rem` }} class="inline-flex flex-wrap items-center gap-2">
-                        {page.title}
-                        {page.exclude_from_search ? (
-                          <span class="rounded bg-gray-100 px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wide text-gray-600 dark:bg-gray-800 dark:text-gray-300">
-                            {translateApp(lang, 'pages.excludeFromSearchBadge')}
+                      {/* Indent nested pages; show title plus primary/translation locale chips like projects. */}
+                      <div style={{ paddingInlineStart: `${depth * 1.25}rem` }} class="flex flex-col gap-1">
+                        <span class="inline-flex flex-wrap items-center gap-2">
+                          {page.title}
+                          {page.exclude_from_search ? (
+                            <span class="rounded bg-gray-100 px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wide text-gray-600 dark:bg-gray-800 dark:text-gray-300">
+                              {translateApp(lang, 'pages.excludeFromSearchBadge')}
+                            </span>
+                          ) : null}
+                        </span>
+                        <div class="flex flex-wrap items-center gap-2 text-xs text-gray-600 dark:text-gray-300">
+                          <span class="rounded bg-gray-100 px-2 py-0.5 dark:bg-gray-900/40">
+                            <span class="font-semibold">{translateApp(lang, 'contentTranslations.contentPrimaryLanguage') || 'Main'}:</span>{' '}
+                            {mainLocaleLabel(page)}
                           </span>
-                        ) : null}
-                      </span>
+                          <span class="rounded bg-gray-100 px-2 py-0.5 dark:bg-gray-900/40">
+                            <span class="font-semibold">{translateApp(lang, 'contentTranslations.sectionTitle') || 'Translations'}:</span>{' '}
+                            {translationsLabel(page)}
+                          </span>
+                        </div>
+                      </div>
                     </td>
                     <td class="px-3 py-2 align-middle font-mono text-xs">{page.path || page.slug}</td>
                     <td class="px-3 py-2 align-middle">{page.status}</td>
