@@ -7,6 +7,8 @@ export type AtomicWidgetProps = {
   type: string;
   settings: Record<string, unknown>;
   uiLocale: string;
+  /** When true, image fit/radius come from the Style wrapper CSS variables. */
+  styled?: boolean;
 };
 
 function str(s: Record<string, unknown>, key: string, fallback = ''): string {
@@ -117,13 +119,18 @@ export const AtomicWidgetView = component$<AtomicWidgetProps>((props) => {
     case 'image': {
       const url = str(s, 'image') || str(s, 'image_url');
       if (!url) return null;
-      const radius = RADIUS[str(s, 'radius', 'lg')] || RADIUS.lg;
-      const fit = str(s, 'object_fit', 'cover') === 'contain' ? 'object-contain' : 'object-cover';
+      const styled = props.styled === true;
+      const radius = styled ? '' : RADIUS[str(s, 'radius', 'lg')] || RADIUS.lg;
+      const fit = styled
+        ? ''
+        : str(s, 'object_fit', 'cover') === 'contain'
+          ? 'object-contain'
+          : 'object-cover';
       const img = (
         <img
           src={url}
           alt={str(s, 'alt') || str(s, 'image_alt') || ''}
-          class={`w-full ${radius} ${fit}`}
+          class={styled ? 'b-styled-media' : `w-full ${radius} ${fit}`}
           loading="lazy"
         />
       );
@@ -138,7 +145,11 @@ export const AtomicWidgetView = component$<AtomicWidgetProps>((props) => {
             img
           )}
           {str(s, 'caption') ? (
-            <figcaption class="mt-2 text-center text-sm text-slate-500">{str(s, 'caption')}</figcaption>
+            <figcaption
+              class={styled ? 'b-styled-caption' : 'mt-2 text-center text-sm text-slate-500'}
+            >
+              {str(s, 'caption')}
+            </figcaption>
           ) : null}
         </figure>
       );

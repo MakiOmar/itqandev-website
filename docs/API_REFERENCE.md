@@ -753,10 +753,22 @@ Public marketing URLs: `/{lang}/pages/{slug}/` (nested: `/{lang}/pages/{parent}/
 
 CMS Pages use a **layout tree** (homepage Appearance stays a flat section list):
 
-- **Band** (`type: "layout"`): `layout_width` (`boxed` | `full`), `enabled`, `settings`, `rows[]`
-- **Row**: `stack_below` (`none` | `tablet` | `desktop`), `gap`, `columns[]`
-- **Column**: `span: { mobile, tablet, desktop }` (1–12 each; breakpoints align with Tailwind `default` / `md` / `lg`), `blocks[]`
-- **Block**: leaf content reuse of homepage section types (`hero`, `cta`, …) with `settings`
+- **Band** (`type: "layout"`): `layout_width` (`boxed` | `full`), `enabled`, `settings`, `hide_on`, `rows[]`
+- **Row**: `stack_below` (`none` | `tablet` | `desktop`), `gap`, `hide_on`, `columns[]`
+- **Column**: `span: { mobile, tablet, desktop }` (1–12 each; breakpoints align with Tailwind `default` / `md` / `lg`), `hide_on`, `blocks[]`
+- **Block**: leaf widget/kit (`type`, `kind`, `settings`, optional `hide_on`, optional `styles`)
+
+`styles` is a **sibling of `settings`** (not translatable; not stored under `settings.translations`). Sparse desktop-first bags:
+
+```json
+"styles": {
+  "desktop": { "width": { "value": 400, "unit": "px" }, "object_fit": "cover" },
+  "tablet": {},
+  "mobile": { "width": { "value": 100, "unit": "%" } }
+}
+```
+
+Empty breakpoint objects inherit the larger breakpoint (desktop → tablet → mobile). Image **Content** keeps media / alt / caption / link only; visual options (object-fit, radius, spacing, hover, caption typography, custom CSS) live in **Style**. Older pages may still have `settings.object_fit` / `settings.radius`; public render falls back to those keys when `styles` is empty.
 
 `stack_below: tablet` forces full-width columns on mobile; `desktop` stacks below the desktop breakpoint.
 

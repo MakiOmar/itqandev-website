@@ -55,6 +55,9 @@ export function ensureFormLayout(raw: unknown): FormLayoutDocument {
         ...(f.hide_on && typeof f.hide_on === 'object'
           ? { hide_on: f.hide_on as FormFieldNode['hide_on'] }
           : {}),
+        ...(f.styles && typeof f.styles === 'object'
+          ? { styles: f.styles as FormFieldNode['styles'] }
+          : {}),
       });
     }
     if (fields.length === 0) continue;

@@ -1,0 +1,235 @@
+/**
+ * Builder leaf styles — imported from StyledBuilderLeaf (not root layout).
+ * Desktop-first storage is resolved in JS; CSS is mobile-first (default / md / lg).
+ */
+
+.b-styled {
+  position: relative;
+  box-sizing: border-box;
+  display: block;
+  width: var(--s-width, 100%);
+  max-width: var(--s-max-width, 100%);
+  height: auto;
+  margin-top: var(--s-mt, 0);
+  margin-right: var(--s-mr, var(--s-align-mr, 0));
+  margin-bottom: var(--s-mb, 0);
+  margin-left: var(--s-ml, var(--s-align-ml, 0));
+  padding: var(--s-pt, 0) var(--s-pr, 0) var(--s-pb, 0) var(--s-pl, 0);
+  overflow: var(--s-overflow, visible);
+  z-index: var(--s-z-index, auto);
+  opacity: var(--s-opacity, 1);
+  filter: var(--s-filter, none);
+  border-style: var(--s-border-style, none);
+  border-width: var(--s-border-width, 0);
+  border-color: var(--s-border-color, transparent);
+  border-radius: var(--s-radius, 0);
+  box-shadow: var(--s-box-shadow, none);
+  text-align: var(--s-align, start);
+  transition:
+    opacity var(--s-hover-transition, 300ms),
+    filter var(--s-hover-transition, 300ms),
+    transform var(--s-hover-transition, 300ms),
+    box-shadow var(--s-hover-transition, 300ms);
+}
+
+.b-styled .b-styled-media {
+  display: block;
+  width: 100%;
+  height: var(--s-height, auto);
+  max-width: 100%;
+  object-fit: var(--s-object-fit, cover);
+  object-position: var(--s-object-position, center);
+  border-radius: inherit;
+}
+
+.b-styled .b-styled-caption {
+  display: block;
+  margin-top: var(--s-caption-spacing, 0.5rem);
+  text-align: var(--s-caption-align, center);
+  color: var(--s-caption-color, #64748b);
+  font-size: var(--s-caption-font-size, 0.875rem);
+  font-weight: var(--s-caption-font-weight, 400);
+  text-transform: var(--s-caption-transform, none);
+  font-style: var(--s-caption-font-style, normal);
+  text-decoration: var(--s-caption-decoration, none);
+  line-height: var(--s-caption-line-height, 1.5);
+  letter-spacing: var(--s-caption-letter-spacing, normal);
+}
+
+.b-styled:hover {
+  opacity: var(--s-hover-opacity, var(--s-opacity, 1));
+  filter: var(--s-hover-filter, var(--s-filter, none));
+  box-shadow: var(--s-hover-box-shadow, var(--s-box-shadow, none));
+  transform: var(--s-hover-transform, none);
+}
+
+.b-anim-grow:hover {
+  transform: var(--s-hover-transform, scale(1.05));
+}
+
+.b-anim-shrink:hover {
+  transform: var(--s-hover-transform, scale(0.95));
+}
+
+.b-anim-float:hover {
+  transform: var(--s-hover-transform, translateY(-8px));
+}
+
+.b-anim-sink:hover {
+  transform: var(--s-hover-transform, translateY(8px));
+}
+
+@media (min-width: 768px) {
+  .b-styled {
+    width: var(--s-width-md, var(--s-width, 100%));
+    max-width: var(--s-max-width-md, var(--s-max-width, 100%));
+    margin-top: var(--s-mt-md, var(--s-mt, 0));
+    margin-right: var(--s-mr-md, var(--s-mr, var(--s-align-mr-md, var(--s-align-mr, 0))));
+    margin-bottom: var(--s-mb-md, var(--s-mb, 0));
+    margin-left: var(--s-ml-md, var(--s-ml, var(--s-align-ml-md, var(--s-align-ml, 0))));
+    padding: var(--s-pt-md, var(--s-pt, 0)) var(--s-pr-md, var(--s-pr, 0))
+      var(--s-pb-md, var(--s-pb, 0)) var(--s-pl-md, var(--s-pl, 0));
+    overflow: var(--s-overflow-md, var(--s-overflow, visible));
+    z-index: var(--s-z-index-md, var(--s-z-index, auto));
+    opacity: var(--s-opacity-md, var(--s-opacity, 1));
+    filter: var(--s-filter-md, var(--s-filter, none));
+    border-style: var(--s-border-style-md, var(--s-border-style, none));
+    border-width: var(--s-border-width-md, var(--s-border-width, 0));
+    border-color: var(--s-border-color-md, var(--s-border-color, transparent));
+    border-radius: var(--s-radius-md, var(--s-radius, 0));
+    box-shadow: var(--s-box-shadow-md, var(--s-box-shadow, none));
+    text-align: var(--s-align-md, var(--s-align, start));
+    transition-duration: var(--s-hover-transition-md, var(--s-hover-transition, 300ms));
+  }
+
+  .b-styled .b-styled-media {
+    height: var(--s-height-md, var(--s-height, auto));
+    object-fit: var(--s-object-fit-md, var(--s-object-fit, cover));
+    object-position: var(--s-object-position-md, var(--s-object-position, center));
+  }
+
+  .b-styled .b-styled-caption {
+    margin-top: var(--s-caption-spacing-md, var(--s-caption-spacing, 0.5rem));
+    text-align: var(--s-caption-align-md, var(--s-caption-align, center));
+    color: var(--s-caption-color-md, var(--s-caption-color, #64748b));
+    font-size: var(--s-caption-font-size-md, var(--s-caption-font-size, 0.875rem));
+    font-weight: var(--s-caption-font-weight-md, var(--s-caption-font-weight, 400));
+    text-transform: var(--s-caption-transform-md, var(--s-caption-transform, none));
+    font-style: var(--s-caption-font-style-md, var(--s-caption-font-style, normal));
+    text-decoration: var(--s-caption-decoration-md, var(--s-caption-decoration, none));
+    line-height: var(--s-caption-line-height-md, var(--s-caption-line-height, 1.5));
+    letter-spacing: var(--s-caption-letter-spacing-md, var(--s-caption-letter-spacing, normal));
+  }
+
+  .b-styled:hover {
+    opacity: var(--s-hover-opacity-md, var(--s-hover-opacity, var(--s-opacity-md, var(--s-opacity, 1))));
+    filter: var(--s-hover-filter-md, var(--s-hover-filter, var(--s-filter-md, var(--s-filter, none))));
+    box-shadow: var(
+      --s-hover-box-shadow-md,
+      var(--s-hover-box-shadow, var(--s-box-shadow-md, var(--s-box-shadow, none)))
+    );
+    transform: var(--s-hover-transform-md, var(--s-hover-transform, none));
+  }
+}
+
+@media (min-width: 1024px) {
+  .b-styled {
+    width: var(--s-width-lg, var(--s-width-md, var(--s-width, 100%)));
+    max-width: var(--s-max-width-lg, var(--s-max-width-md, var(--s-max-width, 100%)));
+    margin-top: var(--s-mt-lg, var(--s-mt-md, var(--s-mt, 0)));
+    margin-right: var(
+      --s-mr-lg,
+      var(--s-mr-md, var(--s-mr, var(--s-align-mr-lg, var(--s-align-mr-md, var(--s-align-mr, 0)))))
+    );
+    margin-bottom: var(--s-mb-lg, var(--s-mb-md, var(--s-mb, 0)));
+    margin-left: var(
+      --s-ml-lg,
+      var(--s-ml-md, var(--s-ml, var(--s-align-ml-lg, var(--s-align-ml-md, var(--s-align-ml, 0)))))
+    );
+    padding: var(--s-pt-lg, var(--s-pt-md, var(--s-pt, 0)))
+      var(--s-pr-lg, var(--s-pr-md, var(--s-pr, 0))) var(--s-pb-lg, var(--s-pb-md, var(--s-pb, 0)))
+      var(--s-pl-lg, var(--s-pl-md, var(--s-pl, 0)));
+    overflow: var(--s-overflow-lg, var(--s-overflow-md, var(--s-overflow, visible)));
+    z-index: var(--s-z-index-lg, var(--s-z-index-md, var(--s-z-index, auto)));
+    opacity: var(--s-opacity-lg, var(--s-opacity-md, var(--s-opacity, 1)));
+    filter: var(--s-filter-lg, var(--s-filter-md, var(--s-filter, none)));
+    border-style: var(--s-border-style-lg, var(--s-border-style-md, var(--s-border-style, none)));
+    border-width: var(--s-border-width-lg, var(--s-border-width-md, var(--s-border-width, 0)));
+    border-color: var(
+      --s-border-color-lg,
+      var(--s-border-color-md, var(--s-border-color, transparent))
+    );
+    border-radius: var(--s-radius-lg, var(--s-radius-md, var(--s-radius, 0)));
+    box-shadow: var(--s-box-shadow-lg, var(--s-box-shadow-md, var(--s-box-shadow, none)));
+    text-align: var(--s-align-lg, var(--s-align-md, var(--s-align, start)));
+    transition-duration: var(
+      --s-hover-transition-lg,
+      var(--s-hover-transition-md, var(--s-hover-transition, 300ms))
+    );
+  }
+
+  .b-styled .b-styled-media {
+    height: var(--s-height-lg, var(--s-height-md, var(--s-height, auto)));
+    object-fit: var(--s-object-fit-lg, var(--s-object-fit-md, var(--s-object-fit, cover)));
+    object-position: var(
+      --s-object-position-lg,
+      var(--s-object-position-md, var(--s-object-position, center))
+    );
+  }
+
+  .b-styled .b-styled-caption {
+    margin-top: var(
+      --s-caption-spacing-lg,
+      var(--s-caption-spacing-md, var(--s-caption-spacing, 0.5rem))
+    );
+    text-align: var(--s-caption-align-lg, var(--s-caption-align-md, var(--s-caption-align, center)));
+    color: var(--s-caption-color-lg, var(--s-caption-color-md, var(--s-caption-color, #64748b)));
+    font-size: var(
+      --s-caption-font-size-lg,
+      var(--s-caption-font-size-md, var(--s-caption-font-size, 0.875rem))
+    );
+    font-weight: var(
+      --s-caption-font-weight-lg,
+      var(--s-caption-font-weight-md, var(--s-caption-font-weight, 400))
+    );
+    text-transform: var(
+      --s-caption-transform-lg,
+      var(--s-caption-transform-md, var(--s-caption-transform, none))
+    );
+    font-style: var(
+      --s-caption-font-style-lg,
+      var(--s-caption-font-style-md, var(--s-caption-font-style, normal))
+    );
+    text-decoration: var(
+      --s-caption-decoration-lg,
+      var(--s-caption-decoration-md, var(--s-caption-decoration, none))
+    );
+    line-height: var(
+      --s-caption-line-height-lg,
+      var(--s-caption-line-height-md, var(--s-caption-line-height, 1.5))
+    );
+    letter-spacing: var(
+      --s-caption-letter-spacing-lg,
+      var(--s-caption-letter-spacing-md, var(--s-caption-letter-spacing, normal))
+    );
+  }
+
+  .b-styled:hover {
+    opacity: var(
+      --s-hover-opacity-lg,
+      var(--s-hover-opacity-md, var(--s-hover-opacity, var(--s-opacity-lg, var(--s-opacity, 1))))
+    );
+    filter: var(
+      --s-hover-filter-lg,
+      var(--s-hover-filter-md, var(--s-hover-filter, var(--s-filter-lg, var(--s-filter, none))))
+    );
+    box-shadow: var(
+      --s-hover-box-shadow-lg,
+      var(
+        --s-hover-box-shadow-md,
+        var(--s-hover-box-shadow, var(--s-box-shadow-lg, var(--s-box-shadow, none)))
+      )
+    );
+    transform: var(--s-hover-transform-lg, var(--s-hover-transform-md, var(--s-hover-transform, none)));
+  }
+}

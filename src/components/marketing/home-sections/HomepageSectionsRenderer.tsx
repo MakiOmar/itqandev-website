@@ -1,4 +1,4 @@
-import { component$ } from '@builder.io/qwik';
+import { component$, type JSXOutput } from '@builder.io/qwik';
 import {
   BlogPreviewHomeSection,
   CaseStudiesHomeSection,
@@ -12,6 +12,7 @@ import { FormRenderer } from '~/components/marketing/forms/FormRenderer';
 import { BlogPostsList } from '~/components/marketing/blog/BlogPostsList';
 import { PortfolioProjectsList } from '~/components/marketing/portfolio/PortfolioProjectsList';
 import { AtomicWidgetView } from '~/components/marketing/widgets/AtomicWidgetView';
+import { StyledBuilderLeaf } from '~/components/marketing/widgets/StyledBuilderLeaf';
 import { ContentKitView } from '~/components/marketing/kits/ContentKitView';
 import { isFeatureModuleEnabled } from '~/lib/api/project-settings';
 import {
@@ -36,6 +37,11 @@ import type {
 import type { PublicBrandingState } from '~/lib/marketing/public-shell';
 import { getConfig } from '~/lib/config';
 import { getPublicSiteBaseUrl } from '~/lib/seo/canonical-url';
+import {
+  hasAnyStyles,
+  hasWidgetStyleControls,
+  type BuilderStyles,
+} from '~/lib/marketing/builder-styles';
 
 const GAP_CLASS: Record<number, string> = {
   0: 'gap-0',
@@ -124,7 +130,13 @@ export type HomepageSectionsRendererProps = {
 };
 
 function renderBlock(
-  block: { id?: string; kind?: string; type: string; settings?: Record<string, unknown> },
+  block: {
+    id?: string;
+    kind?: string;
+    type: string;
+    settings?: Record<string, unknown>;
+    styles?: BuilderStyles | null;
+  },
   props: HomepageSectionsRendererProps,
 ) {
   const key = block.id || block.type;
@@ -135,23 +147,38 @@ function renderBlock(
   const showServicesModule = isFeatureModuleEnabled(props.branding.features, 'services');
   const showProjectsModule = isFeatureModuleEnabled(props.branding.features, 'projects');
   const kind = block.kind || (WIDGET_TYPES.has(block.type) ? 'widget' : 'kit');
+  const wrapStyles = hasWidgetStyleControls(block.type) || hasAnyStyles(block.styles);
+  const wrap = (inner: JSXOutput) =>
+    wrapStyles ? (
+      <StyledBuilderLeaf key={key} id={String(block.id || key)} styles={block.styles} settings={settings}>
+        {inner}
+      </StyledBuilderLeaf>
+    ) : (
+      inner
+    );
 
   if (kind === 'widget' || WIDGET_TYPES.has(block.type)) {
-    return (
-      <AtomicWidgetView key={key} type={block.type} settings={settings} uiLocale={props.uiLocale} />
+    return wrap(
+      <AtomicWidgetView
+        key={wrapStyles ? undefined : key}
+        type={block.type}
+        settings={settings}
+        uiLocale={props.uiLocale}
+        styled={wrapStyles}
+      />,
     );
   }
   if (CONTENT_KITS.has(block.type)) {
-    return (
+    return wrap(
       <ContentKitView
-        key={key}
+        key={wrapStyles ? undefined : key}
         type={block.type}
         settings={settings}
         uiLocale={props.uiLocale}
         pageContext={props.pageContext}
         embedded={props.embedKits === true}
         siteContact={props.siteContact}
-      />
+      />,
     );
   }
 

@@ -29,7 +29,9 @@ import {
   BuilderInspectorTabs,
   BuilderResponsiveVisibilityFields,
 } from '~/components/admin/BuilderResponsiveVisibilityFields';
+import { BuilderStylePanel } from '~/components/admin/BuilderStylePanel';
 import { normalizeHideOn, type DeviceHideOn } from '~/lib/marketing/device-visibility';
+import type { BuilderStyles, StyleBreakpoint } from '~/lib/marketing/builder-styles';
 import type { FormBuilderDocument } from '~/lib/admin/builder-import-export';
 import type {
   FormActionNode,
@@ -139,7 +141,7 @@ export type FormBuilderWorkspaceProps = {
 export const FormBuilderWorkspace = component$<FormBuilderWorkspaceProps>((props) => {
   const device = useSignal<Device>('desktop');
   const selection = useSignal<Selection>(null);
-  const inspectorTab = useSignal<'content' | 'advanced'>('content');
+  const inspectorTab = useSignal<'content' | 'style' | 'advanced'>('content');
   const tab = useSignal<'fields' | 'actions' | 'settings'>('fields');
   const dragFieldType = useSignal<string | null>(null);
   const dragFieldPath = useSignal<DragFieldPath | null>(null);
@@ -792,6 +794,7 @@ export const FormBuilderWorkspace = component$<FormBuilderWorkspaceProps>((props
               <BuilderInspectorTabs
                 lang={props.lang}
                 tab={inspectorTab.value}
+                showStyle={selection.value.kind === 'field'}
                 onTab$={$((tab) => {
                   inspectorTab.value = tab;
                 })}
@@ -892,6 +895,28 @@ export const FormBuilderWorkspace = component$<FormBuilderWorkspaceProps>((props
                 })()}
               
                 </>
+                ) : null}
+                {inspectorTab.value === 'style' ? (
+                  <BuilderStylePanel
+                    lang={props.lang}
+                    widgetType={selectedField.type}
+                    styles={selectedField.styles}
+                    device={device.value as StyleBreakpoint}
+                    onDevice$={$((next: StyleBreakpoint) => {
+                      device.value = next;
+                    })}
+                    onChange$={$(async (next: BuilderStyles) => {
+                      const { rowIndex, fieldIndex } = selection.value as {
+                        rowIndex: number;
+                        fieldIndex: number;
+                      };
+                      const nextLayout = ensureFormLayout(props.layout.value);
+                      const field = nextLayout.rows[rowIndex]?.fields[fieldIndex];
+                      if (!field) return;
+                      field.styles = next;
+                      props.layout.value = { ...nextLayout, rows: [...nextLayout.rows] };
+                    })}
+                  />
                 ) : null}
                 {inspectorTab.value === 'advanced' ? (
                   <BuilderResponsiveVisibilityFields

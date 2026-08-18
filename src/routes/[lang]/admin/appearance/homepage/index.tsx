@@ -1,4 +1,4 @@
-import { component$, useSignal, useVisibleTask$, $ } from '@builder.io/qwik';
+import { component$, useSignal, useTask$, useVisibleTask$, $ } from '@builder.io/qwik';
 import type { DocumentHead } from '@builder.io/qwik-city';
 import { useTranslate, translateApp } from '~/lib/i18n/useTranslate';
 import { appearanceSectionLabel } from '~/lib/i18n/appearance-labels';
@@ -26,9 +26,12 @@ import {
 import { collectAppearanceMediaIdsFromSections } from '~/lib/admin/appearance-media-ref';
 import { BuilderImportExportButtons } from '~/components/admin/BuilderImportExportButtons';
 import {
+  BuilderInspectorTabs,
   BuilderResponsiveVisibilityFields,
 } from '~/components/admin/BuilderResponsiveVisibilityFields';
+import { BuilderStylePanel } from '~/components/admin/BuilderStylePanel';
 import { normalizeHideOn, type DeviceHideOn } from '~/lib/marketing/device-visibility';
+import type { BuilderStyles, StyleBreakpoint } from '~/lib/marketing/builder-styles';
 import type { HomepageBuilderDocument } from '~/lib/admin/builder-import-export';
 import type {
   AppearanceRegistryEntry,
@@ -46,6 +49,8 @@ export default component$(() => {
   const registry = useSignal<AppearanceRegistryEntry[]>([]);
   const insertType = useSignal('hero');
   const expandedId = useSignal<string | null>(null);
+  const inspectorTab = useSignal<'content' | 'style' | 'advanced'>('content');
+  const styleDevice = useSignal<StyleBreakpoint>('desktop');
   const dragFromIndex = useSignal<number | null>(null);
   const dropOverIndex = useSignal<number | null>(null);
   const mediaTarget = useSignal<{ sectionId: string; key: string; accept?: string } | null>(null);
@@ -77,6 +82,11 @@ export default component$(() => {
     } finally {
       loading.value = false;
     }
+  });
+
+  useTask$(({ track }) => {
+    track(() => expandedId.value);
+    inspectorTab.value = 'content';
   });
 
   const patchSection = $((sectionId: string, patch: Partial<HomepageSectionInstance>) => {
@@ -302,6 +312,16 @@ export default component$(() => {
                   </div>
                   {open ? (
                     <div class="space-y-4 border-t border-gray-100 px-4 py-4 dark:border-gray-700">
+                      <BuilderInspectorTabs
+                        lang={lang}
+                        tab={inspectorTab.value}
+                        showStyle={true}
+                        onTab$={$((tab) => {
+                          inspectorTab.value = tab;
+                        })}
+                      />
+                      {inspectorTab.value === 'content' ? (
+                        <>
                       <div>
                         <label class="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-300">
                           {translateApp(lang, 'appearance.layoutWidth')}
@@ -318,13 +338,6 @@ export default component$(() => {
                           <option value="full">{translateApp(lang, 'appearance.layoutFull')}</option>
                         </select>
                       </div>
-                      <BuilderResponsiveVisibilityFields
-                        lang={lang}
-                        hideOn={section.hide_on}
-                        onChange$={$(async (next: DeviceHideOn) => {
-                          await patchSection(section.id, { hide_on: normalizeHideOn(next) });
-                        })}
-                      />
                       {(entry?.settings_fields?.length ?? 0) > 0 ? (
                         <AppearanceSettingsFields
                           fields={entry!.settings_fields!}
@@ -355,6 +368,31 @@ export default component$(() => {
                           {translateApp(lang, 'appearance.noSectionSettings')}
                         </p>
                       )}
+                        </>
+                      ) : null}
+                      {inspectorTab.value === 'style' ? (
+                        <BuilderStylePanel
+                          lang={lang}
+                          widgetType={section.type}
+                          styles={section.styles}
+                          device={styleDevice.value}
+                          onDevice$={$((d: StyleBreakpoint) => {
+                            styleDevice.value = d;
+                          })}
+                          onChange$={$(async (next: BuilderStyles) => {
+                            await patchSection(section.id, { styles: next });
+                          })}
+                        />
+                      ) : null}
+                      {inspectorTab.value === 'advanced' ? (
+                      <BuilderResponsiveVisibilityFields
+                        lang={lang}
+                        hideOn={section.hide_on}
+                        onChange$={$(async (next: DeviceHideOn) => {
+                          await patchSection(section.id, { hide_on: normalizeHideOn(next) });
+                        })}
+                      />
+                      ) : null}
                     </div>
                   ) : null}
                 </li>

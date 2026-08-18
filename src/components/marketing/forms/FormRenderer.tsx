@@ -20,6 +20,8 @@ import type {
 } from '~/types/form';
 import { isHiddenOnDevice } from '~/lib/marketing/device-visibility';
 import { useLayoutDevice } from '~/lib/marketing/layout-device-context';
+import { StyledBuilderLeaf } from '~/components/marketing/widgets/StyledBuilderLeaf';
+import { hasAnyStyles } from '~/lib/marketing/builder-styles';
 
 /** Convert Eastern/Persian digits as the user types into email/tel fields. */
 const onWesternDigitsInput$ = $((e: Event) => {
@@ -520,7 +522,13 @@ export const FormRenderer = component$<FormRendererProps>((props) => {
           <div key={row.id} class="grid grid-cols-12 gap-4">
             {visibleFields.map((field) => (
               <div key={field.id} class={fieldSpanClass(field.span)}>
-                {renderFieldControl(field)}
+                {hasAnyStyles(field.styles) ? (
+                  <StyledBuilderLeaf id={field.id} styles={field.styles} settings={field.settings}>
+                    {renderFieldControl(field)}
+                  </StyledBuilderLeaf>
+                ) : (
+                  renderFieldControl(field)
+                )}
               </div>
             ))}
           </div>

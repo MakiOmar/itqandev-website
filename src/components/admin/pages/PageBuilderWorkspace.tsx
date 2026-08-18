@@ -38,8 +38,10 @@ import {
   BuilderInspectorTabs,
   BuilderResponsiveVisibilityFields,
 } from '~/components/admin/BuilderResponsiveVisibilityFields';
+import { BuilderStylePanel } from '~/components/admin/BuilderStylePanel';
 import { LayoutDeviceProvider } from '~/lib/marketing/layout-device-context';
 import { normalizeHideOn, type DeviceHideOn } from '~/lib/marketing/device-visibility';
+import type { BuilderStyles, StyleBreakpoint } from '~/lib/marketing/builder-styles';
 import type { PageBuilderDocument } from '~/lib/admin/builder-import-export';
 import type {
   AppearanceRegistryEntry,
@@ -476,7 +478,7 @@ export const PageBuilderWorkspace = component$<PageBuilderWorkspaceProps>((props
   const paletteTab = useSignal<'widgets' | 'kits'>('widgets');
   const paletteSearch = useSignal('');
   const showLivePreview = useSignal(false);
-  const inspectorTab = useSignal<'content' | 'advanced'>('content');
+  const inspectorTab = useSignal<'content' | 'style' | 'advanced'>('content');
   /** Keep preview DOM after first open so off is CSS-only (avoids stuck pane). */
   const livePreviewMounted = useSignal(false);
   const previewIsDark = useSignal(false);
@@ -1489,6 +1491,7 @@ export const PageBuilderWorkspace = component$<PageBuilderWorkspaceProps>((props
               <BuilderInspectorTabs
                 lang={props.lang}
                 tab={inspectorTab.value}
+                showStyle={selection.value.kind === 'block'}
                 onTab$={$((tab) => {
                   inspectorTab.value = tab;
                 })}
@@ -1824,6 +1827,25 @@ export const PageBuilderWorkspace = component$<PageBuilderWorkspaceProps>((props
                   );
                 })()}
                 </>
+                ) : null}
+                {inspectorTab.value === 'style' ? (
+                  <BuilderStylePanel
+                    lang={props.lang}
+                    widgetType={selectedBlock.type}
+                    styles={selectedBlock.styles}
+                    device={previewDevice.value as StyleBreakpoint}
+                    onDevice$={$((device: StyleBreakpoint) => {
+                      previewDevice.value = device;
+                    })}
+                    onChange$={$(async (next: BuilderStyles) => {
+                      await commit$(
+                        updateBlockInBands(bands, selectedBlock.id, (blk) => ({
+                          ...blk,
+                          styles: next,
+                        })),
+                      );
+                    })}
+                  />
                 ) : null}
                 {inspectorTab.value === 'advanced' ? (
                   <BuilderResponsiveVisibilityFields

@@ -78,27 +78,47 @@ export const BuilderResponsiveVisibilityFields = component$<{
   );
 });
 
-export const BuilderInspectorTabs = component$<{
+const InspectorTabBtn = component$<{
   lang: string;
-  tab: 'content' | 'advanced';
-  onTab$: QRL<(tab: 'content' | 'advanced') => void>;
+  tab: 'content' | 'style' | 'advanced';
+  active: boolean;
+  onTab$: QRL<(tab: 'content' | 'style' | 'advanced') => void>;
 }>((props) => {
   return (
+    <button
+      type="button"
+      class={[
+        'flex-1 rounded-md px-2 py-1.5 text-xs font-medium',
+        props.active
+          ? 'bg-primary-600 text-white'
+          : 'text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800',
+      ].join(' ')}
+      onClick$={() => props.onTab$(props.tab)}
+    >
+      {translateApp(props.lang, `builder.tabs.${props.tab}`)}
+    </button>
+  );
+});
+
+export const BuilderInspectorTabs = component$<{
+  lang: string;
+  tab: 'content' | 'style' | 'advanced';
+  showStyle?: boolean;
+  onTab$: QRL<(tab: 'content' | 'style' | 'advanced') => void>;
+}>((props) => {
+  const tabs = props.showStyle
+    ? (['content', 'style', 'advanced'] as const)
+    : (['content', 'advanced'] as const);
+  return (
     <div class="mb-3 inline-flex w-full rounded-lg border border-gray-300 p-0.5 dark:border-gray-600">
-      {(['content', 'advanced'] as const).map((tab) => (
-        <button
+      {tabs.map((tab) => (
+        <InspectorTabBtn
           key={tab}
-          type="button"
-          class={[
-            'flex-1 rounded-md px-2 py-1.5 text-xs font-medium',
-            props.tab === tab
-              ? 'bg-primary-600 text-white'
-              : 'text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800',
-          ].join(' ')}
-          onClick$={() => props.onTab$(tab)}
-        >
-          {translateApp(props.lang, `builder.tabs.${tab}`)}
-        </button>
+          lang={props.lang}
+          tab={tab}
+          active={props.tab === tab}
+          onTab$={props.onTab$}
+        />
       ))}
     </div>
   );

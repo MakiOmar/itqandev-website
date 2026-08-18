@@ -1,3 +1,5 @@
+import type { BuilderStyles } from '~/lib/marketing/builder-styles';
+
 export type FormFieldSpan = {
   mobile: number;
   tablet: number;
@@ -15,6 +17,8 @@ export type FormFieldNode = {
     tablet?: boolean;
     desktop?: boolean;
   };
+  /** Presentation overrides (not translatable). */
+  styles?: BuilderStyles;
 };
 
 export type FormRowNode = {

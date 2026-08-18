@@ -1,4 +1,4 @@
-/** Appearance builder types shared by public shell + admin. */
+import type { BuilderStyles } from './builder-styles';
 
 export type HomepageLayoutWidth = 'boxed' | 'full';
 
@@ -26,6 +26,8 @@ export type HomepageSectionInstance = {
   layout_width?: HomepageLayoutWidth;
   /** When true for a breakpoint, section is not rendered for that device. */
   hide_on?: DeviceHideOn;
+  /** Presentation overrides (not translatable). */
+  styles?: BuilderStyles;
   settings?: Record<string, unknown>;
 };
 
@@ -47,6 +49,8 @@ export type PageLayoutBlock = {
   enabled?: boolean;
   /** When true for a breakpoint, node is not rendered for that device. */
   hide_on?: DeviceHideOn;
+  /** Presentation overrides (not translatable). */
+  styles?: BuilderStyles;
   settings?: Record<string, unknown>;
 };
 

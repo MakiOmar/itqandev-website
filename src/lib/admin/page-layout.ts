@@ -81,6 +81,8 @@ export function wrapLegacySectionAsBand(section: HomepageSectionInstance): PageL
                 type: section.type,
                 enabled: section.enabled !== false,
                 settings: { ...(section.settings ?? {}) },
+                ...(section.hide_on ? { hide_on: section.hide_on } : {}),
+                ...(section.styles ? { styles: section.styles } : {}),
               },
             ],
           },

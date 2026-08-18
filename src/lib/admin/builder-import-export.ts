@@ -130,6 +130,12 @@ function normalizeHomepageSections(raw: unknown[]): HomepageSectionInstance[] {
         s.settings && typeof s.settings === 'object' && !Array.isArray(s.settings)
           ? { ...(s.settings as Record<string, unknown>) }
           : {},
+      ...(s.hide_on && typeof s.hide_on === 'object' && !Array.isArray(s.hide_on)
+        ? { hide_on: s.hide_on as HomepageSectionInstance['hide_on'] }
+        : {}),
+      ...(s.styles && typeof s.styles === 'object' && !Array.isArray(s.styles)
+        ? { styles: s.styles as HomepageSectionInstance['styles'] }
+        : {}),
     });
   }
   return out;
