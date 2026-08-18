@@ -13,6 +13,7 @@ import { mapMarketingSeoMetaFromApi } from '~/lib/marketing/seo-snippet';
 import { API_ENDPOINTS } from '~/lib/api/endpoints';
 import type { PageSectionNode } from '~/lib/marketing/appearance-types';
 import type { PublicPageDetail } from '~/types/page';
+import { isSearchEngineIndexingEnabled, publicRobotsContent } from '~/lib/seo/search-engine-indexing';
 
 function restPathParam(raw: unknown): string {
   if (Array.isArray(raw)) {
@@ -160,7 +161,10 @@ export const head: DocumentHead = ({ resolveValue, url }) => {
       defaultTitle: page.title,
       defaultDescription: page.excerpt || page.title,
       seo: mapMarketingSeoMetaFromApi(page.seo_meta),
-      robots: page.exclude_from_search ? 'noindex, nofollow' : undefined,
+      robots: publicRobotsContent({
+        siteIndexingEnabled: isSearchEngineIndexingEnabled(shell.branding?.search_engine_indexing),
+        pageExcluded: page.exclude_from_search === true,
+      }),
     });
     return result;
   } catch {

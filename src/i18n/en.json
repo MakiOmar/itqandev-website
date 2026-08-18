@@ -360,7 +360,7 @@
     },
     "parentNone": "— No parent (top-level) —",
     "parentHint": "Nested pages use /pages/parent/child/ and still open from a direct URL.",
-    "excludeFromSearchHint": "Hidden from public listings and the sitemap. Anyone with the URL can still open the page.",
+    "excludeFromSearchHint": "Search engines get noindex on this page, and it is omitted from listings and the sitemap. Anyone with the URL can still open it. Use this when site-wide indexing is on and you want to hide one page.",
     "excludeFromSearchBadge": "Hidden from search"
   },
   "forms": {
@@ -698,6 +698,8 @@
     "general": "General Settings",
     "siteName": "Site Name",
     "siteDescription": "Site Description",
+    "searchEngineIndexing": "Allow search engines to index this site",
+    "searchEngineIndexingHint": "When off, robots.txt blocks all URLs, the sitemap is empty, and every public page sends noindex. Admin URLs are never indexed. To hide one page while indexing stays on, use Exclude from search on that page.",
     "siteEmail": "Email",
     "sitePhone": "Phone",
     "siteAddress": "Address",

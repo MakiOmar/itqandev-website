@@ -4,6 +4,7 @@ import { getBlogPosts } from '../../lib/marketing/content-layer';
 import { getPublicSiteBaseUrl } from '../../lib/seo/canonical-url';
 import { marketingGet } from '../../lib/marketing/api-client';
 import { MARKETING_ENDPOINTS } from '../../lib/marketing/endpoints';
+import { isSearchEngineIndexingEnabled } from '../../lib/seo/search-engine-indexing';
 
 const baseUrl = getPublicSiteBaseUrl();
 
@@ -15,6 +16,16 @@ const PRETTY_PAGE_PATHS = new Set([
   '/contact',
   '/blog',
 ]);
+
+/** Pretty marketing URLs backed by a CMS page slug (`exclude_from_search` is on the show payload). */
+const PRETTY_PATH_CMS_SLUG: Record<string, string> = {
+  '/services': 'services',
+  '/portfolio': 'portfolio',
+  '/about': 'about',
+  '/pricing': 'pricing',
+  '/contact': 'contact',
+  '/blog': 'articles',
+};
 
 function escapeXml(s: string): string {
   return s
@@ -33,6 +44,28 @@ function unwrapList(data: unknown): Record<string, unknown>[] {
     return (data as { data: Record<string, unknown>[] }).data;
   }
   return [];
+}
+
+async function fetchAllowIndexing(): Promise<boolean> {
+  try {
+    const data = await marketingGet<Record<string, unknown>>(MARKETING_ENDPOINTS.siteMeta);
+    return isSearchEngineIndexingEnabled(data?.search_engine_indexing);
+  } catch {
+    return true;
+  }
+}
+
+async function prettyPathIsExcluded(path: string): Promise<boolean> {
+  const slug = PRETTY_PATH_CMS_SLUG[path];
+  if (!slug) {
+    return false;
+  }
+  try {
+    const data = await marketingGet<Record<string, unknown>>(MARKETING_ENDPOINTS.page(slug));
+    return data?.exclude_from_search === true;
+  } catch {
+    return false;
+  }
 }
 
 async function getCmsPagesForSitemap(): Promise<{ loc: string; priority: string }[]> {
@@ -57,14 +90,34 @@ async function getCmsPagesForSitemap(): Promise<{ loc: string; priority: string 
   }
 }
 
-export const onGet: RequestHandler = async ({ send }) => {
-  const [caseStudies, blogPosts, cmsPages] = await Promise.all([
-    getCaseStudies(),
-    getBlogPosts(),
-    getCmsPagesForSitemap(),
-  ]);
+function sitemapXml(urls: Array<{ loc: string; priority: string }>): string {
+  return `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+${urls
+  .map(
+    (u) =>
+      `  <url><loc>${escapeXml(baseUrl)}${u.loc.startsWith('/') ? u.loc : '/' + u.loc}</loc><priority>${u.priority}</priority></url>`
+  )
+  .join('\n')}
+</urlset>`;
+}
 
-  const staticPaths = [
+export const onGet: RequestHandler = async ({ send }) => {
+  const allowIndexing = await fetchAllowIndexing();
+  if (!allowIndexing) {
+    send(
+      new Response(sitemapXml([]), {
+        status: 200,
+        headers: {
+          'Content-Type': 'text/xml; charset=utf-8',
+          'Cache-Control': 'public, max-age=300',
+        },
+      }),
+    );
+    return;
+  }
+
+  const staticCandidates = [
     { loc: '/', priority: '1.0' },
     { loc: '/services', priority: '0.9' },
     { loc: '/portfolio', priority: '0.9' },
@@ -73,6 +126,19 @@ export const onGet: RequestHandler = async ({ send }) => {
     { loc: '/contact', priority: '0.8' },
     { loc: '/blog', priority: '0.9' },
   ];
+
+  const [caseStudies, blogPosts, cmsPages, excludedPretty] = await Promise.all([
+    getCaseStudies(),
+    getBlogPosts(),
+    getCmsPagesForSitemap(),
+    Promise.all(
+      staticCandidates.map(async (row) =>
+        row.loc === '/' ? false : prettyPathIsExcluded(row.loc),
+      ),
+    ),
+  ]);
+
+  const staticPaths = staticCandidates.filter((_, i) => !excludedPretty[i]);
 
   const portfolioUrls = caseStudies.map((c) => ({
     loc: `/portfolio/${escapeXml(c.slug)}`,
@@ -85,22 +151,13 @@ export const onGet: RequestHandler = async ({ send }) => {
   }));
 
   const urls = [...staticPaths, ...portfolioUrls, ...blogUrls, ...cmsPages];
-  const xml = `<?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-${urls
-  .map(
-    (u) =>
-      `  <url><loc>${escapeXml(baseUrl)}${u.loc.startsWith('/') ? u.loc : '/' + u.loc}</loc><priority>${u.priority}</priority></url>`
-  )
-  .join('\n')}
-</urlset>`;
-
-  const response = new Response(xml, {
-    status: 200,
-    headers: {
-      'Content-Type': 'text/xml; charset=utf-8',
-      'Cache-Control': 'public, max-age=3600',
-    },
-  });
-  send(response);
+  send(
+    new Response(sitemapXml(urls), {
+      status: 200,
+      headers: {
+        'Content-Type': 'text/xml; charset=utf-8',
+        'Cache-Control': 'public, max-age=300',
+      },
+    }),
+  );
 };

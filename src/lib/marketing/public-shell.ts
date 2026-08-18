@@ -22,6 +22,7 @@ import {
   type PageSectionNode,
 } from './appearance-types';
 import { defaultFooterSections, defaultHeaderSections } from './chrome-defaults';
+import { isSearchEngineIndexingEnabled } from '~/lib/seo/search-engine-indexing';
 const localBase = siteData as SiteContent;
 
 export type PublicBrandingState = {
@@ -33,6 +34,8 @@ export type PublicBrandingState = {
   site_languages: ReturnType<typeof resolvePublicSiteLanguages>;
   features?: Record<string, boolean>;
   typography?: SiteTypography;
+  /** When false, public pages send noindex and robots.txt disallows crawling. */
+  search_engine_indexing?: boolean;
 };
 
 export type PublicShellState = {
@@ -109,6 +112,7 @@ function brandingFromSiteMeta(
     site_languages: resolvePublicSiteLanguages(settings?.site_languages),
     features,
     typography: parseSiteTypography(settings?.typography),
+    search_engine_indexing: isSearchEngineIndexingEnabled(settings?.search_engine_indexing),
   };
 }
 
@@ -141,6 +145,7 @@ function localShellFallback(): PublicShellState {
       logoLight: '',
       site_languages: resolvePublicSiteLanguages(null),
       features: undefined,
+      search_engine_indexing: true,
     },
     primaryMenu: [],
     siteContent: base,

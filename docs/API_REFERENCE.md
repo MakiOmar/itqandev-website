@@ -512,7 +512,9 @@ Also available: `GET /api/health` (minimal `{ "status": "ok" }`) and Laravel’s
 
 ### GET `/api/public/site-meta`
 
-Returns **locale-resolved** branding, `site_languages`, and resolved **`typography`** for the marketing shell (see `SettingsController::publicMeta`, `SiteSettingsPresenter`, and `TypographyResolver`).
+Returns **locale-resolved** branding, `site_languages`, resolved **`typography`**, and **`search_engine_indexing`** (boolean, default `true`) for the marketing shell (see `SettingsController::publicMeta`, `SiteSettingsPresenter`, and `TypographyResolver`).
+
+When `search_engine_indexing` is `false`, the public sitefront must not advertise URLs to crawlers (`robots.txt` `Disallow: /`, empty sitemap, `noindex` on public HTML). Admin dashboard stays noindex in all cases.
 
 **Locale:** optional `locale` query and/or `X-Content-Locale` header. When set to a non-default site language, `site_name`, `site_description`, and `site_address` are overlaid from `settings_translations` (fallback to primary when a field is missing). Raw `settings_translations` is never returned on public endpoints.
 
@@ -747,7 +749,7 @@ Seeded slug **`articles`** (`ArticlesPageSeeder`) is the page-builder layout for
 | GET | `/api/public/forms/{slug}` | Published form definition (layout, settings, captcha site key); `feature.module:forms`; `X-Content-Locale` |
 | POST | `/api/public/forms/{slug}/submit` | Submit form field values (+ optional `captcha_token`); runs enabled actions in order; `throttle:form-submit` |
 
-Public marketing URLs: `/{lang}/pages/{slug}/` (nested: `/{lang}/pages/{parent}/{child}/`). Admin visual builder (fullscreen): `/{lang}/admin/pages/{id}/builder/` — classic metadata editor remains at `/{lang}/admin/pages/{id}/`. Set **Parent page** and **Exclude from search** on create/edit. Excluded pages stay reachable by URL, send `noindex`, and are omitted from `GET /api/public/pages` and `sitemap.xml`.
+Public marketing URLs: `/{lang}/pages/{slug}/` (nested: `/{lang}/pages/{parent}/{child}/`). Admin visual builder (fullscreen): `/{lang}/admin/pages/{id}/builder/` — classic metadata editor remains at `/{lang}/admin/pages/{id}/`. Set **Parent page** and **Exclude from search** on create/edit. Excluded pages stay reachable by URL, send `noindex`, and are omitted from `GET /api/public/pages` and `sitemap.xml`. Site-wide crawl blocking is **`search_engine_indexing`** on `PUT /api/settings` (Settings → General); per-page exclude still applies when that flag is on.
 
 ### Pages `sections` document (layout tree)
 

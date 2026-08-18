@@ -2,6 +2,7 @@ import type { DocumentHeadProps, DocumentHeadValue } from '@builder.io/qwik-city
 import { buildCanonicalHref } from '~/lib/seo/canonical-url';
 import { getConfig } from '~/lib/config';
 import type { PublicBrandingState } from '~/lib/marketing/public-shell';
+import { isSearchEngineIndexingEnabled, publicRobotsContent } from '~/lib/seo/search-engine-indexing';
 
 /** Internal Qwik dashboard label — not a public marketing site name. */
 const INTERNAL_DASHBOARD_LABEL = 'Dashboard';
@@ -59,6 +60,8 @@ export interface PublicListPageHeadInput {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   usePublicShell: any;
   url: URL;
+  /** CMS `exclude_from_search` for pretty marketing URLs backed by a page. */
+  pageExcluded?: boolean;
 }
 
 /** Shared document head for public marketing list pages. */
@@ -68,17 +71,26 @@ export function publicListPageHead({
   resolveValue,
   usePublicShell,
   url,
+  pageExcluded,
 }: PublicListPageHeadInput): DocumentHeadValue {
   const shell = resolveValue(usePublicShell) as { branding?: PublicBrandingState | null };
   const pageTitle = publicPageTitle(page, shell.branding);
   const canonical = buildCanonicalHref(url.pathname, url.origin);
+  const robots = publicRobotsContent({
+    siteIndexingEnabled: isSearchEngineIndexingEnabled(shell.branding?.search_engine_indexing),
+    pageExcluded,
+  });
+  const meta: { name?: string; property?: string; content: string }[] = [
+    { name: 'description', content: description },
+    { property: 'og:title', content: pageTitle },
+    { property: 'og:url', content: canonical },
+  ];
+  if (robots) {
+    meta.push({ name: 'robots', content: robots });
+  }
   return {
     title: pageTitle,
-    meta: [
-      { name: 'description', content: description },
-      { property: 'og:title', content: pageTitle },
-      { property: 'og:url', content: canonical },
-    ],
+    meta,
     links: [{ rel: 'canonical', href: canonical }],
   };
 }

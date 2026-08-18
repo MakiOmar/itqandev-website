@@ -13,6 +13,10 @@ import {
   useSettings,
   useUpdateSettings,
 } from '../layout';
+import {
+  ADMIN_CHECKBOX_CLASS,
+  ADMIN_CHECKBOX_LABEL_CLASS,
+} from '../../../../../lib/admin/native-select-classes';
 
 export default component$(() => {
   const { lang } = useTranslate();
@@ -133,6 +137,24 @@ export default component$(() => {
             </SettingsFieldGlobe>
           </div>
         </SettingsTranslationsRoot>
+
+        <div class="rounded-lg border border-gray-200 p-4 dark:border-gray-700">
+          <input type="hidden" name="search_engine_indexing" value="0" />
+          <label class={ADMIN_CHECKBOX_LABEL_CLASS} for="search_engine_indexing">
+            <input
+              id="search_engine_indexing"
+              name="search_engine_indexing"
+              type="checkbox"
+              value="1"
+              checked={settings.value.search_engine_indexing}
+              class={ADMIN_CHECKBOX_CLASS}
+            />
+            <span>{translateApp(lang, 'settings.searchEngineIndexing')}</span>
+          </label>
+          <p class="mt-2 text-xs text-gray-500 dark:text-gray-400">
+            {translateApp(lang, 'settings.searchEngineIndexingHint')}
+          </p>
+        </div>
 
         <div class="flex justify-end">
           <SettingsSaveButton />

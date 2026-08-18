@@ -35,4 +35,6 @@ export const MARKETING_ENDPOINTS = {
   menuBySlug: (slug: string) => `/public/menus/${encodeURIComponent(slug)}`,
   /** GET published CMS pages (excludes exclude_from_search) */
   pages: '/public/pages',
+  /** GET one published CMS page by slug (still returns exclude_from_search pages) */
+  page: (slug: string) => `/public/pages/${encodeURIComponent(slug)}`,
 } as const;

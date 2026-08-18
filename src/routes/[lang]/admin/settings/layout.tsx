@@ -27,6 +27,7 @@ export interface SettingsFormData {
   social_instagram: string;
   upload_max_size: number;
   media_convert_to_webp: boolean;
+  search_engine_indexing: boolean;
   logo: string;
   logoDark: string;
   logoLight: string;
@@ -54,6 +55,7 @@ export const defaultSettings: SettingsFormData = {
   social_instagram: '',
   upload_max_size: 100,
   media_convert_to_webp: true,
+  search_engine_indexing: true,
   logo: '',
   logoDark: '',
   logoLight: '',
@@ -70,6 +72,19 @@ export const defaultSettings: SettingsFormData = {
   settings_translations: {},
   marketing_site_content: parseMarketingSiteContent(null),
 };
+
+function coerceFormBool(raw: unknown, fallback: boolean): boolean {
+  if (typeof raw === 'boolean') {
+    return raw;
+  }
+  if (raw === '1' || raw === 'true' || raw === 1) {
+    return true;
+  }
+  if (raw === '0' || raw === 'false' || raw === 0) {
+    return false;
+  }
+  return fallback;
+}
 
 function normalizeSettings(input: Partial<SettingsFormData> | undefined | null): SettingsFormData {
   const maxUploadSizeRaw =
@@ -94,18 +109,14 @@ function normalizeSettings(input: Partial<SettingsFormData> | undefined | null):
     social_linkedin: input?.social_linkedin || defaultSettings.social_linkedin,
     social_instagram: input?.social_instagram || defaultSettings.social_instagram,
     upload_max_size: maxUploadSizeRaw > 0 ? uploadSizeMb : defaultSettings.upload_max_size,
-    media_convert_to_webp:
-      typeof (input as any)?.media_convert_to_webp === 'boolean'
-        ? (input as any).media_convert_to_webp
-        : (input as any)?.media_convert_to_webp === '1' ||
-            (input as any)?.media_convert_to_webp === 'true' ||
-            (input as any)?.media_convert_to_webp === 1
-          ? true
-          : (input as any)?.media_convert_to_webp === '0' ||
-              (input as any)?.media_convert_to_webp === 'false' ||
-              (input as any)?.media_convert_to_webp === 0
-            ? false
-            : defaultSettings.media_convert_to_webp,
+    media_convert_to_webp: coerceFormBool(
+      (input as any)?.media_convert_to_webp,
+      defaultSettings.media_convert_to_webp,
+    ),
+    search_engine_indexing: coerceFormBool(
+      (input as any)?.search_engine_indexing,
+      defaultSettings.search_engine_indexing,
+    ),
     logo: (input as any)?.logo || (input as any)?.site_logo || defaultSettings.logo,
     logoDark:
       (input as any)?.logoDark ||
@@ -247,6 +258,14 @@ export const useUpdateSettings = routeAction$(
         );
       }
 
+      if (has('search_engine_indexing')) {
+        const raw = (data as any).search_engine_indexing;
+        const values = Array.isArray(raw) ? raw : [raw];
+        payload.search_engine_indexing = values.some(
+          (v) => v === true || v === 'true' || v === '1' || v === 1,
+        );
+      }
+
       if ('site_name' in payload) {
         payload.name = payload.site_name;
       }
@@ -367,6 +386,7 @@ export const useUpdateSettings = routeAction$(
     social_instagram: z.string().optional(),
     upload_max_size: z.union([z.string(), z.number()]).optional(),
     media_convert_to_webp: z.union([z.string(), z.boolean(), z.number()]).optional(),
+    search_engine_indexing: z.union([z.string(), z.boolean(), z.number()]).optional(),
     logo: z.string().optional(),
     logoDark: z.string().optional(),
     logoLight: z.string().optional(),

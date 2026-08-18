@@ -95,6 +95,7 @@ export default component$(() => {
 export const head: DocumentHead = ({ resolveValue, url }) => {
   let pageTitle = 'Pricing';
   let description = 'Transparent pricing for web and mobile development. Custom quotes available.';
+  let pageExcluded = false;
   try {
     const page = resolveValue(usePricingCmsPage) as PublicPageDetail;
     if (page && typeof page.title === 'string' && page.title.trim()) {
@@ -103,6 +104,7 @@ export const head: DocumentHead = ({ resolveValue, url }) => {
         description = page.excerpt.trim();
       }
     }
+    pageExcluded = page?.exclude_from_search === true;
   } catch {
     /* loader unavailable during head — keep defaults */
   }
@@ -112,5 +114,6 @@ export const head: DocumentHead = ({ resolveValue, url }) => {
     resolveValue,
     usePublicShell,
     url,
+    pageExcluded,
   });
 };

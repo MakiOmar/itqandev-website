@@ -1,5 +1,6 @@
 import '~/styles/site.css';
 import { component$, Slot, useSignal } from '@builder.io/qwik';
+import type { DocumentHead } from '@builder.io/qwik-city';
 import { routeLoader$, useLocation } from '@builder.io/qwik-city';
 import { detectLayoutBreakpointFromUserAgent } from '~/lib/marketing/device-visibility';
 import { LayoutDeviceProvider } from '~/lib/marketing/layout-device-context';
@@ -21,6 +22,7 @@ import { marketingRoutes } from '~/lib/marketing/constants';
 import type { PublicNavItem } from '~/lib/marketing/public-menu';
 import type { SiteContent } from '~/lib/marketing/types';
 import type { HomepageSectionInstance } from '~/lib/marketing/appearance-types';
+import { isSearchEngineIndexingEnabled, publicRobotsContent } from '~/lib/seo/search-engine-indexing';
 
 /**
  * One Laravel round-trip for branding, primary menu, and services merged into site content.
@@ -122,3 +124,18 @@ export default component$(() => {
     </div>
   );
 });
+
+export const head: DocumentHead = ({ resolveValue }) => {
+  try {
+    const shell = resolveValue(usePublicShell);
+    const robots = publicRobotsContent({
+      siteIndexingEnabled: isSearchEngineIndexingEnabled(shell.branding?.search_engine_indexing),
+    });
+    if (!robots) {
+      return {};
+    }
+    return { meta: [{ name: 'robots', content: robots }] };
+  } catch {
+    return {};
+  }
+};
