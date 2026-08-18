@@ -49,9 +49,10 @@ export const STYLE_GROUP_ORDER = [
 
 export type StyleGroupId = (typeof STYLE_GROUP_ORDER)[number];
 
-/** Widget type → style groups. Add a type here to opt a widget into the Style tab. */
+/** Widget/kit type → style groups. Add a type here to opt a leaf into the Style tab. */
 export const WIDGET_STYLE_GROUPS: Record<string, readonly StyleGroupId[]> = {
   image: ['layout', 'spacing', 'image', 'border', 'hover', 'caption', 'custom'],
+  image_text: ['layout', 'spacing', 'image', 'border', 'hover', 'caption', 'custom'],
 };
 
 export function widgetStyleGroups(type: string): readonly StyleGroupId[] {

@@ -768,7 +768,7 @@ CMS Pages use a **layout tree** (homepage Appearance stays a flat section list):
 }
 ```
 
-Empty breakpoint objects inherit the larger breakpoint (desktop → tablet → mobile). Image **Content** keeps media / alt / caption / link only; visual options (object-fit, radius, spacing, hover, caption typography, custom CSS) live in **Style**. Older pages may still have `settings.object_fit` / `settings.radius`; public render falls back to those keys when `styles` is empty.
+Empty breakpoint objects inherit the larger breakpoint (desktop → tablet → mobile). Image and **Image + text** (`image_text`) share the same Style groups (layout, spacing, image, border, hover, caption, custom CSS). Image **Content** keeps media / alt / caption / link only. Image + text **Content** keeps copy, media, image position, and button fields. Visual options live in **Style**; image chrome (object-fit, radius, opacity, hover) applies to the `<img>` (`.b-styled-media`), not the text column. Caption typography on Image + text maps to the body column; “Spacing from image” is the column gap. Older Image widgets may still have `settings.object_fit` / `settings.radius`; public render falls back to those keys when `styles` is empty.
 
 `stack_below: tablet` forces full-width columns on mobile; `desktop` stacks below the desktop breakpoint.
 

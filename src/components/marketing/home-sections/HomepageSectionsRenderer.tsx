@@ -178,6 +178,7 @@ function renderBlock(
         pageContext={props.pageContext}
         embedded={props.embedKits === true}
         siteContact={props.siteContact}
+        styled={hasAnyStyles(block.styles)}
       />,
     );
   }

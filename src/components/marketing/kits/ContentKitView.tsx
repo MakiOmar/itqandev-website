@@ -20,6 +20,8 @@ export type ContentKitProps = {
   embedded?: boolean;
   /** Site-wide contact block for `use_site_contact` on contact_info kit. */
   siteContact?: ContactInfo | null;
+  /** Style-tab CSS variables apply via parent wrapper; image_text uses media/copy classes. */
+  styled?: boolean;
 };
 
 function str(s: Record<string, unknown>, key: string, fallback = ''): string {
@@ -361,8 +363,15 @@ export const ContentKitView = component$<ContentKitProps>((props) => {
     case 'image_text': {
       const image = str(s, 'image');
       const left = str(s, 'image_position', 'right') === 'left';
+      const styled = props.styled === true;
+      const copyClass = [
+        styled ? 'b-styled-copy' : '',
+        image ? (left ? 'lg:order-2' : 'lg:order-1') : 'mx-auto max-w-3xl',
+      ]
+        .filter(Boolean)
+        .join(' ');
       const copy = (
-        <div class={image ? (left ? 'lg:order-2' : 'lg:order-1') : 'mx-auto max-w-3xl'}>
+        <div class={copyClass}>
           {str(s, 'eyebrow') ? (
             <p class="text-xs font-semibold uppercase tracking-widest text-primary-600 dark:text-primary-400">
               {str(s, 'eyebrow')}
@@ -372,7 +381,11 @@ export const ContentKitView = component$<ContentKitProps>((props) => {
             {str(s, 'title')}
           </h2>
           <div
-            class="prose prose-slate mt-5 max-w-none leading-relaxed dark:prose-invert"
+            class={
+              styled
+                ? 'b-styled-body prose prose-slate mt-5 max-w-none leading-relaxed dark:prose-invert'
+                : 'prose prose-slate mt-5 max-w-none leading-relaxed dark:prose-invert'
+            }
             dangerouslySetInnerHTML={str(s, 'body')}
           />
           {str(s, 'button_label') && str(s, 'button_url') ? (
@@ -384,20 +397,39 @@ export const ContentKitView = component$<ContentKitProps>((props) => {
           ) : null}
         </div>
       );
+      const media = image ? (
+        <div class={left ? 'lg:order-1' : 'lg:order-2'}>
+          {styled ? (
+            /* Style tab: image chrome (radius, hover, object-fit) targets .b-styled-media */
+            <img
+              src={image}
+              alt={str(s, 'image_alt') || ''}
+              class="b-styled-media w-full"
+              loading="lazy"
+            />
+          ) : (
+            <div class="overflow-hidden rounded-2xl border border-slate-200/80 shadow-sm ring-1 ring-slate-900/5 dark:border-slate-700/80 dark:ring-white/5">
+              <img
+                src={image}
+                alt={str(s, 'image_alt') || ''}
+                class="w-full object-cover"
+                loading="lazy"
+              />
+            </div>
+          )}
+        </div>
+      ) : null;
       const body = (
         <AnimatedReveal>
-          {image ? (
-            <div class="grid items-center gap-10 lg:grid-cols-2">
-              <div class={left ? 'lg:order-1' : 'lg:order-2'}>
-                <div class="overflow-hidden rounded-2xl border border-slate-200/80 shadow-sm ring-1 ring-slate-900/5 dark:border-slate-700/80 dark:ring-white/5">
-                  <img
-                    src={image}
-                    alt={str(s, 'image_alt') || ''}
-                    class="w-full object-cover"
-                    loading="lazy"
-                  />
-                </div>
-              </div>
+          {media ? (
+            <div
+              class={
+                styled
+                  ? 'b-styled-split grid items-center lg:grid-cols-2'
+                  : 'grid items-center gap-10 lg:grid-cols-2'
+              }
+            >
+              {media}
               {copy}
             </div>
           ) : (

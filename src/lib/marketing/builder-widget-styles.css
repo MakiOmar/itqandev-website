@@ -1,6 +1,10 @@
 /**
  * Builder leaf styles — imported from StyledBuilderLeaf (not root layout).
  * Desktop-first storage is resolved in JS; CSS is mobile-first (default / md / lg).
+ *
+ * Wrapper (.b-styled): width, spacing, overflow, z-index, alignment.
+ * Media (.b-styled-media): object-fit, opacity, filters, border, radius, shadow, hover.
+ * That split keeps Image + text copy from inheriting image chrome.
  */
 
 .b-styled {
@@ -17,6 +21,16 @@
   padding: var(--s-pt, 0) var(--s-pr, 0) var(--s-pb, 0) var(--s-pl, 0);
   overflow: var(--s-overflow, visible);
   z-index: var(--s-z-index, auto);
+  text-align: var(--s-align, start);
+}
+
+.b-styled .b-styled-media {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  height: var(--s-height, auto);
+  object-fit: var(--s-object-fit, cover);
+  object-position: var(--s-object-position, center);
   opacity: var(--s-opacity, 1);
   filter: var(--s-filter, none);
   border-style: var(--s-border-style, none);
@@ -24,7 +38,6 @@
   border-color: var(--s-border-color, transparent);
   border-radius: var(--s-radius, 0);
   box-shadow: var(--s-box-shadow, none);
-  text-align: var(--s-align, start);
   transition:
     opacity var(--s-hover-transition, 300ms),
     filter var(--s-hover-transition, 300ms),
@@ -32,14 +45,8 @@
     box-shadow var(--s-hover-transition, 300ms);
 }
 
-.b-styled .b-styled-media {
-  display: block;
-  width: 100%;
-  height: var(--s-height, auto);
-  max-width: 100%;
-  object-fit: var(--s-object-fit, cover);
-  object-position: var(--s-object-position, center);
-  border-radius: inherit;
+.b-styled .b-styled-split {
+  gap: var(--s-caption-spacing, 2.5rem);
 }
 
 .b-styled .b-styled-caption {
@@ -56,26 +63,41 @@
   letter-spacing: var(--s-caption-letter-spacing, normal);
 }
 
-.b-styled:hover {
+.b-styled .b-styled-copy {
+  text-align: var(--s-caption-align);
+}
+
+.b-styled .b-styled-copy .b-styled-body {
+  color: var(--s-caption-color);
+  font-size: var(--s-caption-font-size);
+  font-weight: var(--s-caption-font-weight);
+  text-transform: var(--s-caption-transform);
+  font-style: var(--s-caption-font-style);
+  text-decoration: var(--s-caption-decoration);
+  line-height: var(--s-caption-line-height);
+  letter-spacing: var(--s-caption-letter-spacing);
+}
+
+.b-styled:hover .b-styled-media {
   opacity: var(--s-hover-opacity, var(--s-opacity, 1));
   filter: var(--s-hover-filter, var(--s-filter, none));
   box-shadow: var(--s-hover-box-shadow, var(--s-box-shadow, none));
   transform: var(--s-hover-transform, none);
 }
 
-.b-anim-grow:hover {
+.b-anim-grow:hover .b-styled-media {
   transform: var(--s-hover-transform, scale(1.05));
 }
 
-.b-anim-shrink:hover {
+.b-anim-shrink:hover .b-styled-media {
   transform: var(--s-hover-transform, scale(0.95));
 }
 
-.b-anim-float:hover {
+.b-anim-float:hover .b-styled-media {
   transform: var(--s-hover-transform, translateY(-8px));
 }
 
-.b-anim-sink:hover {
+.b-anim-sink:hover .b-styled-media {
   transform: var(--s-hover-transform, translateY(8px));
 }
 
@@ -91,6 +113,13 @@
       var(--s-pb-md, var(--s-pb, 0)) var(--s-pl-md, var(--s-pl, 0));
     overflow: var(--s-overflow-md, var(--s-overflow, visible));
     z-index: var(--s-z-index-md, var(--s-z-index, auto));
+    text-align: var(--s-align-md, var(--s-align, start));
+  }
+
+  .b-styled .b-styled-media {
+    height: var(--s-height-md, var(--s-height, auto));
+    object-fit: var(--s-object-fit-md, var(--s-object-fit, cover));
+    object-position: var(--s-object-position-md, var(--s-object-position, center));
     opacity: var(--s-opacity-md, var(--s-opacity, 1));
     filter: var(--s-filter-md, var(--s-filter, none));
     border-style: var(--s-border-style-md, var(--s-border-style, none));
@@ -98,14 +127,11 @@
     border-color: var(--s-border-color-md, var(--s-border-color, transparent));
     border-radius: var(--s-radius-md, var(--s-radius, 0));
     box-shadow: var(--s-box-shadow-md, var(--s-box-shadow, none));
-    text-align: var(--s-align-md, var(--s-align, start));
     transition-duration: var(--s-hover-transition-md, var(--s-hover-transition, 300ms));
   }
 
-  .b-styled .b-styled-media {
-    height: var(--s-height-md, var(--s-height, auto));
-    object-fit: var(--s-object-fit-md, var(--s-object-fit, cover));
-    object-position: var(--s-object-position-md, var(--s-object-position, center));
+  .b-styled .b-styled-split {
+    gap: var(--s-caption-spacing-md, var(--s-caption-spacing, 2.5rem));
   }
 
   .b-styled .b-styled-caption {
@@ -121,7 +147,22 @@
     letter-spacing: var(--s-caption-letter-spacing-md, var(--s-caption-letter-spacing, normal));
   }
 
-  .b-styled:hover {
+  .b-styled .b-styled-copy {
+    text-align: var(--s-caption-align-md, var(--s-caption-align));
+  }
+
+  .b-styled .b-styled-copy .b-styled-body {
+    color: var(--s-caption-color-md, var(--s-caption-color));
+    font-size: var(--s-caption-font-size-md, var(--s-caption-font-size));
+    font-weight: var(--s-caption-font-weight-md, var(--s-caption-font-weight));
+    text-transform: var(--s-caption-transform-md, var(--s-caption-transform));
+    font-style: var(--s-caption-font-style-md, var(--s-caption-font-style));
+    text-decoration: var(--s-caption-decoration-md, var(--s-caption-decoration));
+    line-height: var(--s-caption-line-height-md, var(--s-caption-line-height));
+    letter-spacing: var(--s-caption-letter-spacing-md, var(--s-caption-letter-spacing));
+  }
+
+  .b-styled:hover .b-styled-media {
     opacity: var(--s-hover-opacity-md, var(--s-hover-opacity, var(--s-opacity-md, var(--s-opacity, 1))));
     filter: var(--s-hover-filter-md, var(--s-hover-filter, var(--s-filter-md, var(--s-filter, none))));
     box-shadow: var(
@@ -151,6 +192,16 @@
       var(--s-pl-lg, var(--s-pl-md, var(--s-pl, 0)));
     overflow: var(--s-overflow-lg, var(--s-overflow-md, var(--s-overflow, visible)));
     z-index: var(--s-z-index-lg, var(--s-z-index-md, var(--s-z-index, auto)));
+    text-align: var(--s-align-lg, var(--s-align-md, var(--s-align, start)));
+  }
+
+  .b-styled .b-styled-media {
+    height: var(--s-height-lg, var(--s-height-md, var(--s-height, auto)));
+    object-fit: var(--s-object-fit-lg, var(--s-object-fit-md, var(--s-object-fit, cover)));
+    object-position: var(
+      --s-object-position-lg,
+      var(--s-object-position-md, var(--s-object-position, center))
+    );
     opacity: var(--s-opacity-lg, var(--s-opacity-md, var(--s-opacity, 1)));
     filter: var(--s-filter-lg, var(--s-filter-md, var(--s-filter, none)));
     border-style: var(--s-border-style-lg, var(--s-border-style-md, var(--s-border-style, none)));
@@ -161,19 +212,16 @@
     );
     border-radius: var(--s-radius-lg, var(--s-radius-md, var(--s-radius, 0)));
     box-shadow: var(--s-box-shadow-lg, var(--s-box-shadow-md, var(--s-box-shadow, none)));
-    text-align: var(--s-align-lg, var(--s-align-md, var(--s-align, start)));
     transition-duration: var(
       --s-hover-transition-lg,
       var(--s-hover-transition-md, var(--s-hover-transition, 300ms))
     );
   }
 
-  .b-styled .b-styled-media {
-    height: var(--s-height-lg, var(--s-height-md, var(--s-height, auto)));
-    object-fit: var(--s-object-fit-lg, var(--s-object-fit-md, var(--s-object-fit, cover)));
-    object-position: var(
-      --s-object-position-lg,
-      var(--s-object-position-md, var(--s-object-position, center))
+  .b-styled .b-styled-split {
+    gap: var(
+      --s-caption-spacing-lg,
+      var(--s-caption-spacing-md, var(--s-caption-spacing, 2.5rem))
     );
   }
 
@@ -214,7 +262,43 @@
     );
   }
 
-  .b-styled:hover {
+  .b-styled .b-styled-copy {
+    text-align: var(--s-caption-align-lg, var(--s-caption-align-md, var(--s-caption-align)));
+  }
+
+  .b-styled .b-styled-copy .b-styled-body {
+    color: var(--s-caption-color-lg, var(--s-caption-color-md, var(--s-caption-color)));
+    font-size: var(
+      --s-caption-font-size-lg,
+      var(--s-caption-font-size-md, var(--s-caption-font-size))
+    );
+    font-weight: var(
+      --s-caption-font-weight-lg,
+      var(--s-caption-font-weight-md, var(--s-caption-font-weight))
+    );
+    text-transform: var(
+      --s-caption-transform-lg,
+      var(--s-caption-transform-md, var(--s-caption-transform))
+    );
+    font-style: var(
+      --s-caption-font-style-lg,
+      var(--s-caption-font-style-md, var(--s-caption-font-style))
+    );
+    text-decoration: var(
+      --s-caption-decoration-lg,
+      var(--s-caption-decoration-md, var(--s-caption-decoration))
+    );
+    line-height: var(
+      --s-caption-line-height-lg,
+      var(--s-caption-line-height-md, var(--s-caption-line-height))
+    );
+    letter-spacing: var(
+      --s-caption-letter-spacing-lg,
+      var(--s-caption-letter-spacing-md, var(--s-caption-letter-spacing))
+    );
+  }
+
+  .b-styled:hover .b-styled-media {
     opacity: var(
       --s-hover-opacity-lg,
       var(--s-hover-opacity-md, var(--s-hover-opacity, var(--s-opacity-lg, var(--s-opacity, 1))))
