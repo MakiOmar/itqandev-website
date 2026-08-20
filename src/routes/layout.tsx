@@ -1,4 +1,4 @@
-import { component$, Slot } from '@builder.io/qwik';
+import { component$, Slot, useContextProvider, useSignal } from '@builder.io/qwik';
 import type { RequestHandler } from '@builder.io/qwik-city';
 import { routeLoader$ } from '@builder.io/qwik-city';
 import { auth } from '../lib/auth';
@@ -6,6 +6,7 @@ import { getConfig } from '../lib/config';
 import { NavigationIndicator } from '../components/navigation-indicator/navigation-indicator';
 import { pathnameHasUiLocale, stripUiLocaleFromPathname, uiLangFromPreferredCookie, uiLangPrefixFromPathname, withUiLocale } from '../lib/i18n/ui-locale-path';
 import { getLocalizedRoutes } from '../lib/constants/routes';
+import { PublicDocumentNavContext } from '../lib/marketing/public-document-nav-context';
 
 /**
  * Prefix bare paths with `/en` or `/ar` so the URL always reflects UI locale.
@@ -140,6 +141,9 @@ export const useAuth = routeLoader$(async ({ cookie, url, redirect: redirectFn }
  * Root layout - handles authentication and redirects
  */
 export default component$(() => {
+  const documentNav = useSignal(false);
+  useContextProvider(PublicDocumentNavContext, documentNav);
+
   return (
     <>
       <NavigationIndicator />

@@ -1,6 +1,6 @@
 import { component$ } from '@builder.io/qwik';
 import type { DocumentHead } from '@builder.io/qwik-city';
-import { Link, routeLoader$, useLocation } from '@builder.io/qwik-city';
+import { routeLoader$, useLocation } from '@builder.io/qwik-city';
 import { HomepageSectionsRenderer } from '~/components/marketing/home-sections/HomepageSectionsRenderer';
 import { getLocalizedRoutes } from '~/lib/constants/routes';
 import { uiLangFromUrlPathname } from '~/lib/i18n/ui-locale-path';
@@ -56,18 +56,18 @@ export default component$(() => {
           The page you&apos;re looking for doesn&apos;t exist or has been moved.
         </p>
         <div class="mt-6 flex flex-col sm:flex-row gap-4 justify-center">
-          <Link
+          <a
             href={R.PUBLIC.HOME}
             class="inline-block rounded-lg bg-primary-600 text-white px-6 py-3 text-sm font-medium hover:bg-primary-700 transition-colors"
           >
             Go to Home
-          </Link>
-          <Link
+          </a>
+          <a
             href={R.ADMIN.HOME}
             class="inline-block rounded-lg border border-primary-600 text-primary-600 px-6 py-3 text-sm font-medium hover:bg-primary-50 dark:hover:bg-primary-900/20 transition-colors"
           >
             Go to Dashboard
-          </Link>
+          </a>
         </div>
       </div>
     </div>

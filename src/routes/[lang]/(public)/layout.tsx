@@ -1,7 +1,11 @@
 import '~/styles/site.css';
-import { component$, Slot, useSignal } from '@builder.io/qwik';
+import { component$, Slot, useContextProvider, useSignal, useTask$ } from '@builder.io/qwik';
 import type { DocumentHead } from '@builder.io/qwik-city';
 import { routeLoader$, useLocation } from '@builder.io/qwik-city';
+import {
+  PublicDocumentNavContext,
+  shouldUsePublicDocumentNav,
+} from '~/lib/marketing/public-document-nav-context';
 import { detectLayoutBreakpointFromUserAgent } from '~/lib/marketing/device-visibility';
 import { LayoutDeviceProvider } from '~/lib/marketing/layout-device-context';
 import { uiLocaleFromPublicRoute, uiLangFromUrlPathname, stripUiLocaleFromPathname } from '~/lib/i18n/ui-locale-path';
@@ -104,6 +108,16 @@ export default component$(() => {
         ? (shellLoader.value.themeBody as unknown as HomepageSectionInstance[])
         : shellLoader.value.homepageSections) as HomepageSectionInstance[],
     );
+
+  const documentNav = useSignal(
+    shouldUsePublicDocumentNav(loc.url.pathname, shellLoader.value.themeContext),
+  );
+  useTask$(({ track }) => {
+    const path = track(() => loc.url.pathname);
+    const themeContext = track(() => shellLoader.value.themeContext);
+    documentNav.value = shouldUsePublicDocumentNav(path, themeContext);
+  });
+  useContextProvider(PublicDocumentNavContext, documentNav);
 
   return (
     <div
