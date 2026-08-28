@@ -149,19 +149,24 @@ function renderBlock(
   const showProjectsModule = isFeatureModuleEnabled(props.branding.features, 'projects');
   const kind = block.kind || (WIDGET_TYPES.has(block.type) ? 'widget' : 'kit');
   const wrapStyles = hasWidgetStyleControls(block.type) || hasAnyStyles(block.styles);
-  const wrap = (inner: JSXOutput) =>
-    wrapStyles ? (
+  const embedded = props.embedKits === true;
+  const wrap = (inner: JSXOutput) => {
+    // Background sits inside the sized leaf so width/padding Style controls frame the fill.
+    const withBg = <LayoutNodeShell settings={settings}>{inner}</LayoutNodeShell>;
+    return wrapStyles ? (
       <StyledBuilderLeaf key={key} id={String(block.id || key)} styles={block.styles} settings={settings}>
-        {inner}
+        {withBg}
       </StyledBuilderLeaf>
     ) : (
-      inner
+      <LayoutNodeShell key={key} settings={settings}>
+        {inner}
+      </LayoutNodeShell>
     );
+  };
 
   if (kind === 'widget' || WIDGET_TYPES.has(block.type)) {
     return wrap(
       <AtomicWidgetView
-        key={wrapStyles ? undefined : key}
         type={block.type}
         settings={settings}
         uiLocale={props.uiLocale}
@@ -172,65 +177,76 @@ function renderBlock(
   if (CONTENT_KITS.has(block.type)) {
     return wrap(
       <ContentKitView
-        key={wrapStyles ? undefined : key}
         type={block.type}
         settings={settings}
         uiLocale={props.uiLocale}
         pageContext={props.pageContext}
-        embedded={props.embedKits === true}
+        embedded={embedded}
         siteContact={props.siteContact}
         styled={hasAnyStyles(block.styles)}
       />,
     );
   }
 
+  // Kits registered in WIDGET_STYLE_GROUPS must go through wrap() so Style tab
+  // width / spacing / border / background emit (same as widgets + ContentKitView).
   switch (block.type) {
     case 'hero':
-      return <HeroHomeSection key={key} settings={settings} uiLocale={props.uiLocale} />;
+      return wrap(
+        <HeroHomeSection settings={settings} uiLocale={props.uiLocale} embedded={embedded} />,
+      );
     case 'services_teaser':
       if (!showServicesModule) return null;
-      return (
+      return wrap(
         <ServicesTeaserHomeSection
-          key={key}
           settings={settings}
           uiLocale={props.uiLocale}
           services={props.services}
-        />
+          embedded={embedded}
+        />,
       );
     case 'case_studies':
       if (!showProjectsModule) return null;
-      return (
+      return wrap(
         <CaseStudiesHomeSection
-          key={key}
           settings={settings}
           uiLocale={props.uiLocale}
           caseStudies={props.caseStudies}
           portfolioCategories={props.portfolioCategories ?? []}
-        />
+          embedded={embedded}
+        />,
       );
     case 'testimonials':
       if (!showTestimonialsModule) return null;
-      return (
+      return wrap(
         <TestimonialsHomeSection
-          key={key}
           settings={settings}
           testimonials={props.testimonials}
-        />
+          embedded={embedded}
+        />,
       );
     case 'tech_stack':
-      return <TechStackHomeSection key={key} settings={settings} techStack={props.techStack} />;
+      return wrap(
+        <TechStackHomeSection
+          settings={settings}
+          techStack={props.techStack}
+          embedded={embedded}
+        />,
+      );
     case 'blog_preview':
       if (!showBlogModule) return null;
-      return (
+      return wrap(
         <BlogPreviewHomeSection
-          key={key}
           settings={settings}
           uiLocale={props.uiLocale}
           blogPosts={props.blogPosts}
-        />
+          embedded={embedded}
+        />,
       );
     case 'cta':
-      return <CtaHomeSection key={key} settings={settings} uiLocale={props.uiLocale} />;
+      return wrap(
+        <CtaHomeSection settings={settings} uiLocale={props.uiLocale} embedded={embedded} />,
+      );
     case 'form': {
       if (!showFormsModule) return null;
       const formSlug = String(settings.form_slug ?? '').trim();
@@ -246,25 +262,18 @@ function renderBlock(
           class="w-full"
         />
       );
-      if (props.embedKits) {
-        return (
-          <div
-            key={key}
-            class="relative overflow-hidden rounded-2xl border border-slate-200/80 bg-white/85 p-6 shadow-sm shadow-primary-500/5 backdrop-blur-md dark:border-slate-700/80 dark:bg-slate-800/55 dark:backdrop-blur-none sm:p-8"
-          >
+      if (embedded) {
+        return wrap(
+          <div class="relative overflow-hidden rounded-2xl border border-slate-200/80 bg-white/85 p-6 shadow-sm shadow-primary-500/5 backdrop-blur-md dark:border-slate-700/80 dark:bg-slate-800/55 dark:backdrop-blur-none sm:p-8">
             <div
               class="pointer-events-none absolute -left-20 top-0 h-40 w-40 rounded-full bg-sky-300/20 blur-3xl dark:bg-sky-900/20"
               aria-hidden="true"
             />
             <div class="relative">{form}</div>
-          </div>
+          </div>,
         );
       }
-      return (
-        <section key={key} class="py-10">
-          {form}
-        </section>
-      );
+      return wrap(<section class="py-10">{form}</section>);
     }
     case 'projects_list': {
       if (!showProjectsModule) return null;
@@ -300,18 +309,10 @@ function renderBlock(
           filterCategoryIds={filterCategoryIds}
         />
       );
-      if (props.embedKits) {
-        return (
-          <div key={key} class="w-full">
-            {list}
-          </div>
-        );
+      if (embedded) {
+        return wrap(<div class="w-full">{list}</div>);
       }
-      return (
-        <section key={key} class="py-10">
-          {list}
-        </section>
-      );
+      return wrap(<section class="py-10">{list}</section>);
     }
     case 'blog_posts_list': {
       if (!showBlogModule) return null;
@@ -335,18 +336,10 @@ function renderBlock(
           perPage={perPage}
         />
       );
-      if (props.embedKits) {
-        return (
-          <div key={key} class="w-full">
-            {blogList}
-          </div>
-        );
+      if (embedded) {
+        return wrap(<div class="w-full">{blogList}</div>);
       }
-      return (
-        <section key={key} class="py-10">
-          {blogList}
-        </section>
-      );
+      return wrap(<section class="py-10">{blogList}</section>);
     }
     default:
       return null;
@@ -356,20 +349,37 @@ function renderBlock(
 function renderLayoutBand(band: PageLayoutBand, props: HomepageSectionsRendererProps) {
   const bandProps: HomepageSectionsRendererProps = { ...props, embedKits: true };
   const inner = (
-    <LayoutNodeShell settings={band.settings} class="space-y-8 py-6 sm:space-y-10 sm:py-8 lg:py-10">
+    <LayoutNodeShell
+      id={band.id}
+      settings={band.settings}
+      styles={band.styles}
+      class="w-full space-y-8 py-6 sm:space-y-10 sm:py-8 lg:py-10"
+    >
       {(band.rows ?? []).map((row) => {
         const gap = typeof row.gap === 'number' ? row.gap : 4;
         const gapClass = GAP_CLASS[gap] ?? 'gap-4';
         const stackBelow = row.stack_below ?? 'none';
         return (
-          <LayoutNodeShell key={row.id} settings={row.settings} class="rounded-xl">
-            <div class={`grid grid-cols-12 ${gapClass}`}>
+          <LayoutNodeShell
+            key={row.id}
+            id={row.id}
+            settings={row.settings}
+            styles={row.styles}
+            class="w-full rounded-xl"
+          >
+            <div class={`grid grid-cols-12 items-stretch ${gapClass}`}>
               {(row.columns ?? []).map((col) => {
                 const span = normalizeColumnSpans(col.span);
                 const spanClass = columnSpanClassNames(span, stackBelow);
                 return (
-                  <LayoutNodeShell key={col.id} settings={col.settings} class={spanClass}>
-                    <div class="space-y-6">
+                  <LayoutNodeShell
+                    key={col.id}
+                    id={col.id}
+                    settings={col.settings}
+                    styles={col.styles}
+                    class={`${spanClass} h-full`}
+                  >
+                    <div class="h-full space-y-6">
                       {(col.blocks ?? [])
                         .filter((b) => b.enabled !== false)
                         .map((block) => renderBlock(block, bandProps))}

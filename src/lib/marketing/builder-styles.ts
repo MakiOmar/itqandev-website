@@ -49,8 +49,12 @@ export const STYLE_GROUP_ORDER = [
 
 export type StyleGroupId = (typeof STYLE_GROUP_ORDER)[number];
 
+/** Layout/spacing/border/custom — Elementor-like container chrome (band / row / column). */
+export const CONTAINER_STYLE_TYPE = '__container__';
+
 /** Widget/kit type → style groups. Add a type here to opt a leaf into the Style tab. */
 export const WIDGET_STYLE_GROUPS: Record<string, readonly StyleGroupId[]> = {
+  [CONTAINER_STYLE_TYPE]: ['layout', 'spacing', 'border', 'custom'],
   image: ['layout', 'spacing', 'image', 'border', 'hover', 'caption', 'custom'],
   image_text: ['layout', 'spacing', 'image', 'border', 'hover', 'caption', 'custom'],
   case_studies: ['layout', 'spacing', 'border', 'custom'],
@@ -59,6 +63,10 @@ export const WIDGET_STYLE_GROUPS: Record<string, readonly StyleGroupId[]> = {
   blog_preview: ['layout', 'spacing', 'border', 'custom'],
   projects_list: ['layout', 'spacing', 'border', 'custom'],
 };
+
+export function containerStyleGroups(): readonly StyleGroupId[] {
+  return WIDGET_STYLE_GROUPS[CONTAINER_STYLE_TYPE] ?? [];
+}
 
 /** Layout keys that only affect `.b-styled-media` (skip for kits without media). */
 export const MEDIA_ONLY_STYLE_KEYS = new Set(['object_fit', 'object_position']);

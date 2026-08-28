@@ -58,6 +58,8 @@ export type PageLayoutColumn = {
   id: string;
   span: ColumnSpans;
   hide_on?: DeviceHideOn;
+  /** Container chrome (width, padding, border, …). */
+  styles?: BuilderStyles;
   settings?: Record<string, unknown>;
   blocks: PageLayoutBlock[];
 };
@@ -67,6 +69,8 @@ export type PageLayoutRow = {
   stack_below?: PageLayoutStackBelow;
   gap?: number;
   hide_on?: DeviceHideOn;
+  /** Container chrome (width, padding, border, …). */
+  styles?: BuilderStyles;
   settings?: Record<string, unknown>;
   columns: PageLayoutColumn[];
 };
@@ -77,6 +81,8 @@ export type PageLayoutBand = {
   enabled?: boolean;
   layout_width?: HomepageLayoutWidth;
   hide_on?: DeviceHideOn;
+  /** Container chrome (width, padding, border, …). */
+  styles?: BuilderStyles;
   settings?: Record<string, unknown>;
   rows: PageLayoutRow[];
 };

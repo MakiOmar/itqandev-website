@@ -43,6 +43,7 @@ import { BuilderBackgroundFields } from '~/components/admin/BuilderBackgroundFie
 import { LayoutDeviceProvider } from '~/lib/marketing/layout-device-context';
 import { normalizeHideOn, type DeviceHideOn } from '~/lib/marketing/device-visibility';
 import type { BuilderStyles, StyleBreakpoint } from '~/lib/marketing/builder-styles';
+import { CONTAINER_STYLE_TYPE } from '~/lib/marketing/builder-styles';
 import type { PageBuilderDocument } from '~/lib/admin/builder-import-export';
 import type {
   AppearanceRegistryEntry,
@@ -1544,16 +1545,33 @@ export const PageBuilderWorkspace = component$<PageBuilderWorkspaceProps>((props
                 </label>
                 ) : null}
                 {inspectorTab.value === 'style' ? (
-                  <BuilderBackgroundFields
-                    lang={props.lang}
-                    settings={bands[selection.value.bandIndex]?.settings}
-                    onChange$={$(async (next) => {
-                      const bi = selection.value!.bandIndex;
-                      await commit$(
-                        bands.map((b, i) => (i === bi ? { ...b, settings: next } : b)),
-                      );
-                    })}
-                  />
+                  <div class="space-y-4">
+                    <BuilderBackgroundFields
+                      lang={props.lang}
+                      settings={bands[selection.value.bandIndex]?.settings}
+                      onChange$={$(async (next) => {
+                        const bi = selection.value!.bandIndex;
+                        await commit$(
+                          bands.map((b, i) => (i === bi ? { ...b, settings: next } : b)),
+                        );
+                      })}
+                    />
+                    <BuilderStylePanel
+                      lang={props.lang}
+                      widgetType={CONTAINER_STYLE_TYPE}
+                      styles={bands[selection.value.bandIndex]?.styles}
+                      device={previewDevice.value as StyleBreakpoint}
+                      onDevice$={$((device: StyleBreakpoint) => {
+                        previewDevice.value = device;
+                      })}
+                      onChange$={$(async (next: BuilderStyles) => {
+                        const bi = selection.value!.bandIndex;
+                        await commit$(
+                          bands.map((b, i) => (i === bi ? { ...b, styles: next } : b)),
+                        );
+                      })}
+                    />
+                  </div>
                 ) : null}
                 {inspectorTab.value === 'advanced' ? (
                   <BuilderResponsiveVisibilityFields
@@ -1619,29 +1637,59 @@ export const PageBuilderWorkspace = component$<PageBuilderWorkspaceProps>((props
                 </label>
                 ) : null}
                 {inspectorTab.value === 'style' ? (
-                  <BuilderBackgroundFields
-                    lang={props.lang}
-                    settings={
-                      bands[selection.value.bandIndex]?.rows[selection.value.rowIndex]?.settings
-                    }
-                    onChange$={$(async (next) => {
-                      const { bandIndex, rowIndex } = selection.value as {
-                        bandIndex: number;
-                        rowIndex: number;
-                      };
-                      await commit$(
-                        bands.map((b, bi) => {
-                          if (bi !== bandIndex) return b;
-                          return {
-                            ...b,
-                            rows: b.rows.map((r, ri) =>
-                              ri === rowIndex ? { ...r, settings: next } : r,
-                            ),
-                          };
-                        }),
-                      );
-                    })}
-                  />
+                  <div class="space-y-4">
+                    <BuilderBackgroundFields
+                      lang={props.lang}
+                      settings={
+                        bands[selection.value.bandIndex]?.rows[selection.value.rowIndex]?.settings
+                      }
+                      onChange$={$(async (next) => {
+                        const { bandIndex, rowIndex } = selection.value as {
+                          bandIndex: number;
+                          rowIndex: number;
+                        };
+                        await commit$(
+                          bands.map((b, bi) => {
+                            if (bi !== bandIndex) return b;
+                            return {
+                              ...b,
+                              rows: b.rows.map((r, ri) =>
+                                ri === rowIndex ? { ...r, settings: next } : r,
+                              ),
+                            };
+                          }),
+                        );
+                      })}
+                    />
+                    <BuilderStylePanel
+                      lang={props.lang}
+                      widgetType={CONTAINER_STYLE_TYPE}
+                      styles={
+                        bands[selection.value.bandIndex]?.rows[selection.value.rowIndex]?.styles
+                      }
+                      device={previewDevice.value as StyleBreakpoint}
+                      onDevice$={$((device: StyleBreakpoint) => {
+                        previewDevice.value = device;
+                      })}
+                      onChange$={$(async (next: BuilderStyles) => {
+                        const { bandIndex, rowIndex } = selection.value as {
+                          bandIndex: number;
+                          rowIndex: number;
+                        };
+                        await commit$(
+                          bands.map((b, bi) => {
+                            if (bi !== bandIndex) return b;
+                            return {
+                              ...b,
+                              rows: b.rows.map((r, ri) =>
+                                ri === rowIndex ? { ...r, styles: next } : r,
+                              ),
+                            };
+                          }),
+                        );
+                      })}
+                    />
+                  </div>
                 ) : null}
                 {inspectorTab.value === 'advanced' ? (
                   <BuilderResponsiveVisibilityFields
@@ -1788,38 +1836,77 @@ export const PageBuilderWorkspace = component$<PageBuilderWorkspaceProps>((props
                 </>
                 ) : null}
                 {inspectorTab.value === 'style' ? (
-                  <BuilderBackgroundFields
-                    lang={props.lang}
-                    settings={
-                      bands[selection.value.bandIndex]?.rows[selection.value.rowIndex]?.columns[
-                        selection.value.colIndex
-                      ]?.settings
-                    }
-                    onChange$={$(async (next) => {
-                      const { bandIndex, rowIndex, colIndex } = selection.value as {
-                        bandIndex: number;
-                        rowIndex: number;
-                        colIndex: number;
-                      };
-                      await commit$(
-                        bands.map((b, bi) => {
-                          if (bi !== bandIndex) return b;
-                          return {
-                            ...b,
-                            rows: b.rows.map((r, ri) => {
-                              if (ri !== rowIndex) return r;
-                              return {
-                                ...r,
-                                columns: r.columns.map((c, ci) =>
-                                  ci === colIndex ? { ...c, settings: next } : c,
-                                ),
-                              };
-                            }),
-                          };
-                        }),
-                      );
-                    })}
-                  />
+                  <div class="space-y-4">
+                    <BuilderBackgroundFields
+                      lang={props.lang}
+                      settings={
+                        bands[selection.value.bandIndex]?.rows[selection.value.rowIndex]?.columns[
+                          selection.value.colIndex
+                        ]?.settings
+                      }
+                      onChange$={$(async (next) => {
+                        const { bandIndex, rowIndex, colIndex } = selection.value as {
+                          bandIndex: number;
+                          rowIndex: number;
+                          colIndex: number;
+                        };
+                        await commit$(
+                          bands.map((b, bi) => {
+                            if (bi !== bandIndex) return b;
+                            return {
+                              ...b,
+                              rows: b.rows.map((r, ri) => {
+                                if (ri !== rowIndex) return r;
+                                return {
+                                  ...r,
+                                  columns: r.columns.map((c, ci) =>
+                                    ci === colIndex ? { ...c, settings: next } : c,
+                                  ),
+                                };
+                              }),
+                            };
+                          }),
+                        );
+                      })}
+                    />
+                    <BuilderStylePanel
+                      lang={props.lang}
+                      widgetType={CONTAINER_STYLE_TYPE}
+                      styles={
+                        bands[selection.value.bandIndex]?.rows[selection.value.rowIndex]?.columns[
+                          selection.value.colIndex
+                        ]?.styles
+                      }
+                      device={previewDevice.value as StyleBreakpoint}
+                      onDevice$={$((device: StyleBreakpoint) => {
+                        previewDevice.value = device;
+                      })}
+                      onChange$={$(async (next: BuilderStyles) => {
+                        const { bandIndex, rowIndex, colIndex } = selection.value as {
+                          bandIndex: number;
+                          rowIndex: number;
+                          colIndex: number;
+                        };
+                        await commit$(
+                          bands.map((b, bi) => {
+                            if (bi !== bandIndex) return b;
+                            return {
+                              ...b,
+                              rows: b.rows.map((r, ri) => {
+                                if (ri !== rowIndex) return r;
+                                return {
+                                  ...r,
+                                  columns: r.columns.map((c, ci) =>
+                                    ci === colIndex ? { ...c, styles: next } : c,
+                                  ),
+                                };
+                              }),
+                            };
+                          }),
+                        );
+                      })}
+                    />
+                  </div>
                 ) : null}
                 {inspectorTab.value === 'advanced' ? (
                   <BuilderResponsiveVisibilityFields
@@ -1920,23 +2007,37 @@ export const PageBuilderWorkspace = component$<PageBuilderWorkspaceProps>((props
                 </>
                 ) : null}
                 {inspectorTab.value === 'style' ? (
-                  <BuilderStylePanel
-                    lang={props.lang}
-                    widgetType={selectedBlock.type}
-                    styles={selectedBlock.styles}
-                    device={previewDevice.value as StyleBreakpoint}
-                    onDevice$={$((device: StyleBreakpoint) => {
-                      previewDevice.value = device;
-                    })}
-                    onChange$={$(async (next: BuilderStyles) => {
-                      await commit$(
-                        updateBlockInBands(bands, selectedBlock.id, (blk) => ({
-                          ...blk,
-                          styles: next,
-                        })),
-                      );
-                    })}
-                  />
+                  <div class="space-y-4">
+                    <BuilderBackgroundFields
+                      lang={props.lang}
+                      settings={selectedBlock.settings}
+                      onChange$={$(async (next) => {
+                        await commit$(
+                          updateBlockInBands(bands, selectedBlock.id, (blk) => ({
+                            ...blk,
+                            settings: next,
+                          })),
+                        );
+                      })}
+                    />
+                    <BuilderStylePanel
+                      lang={props.lang}
+                      widgetType={selectedBlock.type}
+                      styles={selectedBlock.styles}
+                      device={previewDevice.value as StyleBreakpoint}
+                      onDevice$={$((device: StyleBreakpoint) => {
+                        previewDevice.value = device;
+                      })}
+                      onChange$={$(async (next: BuilderStyles) => {
+                        await commit$(
+                          updateBlockInBands(bands, selectedBlock.id, (blk) => ({
+                            ...blk,
+                            styles: next,
+                          })),
+                        );
+                      })}
+                    />
+                  </div>
                 ) : null}
                 {inspectorTab.value === 'advanced' ? (
                   <BuilderResponsiveVisibilityFields

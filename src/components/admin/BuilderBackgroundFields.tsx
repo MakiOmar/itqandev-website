@@ -46,7 +46,20 @@ export const BuilderBackgroundFields = component$<BuilderBackgroundFieldsProps>(
           class={`${ADMIN_NATIVE_SELECT_CLASS} mt-1`}
           value={bg.type}
           onChange$={async (e) => {
-            await patch({ type: (e.target as HTMLSelectElement).value as BuilderBackgroundType });
+            const type = (e.target as HTMLSelectElement).value as BuilderBackgroundType;
+            // Selecting a type must paint immediately — color/image need defaults or they stay invisible.
+            if (type === 'color') {
+              await patch({ type, color: bg.color || '#0389a1' });
+            } else if (type === 'gradient') {
+              await patch({
+                type,
+                gradient_from: bg.gradient_from || '#0389a1',
+                gradient_to: bg.gradient_to || '#0ea5e9',
+                gradient_angle: bg.gradient_angle ?? 135,
+              });
+            } else {
+              await patch({ type });
+            }
           }}
         >
           {BACKGROUND_TYPES.map((t) => (

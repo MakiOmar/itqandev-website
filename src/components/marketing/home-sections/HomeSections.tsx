@@ -78,9 +78,22 @@ function projectInSelectedCategories(caseStudy: CaseStudy, selectedIds: number[]
 export type HomeSectionSharedProps = {
   settings?: Record<string, unknown>;
   uiLocale: string;
+  /** Inside a page-builder band — skip muted fills so layout/widget backgrounds show. */
+  embedded?: boolean;
 };
 
-export const HeroHomeSection = component$<HomeSectionSharedProps>(({ settings, uiLocale }) => {
+function sectionFillSuppressed(
+  settings: Record<string, unknown> | undefined,
+  embedded?: boolean,
+): boolean {
+  if (embedded) return true;
+  const raw = settings?.background;
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return false;
+  const type = String((raw as { type?: unknown }).type ?? 'none');
+  return type !== 'none' && type !== '';
+}
+
+export const HeroHomeSection = component$<HomeSectionSharedProps>(({ settings, uiLocale, embedded }) => {
   const routes = marketingRoutes(uiLocale);
   const headline = settingString(settings, 'headline', 'We build web, Android & iOS apps that scale');
   const subheadline = settingString(
@@ -117,14 +130,20 @@ export const HeroHomeSection = component$<HomeSectionSharedProps>(({ settings, u
       ? true
       : settingBool(settings, 'particles_enabled');
   const particles = resolveHeroParticlesConfig(settings);
+  const clearFill = sectionFillSuppressed(settings, embedded);
 
   const sectionClass = [
     // Visible so floating icons can hang past the image frame (blur orbs may spill slightly).
-    'relative overflow-visible bg-gradient-to-b from-primary-50/70 via-white to-white dark:from-primary-950/25 dark:via-slate-900 dark:to-slate-900',
+    'relative overflow-visible',
+    clearFill
+      ? ''
+      : 'bg-gradient-to-b from-primary-50/70 via-white to-white dark:from-primary-950/25 dark:via-slate-900 dark:to-slate-900',
     fullViewport
       ? 'flex min-h-[100dvh] min-h-screen flex-col justify-center pb-12 sm:pb-16'
       : 'pt-12 sm:pt-16 lg:pt-20',
-  ].join(' ');
+  ]
+    .filter(Boolean)
+    .join(' ');
 
   return (
     <Section
@@ -235,7 +254,7 @@ export const HeroHomeSection = component$<HomeSectionSharedProps>(({ settings, u
 
 export const ServicesTeaserHomeSection = component$<
   HomeSectionSharedProps & { services: Service[] }
->(({ settings, uiLocale, services }) => {
+>(({ settings, uiLocale, services, embedded }) => {
   if (services.length === 0) return null;
   const routes = marketingRoutes(uiLocale);
   const limit = settingInt(settings, 'limit', 6);
@@ -246,9 +265,14 @@ export const ServicesTeaserHomeSection = component$<
     'subtitle',
     'Full-stack development for web and mobile — from interfaces to APIs and app stores.',
   );
+  const clearFill = sectionFillSuppressed(settings, embedded);
 
   return (
-    <Section variant="muted" class="relative overflow-hidden">
+    <Section
+      variant={clearFill ? 'default' : 'muted'}
+      flush={Boolean(embedded)}
+      class="relative overflow-hidden"
+    >
       <div
         class="pointer-events-none absolute -left-32 top-1/4 h-72 w-72 rounded-full bg-primary-400/15 blur-3xl dark:bg-primary-500/10"
         aria-hidden="true"
@@ -347,7 +371,7 @@ export const ServicesTeaserHomeSection = component$<
 
 export const CaseStudiesHomeSection = component$<
   HomeSectionSharedProps & { caseStudies: CaseStudy[]; portfolioCategories?: PortfolioCategory[] }
->(({ settings, uiLocale, caseStudies, portfolioCategories = [] }) => {
+>(({ settings, uiLocale, caseStudies, portfolioCategories = [], embedded }) => {
   const limit = settingInt(settings, 'limit', 6);
   const selectedCategoryIds = settingCategoryIds(settings);
   const columns = normalizeResponsiveColumns(settings?.columns);
@@ -388,7 +412,7 @@ export const CaseStudiesHomeSection = component$<
   if (filteredItems.length === 0 && activeTab.value === 'all') return null;
 
   return (
-    <Section>
+    <Section flush={Boolean(embedded)}>
       <Container>
         <AnimatedReveal>
           <div class="flex items-end justify-between gap-4">
@@ -449,14 +473,16 @@ export const CaseStudiesHomeSection = component$<
 export const TestimonialsHomeSection = component$<{
   settings?: Record<string, unknown>;
   testimonials: Testimonial[];
-}>(({ settings, testimonials }) => {
+  embedded?: boolean;
+}>(({ settings, testimonials, embedded }) => {
   if (testimonials.length === 0) return null;
   const title = settingString(settings, 'title', 'What our clients say');
   const subtitle = settingString(settings, 'subtitle', 'Trusted by startups and enterprises.');
   const limit = settingInt(settings, 'limit', 6);
+  const clearFill = sectionFillSuppressed(settings, embedded);
 
   return (
-    <Section variant="muted">
+    <Section variant={clearFill ? 'default' : 'muted'} flush={Boolean(embedded)}>
       <TestimonialGrid
         testimonials={testimonials.slice(0, limit)}
         title={title}
@@ -469,12 +495,13 @@ export const TestimonialsHomeSection = component$<{
 export const TechStackHomeSection = component$<{
   settings?: Record<string, unknown>;
   techStack: string[];
-}>(({ settings, techStack }) => {
+  embedded?: boolean;
+}>(({ settings, techStack, embedded }) => {
   if (techStack.length === 0) return null;
   const eyebrow = settingString(settings, 'eyebrow', 'Built with');
 
   return (
-    <Section class="py-12">
+    <Section flush={Boolean(embedded)} class={embedded ? '' : 'py-12'}>
       <Container>
         <AnimatedReveal>
           <p class="text-center text-sm font-medium uppercase tracking-wider text-slate-500 dark:text-slate-400">
@@ -495,16 +522,17 @@ export const TechStackHomeSection = component$<{
 
 export const BlogPreviewHomeSection = component$<
   HomeSectionSharedProps & { blogPosts: BlogPost[] }
->(({ settings, uiLocale, blogPosts }) => {
+>(({ settings, uiLocale, blogPosts, embedded }) => {
   const limit = settingInt(settings, 'limit', 3);
   const items = blogPosts.slice(0, limit);
   if (items.length === 0) return null;
   const routes = marketingRoutes(uiLocale);
   const title = settingString(settings, 'title', 'From the blog');
   const subtitle = settingString(settings, 'subtitle', 'Tips and updates from our team.');
+  const clearFill = sectionFillSuppressed(settings, embedded);
 
   return (
-    <Section variant="muted">
+    <Section variant={clearFill ? 'default' : 'muted'} flush={Boolean(embedded)}>
       <Container>
         <AnimatedReveal>
           <div class="flex items-end justify-between gap-4">
@@ -541,7 +569,7 @@ export const BlogPreviewHomeSection = component$<
   );
 });
 
-export const CtaHomeSection = component$<HomeSectionSharedProps>(({ settings, uiLocale }) => {
+export const CtaHomeSection = component$<HomeSectionSharedProps>(({ settings, uiLocale, embedded }) => {
   const routes = marketingRoutes(uiLocale);
   const title = settingString(settings, 'title', 'Ready to start your project?');
   const subtitle = settingString(
@@ -553,7 +581,7 @@ export const CtaHomeSection = component$<HomeSectionSharedProps>(({ settings, ui
   const buttonUrl = settingString(settings, 'button_url', '').trim() || routes.contact;
 
   return (
-    <Section>
+    <Section flush={Boolean(embedded)}>
       <Container>
         <AnimatedReveal>
           <div class="mx-auto max-w-2xl rounded-2xl bg-primary-600 px-6 py-12 text-center dark:bg-primary-700 sm:px-12 sm:py-16">
