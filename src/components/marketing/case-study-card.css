@@ -1,0 +1,33 @@
+/* Screenshot pan-on-hover for portfolio cards (respects reduced motion). */
+.case-study-card-viewport {
+  aspect-ratio: 4 / 3;
+  overflow: hidden;
+  container-type: size;
+}
+
+.case-study-card-image {
+  width: 100%;
+  height: auto;
+  min-height: 100%;
+  object-fit: cover;
+  object-position: top center;
+  transition: transform 6s ease;
+  will-change: transform;
+}
+
+.case-study-card-viewport:hover .case-study-card-image,
+.group:hover .case-study-card-image {
+  transform: translateY(calc(-100% + 100cqh));
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .case-study-card-image {
+    transition: none;
+    will-change: auto;
+  }
+
+  .case-study-card-viewport:hover .case-study-card-image,
+  .group:hover .case-study-card-image {
+    transform: none;
+  }
+}

@@ -53,7 +53,15 @@ export type StyleGroupId = (typeof STYLE_GROUP_ORDER)[number];
 export const WIDGET_STYLE_GROUPS: Record<string, readonly StyleGroupId[]> = {
   image: ['layout', 'spacing', 'image', 'border', 'hover', 'caption', 'custom'],
   image_text: ['layout', 'spacing', 'image', 'border', 'hover', 'caption', 'custom'],
+  case_studies: ['layout', 'spacing', 'border', 'custom'],
+  services_teaser: ['layout', 'spacing', 'border', 'custom'],
+  testimonials: ['layout', 'spacing', 'border', 'custom'],
+  blog_preview: ['layout', 'spacing', 'border', 'custom'],
+  projects_list: ['layout', 'spacing', 'border', 'custom'],
 };
+
+/** Layout keys that only affect `.b-styled-media` (skip for kits without media). */
+export const MEDIA_ONLY_STYLE_KEYS = new Set(['object_fit', 'object_position']);
 
 export function widgetStyleGroups(type: string): readonly StyleGroupId[] {
   return WIDGET_STYLE_GROUPS[type] ?? [];
@@ -61,6 +69,12 @@ export function widgetStyleGroups(type: string): readonly StyleGroupId[] {
 
 export function hasWidgetStyleControls(type: string): boolean {
   return widgetStyleGroups(type).length > 0;
+}
+
+/** True when the type uses image/media chrome (object-fit, hover on media, etc.). */
+export function widgetHasMediaStyleChrome(type: string): boolean {
+  const groups = widgetStyleGroups(type);
+  return groups.includes('image') || groups.includes('hover') || groups.includes('caption');
 }
 
 export function resolveStyleBags(styles?: BuilderStyles | null): {

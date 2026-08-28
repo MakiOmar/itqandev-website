@@ -45,8 +45,27 @@ export type PortfolioProjectsListProps = {
   initialSkillSlug?: string | null;
   /** Kit setting: show category sidebar (default true). */
   showFilters?: boolean;
+  /**
+   * Kit setting: which category IDs appear in the side filter.
+   * Empty = show every category that has published projects.
+   */
+  filterCategoryIds?: number[];
   class?: string;
 };
+
+function normalizeFilterCategoryIds(ids: number[] | undefined): number[] {
+  if (!ids?.length) return [];
+  return ids.map((n) => Number(n)).filter((n) => Number.isFinite(n) && n > 0);
+}
+
+function categoriesForFilter(
+  all: PortfolioCategory[],
+  selectedIds: number[],
+): PortfolioCategory[] {
+  if (selectedIds.length === 0) return all;
+  const byId = new Map(all.map((c) => [c.id, c]));
+  return selectedIds.map((id) => byId.get(id)).filter((c): c is PortfolioCategory => !!c);
+}
 
 /**
  * Live portfolio grid with optional category side filters and pagination.
@@ -59,6 +78,7 @@ export const PortfolioProjectsList = component$<PortfolioProjectsListProps>((pro
   const activeCategory = useSignal<string | null>(props.initialCategorySlug ?? null);
   const skillSlug = useSignal<string | null>(props.initialSkillSlug ?? null);
   const showFilters = props.showFilters !== false;
+  const filterCategoryIds = normalizeFilterCategoryIds(props.filterCategoryIds);
   const uiLocale = props.uiLocale || uiLangFromUrlPathname(loc.url.pathname);
 
   useVisibleTask$(async ({ track }) => {
@@ -101,6 +121,7 @@ export const PortfolioProjectsList = component$<PortfolioProjectsListProps>((pro
 
   const meta = listState.value.meta;
   const items = listState.value.items;
+  const filterCategories = categoriesForFilter(categoriesState.value, filterCategoryIds);
   const t = (key: string, params?: Record<string, string | number>) =>
     translateApp(uiLocale, key, params);
 
@@ -220,7 +241,7 @@ export const PortfolioProjectsList = component$<PortfolioProjectsListProps>((pro
                     ) : null}
                   </Link>
                 </li>
-                {categoriesState.value.map((cat) => {
+                {filterCategories.map((cat) => {
                   const active = activeCategory.value === cat.slug;
                   return (
                     <li key={cat.id}>

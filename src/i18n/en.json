@@ -93,6 +93,13 @@
     "email": "Email",
     "phone": "Phone"
   },
+  "homePage": {
+    "worksAll": "All",
+    "viewPortfolio": "View portfolio",
+    "worksEmptyTab": "No projects in this category yet.",
+    "tabsPrev": "Previous categories",
+    "tabsNext": "Next categories"
+  },
   "portfolioPage": {
     "title": "Portfolio",
     "eyebrow": "Portfolio",
@@ -942,8 +949,17 @@
       "particles_size": "Particles size",
       "particles_color": "Particles color (empty = theme)",
       "floating_icons_enabled": "Floating icons around image",
-      "floating_icons": "Floating icons"
+      "floating_icons": "Floating icons",
+      "category_ids": "Categories in filter",
+      "columns": "Grid columns"
     },
+    "categoryMultiHint": "Check categories to show as filter tabs/sidebar. Leave all unchecked to show every category with published projects.",
+    "categoriesLoading": "Loading categories…",
+    "categoriesLoadFailed": "Could not load categories.",
+    "noCategories": "No categories yet. Create categories under Projects.",
+    "columnsMobile": "Mobile columns",
+    "columnsTablet": "Tablet columns",
+    "columnsDesktop": "Desktop columns",
     "floatingIconsHint": "Place icons near the image border. X/Y are % of the image (−20 to 120); values under 0 or over 100 hang outside.",
     "floatingIconsAdd": "Add icon",
     "floatingIconsEmpty": "No floating icons yet.",
@@ -1183,6 +1199,32 @@
       "filterContrast": "Contrast",
       "filterSaturate": "Saturate",
       "filterHue": "Hue"
+    },
+    "background": {
+      "type": "Background type",
+      "types": {
+        "none": "None",
+        "color": "Solid color",
+        "gradient": "Gradient",
+        "image": "Image",
+        "particles": "Particles",
+        "animated_rain": "Animated rain lines"
+      },
+      "color": "Background color",
+      "gradientFrom": "Gradient start",
+      "gradientTo": "Gradient end",
+      "gradientAngle": "Gradient angle (deg)",
+      "imageUrl": "Image URL",
+      "imageSize": "Image size",
+      "density": "Density",
+      "speed": "Speed",
+      "opacity": "Opacity",
+      "size": "Size",
+      "colorOptional": "Color (optional hex)",
+      "rainDirection": "Rain direction",
+      "rainDown": "Top to bottom",
+      "rainUp": "Bottom to top",
+      "rainBoth": "Both directions"
     }
   }
 }

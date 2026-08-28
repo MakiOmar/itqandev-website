@@ -59,6 +59,20 @@ function mapPublicProjectToCaseStudy(raw: Record<string, unknown>): CaseStudy {
 
   const seoMeta = mapMarketingSeoMetaFromApi(raw.seo_meta);
 
+  const categories = Array.isArray(raw.categories)
+    ? (raw.categories as unknown[])
+        .map((row) => {
+          if (!row || typeof row !== 'object') return null;
+          const c = row as Record<string, unknown>;
+          const id = Number(c.id);
+          const name = String(c.name ?? '').trim();
+          const slug = String(c.slug ?? '').trim();
+          if (!id || !name) return null;
+          return { id, name, slug: slug || undefined };
+        })
+        .filter((c): c is { id: number; name: string; slug?: string } => c !== null)
+    : undefined;
+
   return {
     id: raw.id as string | number,
     slug: String(raw.slug ?? ''),
@@ -69,6 +83,7 @@ function mapPublicProjectToCaseStudy(raw: Record<string, unknown>): CaseStudy {
     image,
     imageAlt,
     tags,
+    categories,
     featured: Boolean(raw.featured),
     publishedAt:
       typeof raw.published_at === 'string'
@@ -463,6 +478,49 @@ function mergeCaseStudiesPreferringFeatured(
     }
   }
   return out;
+}
+
+/** Shared marketing payloads for page builder pages (case studies tabs, etc.). */
+export async function getPageBuilderMarketingSupport(
+  locale?: string,
+  fetchContext?: MarketingFetchContext,
+  blogLimit = 3,
+) {
+  const [caseStudies, portfolioCategories, testimonials, blogPosts] = await Promise.all([
+    getHomeCaseStudiesForTabs(locale, fetchContext),
+    getPortfolioCategories(locale, fetchContext),
+    getTestimonials(locale, fetchContext),
+    getBlogPosts(),
+  ]);
+  return {
+    caseStudies,
+    portfolioCategories,
+    testimonials,
+    blogPosts: blogPosts.slice(0, blogLimit),
+  };
+}
+
+/** Get published projects for homepage tabs (featured first, up to API cap). */
+export async function getHomeCaseStudiesForTabs(
+  locale?: string,
+  fetchContext?: MarketingFetchContext,
+): Promise<CaseStudy[]> {
+  const cap = 48;
+  const liveFeatured = await fetchPublishedProjectsFromApi(
+    { featured: true, per_page: cap, locale },
+    fetchContext,
+  );
+  if (hasMarketingApiBase(fetchContext)) {
+    const latest = await fetchPublishedProjectsFromApi(
+      { per_page: cap, locale },
+      fetchContext,
+    );
+    return mergeCaseStudiesPreferringFeatured(liveFeatured, latest, cap);
+  }
+
+  const all = await getCaseStudies(locale, undefined, fetchContext);
+  const featured = all.filter((c) => c.featured);
+  return mergeCaseStudiesPreferringFeatured(featured, all, cap);
 }
 
 /** Get featured case studies for home page (pad with latest published if featured is short). */

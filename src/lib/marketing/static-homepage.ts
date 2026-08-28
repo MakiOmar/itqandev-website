@@ -38,6 +38,15 @@ export function parsePublicFrontPageMeta(siteMeta: Record<string, unknown> | nul
   const show = parseShowOnFront(siteMeta?.show_on_front);
   const id = parsePageOnFrontId(siteMeta?.page_on_front);
   const slug = slugRaw !== '' ? slugRaw.toLowerCase() : null;
+  // Backend may resolve a published page_on_front and expose slug even when the
+  // stored show_on_front flag was left as "builder".
+  if (slug && (show === SHOW_ON_FRONT_PAGE || id != null)) {
+    return {
+      show_on_front: SHOW_ON_FRONT_PAGE,
+      page_on_front: id,
+      slug,
+    };
+  }
   if (show !== SHOW_ON_FRONT_PAGE || !slug) {
     return {
       show_on_front: SHOW_ON_FRONT_BUILDER,

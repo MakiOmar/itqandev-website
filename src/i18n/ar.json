@@ -93,6 +93,13 @@
     "email": "البريد الإلكتروني",
     "phone": "الهاتف"
   },
+  "homePage": {
+    "worksAll": "الكل",
+    "viewPortfolio": "عرض المحفظة",
+    "worksEmptyTab": "لا توجد مشاريع في هذا التصنيف بعد.",
+    "tabsPrev": "التصنيفات السابقة",
+    "tabsNext": "التصنيفات التالية"
+  },
   "portfolioPage": {
     "title": "المحفظة",
     "eyebrow": "المحفظة",
@@ -942,8 +949,17 @@
       "particles_size": "حجم الجسيمات",
       "particles_color": "لون الجسيمات (فارغ = حسب المظهر)",
       "floating_icons_enabled": "أيقونات عائمة حول الصورة",
-      "floating_icons": "الأيقونات العائمة"
+      "floating_icons": "الأيقونات العائمة",
+      "category_ids": "التصنيفات في عامل التصفية",
+      "columns": "أعمدة الشبكة"
     },
+    "categoryMultiHint": "حدد التصنيفات التي تظهر في التبويبات/الشريط الجانبي. مرّر لوحة الخصائص إن لزم — الحقل مميز بإطار. اترك الكل غير محدد لعرض كل تصنيف يحتوي على مشاريع منشورة.",
+    "categoriesLoading": "جاري تحميل التصنيفات…",
+    "categoriesLoadFailed": "تعذّر تحميل التصنيفات.",
+    "noCategories": "لا توجد تصنيفات بعد. أنشئ تصنيفات من المشاريع.",
+    "columnsMobile": "أعمدة الجوال",
+    "columnsTablet": "أعمدة الجهاز اللوحي",
+    "columnsDesktop": "أعمدة سطح المكتب",
     "floatingIconsHint": "ضع الأيقونات قرب حدود الصورة. س/ص نسبة مئوية (−20 إلى 120)؛ القيم أقل من 0 أو أكبر من 100 تخرج خارج الإطار.",
     "floatingIconsAdd": "إضافة أيقونة",
     "floatingIconsEmpty": "لا توجد أيقونات عائمة بعد.",
@@ -1183,6 +1199,32 @@
       "filterContrast": "تباين",
       "filterSaturate": "تشبع",
       "filterHue": "صبغة"
+    },
+    "background": {
+      "type": "نوع الخلفية",
+      "types": {
+        "none": "بدون",
+        "color": "لون ثابت",
+        "gradient": "تدرج",
+        "image": "صورة",
+        "particles": "جسيمات",
+        "animated_rain": "خطوط مطر متحركة"
+      },
+      "color": "لون الخلفية",
+      "gradientFrom": "بداية التدرج",
+      "gradientTo": "نهاية التدرج",
+      "gradientAngle": "زاوية التدرج (درجة)",
+      "imageUrl": "رابط الصورة",
+      "imageSize": "حجم الصورة",
+      "density": "الكثافة",
+      "speed": "السرعة",
+      "opacity": "الشفافية",
+      "size": "الحجم",
+      "colorOptional": "اللون (hex اختياري)",
+      "rainDirection": "اتجاه المطر",
+      "rainDown": "من أعلى لأسفل",
+      "rainUp": "من أسفل لأعلى",
+      "rainBoth": "الاتجاهان"
     }
   }
 }

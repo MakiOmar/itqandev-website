@@ -6,7 +6,7 @@ import { publicListPageHead } from '~/lib/marketing/public-page-head';
 import { usePublicShell } from '../layout';
 import {
   getBlogPostsPage,
-  getFeaturedCaseStudies,
+  getPageBuilderMarketingSupport,
   getTestimonials,
 } from '~/lib/marketing/content-layer';
 import { uiLangFromUrlPathname, uiLocaleFromPublicRoute } from '~/lib/i18n/ui-locale-path';
@@ -68,15 +68,16 @@ export const useArticlesListingData = routeLoader$(async ({ request, url, params
   const uiLocale = uiLocaleFromPublicRoute(cookie, params.lang, request.url) || 'en';
   const page = Math.max(1, Number(url.searchParams.get('page')) || 1);
   const fetchContext = { forwardDocumentUrl: request.url, forwardCookies: cookie };
-  const [list, caseStudies, testimonials] = await Promise.all([
+  const [list, support, testimonials] = await Promise.all([
     getBlogPostsPage(uiLocale, { page, perPage: ARTICLES_PER_PAGE }, fetchContext),
-    getFeaturedCaseStudies(6, uiLocale, fetchContext),
+    getPageBuilderMarketingSupport(uiLocale, fetchContext),
     getTestimonials(uiLocale, fetchContext),
   ]);
   return {
     list,
     uiLocale,
-    caseStudies,
+    caseStudies: support.caseStudies,
+    portfolioCategories: support.portfolioCategories,
     testimonials,
     blogPosts: list.items.slice(0, 3),
   };
@@ -96,6 +97,7 @@ export default component$(() => {
         uiLocale={uiLocale}
         services={shell.value.siteContent?.services ?? []}
         caseStudies={listing.value.caseStudies}
+        portfolioCategories={listing.value.portfolioCategories}
         testimonials={listing.value.testimonials}
         blogPosts={listing.value.blogPosts}
         techStack={shell.value.siteContent?.techStack ?? []}

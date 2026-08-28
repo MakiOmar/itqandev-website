@@ -1,10 +1,11 @@
-import { component$ } from '@builder.io/qwik';
+import { component$, useSignal } from '@builder.io/qwik';
 import { Link } from '@builder.io/qwik-city';
 import { Container } from '~/components/marketing/Container';
 import { Section } from '~/components/marketing/Section';
 import { Button } from '~/components/marketing/Button';
 import { AnimatedReveal } from '~/components/marketing/AnimatedReveal';
 import { CaseStudyCard } from '~/components/marketing/CaseStudyCard';
+import { CategoryTabsCarousel } from '~/components/marketing/CategoryTabsCarousel';
 import { TestimonialGrid } from '~/components/marketing/TestimonialGrid';
 import { BlogCard } from '~/components/marketing/BlogCard';
 import { resolveServiceIconUrl } from '~/lib/marketing/service-icons';
@@ -14,7 +15,10 @@ import { normalizeHeroFloatingIcons } from '~/lib/admin/hero-floating-icons';
 import { resolveHeroParticlesConfig } from '~/lib/marketing/hero-particles';
 import { LazyParticlesBackground } from '~/components/marketing/LazyParticlesBackground';
 import type { CaseStudy, Testimonial, BlogPost, Service } from '~/lib/marketing/types';
+import type { PortfolioCategory } from '~/lib/marketing/content-layer';
 import type { HeroFloatingIcon } from '~/lib/marketing/appearance-types';
+import { gridColumnClassNames, normalizeResponsiveColumns } from '~/lib/marketing/grid-columns';
+import { translateApp } from '~/lib/i18n/useTranslate';
 import './hero-floating-icons.css';
 
 function settingString(settings: Record<string, unknown> | undefined, key: string, fallback: string): string {
@@ -36,6 +40,39 @@ function settingOptionalString(settings: Record<string, unknown> | undefined, ke
 function settingBool(settings: Record<string, unknown> | undefined, key: string): boolean {
   const v = settings?.[key];
   return v === true || v === 'true' || v === 1 || v === '1';
+}
+
+function settingCategoryIds(settings: Record<string, unknown> | undefined): number[] {
+  const raw = settings?.category_ids;
+  if (Array.isArray(raw)) {
+    return raw.map((v) => Number(v)).filter((n) => Number.isFinite(n) && n > 0);
+  }
+  // Tolerate object maps from some JSON paths: { "0": 3, "1": 4 }
+  if (raw && typeof raw === 'object') {
+    return Object.values(raw as Record<string, unknown>)
+      .map((v) => Number(v))
+      .filter((n) => Number.isFinite(n) && n > 0);
+  }
+  if (typeof raw === 'string' && raw.trim()) {
+    try {
+      const parsed = JSON.parse(raw) as unknown;
+      if (Array.isArray(parsed)) {
+        return parsed.map((v) => Number(v)).filter((n) => Number.isFinite(n) && n > 0);
+      }
+    } catch {
+      /* ignore */
+    }
+  }
+  return [];
+}
+
+function projectMatchesCategory(caseStudy: CaseStudy, categoryId: number): boolean {
+  return (caseStudy.categories ?? []).some((c) => c.id === categoryId);
+}
+
+function projectInSelectedCategories(caseStudy: CaseStudy, selectedIds: number[]): boolean {
+  if (selectedIds.length === 0) return true;
+  return selectedIds.some((id) => projectMatchesCategory(caseStudy, id));
 }
 
 export type HomeSectionSharedProps = {
@@ -309,14 +346,46 @@ export const ServicesTeaserHomeSection = component$<
 });
 
 export const CaseStudiesHomeSection = component$<
-  HomeSectionSharedProps & { caseStudies: CaseStudy[] }
->(({ settings, uiLocale, caseStudies }) => {
-  const limit = settingInt(settings, 'limit', 3);
-  const items = caseStudies.slice(0, limit);
-  if (items.length === 0) return null;
+  HomeSectionSharedProps & { caseStudies: CaseStudy[]; portfolioCategories?: PortfolioCategory[] }
+>(({ settings, uiLocale, caseStudies, portfolioCategories = [] }) => {
+  const limit = settingInt(settings, 'limit', 6);
+  const selectedCategoryIds = settingCategoryIds(settings);
+  const columns = normalizeResponsiveColumns(settings?.columns);
+  const gridClass = gridColumnClassNames(columns);
+  const activeTab = useSignal<'all' | string>('all');
+
+  if (caseStudies.length === 0) return null;
+
   const routes = marketingRoutes(uiLocale);
   const title = settingString(settings, 'title', 'Selected portfolio');
   const subtitle = settingString(settings, 'subtitle', 'Recent projects we are proud of.');
+  const allLabel = translateApp(uiLocale, 'homePage.worksAll');
+
+  const tabCategories = (() => {
+    if (selectedCategoryIds.length > 0) {
+      const byId = new Map(portfolioCategories.map((c) => [c.id, c]));
+      return selectedCategoryIds
+        .map((id) => byId.get(id))
+        .filter((category): category is PortfolioCategory => !!category)
+        .filter((category) => caseStudies.some((cs) => projectMatchesCategory(cs, category.id)));
+    }
+    return portfolioCategories.filter((category) =>
+      caseStudies.some((cs) => projectMatchesCategory(cs, category.id)),
+    );
+  })();
+
+  const filteredItems = (() => {
+    let pool = caseStudies.filter((cs) => projectInSelectedCategories(cs, selectedCategoryIds));
+    if (activeTab.value !== 'all') {
+      const category = tabCategories.find((c) => c.slug === activeTab.value);
+      if (category) {
+        pool = pool.filter((cs) => projectMatchesCategory(cs, category.id));
+      }
+    }
+    return pool.slice(0, limit);
+  })();
+
+  if (filteredItems.length === 0 && activeTab.value === 'all') return null;
 
   return (
     <Section>
@@ -333,22 +402,43 @@ export const CaseStudiesHomeSection = component$<
               href={routes.portfolio}
               class="hidden shrink-0 text-sm font-medium text-primary-600 hover:text-primary-700 dark:text-primary-400 sm:block"
             >
-              View all
+              {translateApp(uiLocale, 'homePage.viewPortfolio')}
             </Link>
           </div>
         </AnimatedReveal>
-        <ul class="mx-auto mt-12 grid max-w-5xl gap-8 sm:grid-cols-2 lg:grid-cols-3" role="list">
-          {items.map((cs, i) => (
-            <li key={cs.id}>
-              <AnimatedReveal delay={i * 100}>
-                <CaseStudyCard caseStudy={cs} />
-              </AnimatedReveal>
-            </li>
-          ))}
-        </ul>
+
+        {tabCategories.length > 0 ? (
+          <CategoryTabsCarousel
+            uiLocale={uiLocale}
+            label={title}
+            allLabel={allLabel}
+            activeTab={activeTab.value}
+            categories={tabCategories}
+            onSelect$={(tab) => {
+              activeTab.value = tab;
+            }}
+          />
+        ) : null}
+
+        {filteredItems.length === 0 ? (
+          <p class="mt-10 text-center text-sm text-slate-500 dark:text-slate-400">
+            {translateApp(uiLocale, 'homePage.worksEmptyTab')}
+          </p>
+        ) : (
+          <ul class={`mx-auto mt-10 max-w-6xl gap-6 lg:gap-8 ${gridClass}`} role="list">
+            {filteredItems.map((cs, i) => (
+              <li key={cs.id}>
+                <AnimatedReveal delay={i * 80}>
+                  <CaseStudyCard caseStudy={cs} />
+                </AnimatedReveal>
+              </li>
+            ))}
+          </ul>
+        )}
+
         <div class="mt-8 text-center sm:hidden">
           <Button href={routes.portfolio} variant="outline">
-            View portfolio
+            {translateApp(uiLocale, 'homePage.viewPortfolio')}
           </Button>
         </div>
       </Container>

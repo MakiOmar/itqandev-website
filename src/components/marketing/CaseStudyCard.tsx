@@ -3,59 +3,42 @@ import { Link } from '@builder.io/qwik-city';
 import { useSpeakLocale } from 'qwik-speak';
 import type { CaseStudy } from '../../lib/marketing/types';
 import { marketingRoutes } from '../../lib/marketing/constants';
-import { Card } from './Card';
 import { ContentImage } from './ContentImage';
+import './case-study-card.css';
 
 export interface CaseStudyCardProps {
   caseStudy: CaseStudy;
-  /** If true, show as featured (larger, more detail) */
-  featured?: boolean;
 }
 
-export const CaseStudyCard = component$<CaseStudyCardProps>(({ caseStudy, featured }) => {
+export const CaseStudyCard = component$<CaseStudyCardProps>(({ caseStudy }) => {
   const locale = useSpeakLocale();
   const MR = marketingRoutes(locale.lang);
   const href = MR.portfolioSlug(caseStudy.slug);
 
   return (
-    <Link href={href} class="block h-full focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 rounded-xl">
-      <Card padding="none" class="h-full overflow-hidden transition-shadow hover:shadow-md">
-        <div class="aspect-video w-full overflow-hidden bg-slate-100 dark:bg-slate-700">
+    <Link
+      href={href}
+      class="group case-study-card block h-full rounded-2xl focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-slate-900"
+    >
+      <article class="relative h-full overflow-hidden rounded-2xl border border-slate-200/90 bg-slate-900 shadow-sm transition-all duration-300 hover:border-primary-300/60 hover:shadow-xl hover:shadow-primary-500/10 dark:border-slate-600/50 dark:hover:border-primary-500/40 dark:hover:shadow-primary-950/40">
+        <div class="case-study-card-viewport relative w-full bg-slate-100 dark:bg-slate-800">
           <ContentImage
             src={caseStudy.image}
             alt={caseStudy.imageAlt || caseStudy.title}
-            width={400}
-            height={240}
+            width={640}
+            height={480}
             loading="lazy"
-            class="h-full w-full object-cover"
+            class="case-study-card-image block"
+          />
+          <div
+            class="pointer-events-none absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/85 via-black/50 to-transparent px-5 pb-5 pt-16"
+            aria-hidden="true"
           />
         </div>
-        <div class="p-4 sm:p-6">
-          {caseStudy.tags && caseStudy.tags.length > 0 && (
-            <ul class="mb-2 flex flex-wrap gap-1.5" role="list">
-              {caseStudy.tags.slice(0, 3).map((tag) => (
-                <li
-                  key={tag}
-                  class="rounded-full bg-primary-100 px-2 py-0.5 text-xs font-medium text-primary-800 dark:bg-primary-900/40 dark:text-primary-200"
-                >
-                  {tag}
-                </li>
-              ))}
-            </ul>
-          )}
-          <h3 class="text-lg font-semibold text-slate-900 dark:text-white">
-            {caseStudy.title}
-          </h3>
-          <p class="mt-1 text-sm text-slate-600 dark:text-slate-400 line-clamp-2">
-            {caseStudy.summary}
-          </p>
-          {featured && caseStudy.description && (
-            <p class="mt-2 text-sm text-slate-500 dark:text-slate-500 line-clamp-2">
-              {caseStudy.description.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim()}
-            </p>
-          )}
+        <div class="pointer-events-none absolute inset-x-0 bottom-0 px-5 pb-5">
+          <h3 class="text-lg font-semibold tracking-tight text-white sm:text-xl">{caseStudy.title}</h3>
         </div>
-      </Card>
+      </article>
     </Link>
   );
 });

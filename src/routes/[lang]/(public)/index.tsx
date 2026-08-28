@@ -4,7 +4,7 @@ import { useLocation } from '@builder.io/qwik-city';
 import { routeLoader$ } from '@builder.io/qwik-city';
 import { buildCanonicalHref } from '~/lib/seo/canonical-url';
 import { publicHomeTitle, publicSiteDescription } from '~/lib/marketing/public-page-head';
-import { getFeaturedCaseStudies, getTestimonials, getBlogPosts } from '~/lib/marketing/content-layer';
+import { getPageBuilderMarketingSupport } from '~/lib/marketing/content-layer';
 import { uiLocaleFromPublicRoute } from '~/lib/i18n/ui-locale-path';
 import { uiLangFromUrlPathname } from '~/lib/i18n/ui-locale-path';
 import { HomepageSectionsRenderer } from '~/components/marketing/home-sections/HomepageSectionsRenderer';
@@ -33,17 +33,10 @@ export const useHomeData = routeLoader$(async ({ request, params, resolveValue }
     : shell.themeBody && shell.themeBody.length > 0
       ? shell.themeBody
       : shell.homepageSections;
-  const caseLimit = maxSectionSettingLimit(sections, 'case_studies', 3);
   const blogLimit = maxSectionSettingLimit(sections, 'blog_preview', 3);
-  const [caseStudies, testimonials, blogPosts] = await Promise.all([
-    getFeaturedCaseStudies(caseLimit, uiLocale, fetchContext),
-    getTestimonials(uiLocale, fetchContext),
-    getBlogPosts(),
-  ]);
+  const support = await getPageBuilderMarketingSupport(uiLocale, fetchContext, blogLimit);
   return {
-    caseStudies,
-    testimonials,
-    blogPosts: blogPosts.slice(0, blogLimit),
+    ...support,
     cmsPage,
   };
 });
@@ -53,7 +46,7 @@ export default component$(() => {
   const uiLocale = uiLangFromUrlPathname(loc.url.pathname);
   const data = useHomeData();
   const shell = usePublicShell();
-  const { caseStudies, testimonials, blogPosts, cmsPage } = data.value;
+  const { caseStudies, portfolioCategories, testimonials, blogPosts, cmsPage } = data.value;
   const siteContent = shell.value.siteContent;
   const services = siteContent?.services ?? [];
   const techStack = siteContent?.techStack ?? [];
@@ -74,6 +67,7 @@ export default component$(() => {
       uiLocale={uiLocale}
       services={services}
       caseStudies={caseStudies}
+      portfolioCategories={portfolioCategories}
       testimonials={testimonials}
       blogPosts={blogPosts}
       techStack={techStack}

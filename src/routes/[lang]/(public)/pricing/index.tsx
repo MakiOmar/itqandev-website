@@ -5,7 +5,7 @@ import { publicListPageHead } from '~/lib/marketing/public-page-head';
 import { usePublicShell } from '../layout';
 import { HomepageSectionsRenderer } from '~/components/marketing/home-sections/HomepageSectionsRenderer';
 import { uiLocaleFromPublicRoute, uiLangFromUrlPathname } from '~/lib/i18n/ui-locale-path';
-import { getFeaturedCaseStudies, getTestimonials, getBlogPosts } from '~/lib/marketing/content-layer';
+import { getPageBuilderMarketingSupport } from '~/lib/marketing/content-layer';
 import { resolveMarketingApiBaseUrl } from '~/lib/marketing/resolve-api-base';
 import { API_ENDPOINTS } from '~/lib/api/endpoints';
 import { isFeatureModuleEnabled } from '~/lib/api/project-settings';
@@ -59,12 +59,7 @@ export const usePricingSupportingData = routeLoader$(async ({ request, params })
   const cookie = request.headers.get('cookie') || '';
   const uiLocale = uiLocaleFromPublicRoute(cookie, params.lang, request.url);
   const fetchContext = { forwardDocumentUrl: request.url };
-  const [caseStudies, testimonials, blogPosts] = await Promise.all([
-    getFeaturedCaseStudies(6, uiLocale, fetchContext),
-    getTestimonials(uiLocale, fetchContext),
-    getBlogPosts(),
-  ]);
-  return { caseStudies, testimonials, blogPosts: blogPosts.slice(0, 3) };
+  return getPageBuilderMarketingSupport(uiLocale, fetchContext);
 });
 
 export default component$(() => {
@@ -80,6 +75,7 @@ export default component$(() => {
       uiLocale={uiLocale}
       services={shell.value.siteContent?.services ?? []}
       caseStudies={support.value.caseStudies}
+      portfolioCategories={support.value.portfolioCategories}
       testimonials={support.value.testimonials}
       blogPosts={support.value.blogPosts}
       techStack={shell.value.siteContent?.techStack ?? []}

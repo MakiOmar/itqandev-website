@@ -22,6 +22,7 @@ import {
 } from '~/lib/marketing/page-layout-utils';
 import { filterPageSectionsForDevice } from '~/lib/marketing/device-visibility';
 import { useLayoutDevice } from '~/lib/marketing/layout-device-context';
+import { LayoutNodeShell } from '~/components/marketing/layout/LayoutNodeShell';
 import {
   defaultHomepageSections,
   type HomepageSectionInstance,
@@ -204,6 +205,7 @@ function renderBlock(
           settings={settings}
           uiLocale={props.uiLocale}
           caseStudies={props.caseStudies}
+          portfolioCategories={props.portfolioCategories ?? []}
         />
       );
     case 'testimonials':
@@ -271,6 +273,11 @@ function renderBlock(
         settings.show_filters === 'true' ||
         settings.show_filters === 1 ||
         settings.show_filters === undefined;
+      const filterCategoryIds = Array.isArray(settings.category_ids)
+        ? (settings.category_ids as unknown[])
+            .map((v) => Number(v))
+            .filter((n) => Number.isFinite(n) && n > 0)
+        : [];
       const emptyList: CaseStudyListResult = {
         items: [],
         meta: {
@@ -290,6 +297,7 @@ function renderBlock(
           initialCategorySlug={props.portfolioCategorySlug ?? null}
           initialSkillSlug={props.portfolioSkillSlug ?? null}
           showFilters={showFilters}
+          filterCategoryIds={filterCategoryIds}
         />
       );
       if (props.embedKits) {
@@ -348,30 +356,32 @@ function renderBlock(
 function renderLayoutBand(band: PageLayoutBand, props: HomepageSectionsRendererProps) {
   const bandProps: HomepageSectionsRendererProps = { ...props, embedKits: true };
   const inner = (
-    <div class="space-y-8 py-6 sm:space-y-10 sm:py-8 lg:py-10">
+    <LayoutNodeShell settings={band.settings} class="space-y-8 py-6 sm:space-y-10 sm:py-8 lg:py-10">
       {(band.rows ?? []).map((row) => {
         const gap = typeof row.gap === 'number' ? row.gap : 4;
         const gapClass = GAP_CLASS[gap] ?? 'gap-4';
         const stackBelow = row.stack_below ?? 'none';
         return (
-          <div key={row.id} class={`grid grid-cols-12 ${gapClass}`}>
-            {(row.columns ?? []).map((col) => {
-              const span = normalizeColumnSpans(col.span);
-              const spanClass = columnSpanClassNames(span, stackBelow);
-              return (
-                <div key={col.id} class={spanClass}>
-                  <div class="space-y-6">
-                    {(col.blocks ?? [])
-                      .filter((b) => b.enabled !== false)
-                      .map((block) => renderBlock(block, bandProps))}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
+          <LayoutNodeShell key={row.id} settings={row.settings} class="rounded-xl">
+            <div class={`grid grid-cols-12 ${gapClass}`}>
+              {(row.columns ?? []).map((col) => {
+                const span = normalizeColumnSpans(col.span);
+                const spanClass = columnSpanClassNames(span, stackBelow);
+                return (
+                  <LayoutNodeShell key={col.id} settings={col.settings} class={spanClass}>
+                    <div class="space-y-6">
+                      {(col.blocks ?? [])
+                        .filter((b) => b.enabled !== false)
+                        .map((block) => renderBlock(block, bandProps))}
+                    </div>
+                  </LayoutNodeShell>
+                );
+              })}
+            </div>
+          </LayoutNodeShell>
         );
       })}
-    </div>
+    </LayoutNodeShell>
   );
 
   if ((band.layout_width ?? 'boxed') === 'full') {

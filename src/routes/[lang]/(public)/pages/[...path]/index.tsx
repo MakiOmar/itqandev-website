@@ -3,7 +3,7 @@ import type { DocumentHead } from '@builder.io/qwik-city';
 import { routeLoader$, useLocation } from '@builder.io/qwik-city';
 import { HomepageSectionsRenderer } from '~/components/marketing/home-sections/HomepageSectionsRenderer';
 import { usePublicShell } from '../../layout';
-import { getFeaturedCaseStudies, getTestimonials, getBlogPosts } from '~/lib/marketing/content-layer';
+import { getPageBuilderMarketingSupport } from '~/lib/marketing/content-layer';
 import { uiLocaleFromPublicRoute, uiLangFromUrlPathname } from '~/lib/i18n/ui-locale-path';
 import { marketingEntityDetailHead } from '~/lib/marketing/marketing-entity-document-head';
 import { publicSiteName } from '~/lib/marketing/public-page-head';
@@ -102,12 +102,7 @@ export const usePageSupportingData = routeLoader$(async ({ request, params }) =>
   const cookie = request.headers.get('cookie') || '';
   const uiLocale = uiLocaleFromPublicRoute(cookie, params.lang, request.url);
   const fetchContext = { forwardDocumentUrl: request.url };
-  const [caseStudies, testimonials, blogPosts] = await Promise.all([
-    getFeaturedCaseStudies(6, uiLocale, fetchContext),
-    getTestimonials(uiLocale, fetchContext),
-    getBlogPosts(),
-  ]);
-  return { caseStudies, testimonials, blogPosts: blogPosts.slice(0, 3) };
+  return getPageBuilderMarketingSupport(uiLocale, fetchContext);
 });
 
 export default component$(() => {
@@ -133,6 +128,7 @@ export default component$(() => {
       uiLocale={uiLocale}
       services={shell.value.siteContent?.services ?? []}
       caseStudies={support.value.caseStudies}
+      portfolioCategories={support.value.portfolioCategories}
       testimonials={support.value.testimonials}
       blogPosts={support.value.blogPosts}
       techStack={shell.value.siteContent?.techStack ?? []}

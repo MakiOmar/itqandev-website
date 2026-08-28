@@ -3,6 +3,8 @@
  */
 import {
   widgetStyleGroups,
+  widgetHasMediaStyleChrome,
+  MEDIA_ONLY_STYLE_KEYS,
   type BuilderStyles,
   type StyleBreakpoint,
   type StyleDimensions,
@@ -216,7 +218,12 @@ export const STYLE_CONTROLS: StyleControl[] = [
 export function controlsForWidget(type: string): StyleControl[] {
   const groups = new Set(widgetStyleGroups(type));
   if (groups.size === 0) return [];
-  return STYLE_CONTROLS.filter((c) => groups.has(c.group as StyleGroupId));
+  const hasMedia = widgetHasMediaStyleChrome(type);
+  return STYLE_CONTROLS.filter((c) => {
+    if (!groups.has(c.group as StyleGroupId)) return false;
+    if (!hasMedia && MEDIA_ONLY_STYLE_KEYS.has(c.key)) return false;
+    return true;
+  });
 }
 
 export function readLength(value: unknown): StyleLength | null {

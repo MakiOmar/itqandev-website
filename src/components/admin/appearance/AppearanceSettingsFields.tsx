@@ -1,6 +1,8 @@
 import { component$, type QRL } from '@builder.io/qwik';
 import { AdminSwitch } from './AdminSwitch';
 import { FormSlugSelectField } from './FormSlugSelectField';
+import { CategoryMultiSelectField } from './CategoryMultiSelectField';
+import { ResponsiveColumnsField } from './ResponsiveColumnsField';
 import { HeroFloatingIconsEditor } from './HeroFloatingIconsEditor';
 import {
   isAppearanceFieldTranslatable,
@@ -16,7 +18,9 @@ import { resolveLaravelMediaUrl } from '~/lib/marketing/resolve-laravel-media-ur
 import { useTranslate, translateApp } from '~/lib/i18n/useTranslate';
 import { appearanceFieldLabel } from '~/lib/i18n/appearance-labels';
 import type { AppearanceSettingField } from '~/lib/marketing/appearance-types';
+import { normalizeResponsiveColumns } from '~/lib/marketing/grid-columns';
 import type { SiteLanguageRow } from '~/types/site-language';
+import type { CategorySelectOption } from './CategoryMultiSelectField';
 
 export type AppearanceSettingsFieldsProps = {
   fields: AppearanceSettingField[];
@@ -33,6 +37,8 @@ export type AppearanceSettingsFieldsProps = {
   mediaPreviewById?: Record<string, string>;
   /** When a nested editor picks media, cache the preview URL by id. */
   onMediaPreview$?: QRL<(mediaId: number, url: string) => void>;
+  /** Prefill category checkboxes (page builder preview / public categories). */
+  categoryOptions?: CategorySelectOption[];
 };
 
 type FieldControlProps = {
@@ -45,6 +51,7 @@ type FieldControlProps = {
   mediaPreviewById?: Record<string, string>;
   onMediaPreview$?: QRL<(mediaId: number, url: string) => void>;
   lang: string;
+  categoryOptions?: CategorySelectOption[];
 };
 
 function asString(v: unknown): string {
@@ -112,6 +119,54 @@ const AppearanceSettingFieldControl = component$<FieldControlProps>((props) => {
               props.activeLocale,
               props.defaultLocale,
               translatable,
+            ),
+          );
+        }}
+      />
+    );
+  }
+
+  if (field.type === 'category_multi') {
+    const ids = Array.isArray(raw)
+      ? (raw as unknown[]).map((v) => Number(v)).filter((n) => Number.isFinite(n) && n > 0)
+      : [];
+    return (
+      <CategoryMultiSelectField
+        lang={props.lang}
+        label={label}
+        value={ids}
+        initialOptions={props.categoryOptions}
+        onChange$={async (nextIds) => {
+          await props.onSettingsChange$(
+            writeAppearanceSettingValue(
+              props.values,
+              field.key,
+              nextIds,
+              props.activeLocale,
+              props.defaultLocale,
+              false,
+            ),
+          );
+        }}
+      />
+    );
+  }
+
+  if (field.type === 'responsive_columns') {
+    return (
+      <ResponsiveColumnsField
+        lang={props.lang}
+        label={label}
+        value={normalizeResponsiveColumns(raw)}
+        onChange$={async (columns) => {
+          await props.onSettingsChange$(
+            writeAppearanceSettingValue(
+              props.values,
+              field.key,
+              columns,
+              props.activeLocale,
+              props.defaultLocale,
+              false,
             ),
           );
         }}
@@ -731,7 +786,15 @@ export const AppearanceSettingsFields = component$<AppearanceSettingsFieldsProps
   const activeLocale = (props.activeLocale || defaultLocale).toLowerCase();
   const showTabs = languages.length > 1;
 
-  const sharedFields = props.fields.filter((f) => !isAppearanceFieldTranslatable(f));
+  const sharedFields = props.fields
+    .filter((f) => !isAppearanceFieldTranslatable(f))
+    // Keep category picker near the top of shared settings so it is not buried.
+    .slice()
+    .sort((a, b) => {
+      const rank = (f: AppearanceSettingField) =>
+        f.type === 'category_multi' ? 0 : f.type === 'responsive_columns' ? 2 : 1;
+      return rank(a) - rank(b);
+    });
   const localizedFields = props.fields.filter((f) => isAppearanceFieldTranslatable(f));
 
   return (
@@ -835,6 +898,7 @@ export const AppearanceSettingsFields = component$<AppearanceSettingsFieldsProps
                 activeLocale={activeLocale}
                 defaultLocale={defaultLocale}
                 lang={lang}
+                categoryOptions={props.categoryOptions}
                 onSettingsChange$={props.onSettingsChange$}
                 onPickMedia$={props.onPickMedia$}
                 mediaPreviewById={props.mediaPreviewById}

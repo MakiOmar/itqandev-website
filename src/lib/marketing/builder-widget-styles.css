@@ -24,6 +24,25 @@
   text-align: var(--s-align, start);
 }
 
+/*
+ * Kits without `.b-styled-media` apply chrome on the wrapper itself so Style tab
+ * border / opacity / height / shadow actually paint (case studies, lists, etc.).
+ */
+.b-styled:not(:has(.b-styled-media)) {
+  height: var(--s-height, auto);
+  opacity: var(--s-opacity, 1);
+  filter: var(--s-filter, none);
+  border-style: var(--s-border-style, none);
+  border-width: var(--s-border-width, 0);
+  border-color: var(--s-border-color, transparent);
+  border-radius: var(--s-radius, 0);
+  box-shadow: var(--s-box-shadow, none);
+  transition:
+    opacity var(--s-hover-transition, 300ms),
+    filter var(--s-hover-transition, 300ms),
+    box-shadow var(--s-hover-transition, 300ms);
+}
+
 .b-styled .b-styled-media {
   display: block;
   width: 100%;
@@ -116,6 +135,17 @@
     text-align: var(--s-align-md, var(--s-align, start));
   }
 
+  .b-styled:not(:has(.b-styled-media)) {
+    height: var(--s-height-md, var(--s-height, auto));
+    opacity: var(--s-opacity-md, var(--s-opacity, 1));
+    filter: var(--s-filter-md, var(--s-filter, none));
+    border-style: var(--s-border-style-md, var(--s-border-style, none));
+    border-width: var(--s-border-width-md, var(--s-border-width, 0));
+    border-color: var(--s-border-color-md, var(--s-border-color, transparent));
+    border-radius: var(--s-radius-md, var(--s-radius, 0));
+    box-shadow: var(--s-box-shadow-md, var(--s-box-shadow, none));
+  }
+
   .b-styled .b-styled-media {
     height: var(--s-height-md, var(--s-height, auto));
     object-fit: var(--s-object-fit-md, var(--s-object-fit, cover));
@@ -193,6 +223,20 @@
     overflow: var(--s-overflow-lg, var(--s-overflow-md, var(--s-overflow, visible)));
     z-index: var(--s-z-index-lg, var(--s-z-index-md, var(--s-z-index, auto)));
     text-align: var(--s-align-lg, var(--s-align-md, var(--s-align, start)));
+  }
+
+  .b-styled:not(:has(.b-styled-media)) {
+    height: var(--s-height-lg, var(--s-height-md, var(--s-height, auto)));
+    opacity: var(--s-opacity-lg, var(--s-opacity-md, var(--s-opacity, 1)));
+    filter: var(--s-filter-lg, var(--s-filter-md, var(--s-filter, none)));
+    border-style: var(--s-border-style-lg, var(--s-border-style-md, var(--s-border-style, none)));
+    border-width: var(--s-border-width-lg, var(--s-border-width-md, var(--s-border-width, 0)));
+    border-color: var(
+      --s-border-color-lg,
+      var(--s-border-color-md, var(--s-border-color, transparent))
+    );
+    border-radius: var(--s-radius-lg, var(--s-radius-md, var(--s-radius, 0)));
+    box-shadow: var(--s-box-shadow-lg, var(--s-box-shadow-md, var(--s-box-shadow, none)));
   }
 
   .b-styled .b-styled-media {

@@ -58,6 +58,7 @@ export type PageLayoutColumn = {
   id: string;
   span: ColumnSpans;
   hide_on?: DeviceHideOn;
+  settings?: Record<string, unknown>;
   blocks: PageLayoutBlock[];
 };
 
@@ -66,6 +67,7 @@ export type PageLayoutRow = {
   stack_below?: PageLayoutStackBelow;
   gap?: number;
   hide_on?: DeviceHideOn;
+  settings?: Record<string, unknown>;
   columns: PageLayoutColumn[];
 };
 
@@ -113,7 +115,9 @@ export type AppearanceSettingFieldType =
   | 'repeater'
   | 'icon'
   | 'page'
-  | 'menu';
+  | 'menu'
+  | 'category_multi'
+  | 'responsive_columns';
 
 export type AppearanceSettingField = {
   key: string;
@@ -158,7 +162,6 @@ export type AppearanceRegistryEntry = {
 export const DEFAULT_HOMEPAGE_SECTION_ORDER: HomepageSectionType[] = [
   'hero',
   'services_teaser',
-  'case_studies',
   'testimonials',
   'tech_stack',
   'blog_preview',

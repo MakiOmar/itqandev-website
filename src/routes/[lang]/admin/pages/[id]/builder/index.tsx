@@ -10,6 +10,8 @@ import { adminApiClient } from '../../../../../../lib/admin/admin-api-client';
 import { API_ENDPOINTS } from '../../../../../../lib/api/endpoints';
 import { adminPageEditHref, useAppRoutes } from '../../../../../../lib/constants/routes';
 import { fetchAppearanceRegistriesFromBrowser } from '../../../../../../lib/admin/appearance-actions';
+import { getPageBuilderMarketingSupport } from '../../../../../../lib/marketing/content-layer';
+import { uiLocaleFromPublicRoute } from '../../../../../../lib/i18n/ui-locale-path';
 import type { AppearanceRegistryEntry, PageSectionNode } from '../../../../../../lib/marketing/appearance-types';
 import type { AdminPage } from '../../../../../../types/page';
 import { primaryLocaleForContent } from '../../../../../../lib/content-display-locale';
@@ -48,12 +50,20 @@ export const usePageBuilderData = routeLoader$(async ({ params, cookie, request,
   }
 });
 
+export const usePageBuilderPreviewSupport = routeLoader$(async ({ request, params }) => {
+  const cookie = request.headers.get('cookie') || '';
+  const uiLocale = uiLocaleFromPublicRoute(cookie, params.lang, request.url);
+  const fetchContext = { forwardDocumentUrl: request.url };
+  return getPageBuilderMarketingSupport(uiLocale, fetchContext);
+});
+
 export default component$(() => {
   const { lang } = useTranslate();
   const R = useAppRoutes();
   const { success, error: showError } = useSwal();
   const langConfig = usePublicSiteMeta();
   const pageLoader = usePageBuilderData();
+  const previewSupport = usePageBuilderPreviewSupport();
   const page = pageLoader.value as AdminPage;
 
   const sections = useSignal<PageSectionNode[]>(page.sections || []);
@@ -121,6 +131,7 @@ export default component$(() => {
       activeLocale={activeLocale}
       onSave$={handleSave$}
       saving={saving}
+      previewSupport={previewSupport.value}
     />
   );
 });

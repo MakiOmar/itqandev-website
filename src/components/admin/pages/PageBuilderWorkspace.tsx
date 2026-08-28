@@ -39,6 +39,7 @@ import {
   BuilderResponsiveVisibilityFields,
 } from '~/components/admin/BuilderResponsiveVisibilityFields';
 import { BuilderStylePanel } from '~/components/admin/BuilderStylePanel';
+import { BuilderBackgroundFields } from '~/components/admin/BuilderBackgroundFields';
 import { LayoutDeviceProvider } from '~/lib/marketing/layout-device-context';
 import { normalizeHideOn, type DeviceHideOn } from '~/lib/marketing/device-visibility';
 import type { BuilderStyles, StyleBreakpoint } from '~/lib/marketing/builder-styles';
@@ -53,6 +54,8 @@ import type {
 } from '~/lib/marketing/appearance-types';
 import type { SiteLanguageRow } from '~/types/site-language';
 import type { Media } from '~/types/media';
+import type { CaseStudy, Testimonial, BlogPost } from '~/lib/marketing/types';
+import type { PortfolioCategory } from '~/lib/marketing/content-layer';
 
 const WIDGET_DND = 'application/x-credocode-widget';
 
@@ -86,6 +89,15 @@ export type PageBuilderWorkspaceProps = {
     logo?: string;
     logoDark?: string;
     logoLight?: string;
+  };
+  /** Live preview kit data (case studies tabs, testimonials, etc.). */
+  previewSupport?: {
+    caseStudies: CaseStudy[];
+    portfolioCategories: PortfolioCategory[];
+    testimonials: Testimonial[];
+    blogPosts: BlogPost[];
+    services?: import('~/lib/marketing/types').Service[];
+    techStack?: string[];
   };
 };
 
@@ -404,6 +416,7 @@ const BuilderLivePreviewShell = component$<{
   pageTitle: string;
   siteLanguages: SiteLanguageRow[];
   previewBranding?: PageBuilderWorkspaceProps['previewBranding'];
+  previewSupport?: PageBuilderWorkspaceProps['previewSupport'];
   isDarkMode: boolean;
   previewDevice: LayoutBreakpoint;
 }>((props) => {
@@ -442,18 +455,19 @@ const BuilderLivePreviewShell = component$<{
         <HomepageSectionsRenderer
           sections={props.bands}
           uiLocale={props.uiLocale}
-          services={[]}
-          caseStudies={[]}
-          testimonials={[]}
-          blogPosts={[]}
-          techStack={[]}
+          services={props.previewSupport?.services ?? []}
+          caseStudies={props.previewSupport?.caseStudies ?? []}
+          portfolioCategories={props.previewSupport?.portfolioCategories ?? []}
+          testimonials={props.previewSupport?.testimonials ?? []}
+          blogPosts={props.previewSupport?.blogPosts ?? []}
+          techStack={props.previewSupport?.techStack ?? []}
           branding={{
             name: props.pageTitle || 'Preview',
             logo: '',
             logoDark: '',
             logoLight: '',
             site_languages: [],
-            features: {},
+            features: { projects: true, testimonials: true, blog: true, services: true },
           }}
           allowDefaultSections={false}
           layoutAware={true}
@@ -823,6 +837,7 @@ export const PageBuilderWorkspace = component$<PageBuilderWorkspaceProps>((props
                 pageTitle={props.pageTitle || 'Preview'}
                 siteLanguages={props.siteLanguages || []}
                 previewBranding={props.previewBranding}
+                previewSupport={props.previewSupport}
                 isDarkMode={previewIsDark.value}
                 previewDevice={previewDevice.value}
               />
@@ -1491,7 +1506,7 @@ export const PageBuilderWorkspace = component$<PageBuilderWorkspaceProps>((props
               <BuilderInspectorTabs
                 lang={props.lang}
                 tab={inspectorTab.value}
-                showStyle={selection.value.kind === 'block'}
+                showStyle={Boolean(selection.value)}
                 onTab$={$((tab) => {
                   inspectorTab.value = tab;
                 })}
@@ -1527,6 +1542,18 @@ export const PageBuilderWorkspace = component$<PageBuilderWorkspaceProps>((props
                     </option>
                   </select>
                 </label>
+                ) : null}
+                {inspectorTab.value === 'style' ? (
+                  <BuilderBackgroundFields
+                    lang={props.lang}
+                    settings={bands[selection.value.bandIndex]?.settings}
+                    onChange$={$(async (next) => {
+                      const bi = selection.value!.bandIndex;
+                      await commit$(
+                        bands.map((b, i) => (i === bi ? { ...b, settings: next } : b)),
+                      );
+                    })}
+                  />
                 ) : null}
                 {inspectorTab.value === 'advanced' ? (
                   <BuilderResponsiveVisibilityFields
@@ -1590,6 +1617,31 @@ export const PageBuilderWorkspace = component$<PageBuilderWorkspaceProps>((props
                     </option>
                   </select>
                 </label>
+                ) : null}
+                {inspectorTab.value === 'style' ? (
+                  <BuilderBackgroundFields
+                    lang={props.lang}
+                    settings={
+                      bands[selection.value.bandIndex]?.rows[selection.value.rowIndex]?.settings
+                    }
+                    onChange$={$(async (next) => {
+                      const { bandIndex, rowIndex } = selection.value as {
+                        bandIndex: number;
+                        rowIndex: number;
+                      };
+                      await commit$(
+                        bands.map((b, bi) => {
+                          if (bi !== bandIndex) return b;
+                          return {
+                            ...b,
+                            rows: b.rows.map((r, ri) =>
+                              ri === rowIndex ? { ...r, settings: next } : r,
+                            ),
+                          };
+                        }),
+                      );
+                    })}
+                  />
                 ) : null}
                 {inspectorTab.value === 'advanced' ? (
                   <BuilderResponsiveVisibilityFields
@@ -1735,6 +1787,40 @@ export const PageBuilderWorkspace = component$<PageBuilderWorkspaceProps>((props
                 ))}
                 </>
                 ) : null}
+                {inspectorTab.value === 'style' ? (
+                  <BuilderBackgroundFields
+                    lang={props.lang}
+                    settings={
+                      bands[selection.value.bandIndex]?.rows[selection.value.rowIndex]?.columns[
+                        selection.value.colIndex
+                      ]?.settings
+                    }
+                    onChange$={$(async (next) => {
+                      const { bandIndex, rowIndex, colIndex } = selection.value as {
+                        bandIndex: number;
+                        rowIndex: number;
+                        colIndex: number;
+                      };
+                      await commit$(
+                        bands.map((b, bi) => {
+                          if (bi !== bandIndex) return b;
+                          return {
+                            ...b,
+                            rows: b.rows.map((r, ri) => {
+                              if (ri !== rowIndex) return r;
+                              return {
+                                ...r,
+                                columns: r.columns.map((c, ci) =>
+                                  ci === colIndex ? { ...c, settings: next } : c,
+                                ),
+                              };
+                            }),
+                          };
+                        }),
+                      );
+                    })}
+                  />
+                ) : null}
                 {inspectorTab.value === 'advanced' ? (
                   <BuilderResponsiveVisibilityFields
                     lang={props.lang}
@@ -1799,6 +1885,11 @@ export const PageBuilderWorkspace = component$<PageBuilderWorkspaceProps>((props
                     <AppearanceSettingsFields
                       fields={entry!.settings_fields!}
                       values={selectedBlock.settings ?? {}}
+                      categoryOptions={(props.previewSupport?.portfolioCategories ?? []).map((c) => ({
+                        id: c.id,
+                        name: c.name,
+                        slug: c.slug,
+                      }))}
                       onSettingsChange$={async (nextSettings) => {
                         await commit$(
                           updateBlockInBands(bands, selectedBlock.id, (blk) => ({
