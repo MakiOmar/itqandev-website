@@ -139,7 +139,9 @@ export default component$(() => {
             overlayNav={overlayNav}
             headerSections={shellLoader.value.header?.sections ?? []}
           />
-          <main class="flex-1 overflow-y-auto">
+          {/* overflow-y-auto alone makes overflow-x compute to auto — decorative
+              hero/section orbs then create a page-level horizontal scrollbar. */}
+          <main class="min-w-0 flex-1 overflow-x-clip overflow-y-auto">
             <Slot />
           </main>
           <Footer
