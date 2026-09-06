@@ -1,4 +1,5 @@
 import { isUiLocaleRtl } from '~/lib/i18n/ui-locale-segments';
+import { resolveLaravelMediaUrl } from '~/lib/marketing/resolve-laravel-media-url';
 import { shouldDisableGoogleFontsForPath } from '~/lib/perf/google-fonts-policy';
 import type { SiteTypography, TypographyFace } from '~/types/typography';
 
@@ -38,7 +39,8 @@ function normalizeSources(raw: unknown): Record<string, string> {
   const out: Record<string, string> = {};
   for (const [key, val] of Object.entries(raw as Record<string, unknown>)) {
     if (typeof val === 'string' && val.trim()) {
-      out[key] = val.trim();
+      // Belt-and-suspenders: relative /storage/fonts/... must hit Laravel APP_URL origin.
+      out[key] = resolveLaravelMediaUrl(val.trim()) || val.trim();
     }
   }
   return out;
