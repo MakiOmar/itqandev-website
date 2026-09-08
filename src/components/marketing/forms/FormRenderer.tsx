@@ -535,15 +535,17 @@ export const FormRenderer = component$<FormRendererProps>((props) => {
           );
         })}
 
-        {/* Honeypot — bots fill this; humans never see it */}
-        {settings.honeypot !== false ? (
-          <div class="absolute -left-[9999px] h-0 w-0 overflow-hidden opacity-0" aria-hidden="true">
-            <label>
-              Website
-              <input type="text" name="_gotcha" tabIndex={-1} autoComplete="off" />
-            </label>
-          </div>
-        ) : null}
+        {/* Honeypot — off-screen, not display:none. Always posted so bots cannot skip it. */}
+        <div class="absolute -left-[9999px] h-0 w-0 overflow-hidden opacity-0" aria-hidden="true">
+          <label>
+            Website
+            <input type="text" name="_gotcha" tabIndex={-1} autoComplete="off" />
+          </label>
+          <label>
+            Website URL
+            <input type="text" name="website_url" tabIndex={-1} autoComplete="off" />
+          </label>
+        </div>
 
         {captchaProvider !== 'none' ? (
           <div class="space-y-2">
