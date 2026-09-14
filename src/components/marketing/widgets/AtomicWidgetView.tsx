@@ -342,7 +342,6 @@ export const AtomicWidgetView = component$<AtomicWidgetProps>((props) => {
         </ul>
       );
     }
-    }
     case 'lottie': {
       const src = str(s, 'url') || str(s, 'media_url') || str(s, 'src');
       if (!src) return <div class="b-lottie rounded-xl bg-slate-100 p-8 text-center text-sm text-slate-500 dark:bg-slate-800">Lottie</div>;
