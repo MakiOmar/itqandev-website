@@ -1,13 +1,12 @@
-import { component$, useSignal, useVisibleTask$, $, lazy$ } from '@builder.io/qwik';
+import { component$, useSignal, useVisibleTask$, $ } from '@builder.io/qwik';
 import { marketingGet } from '~/lib/marketing/api-client';
 import { MARKETING_ENDPOINTS } from '~/lib/marketing/endpoints';
 import { isFeatureModuleEnabled } from '~/lib/api/project-settings';
+import { HomepageSectionsRenderer } from '~/components/marketing/home-sections/HomepageSectionsRenderer';
 import type { PageSectionNode } from '~/lib/marketing/appearance-types';
 import type { PublicBrandingState } from '~/lib/marketing/public-shell';
 import type { CaseStudy, Testimonial, BlogPost, Service, ContactInfo } from '~/lib/marketing/types';
 import type { PortfolioCategory } from '~/lib/marketing/content-layer';
-
-const OverlaySections = lazy$(() => import('./OverlaySectionsLazy'));
 
 export type ScheduledOverlay = {
   id: number;
@@ -126,7 +125,7 @@ export const PublicOverlayHost = component$<{
         >
           Close
         </button>
-        <OverlaySections
+        <HomepageSectionsRenderer
           sections={payload.value.sections}
           layoutAware={true}
           allowDefaultSections={false}

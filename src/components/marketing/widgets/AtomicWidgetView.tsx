@@ -1,8 +1,7 @@
-import { component$, lazy$ } from '@builder.io/qwik';
+import { component$ } from '@builder.io/qwik';
 import { Button } from '~/components/marketing/Button';
 import { MarketingImageLightbox } from '~/components/marketing/MarketingImageLightbox';
-
-const LottiePlayer = lazy$(() => import('./LottiePlayerLazy'));
+import { LottiePlayer } from '~/components/marketing/widgets/LottiePlayer';
 
 export type AtomicWidgetProps = {
   type: string;
