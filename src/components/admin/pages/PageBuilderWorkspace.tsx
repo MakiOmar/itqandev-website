@@ -605,7 +605,7 @@ export const PageBuilderWorkspace = component$<PageBuilderWorkspaceProps>((props
     .slice();
 
   const insertableByCategory = (() => {
-    const map = new Map<string, AppearanceRegistryEntry[]>();
+    const map: Map<string, AppearanceRegistryEntry[]> = new Map();
     for (const entry of insertable) {
       const cat = entry.category || 'General';
       const list = map.get(cat) || [];
