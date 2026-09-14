@@ -21,7 +21,7 @@ import type {
 import { isHiddenOnDevice } from '~/lib/marketing/device-visibility';
 import { useLayoutDevice } from '~/lib/marketing/layout-device-context';
 import { StyledBuilderLeaf } from '~/components/marketing/widgets/StyledBuilderLeaf';
-import { hasAnyStyles } from '~/lib/marketing/builder-styles';
+import { isFormFieldVisible } from '~/lib/forms/form-conditions';
 
 /** Convert Eastern/Persian digits as the user types into email/tel fields. */
 const onWesternDigitsInput$ = $((e: Event) => {
@@ -175,13 +175,20 @@ function renderFieldControl(field: FormFieldNode) {
     );
   }
 
+  if (field.type === 'html') {
+    return (
+      <div class="prose prose-sm max-w-none dark:prose-invert" dangerouslySetInnerHTML={String(s.html || '')} />
+    );
+  }
+
   if (field.type === 'select') {
+    const multiple = Boolean(s.multiple);
     return (
       <label class="block text-sm font-medium text-gray-800 dark:text-gray-200">
         {label}
         {required ? ' *' : ''}
-        <select class={inputClass} name={name} required={required}>
-          <option value="">{placeholder || '—'}</option>
+        <select class={inputClass} name={name} required={required} multiple={multiple}>
+          {!multiple ? <option value="">{placeholder || '—'}</option> : null}
           {options.map((opt) => (
             <option key={opt} value={opt}>
               {opt}
@@ -257,6 +264,7 @@ function renderFieldControl(field: FormFieldNode) {
           name={name}
           accept={String(s.accept || '') || undefined}
           required={required}
+          multiple={Boolean(s.multiple)}
         />
         {help ? <span class="mt-1 block text-xs text-gray-500">{help}</span> : null}
       </label>
@@ -272,8 +280,10 @@ function renderFieldControl(field: FormFieldNode) {
           ? 'url'
           : field.type === 'number'
             ? 'number'
-            : field.type === 'date'
-              ? 'date'
+          : field.type === 'date'
+            ? 'date'
+            : field.type === 'time'
+              ? 'time'
               : 'text';
 
   const westernDigits = fieldUsesWesternDigits(field.type);
@@ -312,6 +322,7 @@ export const FormRenderer = component$<FormRendererProps>((props) => {
   const successMsg = useSignal('');
   const submitting = useSignal(false);
   const captchaReady = useSignal(false);
+  const fieldValues = useSignal<Record<string, string>>({});
   const layoutDevice = useLayoutDevice();
 
   // eslint-disable-next-line qwik/no-use-visible-task
@@ -513,10 +524,24 @@ export const FormRenderer = component$<FormRendererProps>((props) => {
       ) : null}
       {intro ? <p class="mb-6 text-sm leading-relaxed text-slate-600 dark:text-slate-400">{intro}</p> : null}
 
-      <form class="space-y-4" preventdefault:submit onSubmit$={onSubmit$}>
+      <form
+        class="space-y-4"
+        preventdefault:submit
+        onSubmit$={onSubmit$}
+        onInput$={(e) => {
+          const t = e.target as HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement | null;
+          if (!t?.name) return;
+          const name = t.name.endsWith('[]') ? t.name.slice(0, -2) : t.name;
+          fieldValues.value = { ...fieldValues.value, [name]: t.value };
+        }}
+      >
         {layout.rows.map((row) => {
           if (isHiddenOnDevice(row.hide_on, layoutDevice)) return null;
-          const visibleFields = row.fields.filter((field) => !isHiddenOnDevice(field.hide_on, layoutDevice));
+          const visibleFields = row.fields.filter(
+            (field) =>
+              !isHiddenOnDevice(field.hide_on, layoutDevice) &&
+              isFormFieldVisible(field.settings?.conditions, fieldValues.value),
+          );
           if (visibleFields.length === 0) return null;
           return (
           <div key={row.id} class="grid grid-cols-12 gap-4">

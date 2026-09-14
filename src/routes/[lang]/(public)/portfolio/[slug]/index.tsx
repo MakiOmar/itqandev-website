@@ -16,6 +16,7 @@ import { AnimatedReveal } from '~/components/marketing/AnimatedReveal';
 import { Link, useLocation } from '@builder.io/qwik-city';
 import { ContentImage } from '~/components/marketing/ContentImage';
 import { MarketingImageLightbox } from '~/components/marketing/MarketingImageLightbox';
+import { ThemeBodyOrFallback } from '~/components/marketing/theme/ThemeBodyOrFallback';
 import { marketingEntityDetailHead } from '~/lib/marketing/marketing-entity-document-head';
 
 /** SSR cannot forward cross-origin Laravel cookies; loaders return this marker for a client retry. */
@@ -167,9 +168,25 @@ export default component$(() => {
 
   const caseStudy = state.study;
 
+  const shell = usePublicShell();
+  const uiLocale = uiLangFromUrlPathname(loc.url.pathname);
   const baseUrl = getPublicSiteBaseUrl();
 
   return (
+    <ThemeBodyOrFallback
+      themeBody={shell.value.themeBody}
+      renderer={{
+        uiLocale,
+        branding: shell.value.branding,
+        services: shell.value.siteContent?.services ?? [],
+        caseStudies: [caseStudy],
+        testimonials: [],
+        blogPosts: [],
+        techStack: shell.value.siteContent?.techStack ?? [],
+        siteContact: shell.value.siteContent?.contact,
+        pageContext: { title: caseStudy.title, slug: caseStudy.slug },
+      }}
+    >
     <>
       <Section>
         <Container size="narrow">
@@ -298,6 +315,7 @@ export default component$(() => {
         />
       ) : null}
     </>
+    </ThemeBodyOrFallback>
   );
 });
 

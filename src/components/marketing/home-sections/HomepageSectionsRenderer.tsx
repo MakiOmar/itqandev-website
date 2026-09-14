@@ -78,6 +78,15 @@ const WIDGET_TYPES = new Set([
   'breadcrumb',
   'map',
   'social_links',
+  'lottie',
+  'flip_box',
+  'post_title',
+  'post_excerpt',
+  'post_content',
+  'post_featured_image',
+  'post_info',
+  'archive_title',
+  'loop_grid',
 ]);
 
 const CONTENT_KITS = new Set([
@@ -137,9 +146,23 @@ function renderBlock(
     type: string;
     settings?: Record<string, unknown>;
     styles?: BuilderStyles | null;
+    rows?: PageLayoutBand['rows'];
   },
   props: HomepageSectionsRendererProps,
 ) {
+  if (block.type === 'inner_band') {
+    return renderLayoutBand(
+      {
+        id: String(block.id || 'inner'),
+        type: 'layout',
+        layout_width: 'boxed',
+        settings: block.settings,
+        styles: block.styles || undefined,
+        rows: block.rows ?? [],
+      },
+      props,
+    );
+  }
   const key = block.id || block.type;
   const settings = block.settings ?? {};
   const showTestimonialsModule = isFeatureModuleEnabled(props.branding.features, 'testimonials');
@@ -367,7 +390,30 @@ function renderLayoutBand(band: PageLayoutBand, props: HomepageSectionsRendererP
             styles={row.styles}
             class="w-full rounded-xl"
           >
-            <div class={`grid grid-cols-12 items-stretch ${gapClass}`}>
+            <div
+              class={`grid grid-cols-12 items-stretch ${gapClass} ${
+                row.direction === 'column' ? 'flex flex-col' : ''
+              }`}
+              style={{
+                justifyContent:
+                  row.justify === 'center'
+                    ? 'center'
+                    : row.justify === 'end'
+                      ? 'end'
+                      : row.justify === 'between'
+                        ? 'space-between'
+                        : 'start',
+                alignItems:
+                  row.align === 'start'
+                    ? 'start'
+                    : row.align === 'center'
+                      ? 'center'
+                      : row.align === 'end'
+                        ? 'end'
+                        : 'stretch',
+                flexWrap: row.wrap === false ? 'nowrap' : 'wrap',
+              }}
+            >
               {(row.columns ?? []).map((col) => {
                 const span = normalizeColumnSpans(col.span);
                 const spanClass = columnSpanClassNames(span, stackBelow);

@@ -4,9 +4,8 @@ import { PageHeader } from '~/components/common/PageHeader';
 import { useTranslate, translateApp } from '~/lib/i18n/useTranslate';
 import { useSwal } from '~/lib/hooks/useSwal';
 import {
-  adminBodyBuilderHref,
-  adminFooterBuilderHref,
-  adminHeaderBuilderHref,
+  adminChromeBuilderHref,
+  chromeListHref,
   getLocalizedRoutes,
 } from '~/lib/constants/routes';
 import { updateChromeLayoutFromBrowser } from '~/lib/admin/chrome-layout-actions';
@@ -23,11 +22,9 @@ import {
 } from '~/lib/admin/native-select-classes';
 
 function chromeSlugEntity(kind: ChromeLayoutKind) {
-  return kind === 'header'
-    ? ('chrome_headers' as const)
-    : kind === 'footer'
-      ? ('chrome_footers' as const)
-      : ('chrome_bodies' as const);
+  if (kind === 'header') return 'chrome_headers' as const;
+  if (kind === 'footer') return 'chrome_footers' as const;
+  return 'chrome_bodies' as const;
 }
 
 export const ChromeLayoutEditPage = component$<{
@@ -40,6 +37,9 @@ export const ChromeLayoutEditPage = component$<{
   const name = useSignal(layout.name);
   const slug = useSignal(layout.slug);
   const status = useSignal<ChromeLayoutStatus>(layout.status);
+  const delayMs = useSignal(String(layout.overlay?.delay_ms ?? 0));
+  const once = useSignal(layout.overlay?.once !== false);
+  const sitewide = useSignal(Boolean(layout.overlay?.sitewide));
   const saving = useSignal(false);
   const slugAuto = useContentSlugAutosuggestTitleSlugSignals({
     entity: chromeSlugEntity(kind),
@@ -47,18 +47,8 @@ export const ChromeLayoutEditPage = component$<{
     slug,
     ignoreRecordId: layout.id,
   });
-  const listHref =
-    kind === 'header'
-      ? R.ADMIN.APPEARANCE_HEADER
-      : kind === 'footer'
-        ? R.ADMIN.APPEARANCE_FOOTER
-        : R.ADMIN.APPEARANCE_BODY;
-  const builderHref =
-    kind === 'header'
-      ? adminHeaderBuilderHref(lang, layout.id)
-      : kind === 'footer'
-        ? adminFooterBuilderHref(lang, layout.id)
-        : adminBodyBuilderHref(lang, layout.id);
+  const listHref = chromeListHref(R, kind);
+  const builderHref = adminChromeBuilderHref(lang, kind, layout.id);
 
   const onSave$ = $(async () => {
     if (!name.value.trim()) {
@@ -67,11 +57,19 @@ export const ChromeLayoutEditPage = component$<{
     }
     saving.value = true;
     try {
-      const res = await updateChromeLayoutFromBrowser(kind, layout.id, {
+      const payload: Record<string, unknown> = {
         name: name.value.trim(),
         slug: slug.value.trim(),
         status: status.value,
-      });
+      };
+      if (kind === 'overlay') {
+        payload.overlay = {
+          delay_ms: Number(delayMs.value) || 0,
+          once: once.value,
+          sitewide: sitewide.value,
+        };
+      }
+      const res = await updateChromeLayoutFromBrowser(kind, layout.id, payload);
       if (!res.success) {
         await showError(res.error || translateApp(lang, 'common.error'));
         return;
@@ -131,6 +129,37 @@ export const ChromeLayoutEditPage = component$<{
             </option>
           </select>
         </label>
+        {kind === 'overlay' ? (
+          <div class="space-y-3 border-t border-gray-200 pt-3 dark:border-gray-700">
+            <label class={ADMIN_FORM_LABEL_CLASS}>
+              Delay (ms)
+              <input
+                class={ADMIN_FORM_INPUT_CLASS}
+                type="number"
+                min={0}
+                max={120000}
+                value={delayMs.value}
+                onInput$={(e) => (delayMs.value = (e.target as HTMLInputElement).value)}
+              />
+            </label>
+            <label class="flex items-center gap-2 text-sm">
+              <input
+                type="checkbox"
+                checked={once.value}
+                onChange$={(e) => (once.value = (e.target as HTMLInputElement).checked)}
+              />
+              Show once
+            </label>
+            <label class="flex items-center gap-2 text-sm">
+              <input
+                type="checkbox"
+                checked={sitewide.value}
+                onChange$={(e) => (sitewide.value = (e.target as HTMLInputElement).checked)}
+              />
+              Sitewide delayed open
+            </label>
+          </div>
+        ) : null}
         {layout.is_site_default ? (
           <p class="text-xs text-gray-500">{translateApp(lang, 'chromeLayouts.siteDefault')}</p>
         ) : null}

@@ -12,7 +12,7 @@ import { Container } from '~/components/marketing/Container';
 import { Section } from '~/components/marketing/Section';
 import { AnimatedReveal } from '~/components/marketing/AnimatedReveal';
 import { ContentImage } from '~/components/marketing/ContentImage';
-import { MarketingImageLightbox } from '~/components/marketing/MarketingImageLightbox';
+import { ThemeBodyOrFallback } from '~/components/marketing/theme/ThemeBodyOrFallback';
 
 export const useBlogPost = routeLoader$(async ({ params, fail }) => {
   const slug = params.slug;
@@ -27,10 +27,26 @@ export default component$(() => {
   const loc = useLocation();
   const MR = marketingRoutes(uiLangFromUrlPathname(loc.url.pathname));
   const post = useBlogPost().value;
+  const shell = usePublicShell();
+  const uiLocale = uiLangFromUrlPathname(loc.url.pathname);
   const baseUrl = getPublicSiteBaseUrl();
   const dateStr = post.date ? new Date(post.date).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) : '';
 
   return (
+    <ThemeBodyOrFallback
+      themeBody={shell.value.themeBody}
+      renderer={{
+        uiLocale,
+        branding: shell.value.branding,
+        services: shell.value.siteContent?.services ?? [],
+        caseStudies: [],
+        testimonials: [],
+        blogPosts: [],
+        techStack: shell.value.siteContent?.techStack ?? [],
+        siteContact: shell.value.siteContent?.contact,
+        pageContext: { title: post.title, slug: String((post as { slug?: string }).slug || '') },
+      }}
+    >
     <>
       <Section>
         <Container size="narrow">
@@ -111,6 +127,7 @@ export default component$(() => {
         })}
       />
     </>
+    </ThemeBodyOrFallback>
   );
 });
 

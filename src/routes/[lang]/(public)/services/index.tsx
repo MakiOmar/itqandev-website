@@ -26,6 +26,15 @@ function parsePublicPageDetail(json: PublicPageDetail & { data?: unknown }): Pub
 
 export const useServicesCmsPage = routeLoader$(async ({ request, params, error, resolveValue }) => {
   const shell = await resolveValue(usePublicShell);
+  if (shell.themeBody && shell.themeBody.length > 0) {
+    return {
+      slug: SERVICES_PAGE_SLUG,
+      title: 'Services',
+      excerpt: '',
+      sections: shell.themeBody,
+      exclude_from_search: false,
+    } as PublicPageDetail;
+  }
   if (!isFeatureModuleEnabled(shell.branding.features, 'pages')) {
     throw error(404, 'Not found');
   }

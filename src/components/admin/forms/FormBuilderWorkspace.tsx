@@ -42,7 +42,8 @@ import type {
 } from '~/types/form';
 import type { SiteLanguageRow } from '~/types/site-language';
 import { moveItem } from '~/lib/admin/appearance-actions';
-import type { AppearanceSettingField } from '~/lib/marketing/appearance-types';
+import { FormConditionFields } from '~/components/admin/forms/FormConditionFields';
+import { FormMergeTagPicker } from '~/components/admin/forms/FormMergeTagPicker';
 
 const FIELD_DND = 'application/x-credocode-form-field';
 
@@ -50,6 +51,12 @@ const FORM_GENERAL_SETTING_FIELDS: AppearanceSettingField[] = [
   { key: 'submit_label', type: 'text', label: 'Submit button label', translatable: true },
   { key: 'success_message', type: 'textarea', label: 'Success message', translatable: true },
   { key: 'error_message', type: 'textarea', label: 'Error message', translatable: true },
+  { key: 'success_mode', type: 'select', label: 'Success mode', translatable: false, options: [
+    { value: 'message', label: 'Message' },
+    { value: 'redirect', label: 'Redirect' },
+  ] },
+  { key: 'do_not_store', type: 'boolean', label: 'Do not store submissions', translatable: false },
+  { key: 'retention_days', type: 'number', label: 'Retention days (0 = keep)', translatable: false },
 ];
 
 type Device = 'mobile' | 'tablet' | 'desktop';
@@ -893,7 +900,20 @@ export const FormBuilderWorkspace = component$<FormBuilderWorkspaceProps>((props
                     />
                   );
                 })()}
-              
+                <FormConditionFields
+                  value={selectedField.settings?.conditions}
+                  onChange$={$(async (next) => {
+                    const { rowIndex, fieldIndex } = selection.value as {
+                      rowIndex: number;
+                      fieldIndex: number;
+                    };
+                    const layout = ensureFormLayout(props.layout.value);
+                    const field = layout.rows[rowIndex]?.fields[fieldIndex];
+                    if (!field) return;
+                    field.settings = { ...field.settings, conditions: next };
+                    await commitLayout$(layout);
+                  })}
+                />
                 </>
                 ) : null}
                 {inspectorTab.value === 'style' ? (
@@ -993,6 +1013,20 @@ export const FormBuilderWorkspace = component$<FormBuilderWorkspaceProps>((props
                     />
                   );
                 })()}
+                <FormMergeTagPicker
+                  fieldIds={ensureFormLayout(props.layout.value).rows.flatMap((r) => r.fields.map((f) => f.id))}
+                  onInsert$={$(async (token) => {
+                    const { actionIndex } = selection.value as { actionIndex: number };
+                    const next = ensureFormActions(props.actions.value).map((a, i) => {
+                      if (i !== actionIndex) return a;
+                      const settings = { ...(a.settings || {}) };
+                      const key = Object.keys(settings).find((k) => typeof settings[k] === 'string') || 'body';
+                      settings[key] = `${String(settings[key] ?? '')}${token}`;
+                      return { ...a, settings };
+                    });
+                    await commitActions$(next);
+                  })}
+                />
               </div>
             ) : null}
           </div>

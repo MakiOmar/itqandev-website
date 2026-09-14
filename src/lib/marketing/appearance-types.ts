@@ -44,14 +44,17 @@ export type PageLayoutStackBelow = 'none' | 'tablet' | 'desktop';
 
 export type PageLayoutBlock = {
   id: string;
-  kind?: 'widget' | 'kit';
+  kind?: 'widget' | 'kit' | 'global' | 'inner';
   type: HomepageSectionType | string;
+  global_id?: number;
   enabled?: boolean;
   /** When true for a breakpoint, node is not rendered for that device. */
   hide_on?: DeviceHideOn;
   /** Presentation overrides (not translatable). */
   styles?: BuilderStyles;
   settings?: Record<string, unknown>;
+  /** Inner band only: nested rows (one extra nest). */
+  rows?: PageLayoutRow[];
 };
 
 export type PageLayoutColumn = {
@@ -68,6 +71,10 @@ export type PageLayoutRow = {
   id: string;
   stack_below?: PageLayoutStackBelow;
   gap?: number;
+  direction?: 'row' | 'column';
+  justify?: 'start' | 'center' | 'end' | 'between';
+  align?: 'start' | 'center' | 'end' | 'stretch';
+  wrap?: boolean;
   hide_on?: DeviceHideOn;
   /** Container chrome (width, padding, border, …). */
   styles?: BuilderStyles;

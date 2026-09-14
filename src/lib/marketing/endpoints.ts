@@ -36,5 +36,5 @@ export const MARKETING_ENDPOINTS = {
   /** GET published CMS pages (excludes exclude_from_search) */
   pages: '/public/pages',
   /** GET one published CMS page by slug (still returns exclude_from_search pages) */
-  page: (slug: string) => `/public/pages/${encodeURIComponent(slug)}`,
+  overlay: (id: string | number) => `/public/overlays/${id}`,
 } as const;

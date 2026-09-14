@@ -12,6 +12,7 @@ import { uiLocaleFromPublicRoute, uiLangFromUrlPathname, stripUiLocaleFromPathna
 import { LocaleTransitionProvider } from '~/components/common/LocaleTransitionOverlay';
 import { Header } from '~/components/marketing/Header';
 import { Footer } from '~/components/marketing/Footer';
+import { PublicOverlayHost } from '~/components/marketing/overlays/PublicOverlayHost';
 import { PublicShellTypographyHead } from '~/components/perf/PublicShellTypographyHead';
 import { defaultSystemTypography } from '~/lib/perf/typography';
 import { auth } from '~/lib/auth';
@@ -142,12 +143,26 @@ export default component$(() => {
           {/* overflow-y-auto alone makes overflow-x compute to auto — decorative
               hero/section orbs then create a page-level horizontal scrollbar. */}
           <main class="min-w-0 flex-1 overflow-x-clip overflow-y-auto">
+            {shellLoader.value.themeBodyCss ? (
+              <style dangerouslySetInnerHTML={shellLoader.value.themeBodyCss} />
+            ) : null}
+            {branding.value.design_kit_css ? (
+              <style dangerouslySetInnerHTML={branding.value.design_kit_css} />
+            ) : null}
             <Slot />
           </main>
           <Footer
             contact={contact}
             branding={branding.value}
             footer={shellLoader.value.footer}
+          />
+          <PublicOverlayHost
+            uiLocale={uiLocale}
+            branding={branding.value}
+            scheduled={shellLoader.value.overlays ?? []}
+            services={shellLoader.value.siteContent?.services ?? []}
+            techStack={shellLoader.value.siteContent?.techStack ?? []}
+            siteContact={shellLoader.value.siteContent?.contact}
           />
         </div>
         </LayoutDeviceProvider>

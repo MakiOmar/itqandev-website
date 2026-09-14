@@ -15,7 +15,7 @@ import { resolveServiceIconUrl } from '~/lib/marketing/service-icons';
 import { marketingEntityDetailHead } from '~/lib/marketing/marketing-entity-document-head';
 import { Container } from '~/components/marketing/Container';
 import { Section } from '~/components/marketing/Section';
-import { AnimatedReveal } from '~/components/marketing/AnimatedReveal';
+import { ThemeBodyOrFallback } from '~/components/marketing/theme/ThemeBodyOrFallback';
 
 export const useServiceDetail = routeLoader$(async ({ params, request, fail }) => {
   const slug = decodeURIComponent(String(params.slug ?? '').trim());
@@ -49,9 +49,25 @@ export default component$(() => {
     return null;
   }
   const s = raw as MarketingService;
+  const shell = usePublicShell();
+  const uiLocale = uiLangFromUrlPathname(loc.url.pathname);
   const baseUrl = getPublicSiteBaseUrl();
 
   return (
+    <ThemeBodyOrFallback
+      themeBody={shell.value.themeBody}
+      renderer={{
+        uiLocale,
+        branding: shell.value.branding,
+        services: shell.value.siteContent?.services ?? [],
+        caseStudies: [],
+        testimonials: [],
+        blogPosts: [],
+        techStack: shell.value.siteContent?.techStack ?? [],
+        siteContact: shell.value.siteContent?.contact,
+        pageContext: { title: s.name, slug: s.slug },
+      }}
+    >
     <>
       <Section>
         <Container size="narrow">
@@ -136,6 +152,7 @@ export default component$(() => {
         <script type="application/ld+json" dangerouslySetInnerHTML={JSON.stringify(s.seoMeta.schema)} />
       ) : null}
     </>
+    </ThemeBodyOrFallback>
   );
 });
 

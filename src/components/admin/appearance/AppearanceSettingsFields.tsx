@@ -21,6 +21,7 @@ import type { AppearanceSettingField } from '~/lib/marketing/appearance-types';
 import { normalizeResponsiveColumns } from '~/lib/marketing/grid-columns';
 import type { SiteLanguageRow } from '~/types/site-language';
 import type { CategorySelectOption } from './CategoryMultiSelectField';
+import { BuilderDynamicTagChips, type BuilderDynamicTag } from './BuilderDynamicTagChips';
 
 export type AppearanceSettingsFieldsProps = {
   fields: AppearanceSettingField[];
@@ -39,6 +40,8 @@ export type AppearanceSettingsFieldsProps = {
   onMediaPreview$?: QRL<(mediaId: number, url: string) => void>;
   /** Prefill category checkboxes (page builder preview / public categories). */
   categoryOptions?: CategorySelectOption[];
+  /** Allowlisted dynamic tags for text/URL fields (theme / loop documents). */
+  dynamicTags?: BuilderDynamicTag[];
 };
 
 type FieldControlProps = {
@@ -52,6 +55,7 @@ type FieldControlProps = {
   onMediaPreview$?: QRL<(mediaId: number, url: string) => void>;
   lang: string;
   categoryOptions?: CategorySelectOption[];
+  dynamicTags?: BuilderDynamicTag[];
 };
 
 function asString(v: unknown): string {
@@ -228,32 +232,63 @@ const AppearanceSettingFieldControl = component$<FieldControlProps>((props) => {
             );
           }}
         />
+        {props.dynamicTags?.length ? (
+          <BuilderDynamicTagChips
+            tags={props.dynamicTags}
+            onInsert$={async (token) => {
+              const current = asString(
+                readAppearanceSettingValue(
+                  props.values,
+                  field.key,
+                  props.activeLocale,
+                  props.defaultLocale,
+                  translatable,
+                ),
+              );
+              await props.onSettingsChange$(
+                writeAppearanceSettingValue(
+                  props.values,
+                  field.key,
+                  `${current}${token}`,
+                  props.activeLocale,
+                  props.defaultLocale,
+                  translatable,
+                ),
+              );
+            }}
+          />
+        ) : null}
       </div>
     );
   }
 
   if (field.type === 'icon') {
+    const ICONS = ['star', 'check', 'heart', 'arrow', 'play', 'mail', 'phone', 'quote'];
     return (
       <div>
         <label class="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-300">{label}</label>
-        <input
-          type="text"
+        <select
           class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm dark:border-gray-600 dark:bg-slate-900"
-          value={asString(raw)}
-          placeholder="star | check | heart"
-          onInput$={async (e) => {
+          value={asString(raw) || 'star'}
+          onChange$={async (e) => {
             await props.onSettingsChange$(
               writeAppearanceSettingValue(
                 props.values,
                 field.key,
-                (e.target as HTMLInputElement).value,
+                (e.target as HTMLSelectElement).value,
                 props.activeLocale,
                 props.defaultLocale,
                 translatable,
               ),
             );
           }}
-        />
+        >
+          {ICONS.map((name) => (
+            <option key={name} value={name}>
+              {name}
+            </option>
+          ))}
+        </select>
       </div>
     );
   }
@@ -279,6 +314,32 @@ const AppearanceSettingFieldControl = component$<FieldControlProps>((props) => {
           }}
         />
         <p class="mt-1 text-[11px] text-gray-500">HTML allowed</p>
+        {props.dynamicTags?.length ? (
+          <BuilderDynamicTagChips
+            tags={props.dynamicTags}
+            onInsert$={async (token) => {
+              const current = asString(
+                readAppearanceSettingValue(
+                  props.values,
+                  field.key,
+                  props.activeLocale,
+                  props.defaultLocale,
+                  translatable,
+                ),
+              );
+              await props.onSettingsChange$(
+                writeAppearanceSettingValue(
+                  props.values,
+                  field.key,
+                  `${current}${token}`,
+                  props.activeLocale,
+                  props.defaultLocale,
+                  translatable,
+                ),
+              );
+            }}
+          />
+        ) : null}
       </div>
     );
   }
@@ -613,6 +674,32 @@ const AppearanceSettingFieldControl = component$<FieldControlProps>((props) => {
             );
           }}
         />
+        {props.dynamicTags?.length ? (
+          <BuilderDynamicTagChips
+            tags={props.dynamicTags}
+            onInsert$={async (token) => {
+              const current = asString(
+                readAppearanceSettingValue(
+                  props.values,
+                  field.key,
+                  props.activeLocale,
+                  props.defaultLocale,
+                  translatable,
+                ),
+              );
+              await props.onSettingsChange$(
+                writeAppearanceSettingValue(
+                  props.values,
+                  field.key,
+                  `${current}${token}`,
+                  props.activeLocale,
+                  props.defaultLocale,
+                  translatable,
+                ),
+              );
+            }}
+          />
+        ) : null}
       </div>
     );
   }
@@ -774,6 +861,32 @@ const AppearanceSettingFieldControl = component$<FieldControlProps>((props) => {
           );
         }}
       />
+      {props.dynamicTags?.length ? (
+        <BuilderDynamicTagChips
+          tags={props.dynamicTags}
+          onInsert$={async (token) => {
+            const current = asString(
+              readAppearanceSettingValue(
+                props.values,
+                field.key,
+                props.activeLocale,
+                props.defaultLocale,
+                translatable,
+              ),
+            );
+            await props.onSettingsChange$(
+              writeAppearanceSettingValue(
+                props.values,
+                field.key,
+                `${current}${token}`,
+                props.activeLocale,
+                props.defaultLocale,
+                translatable,
+              ),
+            );
+          }}
+        />
+      ) : null}
     </div>
   );
 });
@@ -877,6 +990,7 @@ export const AppearanceSettingsFields = component$<AppearanceSettingsFieldsProps
               onPickMedia$={props.onPickMedia$}
               mediaPreviewById={props.mediaPreviewById}
               onMediaPreview$={props.onMediaPreview$}
+              dynamicTags={props.dynamicTags}
             />
           ))}
         </div>
@@ -903,6 +1017,7 @@ export const AppearanceSettingsFields = component$<AppearanceSettingsFieldsProps
                 onPickMedia$={props.onPickMedia$}
                 mediaPreviewById={props.mediaPreviewById}
                 onMediaPreview$={props.onMediaPreview$}
+                dynamicTags={props.dynamicTags}
               />
             ))}
           </div>

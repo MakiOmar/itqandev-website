@@ -154,6 +154,8 @@ export function ensureFormSettings(raw: unknown): FormSettings {
         ? o.captcha
         : 'none',
     store_ip: o.store_ip !== false,
+    do_not_store: o.do_not_store === true,
+    retention_days: Math.max(0, Math.min(3650, Number(o.retention_days) || 0)),
     translations:
       o.translations && typeof o.translations === 'object'
         ? (o.translations as Record<string, Record<string, unknown>>)

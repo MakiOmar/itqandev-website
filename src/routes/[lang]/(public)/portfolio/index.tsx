@@ -35,6 +35,15 @@ function parsePublicPageDetail(json: PublicPageDetail & { data?: unknown }): Pub
 
 export const usePortfolioCmsPage = routeLoader$(async ({ request, params, error, resolveValue }) => {
   const shell = await resolveValue(usePublicShell);
+  if (shell.themeBody && shell.themeBody.length > 0) {
+    return {
+      slug: PORTFOLIO_PAGE_SLUG,
+      title: 'Portfolio',
+      excerpt: '',
+      sections: shell.themeBody,
+      exclude_from_search: false,
+    } as PublicPageDetail;
+  }
   if (!isFeatureModuleEnabled(shell.branding.features, 'pages')) {
     throw error(404, 'Not found');
   }

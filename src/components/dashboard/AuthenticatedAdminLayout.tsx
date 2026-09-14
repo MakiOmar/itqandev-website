@@ -17,7 +17,8 @@ function isAdminPageBuilderPath(pathname: string): boolean {
   return (
     /^\/admin\/pages\/[^/]+\/builder$/.test(logical) ||
     /^\/admin\/forms\/[^/]+\/builder$/.test(logical) ||
-    /^\/admin\/appearance\/(header|footer|body)\/[^/]+\/builder$/.test(logical)
+    /^\/admin\/appearance\/(header|footer|body|singles|archives|loop-items|overlays)\/[^/]+\/builder$/.test(logical) ||
+    /^\/admin\/appearance\/homepage$/.test(logical)
   );
 }
 
@@ -93,31 +94,26 @@ export const AuthenticatedAdminLayout = component$((props: { settings?: ProjectS
     const existingSession =
       typeof window !== 'undefined' ? localStorage.getItem(sessionKey) : null;
 
-    if (!existingSession && adminAuth.value) {
-      if (
-        adminAuth.value.token &&
-        adminAuth.value.token !== 'sanctum_cookie' &&
-        typeof window !== 'undefined'
-      ) {
-        localStorage.setItem(sessionKey, JSON.stringify(adminAuth.value));
-      } else {
-        try {
-          const apiClient = getApiClient();
-          const response = await apiClient.get('/me');
-          if (response.success && response.data && typeof window !== 'undefined') {
-            const userData = response.data as { token?: string };
-            const session = {
-              user: userData,
-              token: userData?.token || 'sanctum_cookie',
+    if (!existingSession && adminAuth.value && typeof window !== 'undefined') {
+      const publicSession = { ...adminAuth.value, token: 'sanctum_cookie' };
+      try {
+        const apiClient = getApiClient();
+        const response = await apiClient.get('/me');
+        if (response.success && response.data) {
+          const userData = response.data as { user?: unknown; token?: string };
+          localStorage.setItem(
+            sessionKey,
+            JSON.stringify({
+              user: (userData as { user?: unknown }).user ?? userData,
+              token: 'sanctum_cookie',
               expiresAt: Date.now() + 24 * 60 * 60 * 1000,
-            };
-            localStorage.setItem(sessionKey, JSON.stringify(session));
-          }
-        } catch {
-          if (adminAuth.value && typeof window !== 'undefined') {
-            localStorage.setItem(sessionKey, JSON.stringify(adminAuth.value));
-          }
+            }),
+          );
+        } else {
+          localStorage.setItem(sessionKey, JSON.stringify(publicSession));
         }
+      } catch {
+        localStorage.setItem(sessionKey, JSON.stringify(publicSession));
       }
     }
 
@@ -155,7 +151,7 @@ export const AuthenticatedAdminLayout = component$((props: { settings?: ProjectS
           dangerouslySetInnerHTML={`
           (function(){try{
             var key=${JSON.stringify(config.auth.cookieName)};
-            var session=${JSON.stringify(adminAuth.value).replace(/</g, '\\u003c')};
+            var session=${JSON.stringify({ ...adminAuth.value, token: 'sanctum_cookie' }).replace(/</g, '\\u003c')};
             localStorage.setItem(key, JSON.stringify(session));
           }catch(e){}})();
         `}
@@ -173,7 +169,7 @@ export const AuthenticatedAdminLayout = component$((props: { settings?: ProjectS
         dangerouslySetInnerHTML={`
           (function(){try{
             var key=${JSON.stringify(config.auth.cookieName)};
-            var session=${JSON.stringify(adminAuth.value).replace(/</g, '\\u003c')};
+            var session=${JSON.stringify({ ...adminAuth.value, token: 'sanctum_cookie' }).replace(/</g, '\\u003c')};
             localStorage.setItem(key, JSON.stringify(session));
           }catch(e){}})();
         `}

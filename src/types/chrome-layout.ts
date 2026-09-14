@@ -2,7 +2,14 @@
  * Named header/footer/body chrome layouts (admin).
  */
 
-export type ChromeLayoutKind = 'header' | 'footer' | 'body';
+export type ChromeLayoutKind =
+  | 'header'
+  | 'footer'
+  | 'body'
+  | 'single'
+  | 'archive'
+  | 'loop_item'
+  | 'overlay';
 
 export type ChromeLayoutStatus = 'draft' | 'published';
 
@@ -16,7 +23,14 @@ export type ChromeLayoutMeta = {
   created_at?: string | null;
   updated_at?: string | null;
   sections?: unknown[];
-  document?: { sections?: unknown[] };
+  document?: { sections?: unknown[]; overlay?: OverlayMeta | null };
+  overlay?: OverlayMeta | null;
+};
+
+export type OverlayMeta = {
+  delay_ms: number;
+  once: boolean;
+  sitewide: boolean;
 };
 
 export type ChromeTypeDefaults = Record<
@@ -42,6 +56,7 @@ export type ThemeTemplateMeta = {
   id: number;
   name: string;
   status: ThemeTemplateStatus;
+  document_type?: 'chrome' | 'single' | 'archive' | 'loop_item' | 'overlay';
   conditions: ThemeTemplateConditionsDoc;
   header_layout_id: number | null;
   footer_layout_id: number | null;

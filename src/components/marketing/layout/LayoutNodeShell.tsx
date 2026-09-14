@@ -8,7 +8,7 @@ import {
   scopedCustomCss,
   type BuilderStyles,
 } from '~/lib/marketing/builder-styles';
-import '~/lib/marketing/builder-widget-styles.css';
+import { ShapeDividerLayer, type ShapeDividerEdge } from './ShapeDividerLayer';
 
 export type LayoutNodeShellProps = {
   /** Stable id for scoped custom CSS (`#b-{id}`). */
@@ -32,6 +32,12 @@ export const LayoutNodeShell = component$<LayoutNodeShellProps>((props) => {
   const vars = styled ? builderStyleCssVars(props.styles, props.settings) : undefined;
   const custom = styled ? scopedCustomCss(safe, props.styles) : null;
 
+  const sticky = props.settings?.sticky === true;
+  const stickyOffset = Number(props.settings?.sticky_offset ?? 0);
+  const dividers = (props.settings?.shape_dividers || null) as
+    | { top?: ShapeDividerEdge; bottom?: ShapeDividerEdge }
+    | null;
+
   return (
     <div
       id={styled || custom ? `b-${safe}` : undefined}
@@ -39,17 +45,23 @@ export const LayoutNodeShell = component$<LayoutNodeShellProps>((props) => {
         'relative w-full min-w-0',
         styled ? 'b-styled' : '',
         hasBg ? 'overflow-hidden' : '',
+        sticky ? 'sticky z-30' : '',
         props.class || '',
       ]
         .filter(Boolean)
         .join(' ')}
-      style={vars}
+      style={{
+        ...(vars || {}),
+        ...(sticky ? { top: `${Number.isFinite(stickyOffset) ? stickyOffset : 0}px` } : {}),
+      }}
     >
       {custom ? <style dangerouslySetInnerHTML={custom} /> : null}
       {hasBg ? <LayoutBackgroundLayer settings={props.settings} /> : null}
+      {dividers?.top ? <ShapeDividerLayer edge="top" divider={dividers.top} /> : null}
       <div class={hasBg ? 'relative z-[1] h-full min-h-0 w-full' : 'h-full w-full min-w-0'}>
         <Slot />
       </div>
+      {dividers?.bottom ? <ShapeDividerLayer edge="bottom" divider={dividers.bottom} /> : null}
     </div>
   );
 });

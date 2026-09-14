@@ -30,6 +30,16 @@ export function getLocalizedRoutes(lang: string) {
       APPEARANCE_FOOTER_NEW: L(`${p}/appearance/footer/new`),
       APPEARANCE_BODY: L(`${p}/appearance/body`),
       APPEARANCE_BODY_NEW: L(`${p}/appearance/body/new`),
+      APPEARANCE_SINGLES: L(`${p}/appearance/singles`),
+      APPEARANCE_SINGLES_NEW: L(`${p}/appearance/singles/new`),
+      APPEARANCE_ARCHIVES: L(`${p}/appearance/archives`),
+      APPEARANCE_ARCHIVES_NEW: L(`${p}/appearance/archives/new`),
+      APPEARANCE_LOOP_ITEMS: L(`${p}/appearance/loop-items`),
+      APPEARANCE_LOOP_ITEMS_NEW: L(`${p}/appearance/loop-items/new`),
+      APPEARANCE_OVERLAYS: L(`${p}/appearance/overlays`),
+      APPEARANCE_OVERLAYS_NEW: L(`${p}/appearance/overlays/new`),
+      APPEARANCE_DESIGN_KIT: L(`${p}/appearance/design-kit`),
+      APPEARANCE_GLOBALS: L(`${p}/appearance/globals`),
       APPEARANCE_THEME_BUILDER: L(`${p}/appearance/theme-builder`),
       APPEARANCE_THEME_BUILDER_NEW: L(`${p}/appearance/theme-builder/new`),
       APPEARANCE_CHROME_DEFAULTS: L(`${p}/appearance/chrome-defaults`),
@@ -173,15 +183,45 @@ export function adminFooterBuilderHref(lang: string, id: string | number): strin
 }
 
 export function adminBodyEditHref(lang: string, id: string | number): string {
-  const config = getConfig();
-  const p = config.routes.admin.prefix;
-  return withUiLocale(lang, `${p}/appearance/body/${id}`);
+  return adminChromeEditHref(lang, 'body', id);
 }
 
 export function adminBodyBuilderHref(lang: string, id: string | number): string {
+  return adminChromeBuilderHref(lang, 'body', id);
+}
+
+export function adminChromeEditHref(lang: string, kind: string, id: string | number): string {
   const config = getConfig();
   const p = config.routes.admin.prefix;
-  return withUiLocale(lang, `${p}/appearance/body/${id}/builder`);
+  const folder =
+    kind === 'footer'
+      ? 'footer'
+      : kind === 'body'
+        ? 'body'
+        : kind === 'single'
+          ? 'singles'
+          : kind === 'archive'
+            ? 'archives'
+            : kind === 'loop_item'
+              ? 'loop-items'
+              : kind === 'overlay'
+                ? 'overlays'
+                : 'header';
+  return withUiLocale(lang, `${p}/appearance/${folder}/${id}`);
+}
+
+export function adminChromeBuilderHref(lang: string, kind: string, id: string | number): string {
+  return `${adminChromeEditHref(lang, kind, id)}/builder`;
+}
+
+export function chromeListHref(R: ReturnType<typeof getLocalizedRoutes>, kind: string): string {
+  if (kind === 'header') return R.ADMIN.APPEARANCE_HEADER;
+  if (kind === 'footer') return R.ADMIN.APPEARANCE_FOOTER;
+  if (kind === 'single') return R.ADMIN.APPEARANCE_SINGLES;
+  if (kind === 'archive') return R.ADMIN.APPEARANCE_ARCHIVES;
+  if (kind === 'loop_item') return R.ADMIN.APPEARANCE_LOOP_ITEMS;
+  if (kind === 'overlay') return R.ADMIN.APPEARANCE_OVERLAYS;
+  return R.ADMIN.APPEARANCE_BODY;
 }
 
 export function adminThemeTemplateEditHref(lang: string, id: string | number): string {

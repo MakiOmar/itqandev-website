@@ -68,6 +68,41 @@ export const DEFAULT_DIMENSIONS: StyleDimensions = {
 
 export const STYLE_CONTROLS: StyleControl[] = [
   {
+    key: 'type_role',
+    group: 'typography',
+    type: 'select',
+    options: [
+      { value: 'heading', labelKey: 'builder.style.roleHeading' },
+      { value: 'body', labelKey: 'builder.style.roleBody' },
+      { value: 'accent', labelKey: 'builder.style.roleAccent' },
+    ],
+  },
+  { key: 'font_size', group: 'typography', type: 'length', min: 8, max: 120 },
+  {
+    key: 'font_weight',
+    group: 'typography',
+    type: 'select',
+    options: [
+      { value: '400', labelKey: 'builder.style.weightNormal' },
+      { value: '600', labelKey: 'builder.style.weightSemibold' },
+      { value: '700', labelKey: 'builder.style.weightBold' },
+    ],
+  },
+  { key: 'line_height', group: 'typography', type: 'length', min: 0, max: 80 },
+  { key: 'letter_spacing', group: 'typography', type: 'length', min: -5, max: 20 },
+  { key: 'text_color', group: 'typography', type: 'color' },
+  {
+    key: 'text_transform',
+    group: 'typography',
+    type: 'select',
+    options: [
+      { value: 'none', labelKey: 'builder.style.transformNone' },
+      { value: 'uppercase', labelKey: 'builder.style.transformUpper' },
+      { value: 'lowercase', labelKey: 'builder.style.transformLower' },
+      { value: 'capitalize', labelKey: 'builder.style.transformCap' },
+    ],
+  },
+  {
     key: 'align',
     group: 'layout',
     type: 'choose',

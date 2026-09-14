@@ -14,7 +14,8 @@ export type FeatureModuleKey =
   | 'forms'
   | 'media'
   | 'users'
-  | 'seo';
+  | 'seo'
+  | 'overlays';
 
 /** Defaults when API is unavailable; mirrors backend canonical keys (all enabled). */
 export const DEFAULT_FEATURE_MODULES: Record<FeatureModuleKey, boolean> = {
@@ -29,6 +30,7 @@ export const DEFAULT_FEATURE_MODULES: Record<FeatureModuleKey, boolean> = {
   media: true,
   users: true,
   seo: true,
+  overlays: true,
 };
 
 export function isFeatureModuleEnabled(

@@ -24,6 +24,8 @@ interface MenuItemNode {
   parent_id: number | null;
   sort_order: number;
   label: string | null;
+  description?: string | null;
+  image_id?: number | null;
   item_type: string;
   url: string | null;
   static_route_key: string | null;
@@ -259,6 +261,8 @@ export default component$(() => {
     reference_id: '',
     label: '',
     label_ar: '',
+    description: '',
+    image_id: '',
     open_in_new_tab: false,
   });
 
@@ -271,6 +275,8 @@ export default component$(() => {
     form.reference_id = '';
     form.label = '';
     form.label_ar = '';
+    form.description = '';
+    form.image_id = '';
     form.open_in_new_tab = false;
     entityPick.m = {};
     entitySearch.value = '';
@@ -464,6 +470,8 @@ export default component$(() => {
           parent_id: form.parent_id,
           sort_order: Number(form.sort_order) || 0,
           label: form.label.trim() || null,
+          description: form.description.trim() || null,
+          image_id: form.image_id ? Number(form.image_id) : null,
           item_type: form.item_type,
           open_in_new_tab: form.open_in_new_tab,
           translations,
@@ -496,6 +504,8 @@ export default component$(() => {
           parent_id: form.parent_id,
           sort_order: Number(form.sort_order) || 0,
           label: form.label.trim() || null,
+          description: form.description.trim() || null,
+          image_id: form.image_id ? Number(form.image_id) : null,
           item_type: 'custom_link',
           url: form.url.trim(),
           open_in_new_tab: form.open_in_new_tab,
@@ -558,6 +568,8 @@ export default component$(() => {
     form.label = item.label || '';
     form.label_ar =
       item.translations?.find((t) => t.locale === 'ar')?.label?.trim() || '';
+    form.description = item.description || '';
+    form.image_id = item.image_id != null ? String(item.image_id) : '';
     form.item_type = (item.item_type === 'static_route' ? 'page' : item.item_type) as MenuItemType;
     form.url = item.url || '';
     form.reference_id = item.reference_id != null ? String(item.reference_id) : '';
@@ -1245,6 +1257,29 @@ export default component$(() => {
                     value={form.label_ar}
                     onInput$={(e) => {
                       form.label_ar = (e.target as HTMLInputElement).value;
+                    }}
+                  />
+                </div>
+
+                <div class="md:col-span-2">
+                  <label class={labelClass}>Mega description</label>
+                  <input
+                    class={inputClass}
+                    type="text"
+                    value={form.description}
+                    onInput$={(e) => {
+                      form.description = (e.target as HTMLInputElement).value;
+                    }}
+                  />
+                </div>
+                <div class="md:col-span-2">
+                  <label class={labelClass}>Mega image id</label>
+                  <input
+                    class={inputClass}
+                    type="number"
+                    value={form.image_id}
+                    onInput$={(e) => {
+                      form.image_id = (e.target as HTMLInputElement).value;
                     }}
                   />
                 </div>

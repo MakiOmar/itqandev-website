@@ -32,6 +32,7 @@ export async function fetchAppearanceRegistriesFromBrowser(): Promise<{
   homepage_sections: AppearanceRegistryEntry[];
   form_fields: FormFieldRegistryEntry[];
   form_actions: FormActionRegistryEntry[];
+  dynamic_tags: Array<{ id: string; group?: string; label: string }>;
 }> {
   const api = getApiClient(null);
   const res = await api.get<{
@@ -40,6 +41,7 @@ export async function fetchAppearanceRegistriesFromBrowser(): Promise<{
     homepage_sections: AppearanceRegistryEntry[];
     form_fields: FormFieldRegistryEntry[];
     form_actions: FormActionRegistryEntry[];
+    dynamic_tags?: Array<{ id: string; group?: string; label: string }>;
   }>(API_ENDPOINTS.APPEARANCE.REGISTRIES);
   const kits = res.data?.kits ?? res.data?.homepage_sections ?? [];
   const widgets = res.data?.widgets ?? [];
@@ -49,6 +51,7 @@ export async function fetchAppearanceRegistriesFromBrowser(): Promise<{
     homepage_sections: res.data?.homepage_sections ?? kits,
     form_fields: res.data?.form_fields ?? [],
     form_actions: res.data?.form_actions ?? [],
+    dynamic_tags: res.data?.dynamic_tags ?? [],
   };
 }
 
@@ -63,11 +66,11 @@ export async function fetchHomepageBuilderFromBrowser(): Promise<{
 }
 
 export async function saveHomepageBuilderFromBrowser(
-  sections: HomepageSectionInstance[],
-): Promise<{ success: boolean; message?: string; error?: string; data?: { sections: HomepageSectionInstance[] } }> {
+  sections: PageSectionNode[],
+): Promise<{ success: boolean; message?: string; error?: string; data?: { sections: PageSectionNode[] } }> {
   try {
     const api = getApiClient(null);
-    const res = await api.put<{ sections: HomepageSectionInstance[] }>(
+    const res = await api.put<{ sections: PageSectionNode[] }>(
       API_ENDPOINTS.APPEARANCE.HOMEPAGE,
       { sections },
     );

@@ -9,6 +9,7 @@ import {
   createEmptyBand,
   createEmptyColumn,
   createEmptyRow,
+  createInnerBand,
   ensurePageLayoutBands,
   findBlockInBands,
   normalizeColumnSpans,
@@ -40,10 +41,14 @@ import {
 } from '~/components/admin/BuilderResponsiveVisibilityFields';
 import { BuilderStylePanel } from '~/components/admin/BuilderStylePanel';
 import { BuilderBackgroundFields } from '~/components/admin/BuilderBackgroundFields';
+import { BuilderShapeDividerFields } from '~/components/admin/BuilderShapeDividerFields';
+import { PageBuilderNavigator } from '~/components/admin/pages/PageBuilderNavigator';
 import { LayoutDeviceProvider } from '~/lib/marketing/layout-device-context';
 import { normalizeHideOn, type DeviceHideOn } from '~/lib/marketing/device-visibility';
 import type { BuilderStyles, StyleBreakpoint } from '~/lib/marketing/builder-styles';
 import { CONTAINER_STYLE_TYPE } from '~/lib/marketing/builder-styles';
+import { getApiClient } from '~/lib/api/client';
+import { API_ENDPOINTS } from '~/lib/api/endpoints';
 import type { PageBuilderDocument } from '~/lib/admin/builder-import-export';
 import type {
   AppearanceRegistryEntry,
@@ -57,6 +62,12 @@ import type { SiteLanguageRow } from '~/types/site-language';
 import type { Media } from '~/types/media';
 import type { CaseStudy, Testimonial, BlogPost } from '~/lib/marketing/types';
 import type { PortfolioCategory } from '~/lib/marketing/content-layer';
+import {
+  listSavedBuilderBands,
+  saveBuilderBand,
+  type SavedBuilderBand,
+} from '~/lib/admin/saved-builder-sections';
+import type { BuilderDynamicTag } from '~/components/admin/appearance/BuilderDynamicTagChips';
 
 const WIDGET_DND = 'application/x-credocode-widget';
 
@@ -83,7 +94,16 @@ export type PageBuilderWorkspaceProps = {
   /** Live preview: page widgets vs header/footer chrome kits. */
   previewSurface?: 'page' | 'chrome';
   /** Import/export envelope kind (default page). */
-  exportBuilderKind?: 'page' | 'header' | 'footer' | 'body';
+  exportBuilderKind?:
+    | 'page'
+    | 'header'
+    | 'footer'
+    | 'body'
+    | 'homepage'
+    | 'single'
+    | 'archive'
+    | 'loop_item'
+    | 'overlay';
   /** Site branding for chrome live preview (logos from settings). */
   previewBranding?: {
     name: string;
@@ -100,6 +120,10 @@ export type PageBuilderWorkspaceProps = {
     services?: import('~/lib/marketing/types').Service[];
     techStack?: string[];
   };
+  /** Allowlisted dynamic tags for inspector chips. */
+  dynamicTags?: BuilderDynamicTag[];
+  /** Resolved tag preview (does not replace the editor document). */
+  livePreviewOverride?: Signal<PageSectionNode[] | null>;
 };
 
 type BlockPath = {
@@ -490,8 +514,12 @@ export const PageBuilderWorkspace = component$<PageBuilderWorkspaceProps>((props
   const dragWidgetType = useSignal<string | null>(null);
   const dropColumnKey = useSignal<string | null>(null);
   const dropRowKey = useSignal<string | null>(null);
-  const paletteTab = useSignal<'widgets' | 'kits'>('widgets');
+  const paletteTab = useSignal<'widgets' | 'kits' | 'globals'>('widgets');
   const paletteSearch = useSignal('');
+  const undoStack = useSignal<string[]>([]);
+  const redoStack = useSignal<string[]>([]);
+  const globalsList = useSignal<Array<{ id: number; name: string }>>([]);
+  const savedBands = useSignal<SavedBuilderBand[]>([]);
   const showLivePreview = useSignal(false);
   const inspectorTab = useSignal<'content' | 'style' | 'advanced'>('content');
   /** Keep preview DOM after first open so off is CSS-only (avoids stuck pane). */
@@ -504,10 +532,40 @@ export const PageBuilderWorkspace = component$<PageBuilderWorkspaceProps>((props
   });
 
   // eslint-disable-next-line qwik/no-use-visible-task
+  useVisibleTask$(async () => {
+    try {
+      const res = await getApiClient(null).get<Array<{ id: number; name: string; status?: string }>>(
+        API_ENDPOINTS.APPEARANCE.GLOBALS,
+      );
+      const rows = Array.isArray(res.data) ? res.data : [];
+      globalsList.value = rows
+        .filter((r) => r.status !== 'draft')
+        .map((r) => ({ id: Number(r.id), name: String(r.name || r.id) }));
+    } catch {
+      globalsList.value = [];
+    }
+    savedBands.value = listSavedBuilderBands();
+  });
+
+  const autosaveArmed = useSignal(false);
+  // Debounced autosave (skips the first hydrate).
+  // eslint-disable-next-line qwik/no-use-visible-task
+  useVisibleTask$(({ track, cleanup }) => {
+    track(() => JSON.stringify(props.sections.value));
+    if (!autosaveArmed.value) {
+      autosaveArmed.value = true;
+      return;
+    }
+    const timer = window.setTimeout(() => {
+      void props.onSave$();
+    }, 2500);
+    cleanup(() => window.clearTimeout(timer));
+  });
+
+  // eslint-disable-next-line qwik/no-use-visible-task
   useVisibleTask$(({ cleanup }) => {
     const sync = () => {
       previewIsDark.value =
-
         typeof document !== 'undefined' && document.documentElement.classList.contains('dark');
     };
     sync();
@@ -525,6 +583,9 @@ export const PageBuilderWorkspace = component$<PageBuilderWorkspaceProps>((props
   });
 
   const commit$ = $(async (next: PageLayoutBand[]) => {
+    const prev = JSON.stringify(props.sections.value);
+    undoStack.value = [...undoStack.value.slice(-29), prev];
+    redoStack.value = [];
     props.sections.value = next;
   });
 
@@ -534,6 +595,7 @@ export const PageBuilderWorkspace = component$<PageBuilderWorkspaceProps>((props
       const kind = entry.kind || 'kit';
       if (paletteTab.value === 'widgets' && kind !== 'widget') return false;
       if (paletteTab.value === 'kits' && kind !== 'kit') return false;
+      if (paletteTab.value === 'globals') return false;
       if (searchQ) {
         const hay = `${entry.label} ${entry.type} ${entry.category || ''}`.toLowerCase();
         if (!hay.includes(searchQ)) return false;
@@ -642,6 +704,36 @@ export const PageBuilderWorkspace = component$<PageBuilderWorkspaceProps>((props
         >
           {translateApp(props.lang, 'pages.livePreview')}
         </button>
+        <button
+          type="button"
+          class="rounded-lg border border-gray-300 px-3 py-1.5 text-xs font-medium dark:border-gray-600"
+          disabled={undoStack.value.length === 0}
+          onClick$={() => {
+            const prev = undoStack.value[undoStack.value.length - 1];
+            if (!prev) return;
+            redoStack.value = [...redoStack.value, JSON.stringify(props.sections.value)];
+            undoStack.value = undoStack.value.slice(0, -1);
+            props.sections.value = JSON.parse(prev);
+            selection.value = null;
+          }}
+        >
+          {translateApp(props.lang, 'pages.undo')}
+        </button>
+        <button
+          type="button"
+          class="rounded-lg border border-gray-300 px-3 py-1.5 text-xs font-medium dark:border-gray-600"
+          disabled={redoStack.value.length === 0}
+          onClick$={() => {
+            const next = redoStack.value[redoStack.value.length - 1];
+            if (!next) return;
+            undoStack.value = [...undoStack.value, JSON.stringify(props.sections.value)];
+            redoStack.value = redoStack.value.slice(0, -1);
+            props.sections.value = JSON.parse(next);
+            selection.value = null;
+          }}
+        >
+          {translateApp(props.lang, 'pages.redo')}
+        </button>
         <BuilderImportExportButtons
           lang={props.lang}
           builder={props.exportBuilderKind || 'page'}
@@ -699,6 +791,20 @@ export const PageBuilderWorkspace = component$<PageBuilderWorkspaceProps>((props
               >
                 {translateApp(props.lang, 'pages.kitsTab')}
               </button>
+              <button
+                type="button"
+                class={[
+                  'flex-1 rounded-md px-2 py-1 text-xs font-semibold',
+                  paletteTab.value === 'globals'
+                    ? 'bg-primary-600 text-white'
+                    : 'text-gray-600 dark:text-gray-300',
+                ].join(' ')}
+                onClick$={() => {
+                  paletteTab.value = 'globals';
+                }}
+              >
+                {translateApp(props.lang, 'pages.globalsTab')}
+              </button>
             </div>
             <input
               type="search"
@@ -723,6 +829,72 @@ export const PageBuilderWorkspace = component$<PageBuilderWorkspaceProps>((props
             <p class="text-[11px] text-gray-500 dark:text-gray-400">
               {translateApp(props.lang, 'pages.dragWidgetsHint')}
             </p>
+            {savedBands.value.length > 0 ? (
+              <div class="space-y-1">
+                <p class="text-[11px] font-semibold uppercase text-gray-500">
+                  {translateApp(props.lang, 'pages.savedSections')}
+                </p>
+                {savedBands.value.map((row) => (
+                  <button
+                    key={row.id}
+                    type="button"
+                    class="w-full rounded-lg border border-dashed border-gray-300 px-3 py-1.5 text-start text-xs dark:border-gray-600"
+                    onClick$={async () => {
+                      const clone = JSON.parse(JSON.stringify(row.band)) as PageLayoutBand;
+                      clone.id = newBlockId('band');
+                      await commit$([...bands, clone]);
+                    }}
+                  >
+                    {row.name}
+                  </button>
+                ))}
+              </div>
+            ) : null}
+            {paletteTab.value === 'globals'
+              ? globalsList.value.map((g) => (
+                  <button
+                    key={g.id}
+                    type="button"
+                    class="w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-start text-sm dark:border-gray-700 dark:bg-slate-950"
+                    onClick$={async () => {
+                      const sel = selection.value;
+                      const block: PageLayoutBlock = {
+                        id: newBlockId('global'),
+                        kind: 'global',
+                        type: 'global',
+                        global_id: g.id,
+                        enabled: true,
+                        settings: {},
+                      };
+                      if (sel?.kind === 'column' || sel?.kind === 'block') {
+                        const next = bands.map((b, bi) => {
+                          if (bi !== sel.bandIndex) return b;
+                          return {
+                            ...b,
+                            rows: b.rows.map((r, ri) => {
+                              if (ri !== sel.rowIndex) return r;
+                              return {
+                                ...r,
+                                columns: r.columns.map((c, ci) => {
+                                  if (ci !== sel.colIndex) return c;
+                                  return { ...c, blocks: [...c.blocks, block] };
+                                }),
+                              };
+                            }),
+                          };
+                        });
+                        await commit$(next);
+                        return;
+                      }
+                      const band = createEmptyBand();
+                      band.rows[0].columns[0].blocks = [block];
+                      await commit$([...bands, band]);
+                    }}
+                  >
+                    {g.name}
+                  </button>
+                ))
+              : null}
             {insertableByCategory.map(([category, entries]) => (
               <div key={category} class="space-y-1.5">
                 <p class="pt-2 text-[10px] font-semibold uppercase tracking-wide text-gray-400">
@@ -816,6 +988,15 @@ export const PageBuilderWorkspace = component$<PageBuilderWorkspaceProps>((props
           </div>
         </aside>
 
+        <PageBuilderNavigator
+          lang={props.lang}
+          bands={bands}
+          selection={selection.value}
+          onSelect$={$((next) => {
+            selection.value = next;
+          })}
+        />
+
         {/* Canvas — sized to active device */}
         <main class="min-w-0 flex-1 overflow-y-auto bg-slate-200/40 p-4 sm:p-6 dark:bg-slate-950/40">
           <div
@@ -833,7 +1014,11 @@ export const PageBuilderWorkspace = component$<PageBuilderWorkspaceProps>((props
               <BuilderLivePreviewShell
                 open={showLivePreview}
                 previewSurface={props.previewSurface}
-                bands={bands}
+                bands={
+                  props.livePreviewOverride?.value && props.livePreviewOverride.value.length > 0
+                    ? ensurePageLayoutBands(props.livePreviewOverride.value)
+                    : bands
+                }
                 uiLocale={props.activeLocale.value || props.defaultLocale}
                 pageTitle={props.pageTitle || 'Preview'}
                 siteLanguages={props.siteLanguages || []}
@@ -1076,6 +1261,40 @@ export const PageBuilderWorkspace = component$<PageBuilderWorkspaceProps>((props
                                   }}
                                 >
                                   {translateApp(props.lang, 'pages.addColumn')}
+                                </button>
+                                <button
+                                  type="button"
+                                  class="rounded border px-2 py-0.5 text-[11px] dark:border-gray-600"
+                                  onClick$={async () => {
+                                    const sel = selection.value;
+                                    const colIndex =
+                                      sel &&
+                                      (sel.kind === 'column' || sel.kind === 'block') &&
+                                      sel.bandIndex === bandIndex &&
+                                      sel.rowIndex === rowIndex
+                                        ? sel.colIndex
+                                        : 0;
+                                    const next = bands.map((b, bi) => {
+                                      if (bi !== bandIndex) return b;
+                                      return {
+                                        ...b,
+                                        rows: b.rows.map((r, ri) => {
+                                          if (ri !== rowIndex) return r;
+                                          return {
+                                            ...r,
+                                            columns: r.columns.map((c, ci) =>
+                                              ci === colIndex
+                                                ? { ...c, blocks: [...c.blocks, createInnerBand()] }
+                                                : c,
+                                            ),
+                                          };
+                                        }),
+                                      };
+                                    });
+                                    await commit$(next);
+                                  }}
+                                >
+                                  {translateApp(props.lang, 'pages.addInnerBand')}
                                 </button>
                               </div>
 
@@ -1519,6 +1738,19 @@ export const PageBuilderWorkspace = component$<PageBuilderWorkspaceProps>((props
                 <p class="text-sm font-medium">
                   {translateApp(props.lang, 'pages.band')} #{selection.value.bandIndex + 1}
                 </p>
+                <button
+                  type="button"
+                  class="rounded border border-gray-300 px-2 py-1 text-xs dark:border-gray-600"
+                  onClick$={() => {
+                    const band = bands[selection.value!.bandIndex];
+                    if (!band) return;
+                    const name = window.prompt(translateApp(props.lang, 'pages.saveSection'), translateApp(props.lang, 'pages.band'));
+                    if (!name) return;
+                    savedBands.value = saveBuilderBand(name, band);
+                  }}
+                >
+                  {translateApp(props.lang, 'pages.saveSection')}
+                </button>
                 {inspectorTab.value === 'content' ? (
                 <label class="block text-xs font-medium text-gray-600 dark:text-gray-300">
                   {translateApp(props.lang, 'appearance.layoutWidth')}
@@ -1556,6 +1788,16 @@ export const PageBuilderWorkspace = component$<PageBuilderWorkspaceProps>((props
                         );
                       })}
                     />
+                    <BuilderShapeDividerFields
+                      lang={props.lang}
+                      settings={bands[selection.value.bandIndex]?.settings}
+                      onChange$={$(async (next) => {
+                        const bi = selection.value!.bandIndex;
+                        await commit$(
+                          bands.map((b, i) => (i === bi ? { ...b, settings: next } : b)),
+                        );
+                      })}
+                    />
                     <BuilderStylePanel
                       lang={props.lang}
                       widgetType={CONTAINER_STYLE_TYPE}
@@ -1574,7 +1816,29 @@ export const PageBuilderWorkspace = component$<PageBuilderWorkspaceProps>((props
                   </div>
                 ) : null}
                 {inspectorTab.value === 'advanced' ? (
-                  <BuilderResponsiveVisibilityFields
+                  <div class="space-y-3">
+                    <label class="flex items-center gap-2 text-xs">
+                      <input
+                        type="checkbox"
+                        checked={bands[selection.value.bandIndex]?.settings?.sticky === true}
+                        onChange$={async (e) => {
+                          const bi = selection.value!.bandIndex;
+                          const checked = (e.target as HTMLInputElement).checked;
+                          await commit$(
+                            bands.map((b, i) =>
+                              i === bi
+                                ? {
+                                    ...b,
+                                    settings: { ...(b.settings || {}), sticky: checked },
+                                  }
+                                : b,
+                            ),
+                          );
+                        }}
+                      />
+                      {translateApp(props.lang, 'pages.sticky')}
+                    </label>
+                    <BuilderResponsiveVisibilityFields
                     lang={props.lang}
                     hideOn={bands[selection.value.bandIndex]?.hide_on}
                     onChange$={$(async (next: DeviceHideOn) => {
@@ -1586,6 +1850,7 @@ export const PageBuilderWorkspace = component$<PageBuilderWorkspaceProps>((props
                       );
                     })}
                   />
+                  </div>
                 ) : null}
               </div>
             ) : null}
@@ -1633,6 +1898,44 @@ export const PageBuilderWorkspace = component$<PageBuilderWorkspaceProps>((props
                     <option class={ADMIN_NATIVE_OPTION_CLASS} value="desktop">
                       {translateApp(props.lang, 'pages.stackDesktop')}
                     </option>
+                  </select>
+                </label>
+                <label class="block text-xs font-medium text-gray-600 dark:text-gray-300">
+                  {translateApp(props.lang, 'pages.rowJustify')}
+                  <select
+                    class={`${ADMIN_NATIVE_SELECT_COMPACT_CLASS} mt-1 w-full`}
+                    value={
+                      bands[selection.value.bandIndex]?.rows[selection.value.rowIndex]?.justify ||
+                      'start'
+                    }
+                    onChange$={async (e) => {
+                      const justify = (e.target as HTMLSelectElement).value as
+                        | 'start'
+                        | 'center'
+                        | 'end'
+                        | 'between';
+                      const { bandIndex, rowIndex } = selection.value as {
+                        bandIndex: number;
+                        rowIndex: number;
+                      };
+                      await commit$(
+                        bands.map((b, bi) => {
+                          if (bi !== bandIndex) return b;
+                          return {
+                            ...b,
+                            rows: b.rows.map((r, ri) =>
+                              ri === rowIndex ? { ...r, justify } : r,
+                            ),
+                          };
+                        }),
+                      );
+                    }}
+                  >
+                    {['start', 'center', 'end', 'between'].map((v) => (
+                      <option key={v} class={ADMIN_NATIVE_OPTION_CLASS} value={v}>
+                        {v}
+                      </option>
+                    ))}
                   </select>
                 </label>
                 ) : null}
@@ -2001,9 +2304,62 @@ export const PageBuilderWorkspace = component$<PageBuilderWorkspaceProps>((props
                           [String(mediaId)]: url,
                         };
                       })}
+                      dynamicTags={props.dynamicTags}
                     />
                   );
                 })()}
+                {selectedBlock.kind !== 'global' ? (
+                  <button
+                    type="button"
+                    class="mt-2 w-full rounded border border-gray-300 px-2 py-1 text-xs dark:border-gray-600"
+                    onClick$={async () => {
+                      try {
+                        const res = await getApiClient(null).post<{ id: number }>(
+                          API_ENDPOINTS.APPEARANCE.GLOBALS,
+                          {
+                            name: selectedBlock.type,
+                            status: 'published',
+                            document: {
+                              kind: selectedBlock.kind || 'widget',
+                              type: selectedBlock.type,
+                              settings: selectedBlock.settings || {},
+                            },
+                          },
+                        );
+                        const id = Number(res.data?.id);
+                        if (!id) return;
+                        await commit$(
+                          updateBlockInBands(bands, selectedBlock.id, (blk) => ({
+                            ...blk,
+                            kind: 'global',
+                            global_id: id,
+                            type: 'global',
+                          })),
+                        );
+                      } catch {
+                        /* ignore */
+                      }
+                    }}
+                  >
+                    {translateApp(props.lang, 'pages.makeGlobal')}
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    class="mt-2 w-full rounded border border-gray-300 px-2 py-1 text-xs dark:border-gray-600"
+                    onClick$={async () => {
+                      await commit$(
+                        updateBlockInBands(bands, selectedBlock.id, (blk) => ({
+                          ...blk,
+                          kind: 'widget',
+                          global_id: undefined,
+                        })),
+                      );
+                    }}
+                  >
+                    {translateApp(props.lang, 'pages.unlinkGlobal')}
+                  </button>
+                )}
                 </>
                 ) : null}
                 {inspectorTab.value === 'style' ? (

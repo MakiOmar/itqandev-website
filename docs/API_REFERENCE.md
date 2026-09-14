@@ -604,8 +604,8 @@ Require `Authorization: Bearer` and the `manageSettings` gate (`admin` / `super_
 
 | Method | Path | Body / notes |
 |--------|------|----------------|
-| `GET` | `/api/appearance/registries` | Catalogs: `widgets`, `kits` (includes Header/Footer chrome kits), alias `homepage_sections`, `form_fields`, `form_actions`. |
-| `GET` | `/api/appearance/homepage` | Full `homepage_builder` document |
+| `GET` | `/api/appearance/registries` | Catalogs: `widgets`, `kits`, `homepage_sections`, `form_fields`, `form_actions`, `dynamic_tags`. |
+| `GET` | `/api/appearance/homepage` | Full `homepage_builder` document (band tree) |
 | `PUT` | `/api/appearance/homepage` | `{ "sections": [ … ] }` |
 | `GET` | `/api/appearance/header` | Site-default header document (compat) |
 | `PUT` | `/api/appearance/header` | `{ "sections": [ … ] }` updates site-default header |
@@ -617,10 +617,18 @@ Require `Authorization: Bearer` and the `manageSettings` gate (`admin` / `super_
 | `POST` | `/api/appearance/headers/{id}/set-site-default` | Published only |
 | `GET/POST/…` | `/api/appearance/footers…` | Same for footers |
 | `GET/POST/…` | `/api/appearance/bodies…` | Same for body layouts (`kind=body`; no set-site-default) |
+| `GET/POST/…` | `/api/appearance/singles…` `/archives…` `/loop-items…` `/overlays…` | Theme document kinds on `chrome_layouts` |
+| `GET/POST` | `/api/appearance/globals` | Global widgets (`manageSettings`) |
+| `GET/PUT/DELETE` | `/api/appearance/globals/{id}` | Show / update / delete a global leaf |
+| `GET/PUT` | `/api/appearance/design-kit` | Branding tokens (colors / type roles) |
+| `GET` | `/api/appearance/{kind}/{id}/revisions` | Last-N JSON snapshots |
 | `GET` | `/api/appearance/theme-templates` | Paginated Theme Builder page templates |
-| `POST` | `/api/appearance/theme-templates` | Create (`name`, `status`, `conditions`, slot ids) |
+| `POST` | `/api/appearance/theme-templates` | Create (`name`, `status`, `document_type`, `conditions`, slot ids) |
+| `GET` | `/api/appearance/theme-templates/match` | Best match + `conflicts` for a context query (`context`, `content_type`, `record_id`) |
 | `GET/PUT/DELETE` | `/api/appearance/theme-templates/{id}` | Show / update / delete |
 | `GET/PUT` | `/api/appearance/chrome-type-defaults` | Per content-type header/footer ids |
+| `GET` | `/api/appearance/{kind}/{id}/preview-as` | Resolve dynamic tags as a published record (`content_type`, `record_id`) |
+| `GET` | `/api/public/overlays/{id}` | Published overlay document (`overlays` module) |
 
 Named layouts live in `chrome_layouts`. Theme templates live in `theme_templates` (conditions + Header/Body/Footer slot FKs). Homepage remains `homepage_builder` in project settings (`project_settings.payload`). See `docs/CONFIGURATION.md` (Appearance builders).
 

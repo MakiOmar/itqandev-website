@@ -40,6 +40,7 @@ export type PublicBrandingState = {
   typography?: SiteTypography;
   /** When false, public pages send noindex and robots.txt disallows crawling. */
   search_engine_indexing?: boolean;
+  design_kit_css?: string;
 };
 
 export type { PublicFrontPageMeta };
@@ -51,6 +52,8 @@ export type PublicShellState = {
   homepageSections: HomepageSectionInstance[];
   /** Theme Builder body (band layout) when matched for homepage / 404. */
   themeBody: PageSectionNode[] | null;
+  themeBodyCss?: string | null;
+  overlays?: Array<{ id: number; delay_ms?: number; once?: boolean; sitewide?: boolean }>;
   themeContext: string | null;
   header: HeaderPublicPayload;
   footer: FooterPublicPayload;
@@ -63,8 +66,9 @@ type PublicShellApiData = {
   menu?: { items?: PublicNavItem[] };
   services?: Record<string, unknown>[];
   homepage_sections?: HomepageSectionInstance[];
-  theme_body?: { sections?: PageSectionNode[] } | null;
+  theme_body?: { sections?: PageSectionNode[]; css?: string } | null;
   theme_context?: string | null;
+  overlays?: Array<{ id: number; delay_ms?: number; once?: boolean; sitewide?: boolean }>;
   header?: HeaderPublicPayload;
   footer?: FooterPublicPayload;
 };
@@ -121,6 +125,7 @@ function brandingFromSiteMeta(
     features,
     typography: parseSiteTypography(settings?.typography),
     search_engine_indexing: isSearchEngineIndexingEnabled(settings?.search_engine_indexing),
+    design_kit_css: typeof settings?.design_kit_css === 'string' ? settings.design_kit_css : undefined,
   };
 }
 
@@ -159,7 +164,9 @@ function localShellFallback(): PublicShellState {
     siteContent: base,
     homepageSections: defaultHomepageSections(),
     themeBody: null,
+    themeBodyCss: null,
     themeContext: null,
+    overlays: [],
     header: { sections: defaultHeaderSections([]) },
     footer: { sections: defaultFooterSections() },
     frontPage: parsePublicFrontPageMeta(null),
@@ -191,7 +198,12 @@ function mapShellApiPayload(data: PublicShellApiData, fallbackName: string): Pub
     siteContent: mergeShellServicesIntoSiteContent(base, data.services),
     homepageSections,
     themeBody: themeBodySections,
+    themeBodyCss:
+      data.theme_body && typeof data.theme_body === 'object' && typeof data.theme_body.css === 'string'
+        ? data.theme_body.css
+        : null,
     themeContext: typeof data.theme_context === 'string' ? data.theme_context : null,
+    overlays: Array.isArray(data.overlays) ? data.overlays : [],
     header: normalizeChromePayload(data.header, () => defaultHeaderSections(menuItems)),
     footer: normalizeChromePayload(data.footer, () => defaultFooterSections()),
     frontPage: parsePublicFrontPageMeta(siteMeta),

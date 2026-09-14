@@ -5,12 +5,8 @@ import { EmptyState } from '~/components/common/EmptyState';
 import { useTranslate, translateApp } from '~/lib/i18n/useTranslate';
 import { useSwal } from '~/lib/hooks/useSwal';
 import {
-  adminBodyBuilderHref,
-  adminBodyEditHref,
-  adminFooterBuilderHref,
-  adminFooterEditHref,
-  adminHeaderBuilderHref,
-  adminHeaderEditHref,
+  adminChromeBuilderHref,
+  adminChromeEditHref,
   getLocalizedRoutes,
 } from '~/lib/constants/routes';
 import {
@@ -37,31 +33,37 @@ export const ChromeLayoutListPage = component$<{
       ? translateApp(lang, 'sidebar.appearanceHeader')
       : kind === 'footer'
         ? translateApp(lang, 'sidebar.appearanceFooter')
-        : translateApp(lang, 'sidebar.appearanceBody');
+        : kind === 'body'
+          ? translateApp(lang, 'sidebar.appearanceBody')
+          : kind === 'single'
+            ? translateApp(lang, 'sidebar.appearanceSingles')
+            : kind === 'archive'
+              ? translateApp(lang, 'sidebar.appearanceArchives')
+              : kind === 'loop_item'
+                ? translateApp(lang, 'sidebar.appearanceLoopItems')
+                : translateApp(lang, 'sidebar.appearanceOverlays');
   const newHref =
     kind === 'header'
       ? R.ADMIN.APPEARANCE_HEADER_NEW
       : kind === 'footer'
         ? R.ADMIN.APPEARANCE_FOOTER_NEW
-        : R.ADMIN.APPEARANCE_BODY_NEW;
+        : kind === 'body'
+          ? R.ADMIN.APPEARANCE_BODY_NEW
+          : kind === 'single'
+            ? R.ADMIN.APPEARANCE_SINGLES_NEW
+            : kind === 'archive'
+              ? R.ADMIN.APPEARANCE_ARCHIVES_NEW
+              : kind === 'loop_item'
+                ? R.ADMIN.APPEARANCE_LOOP_ITEMS_NEW
+                : R.ADMIN.APPEARANCE_OVERLAYS_NEW;
 
   const refetch$ = $(async () => {
     items.value = await fetchChromeLayoutsFromBrowser(kind);
   });
 
-  const editHref = (id: number) =>
-    kind === 'header'
-      ? adminHeaderEditHref(lang, id)
-      : kind === 'footer'
-        ? adminFooterEditHref(lang, id)
-        : adminBodyEditHref(lang, id);
-  const builderHref = (id: number) =>
-    kind === 'header'
-      ? adminHeaderBuilderHref(lang, id)
-      : kind === 'footer'
-        ? adminFooterBuilderHref(lang, id)
-        : adminBodyBuilderHref(lang, id);
-  const showSiteDefault = kind !== 'body';
+  const editHref = (id: number) => adminChromeEditHref(lang, kind, id);
+  const builderHref = (id: number) => adminChromeBuilderHref(lang, kind, id);
+  const showSiteDefault = kind === 'header' || kind === 'footer';
 
   return (
     <div class="space-y-4">

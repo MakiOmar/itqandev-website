@@ -13,6 +13,7 @@ const ADMIN_PATH_MODULE: Array<{ prefix: string; module: FeatureModuleKey }> = [
   { prefix: '/admin/blog', module: 'blog' },
   { prefix: '/admin/pages', module: 'pages' },
   { prefix: '/admin/forms', module: 'forms' },
+  { prefix: '/admin/appearance/overlays', module: 'overlays' },
   { prefix: '/admin/media', module: 'media' },
   { prefix: '/admin/users', module: 'users' },
 ];

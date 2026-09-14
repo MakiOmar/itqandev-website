@@ -38,6 +38,7 @@ export type StyleShadow = {
 };
 
 export const STYLE_GROUP_ORDER = [
+  'typography',
   'layout',
   'spacing',
   'image',
@@ -52,16 +53,31 @@ export type StyleGroupId = (typeof STYLE_GROUP_ORDER)[number];
 /** Layout/spacing/border/custom — Elementor-like container chrome (band / row / column). */
 export const CONTAINER_STYLE_TYPE = '__container__';
 
-/** Widget/kit type → style groups. Add a type here to opt a leaf into the Style tab. */
+const DEFAULT_LEAF_STYLE_GROUPS: readonly StyleGroupId[] = [
+  'typography',
+  'layout',
+  'spacing',
+  'border',
+  'hover',
+  'custom',
+];
+
+/** Widget/kit type → style groups. Unknown types still get a complete Style tab. */
 export const WIDGET_STYLE_GROUPS: Record<string, readonly StyleGroupId[]> = {
   [CONTAINER_STYLE_TYPE]: ['layout', 'spacing', 'border', 'custom'],
-  image: ['layout', 'spacing', 'image', 'border', 'hover', 'caption', 'custom'],
-  image_text: ['layout', 'spacing', 'image', 'border', 'hover', 'caption', 'custom'],
+  image: ['typography', 'layout', 'spacing', 'image', 'border', 'hover', 'caption', 'custom'],
+  image_text: ['typography', 'layout', 'spacing', 'image', 'border', 'hover', 'caption', 'custom'],
+  gallery: ['layout', 'spacing', 'image', 'border', 'hover', 'caption', 'custom'],
+  lottie: ['layout', 'spacing', 'border', 'custom'],
+  flip_box: ['typography', 'layout', 'spacing', 'border', 'hover', 'custom'],
+  button: ['typography', 'layout', 'spacing', 'border', 'hover', 'custom'],
   case_studies: ['layout', 'spacing', 'border', 'custom'],
   services_teaser: ['layout', 'spacing', 'border', 'custom'],
   testimonials: ['layout', 'spacing', 'border', 'custom'],
   blog_preview: ['layout', 'spacing', 'border', 'custom'],
   projects_list: ['layout', 'spacing', 'border', 'custom'],
+  loop_grid: ['layout', 'spacing', 'border', 'custom'],
+  form: ['typography', 'layout', 'spacing', 'border', 'custom'],
 };
 
 export function containerStyleGroups(): readonly StyleGroupId[] {
@@ -72,7 +88,10 @@ export function containerStyleGroups(): readonly StyleGroupId[] {
 export const MEDIA_ONLY_STYLE_KEYS = new Set(['object_fit', 'object_position']);
 
 export function widgetStyleGroups(type: string): readonly StyleGroupId[] {
-  return WIDGET_STYLE_GROUPS[type] ?? [];
+  if (type === CONTAINER_STYLE_TYPE) {
+    return containerStyleGroups();
+  }
+  return WIDGET_STYLE_GROUPS[type] ?? DEFAULT_LEAF_STYLE_GROUPS;
 }
 
 export function hasWidgetStyleControls(type: string): boolean {
@@ -161,10 +180,10 @@ function emitBagVars(bag: StyleBag, suffix: '' | '-md' | '-lg', out: Record<stri
   if (bag.align === 'center') {
     set('align-ml', 'auto');
     set('align-mr', 'auto');
-  } else if (bag.align === 'right') {
+  } else if (bag.align === 'end' || bag.align === 'right') {
     set('align-ml', 'auto');
     set('align-mr', '0');
-  } else if (bag.align === 'left') {
+  } else if (bag.align === 'start' || bag.align === 'left') {
     set('align-ml', '0');
     set('align-mr', 'auto');
   }
@@ -202,6 +221,15 @@ function emitBagVars(bag: StyleBag, suffix: '' | '-md' | '-lg', out: Record<stri
   set('caption-line-height', lengthToCss(bag.caption_line_height));
   set('caption-letter-spacing', lengthToCss(bag.caption_letter_spacing));
   set('caption-spacing', lengthToCss(bag.caption_spacing));
+  set('font-family', typeof bag.font_family === 'string' ? bag.font_family : null);
+  set('font-size', lengthToCss(bag.font_size));
+  set('font-weight', typeof bag.font_weight === 'string' ? bag.font_weight : null);
+  set('line-height', lengthToCss(bag.line_height));
+  set('letter-spacing', lengthToCss(bag.letter_spacing));
+  set('text-color', typeof bag.text_color === 'string' ? bag.text_color : null);
+  set('text-transform', typeof bag.text_transform === 'string' ? bag.text_transform : null);
+  set('font-style', typeof bag.font_style === 'string' ? bag.font_style : null);
+  set('text-decoration', typeof bag.text_decoration === 'string' ? bag.text_decoration : null);
 
   if (isDims(bag.margin)) {
     const u = bag.margin.unit === 'auto' ? 'px' : bag.margin.unit;

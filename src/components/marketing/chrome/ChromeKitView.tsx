@@ -46,6 +46,8 @@ function asItems(settings: Record<string, unknown>): PublicNavItem[] {
         label: String(row.label ?? ''),
         href: String(row.href ?? ''),
         open_in_new_tab: !!row.open_in_new_tab,
+        description: typeof row.description === 'string' ? row.description : null,
+        image_url: typeof row.image_url === 'string' ? row.image_url : null,
         children: Array.isArray(row.children)
           ? (row.children as PublicNavItem[])
           : [],
@@ -110,12 +112,13 @@ export const ChromeKitView = component$<ChromeKitViewProps>((props) => {
     case 'footer_menu': {
       const items = filterNav(asItems(s), props.features);
       const title = typeof s.title === 'string' ? s.title.trim() : '';
+      const isMega = props.type === 'header_menu' && String(s.layout || 'dropdown') === 'mega';
       const linkClass =
         props.type === 'header_menu'
           ? 'rounded-lg px-3 py-2 text-sm font-medium text-slate-900 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800'
           : 'block text-sm text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white';
       return (
-        <div>
+        <nav aria-label={title || 'Primary'}>
           {title ? (
             <h3 class="mb-3 text-sm font-semibold uppercase tracking-wide text-slate-900 dark:text-white">
               {title}
@@ -130,7 +133,7 @@ export const ChromeKitView = component$<ChromeKitViewProps>((props) => {
             role="list"
           >
             {items.map((item) => (
-              <li key={item.href + item.label}>
+              <li key={item.href + item.label} class={isMega && item.children?.length ? 'group relative' : undefined}>
                 <MarketingLink
                   href={item.href}
                   class={linkClass}
@@ -140,10 +143,32 @@ export const ChromeKitView = component$<ChromeKitViewProps>((props) => {
                 >
                   {item.label}
                 </MarketingLink>
+                {isMega && item.children && item.children.length > 0 ? (
+                  <div
+                    class="b-mega invisible absolute start-0 top-full z-40 hidden min-w-[20rem] grid-cols-2 gap-3 rounded-xl border border-slate-200 bg-white p-4 opacity-0 shadow-lg group-hover:visible group-hover:grid group-hover:opacity-100 group-focus-within:visible group-focus-within:grid group-focus-within:opacity-100 dark:border-slate-700 dark:bg-slate-900 lg:grid-cols-3"
+                    role="menu"
+                  >
+                    {item.children.map((child) => (
+                      <MarketingLink
+                        key={child.href + child.label}
+                        href={child.href}
+                        class="block rounded-lg p-2 text-sm text-slate-700 hover:bg-slate-50 dark:text-slate-200 dark:hover:bg-slate-800"
+                      >
+                        {child.image_url ? (
+                          <img src={child.image_url} alt="" class="mb-2 h-12 w-full rounded object-cover" />
+                        ) : null}
+                        <span class="font-medium">{child.label}</span>
+                        {child.description ? (
+                          <span class="mt-1 block text-xs text-slate-500">{child.description}</span>
+                        ) : null}
+                      </MarketingLink>
+                    ))}
+                  </div>
+                ) : null}
               </li>
             ))}
           </ul>
-        </div>
+        </nav>
       );
     }
     case 'header_cta':

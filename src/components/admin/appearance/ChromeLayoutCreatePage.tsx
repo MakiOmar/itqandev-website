@@ -4,9 +4,8 @@ import { PageHeader } from '~/components/common/PageHeader';
 import { useTranslate, translateApp } from '~/lib/i18n/useTranslate';
 import { useSwal } from '~/lib/hooks/useSwal';
 import {
-  adminBodyBuilderHref,
-  adminFooterBuilderHref,
-  adminHeaderBuilderHref,
+  adminChromeBuilderHref,
+  chromeListHref,
   getLocalizedRoutes,
 } from '~/lib/constants/routes';
 import { createChromeLayoutFromBrowser } from '~/lib/admin/chrome-layout-actions';
@@ -44,18 +43,15 @@ export const ChromeLayoutCreatePage = component$<{ kind: ChromeLayoutKind }>(({ 
     title: name,
     slug,
   });
-  const listHref =
+  const listHref = chromeListHref(R, kind);
+  const title = translateApp(
+    lang,
     kind === 'header'
-      ? R.ADMIN.APPEARANCE_HEADER
+      ? 'chromeLayouts.createHeader'
       : kind === 'footer'
-        ? R.ADMIN.APPEARANCE_FOOTER
-        : R.ADMIN.APPEARANCE_BODY;
-  const title =
-    kind === 'header'
-      ? translateApp(lang, 'chromeLayouts.createHeader')
-      : kind === 'footer'
-        ? translateApp(lang, 'chromeLayouts.createFooter')
-        : translateApp(lang, 'chromeLayouts.createBody');
+        ? 'chromeLayouts.createFooter'
+        : 'chromeLayouts.createBody',
+  );
 
   const onSave$ = $(async () => {
     if (!name.value.trim()) {
@@ -74,13 +70,7 @@ export const ChromeLayoutCreatePage = component$<{ kind: ChromeLayoutKind }>(({ 
         return;
       }
       await success(translateApp(lang, 'common.created'));
-      const href =
-        kind === 'header'
-          ? adminHeaderBuilderHref(lang, res.id)
-          : kind === 'footer'
-            ? adminFooterBuilderHref(lang, res.id)
-            : adminBodyBuilderHref(lang, res.id);
-      await nav(href);
+      await nav(adminChromeBuilderHref(lang, kind, res.id));
     } finally {
       saving.value = false;
     }

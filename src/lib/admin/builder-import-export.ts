@@ -15,7 +15,18 @@ import type { FormActionNode, FormLayoutDocument, FormSettings } from '~/types/f
 export const BUILDER_EXPORT_FORMAT = 'credocode.builder-export';
 export const BUILDER_EXPORT_VERSION = 1;
 
-export type BuilderKind = 'page' | 'form' | 'homepage' | 'header' | 'footer' | 'body' | 'theme';
+export type BuilderKind =
+  | 'page'
+  | 'form'
+  | 'homepage'
+  | 'header'
+  | 'footer'
+  | 'body'
+  | 'theme'
+  | 'single'
+  | 'archive'
+  | 'loop_item'
+  | 'overlay';
 
 
 export type BuilderExportEnvelope<T = unknown> = {
@@ -170,12 +181,16 @@ export function normalizeBuilderDocument(builder: BuilderKind, document: unknown
         throw new BuilderImportError('INVALID_HOMEPAGE_DOCUMENT');
       }
       return {
-        sections: normalizeHomepageSections(sections),
-      } satisfies HomepageBuilderDocument;
+        sections: ensurePageLayoutBands(sections as PageSectionNode[]),
+      } satisfies PageBuilderDocument;
     }
     case 'footer':
     case 'header':
-    case 'body': {
+    case 'body':
+    case 'single':
+    case 'archive':
+    case 'loop_item':
+    case 'overlay': {
       const sections = asSectionsArray(document);
       if (!sections) {
         throw new BuilderImportError(
@@ -218,7 +233,7 @@ export function normalizeBuilderDocument(builder: BuilderKind, document: unknown
  * Returns the normalized document (not the envelope).
  */
 export function extractBuilderDocument(data: unknown, expectedBuilder: BuilderKind): unknown {
-  if (Array.isArray(data) && (expectedBuilder === 'page' || expectedBuilder === 'homepage' || expectedBuilder === 'header' || expectedBuilder === 'footer' || expectedBuilder === 'body')) {
+  if (Array.isArray(data) && (expectedBuilder === 'page' || expectedBuilder === 'homepage' || expectedBuilder === 'header' || expectedBuilder === 'footer' || expectedBuilder === 'body' || expectedBuilder === 'single' || expectedBuilder === 'archive' || expectedBuilder === 'loop_item' || expectedBuilder === 'overlay')) {
     return normalizeBuilderDocument(expectedBuilder, { sections: data });
   }
 

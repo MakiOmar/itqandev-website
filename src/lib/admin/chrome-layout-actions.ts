@@ -13,12 +13,20 @@ import type {
 function listEndpoint(kind: ChromeLayoutKind): string {
   if (kind === 'footer') return API_ENDPOINTS.APPEARANCE.FOOTERS;
   if (kind === 'body') return API_ENDPOINTS.APPEARANCE.BODIES;
+  if (kind === 'single') return API_ENDPOINTS.APPEARANCE.SINGLES;
+  if (kind === 'archive') return API_ENDPOINTS.APPEARANCE.ARCHIVES;
+  if (kind === 'loop_item') return API_ENDPOINTS.APPEARANCE.LOOP_ITEMS;
+  if (kind === 'overlay') return API_ENDPOINTS.APPEARANCE.OVERLAYS;
   return API_ENDPOINTS.APPEARANCE.HEADERS;
 }
 
 function itemEndpoint(kind: ChromeLayoutKind, id: string | number): string {
   if (kind === 'footer') return API_ENDPOINTS.APPEARANCE.FOOTER_GET(id);
   if (kind === 'body') return API_ENDPOINTS.APPEARANCE.BODY_GET(id);
+  if (kind === 'single') return API_ENDPOINTS.APPEARANCE.SINGLE_GET(id);
+  if (kind === 'archive') return API_ENDPOINTS.APPEARANCE.ARCHIVE_GET(id);
+  if (kind === 'loop_item') return API_ENDPOINTS.APPEARANCE.LOOP_ITEM_GET(id);
+  if (kind === 'overlay') return API_ENDPOINTS.APPEARANCE.OVERLAY_GET(id);
   return API_ENDPOINTS.APPEARANCE.HEADER_GET(id);
 }
 
@@ -35,8 +43,11 @@ function mapLayout(raw: Record<string, unknown>): ChromeLayoutMeta {
       : undefined;
 
   const kindRaw = String(raw.kind ?? 'header');
-  const kind: ChromeLayoutKind =
-    kindRaw === 'footer' ? 'footer' : kindRaw === 'body' ? 'body' : 'header';
+  const kind: ChromeLayoutKind = (
+    ['header', 'footer', 'body', 'single', 'archive', 'loop_item', 'overlay'] as ChromeLayoutKind[]
+  ).includes(kindRaw as ChromeLayoutKind)
+    ? (kindRaw as ChromeLayoutKind)
+    : 'header';
 
   return {
     id: Number(raw.id),
@@ -48,6 +59,7 @@ function mapLayout(raw: Record<string, unknown>): ChromeLayoutMeta {
     created_at: (raw.created_at as string) ?? null,
     updated_at: (raw.updated_at as string) ?? null,
     sections,
+    overlay: (raw.overlay as ChromeLayoutMeta['overlay']) ?? null,
     document: raw.document as ChromeLayoutMeta['document'],
   };
 }

@@ -1,7 +1,8 @@
-import { component$ } from '@builder.io/qwik';
+import { component$, lazy$ } from '@builder.io/qwik';
 import { Button } from '~/components/marketing/Button';
 import { MarketingImageLightbox } from '~/components/marketing/MarketingImageLightbox';
-import { marketingRoutes } from '~/lib/marketing/constants';
+
+const LottiePlayer = lazy$(() => import('./LottiePlayerLazy'));
 
 export type AtomicWidgetProps = {
   type: string;
@@ -135,14 +136,20 @@ export const AtomicWidgetView = component$<AtomicWidgetProps>((props) => {
         />
       );
       const link = str(s, 'link_url');
+      const lightbox = s.lightbox === true;
+      const wrapped = lightbox ? <MarketingImageLightbox>{img}</MarketingImageLightbox> : img;
       return (
         <figure>
-          {link ? (
-            <a href={link} target="_blank" rel="noopener noreferrer">
+          {link && !lightbox ? (
+            <a
+              href={link}
+              target={s.open_in_new_tab ? '_blank' : undefined}
+              rel={s.open_in_new_tab ? 'noopener noreferrer' : undefined}
+            >
               {img}
             </a>
           ) : (
-            img
+            wrapped
           )}
           {str(s, 'caption') ? (
             <figcaption
@@ -213,9 +220,14 @@ export const AtomicWidgetView = component$<AtomicWidgetProps>((props) => {
     }
     case 'button': {
       const style = str(s, 'style', 'primary') as 'primary' | 'secondary' | 'outline' | 'ghost';
+      const overlayId = Number(s.overlay_id);
       const href = str(s, 'url') || '#';
+      const extra =
+        Number.isInteger(overlayId) && overlayId > 0
+          ? { 'data-overlay-id': String(overlayId) }
+          : {};
       return (
-        <Button href={href} variant={style}>
+        <Button href={href} variant={style} {...extra}>
           {str(s, 'label', 'Button')}
         </Button>
       );
@@ -328,6 +340,80 @@ export const AtomicWidgetView = component$<AtomicWidgetProps>((props) => {
               </li>
             ))}
         </ul>
+      );
+    }
+    }
+    case 'lottie': {
+      const src = str(s, 'url') || str(s, 'media_url') || str(s, 'src');
+      if (!src) return <div class="b-lottie rounded-xl bg-slate-100 p-8 text-center text-sm text-slate-500 dark:bg-slate-800">Lottie</div>;
+      return (
+        <LottiePlayer
+          src={src}
+          loop={s.loop !== false}
+          autoplay={s.autoplay !== false}
+          speed={num(s, 'speed', 1)}
+          playInView={s.play_in_view !== false}
+        />
+      );
+    }
+    case 'flip_box':
+      return (
+        <div class="b-flip group relative h-56 w-full" tabIndex={0}>
+          <div class="b-flip-inner relative h-full w-full rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-900">
+            <div class="absolute inset-0 flex flex-col items-center justify-center gap-2 p-6 backface-hidden">
+              <p class="text-lg font-semibold text-slate-900 dark:text-white">{str(s, 'front_heading', 'Front')}</p>
+              <p class="text-sm text-slate-600 dark:text-slate-300">{str(s, 'front_text')}</p>
+            </div>
+            <div class="absolute inset-0 flex flex-col items-center justify-center gap-2 p-6 [transform:rotateY(180deg)] backface-hidden">
+              <p class="text-lg font-semibold text-slate-900 dark:text-white">{str(s, 'back_heading', 'Back')}</p>
+              <p class="text-sm text-slate-600 dark:text-slate-300">{str(s, 'back_text')}</p>
+              {str(s, 'back_url') ? (
+                <a class="text-sm font-medium text-primary-600" href={str(s, 'back_url')}>
+                  {str(s, 'back_label', 'Learn more')}
+                </a>
+              ) : null}
+            </div>
+          </div>
+        </div>
+      );
+    case 'post_title':
+      return <h1 class="text-3xl font-bold text-slate-900 dark:text-white">{str(s, 'text') || str(s, 'fallback', 'Title')}</h1>;
+    case 'post_excerpt':
+      return <p class="text-lg text-slate-600 dark:text-slate-300">{str(s, 'text') || str(s, 'fallback')}</p>;
+    case 'post_content':
+      return (
+        <div class="prose prose-slate max-w-none dark:prose-invert" dangerouslySetInnerHTML={str(s, 'html') || str(s, 'content') || str(s, 'fallback')} />
+      );
+    case 'post_featured_image': {
+      const url = str(s, 'image') || str(s, 'url');
+      if (!url) return null;
+      return <img src={url} alt="" class="w-full rounded-xl" loading="lazy" />;
+    }
+    case 'post_info':
+      return (
+        <p class="text-sm text-slate-500">
+          {s.show_date !== false ? str(s, 'date') : ''}
+          {s.show_terms !== false && str(s, 'terms') ? ` · ${str(s, 'terms')}` : ''}
+        </p>
+      );
+    case 'archive_title':
+      return <h1 class="text-3xl font-bold text-slate-900 dark:text-white">{str(s, 'text') || str(s, 'fallback', 'Archive')}</h1>;
+    case 'loop_grid': {
+      const items = Array.isArray(s.items) ? (s.items as Array<Record<string, unknown>>) : [];
+      const mode = str(s, 'mode', 'grid');
+      return (
+        <div class={mode === 'carousel' ? 'flex gap-4 overflow-x-auto' : 'grid gap-6 sm:grid-cols-2 lg:grid-cols-3'}>
+          {items.map((item, i) => (
+            <a
+              key={i}
+              href={String(item.url || '#')}
+              class="block rounded-xl border border-slate-200 p-4 hover:border-primary-400 dark:border-slate-700"
+            >
+              <h3 class="font-semibold text-slate-900 dark:text-white">{String(item.title || '')}</h3>
+              <p class="mt-1 text-sm text-slate-600 dark:text-slate-400">{String(item.excerpt || '')}</p>
+            </a>
+          ))}
+        </div>
       );
     }
     default:

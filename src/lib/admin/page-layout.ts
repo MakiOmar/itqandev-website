@@ -157,6 +157,41 @@ export function createEmptyBand(): PageLayoutBand {
   };
 }
 
+export function createInnerBand(): PageLayoutBlock {
+  return {
+    id: newBlockId('inner_band'),
+    kind: 'inner',
+    type: 'inner_band',
+    enabled: true,
+    settings: {},
+    rows: [createEmptyRow(2)],
+  };
+}
+
+function mapBlocksDeep(
+  blocks: PageLayoutBlock[],
+  updater: (block: PageLayoutBlock) => PageLayoutBlock,
+  matchId?: string,
+): PageLayoutBlock[] {
+  return blocks.map((block) => {
+    const next =
+      !matchId || block.id === matchId ? updater(block) : block;
+    if ((next.type === 'inner_band' || next.kind === 'inner') && next.rows) {
+      return {
+        ...next,
+        rows: next.rows.map((row) => ({
+          ...row,
+          columns: row.columns.map((col) => ({
+            ...col,
+            blocks: mapBlocksDeep(col.blocks ?? [], updater, matchId),
+          })),
+        })),
+      };
+    }
+    return next;
+  });
+}
+
 export function createEmptyColumn(equalShare = 12): PageLayoutColumn {
   const n = clampSpan(equalShare);
   return {
@@ -186,8 +221,18 @@ export function countBlocksByType(bands: PageLayoutBand[]): Record<string, numbe
           const kind = block.kind || 'kit';
           const key = `${kind}:${block.type}`;
           counts[key] = (counts[key] ?? 0) + 1;
-          // Legacy type-only key for older callers.
           counts[block.type] = (counts[block.type] ?? 0) + 1;
+          if (block.type === 'inner_band' && block.rows) {
+            for (const row of block.rows) {
+              for (const col of row.columns ?? []) {
+                for (const nested of col.blocks ?? []) {
+                  const nk = `${nested.kind || 'kit'}:${nested.type}`;
+                  counts[nk] = (counts[nk] ?? 0) + 1;
+                  counts[nested.type] = (counts[nested.type] ?? 0) + 1;
+                }
+              }
+            }
+          }
         }
       }
     }
@@ -229,7 +274,7 @@ export function updateBlockInBands(
       ...row,
       columns: row.columns.map((col) => ({
         ...col,
-        blocks: col.blocks.map((block) => (block.id === blockId ? updater(block) : block)),
+        blocks: mapBlocksDeep(col.blocks, updater, blockId),
       })),
     })),
   }));
@@ -292,12 +337,25 @@ export function findBlockInBands(
   bands: PageLayoutBand[],
   blockId: string,
 ): PageLayoutBlock | null {
+  const walk = (blocks: PageLayoutBlock[]): PageLayoutBlock | null => {
+    for (const block of blocks) {
+      if (block.id === blockId) return block;
+      if (block.rows) {
+        for (const row of block.rows) {
+          for (const col of row.columns ?? []) {
+            const found = walk(col.blocks ?? []);
+            if (found) return found;
+          }
+        }
+      }
+    }
+    return null;
+  };
   for (const band of bands) {
     for (const row of band.rows) {
       for (const col of row.columns) {
-        for (const block of col.blocks) {
-          if (block.id === blockId) return block;
-        }
+        const found = walk(col.blocks);
+        if (found) return found;
       }
     }
   }
