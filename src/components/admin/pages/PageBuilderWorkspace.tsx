@@ -78,6 +78,41 @@ export type PageBuilderSelection =
   | { kind: 'block'; bandIndex: number; rowIndex: number; colIndex: number; blockIndex: number }
   | null;
 
+function groupRegistryByCategory(
+  entries: AppearanceRegistryEntry[],
+): Array<[string, AppearanceRegistryEntry[]]> {
+  const grouped: Record<string, AppearanceRegistryEntry[]> = {};
+  for (const entry of entries) {
+    const cat = entry.category || 'General';
+    const list = grouped[cat] || [];
+    list.push(entry);
+    grouped[cat] = list;
+  }
+  return Object.entries(grouped);
+}
+
+function blockAtSelection(
+  bands: PageLayoutBand[],
+  selection: PageBuilderSelection,
+): PageLayoutBlock | null {
+  if (!selection || selection.kind !== 'block') {
+    return null;
+  }
+  const band = bands[selection.bandIndex];
+  if (!band) {
+    return null;
+  }
+  const row = band.rows[selection.rowIndex];
+  if (!row) {
+    return null;
+  }
+  const col = row.columns[selection.colIndex];
+  if (!col) {
+    return null;
+  }
+  return col.blocks[selection.blockIndex] || null;
+}
+
 export type PageBuilderWorkspaceProps = {
   lang: string;
   pageTitle: string;
@@ -534,10 +569,10 @@ export const PageBuilderWorkspace = component$<PageBuilderWorkspaceProps>((props
   // eslint-disable-next-line qwik/no-use-visible-task
   useVisibleTask$(async () => {
     try {
-      const res = await getApiClient(null).get<Array<{ id: number; name: string; status?: string }>>(
-        API_ENDPOINTS.APPEARANCE.GLOBALS,
-      );
-      const rows = Array.isArray(res.data) ? res.data : [];
+      const res = await getApiClient(null).get(API_ENDPOINTS.APPEARANCE.GLOBALS);
+      const rows = Array.isArray(res.data)
+        ? (res.data as Array<{ id: number; name: string; status?: string }>)
+        : [];
       globalsList.value = rows
         .filter((r) => r.status !== 'draft')
         .map((r) => ({ id: Number(r.id), name: String(r.name || r.id) }));
@@ -604,23 +639,8 @@ export const PageBuilderWorkspace = component$<PageBuilderWorkspaceProps>((props
     })
     .slice();
 
-  const insertableByCategory = (() => {
-    const map: Map<string, AppearanceRegistryEntry[]> = new Map();
-    for (const entry of insertable) {
-      const cat = entry.category || 'General';
-      const list = map.get(cat) || [];
-      list.push(entry);
-      map.set(cat, list);
-    }
-    return Array.from(map.entries());
-  })();
-
-  const selectedBlock =
-    selection.value?.kind === 'block'
-      ? bands[selection.value.bandIndex]?.rows[selection.value.rowIndex]?.columns[
-          selection.value.colIndex
-        ]?.blocks[selection.value.blockIndex]
-      : null;
+  const insertableByCategory = groupRegistryByCategory(insertable);
+  const selectedBlock = blockAtSelection(bands, selection.value);
 
   return (
     <div class="flex h-full min-h-0 flex-col">
@@ -2314,7 +2334,7 @@ export const PageBuilderWorkspace = component$<PageBuilderWorkspaceProps>((props
                     class="mt-2 w-full rounded border border-gray-300 px-2 py-1 text-xs dark:border-gray-600"
                     onClick$={async () => {
                       try {
-                        const res = await getApiClient(null).post<{ id: number }>(
+                        const res = await getApiClient(null).post(
                           API_ENDPOINTS.APPEARANCE.GLOBALS,
                           {
                             name: selectedBlock.type,
@@ -2326,7 +2346,7 @@ export const PageBuilderWorkspace = component$<PageBuilderWorkspaceProps>((props
                             },
                           },
                         );
-                        const id = Number(res.data?.id);
+                        const id = Number((res.data as { id?: number } | undefined)?.id);
                         if (!id) return;
                         await commit$(
                           updateBlockInBands(bands, selectedBlock.id, (blk) => ({
