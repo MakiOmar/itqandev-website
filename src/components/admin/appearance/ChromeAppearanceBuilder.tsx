@@ -41,10 +41,21 @@ function chromeKindSlug(kind: ChromeLayoutKind): string {
 const HEADER_CATEGORIES = new Set(['Header']);
 const FOOTER_CATEGORIES = new Set(['Footer']);
 
-export const ChromeAppearanceBuilder = component$<{
+type ChromeAppearanceBuilderProps = {
   kind: ChromeLayoutKind;
   layoutId: number;
-}>(({ kind, layoutId }) => {
+};
+
+type PreviewRecordOption = { id: number; title: string };
+
+type PreviewBrandingState = {
+  name: string;
+  logo: string;
+  logoDark: string;
+  logoLight: string;
+};
+
+export const ChromeAppearanceBuilder = component$<ChromeAppearanceBuilderProps>(({ kind, layoutId }) => {
   const { lang } = useTranslate();
   const R = getLocalizedRoutes(lang);
   const langConfig = usePublicSiteMeta();
@@ -57,14 +68,14 @@ export const ChromeAppearanceBuilder = component$<{
   const dynamicTags = useSignal<BuilderDynamicTag[]>([]);
   const previewType = useSignal('blog_post');
   const previewRecordId = useSignal('');
-  const previewRecords = useSignal<Array<{ id: number; title: string }>>([]);
+  const previewRecords = useSignal<PreviewRecordOption[]>([]);
   const previewOverride = useSignal<PageSectionNode[] | null>(null);
-  const previewBranding = useSignal<{
-    name: string;
-    logo: string;
-    logoDark: string;
-    logoLight: string;
-  }>({ name: '', logo: '', logoDark: '', logoLight: '' });
+  const previewBranding = useSignal<PreviewBrandingState>({
+    name: '',
+    logo: '',
+    logoDark: '',
+    logoLight: '',
+  });
   const defaultLocale = (
     langConfig.value.content_editing_locale ||
     langConfig.value.default_locale ||
@@ -108,7 +119,7 @@ export const ChromeAppearanceBuilder = component$<{
         fetchAppearanceRegistriesFromBrowser(),
         fetchChromeLayoutFromBrowser(kind, layoutId),
         getApiClient(null)
-          .get<Record<string, unknown>>(API_ENDPOINTS.SETTINGS.GET)
+          .get(API_ENDPOINTS.SETTINGS.GET)
           .catch(() => null),
       ]);
       if (kind === 'header') {

@@ -55,6 +55,8 @@ import type {
   LayoutBreakpoint,
   PageLayoutBand,
   PageLayoutBlock,
+  PageLayoutColumn,
+  PageLayoutRow,
   PageLayoutStackBelow,
   PageSectionNode,
 } from '~/lib/marketing/appearance-types';
@@ -169,6 +171,87 @@ type BlockPath = {
 };
 
 type RowPath = { bandIndex: number; rowIndex: number };
+
+type ColPath = { bandIndex: number; rowIndex: number; colIndex: number };
+
+function rowPathOf(selection: PageBuilderSelection): RowPath | null {
+  if (!selection || selection.kind !== 'row') {
+    return null;
+  }
+  return { bandIndex: selection.bandIndex, rowIndex: selection.rowIndex };
+}
+
+function rowAtSelection(
+  bands: PageLayoutBand[],
+  selection: PageBuilderSelection,
+): PageLayoutRow | null {
+  const path = rowPathOf(selection);
+  if (!path) {
+    return null;
+  }
+  const band = bands[path.bandIndex];
+  if (!band) {
+    return null;
+  }
+  return band.rows[path.rowIndex] || null;
+}
+
+function colPathOf(selection: PageBuilderSelection): ColPath | null {
+  if (!selection || selection.kind !== 'column') {
+    return null;
+  }
+  return {
+    bandIndex: selection.bandIndex,
+    rowIndex: selection.rowIndex,
+    colIndex: selection.colIndex,
+  };
+}
+
+function colAtSelection(
+  bands: PageLayoutBand[],
+  selection: PageBuilderSelection,
+): PageLayoutColumn | null {
+  const path = colPathOf(selection);
+  if (!path) {
+    return null;
+  }
+  const row = rowAtSelection(bands, {
+    kind: 'row',
+    bandIndex: path.bandIndex,
+    rowIndex: path.rowIndex,
+  });
+  if (!row) {
+    return null;
+  }
+  return row.columns[path.colIndex] || null;
+}
+
+type MediaPickerTarget = { blockId: string; key: string; accept?: string };
+
+type GlobalWidgetApiRow = { id: number; name: string; status?: string };
+
+type PaletteTab = 'widgets' | 'kits' | 'globals';
+
+type InspectorTab = 'content' | 'style' | 'advanced';
+
+type GlobalWidgetCreated = { id?: number };
+
+type BandLayoutWidth = 'boxed' | 'full';
+
+type RowJustify = 'start' | 'center' | 'end' | 'between';
+
+type BuilderLivePreviewShellProps = {
+  open: Signal<boolean>;
+  previewSurface?: 'page' | 'chrome';
+  bands: PageLayoutBand[];
+  uiLocale: string;
+  pageTitle: string;
+  siteLanguages: SiteLanguageRow[];
+  previewBranding?: PageBuilderWorkspaceProps['previewBranding'];
+  previewSupport?: PageBuilderWorkspaceProps['previewSupport'];
+  isDarkMode: boolean;
+  previewDevice: LayoutBreakpoint;
+};
 
 /** Module-level so `$` handlers do not capture non-serializable closures. */
 function usedSpanInRow(
@@ -468,18 +551,7 @@ function withChromePreviewMenuSamples(bands: PageLayoutBand[]): PageLayoutBand[]
 }
 
 /** Isolates live-preview visibility so toggle off cannot leave a stuck pane. */
-const BuilderLivePreviewShell = component$<{
-  open: Signal<boolean>;
-  previewSurface?: 'page' | 'chrome';
-  bands: PageLayoutBand[];
-  uiLocale: string;
-  pageTitle: string;
-  siteLanguages: SiteLanguageRow[];
-  previewBranding?: PageBuilderWorkspaceProps['previewBranding'];
-  previewSupport?: PageBuilderWorkspaceProps['previewSupport'];
-  isDarkMode: boolean;
-  previewDevice: LayoutBreakpoint;
-}>((props) => {
+const BuilderLivePreviewShell = component$<BuilderLivePreviewShellProps>((props) => {
   const visible = props.open.value;
   return (
     <div
@@ -544,19 +616,19 @@ export const PageBuilderWorkspace = component$<PageBuilderWorkspaceProps>((props
   const previewDevice = useSignal<LayoutBreakpoint>('desktop');
   const selection = useSignal<PageBuilderSelection>(null);
   const mediaPreviewById = useSignal<Record<string, string>>({});
-  const mediaTarget = useSignal<{ blockId: string; key: string; accept?: string } | null>(null);
+  const mediaTarget = useSignal<MediaPickerTarget | null>(null);
   const dragBlock = useSignal<BlockPath | null>(null);
   const dragWidgetType = useSignal<string | null>(null);
   const dropColumnKey = useSignal<string | null>(null);
   const dropRowKey = useSignal<string | null>(null);
-  const paletteTab = useSignal<'widgets' | 'kits' | 'globals'>('widgets');
+  const paletteTab = useSignal<PaletteTab>('widgets');
   const paletteSearch = useSignal('');
   const undoStack = useSignal<string[]>([]);
   const redoStack = useSignal<string[]>([]);
-  const globalsList = useSignal<Array<{ id: number; name: string }>>([]);
+  const globalsList = useSignal<GlobalWidgetApiRow[]>([]);
   const savedBands = useSignal<SavedBuilderBand[]>([]);
   const showLivePreview = useSignal(false);
-  const inspectorTab = useSignal<'content' | 'style' | 'advanced'>('content');
+  const inspectorTab = useSignal<InspectorTab>('content');
   /** Keep preview DOM after first open so off is CSS-only (avoids stuck pane). */
   const livePreviewMounted = useSignal(false);
   const previewIsDark = useSignal(false);
@@ -570,9 +642,7 @@ export const PageBuilderWorkspace = component$<PageBuilderWorkspaceProps>((props
   useVisibleTask$(async () => {
     try {
       const res = await getApiClient(null).get(API_ENDPOINTS.APPEARANCE.GLOBALS);
-      const rows = Array.isArray(res.data)
-        ? (res.data as Array<{ id: number; name: string; status?: string }>)
-        : [];
+      const rows = Array.isArray(res.data) ? (res.data as GlobalWidgetApiRow[]) : [];
       globalsList.value = rows
         .filter((r) => r.status !== 'draft')
         .map((r) => ({ id: Number(r.id), name: String(r.name || r.id) }));
@@ -641,6 +711,8 @@ export const PageBuilderWorkspace = component$<PageBuilderWorkspaceProps>((props
 
   const insertableByCategory = groupRegistryByCategory(insertable);
   const selectedBlock = blockAtSelection(bands, selection.value);
+  const selectedRow = rowAtSelection(bands, selection.value);
+  const selectedCol = colAtSelection(bands, selection.value);
 
   return (
     <div class="flex h-full min-h-0 flex-col">
@@ -658,7 +730,7 @@ export const PageBuilderWorkspace = component$<PageBuilderWorkspaceProps>((props
                 {props.breadcrumbs.map((c, i) => (
                   <li key={i} class="flex min-w-0 items-center gap-1">
                     {i > 0 ? <span aria-hidden="true">/</span> : null}
-                    {c.href && i < props.breadcrumbs!.length - 1 ? (
+                    {c.href && i + 1 !== props.breadcrumbs!.length ? (
                       <Link href={c.href} class="truncate hover:text-primary-600 dark:hover:text-primary-400">
                         {c.label}
                       </Link>
@@ -1778,9 +1850,7 @@ export const PageBuilderWorkspace = component$<PageBuilderWorkspaceProps>((props
                     class={`${ADMIN_NATIVE_SELECT_COMPACT_CLASS} mt-1 w-full`}
                     value={bands[selection.value.bandIndex]?.layout_width || 'boxed'}
                     onChange$={async (e) => {
-                      const layout_width = (e.target as HTMLSelectElement).value as
-                        | 'boxed'
-                        | 'full';
+                      const layout_width = (e.target as HTMLSelectElement).value as BandLayoutWidth;
                       const bi = selection.value!.bandIndex;
                       await commit$(
                         bands.map((b, i) => (i === bi ? { ...b, layout_width } : b)),
@@ -1881,21 +1951,18 @@ export const PageBuilderWorkspace = component$<PageBuilderWorkspaceProps>((props
                   {translateApp(props.lang, 'pages.row')} {selection.value.rowIndex + 1}
                 </p>
                 {inspectorTab.value === 'content' ? (
+                <>
                 <label class="block text-xs font-medium text-gray-600 dark:text-gray-300">
                   {translateApp(props.lang, 'pages.stackBelow')}
                   <select
                     class={`${ADMIN_NATIVE_SELECT_COMPACT_CLASS} mt-1 w-full`}
-                    value={
-                      bands[selection.value.bandIndex]?.rows[selection.value.rowIndex]
-                        ?.stack_below || 'none'
-                    }
+                    value={selectedRow?.stack_below || 'none'}
                     onChange$={async (e) => {
                       const stack_below = (e.target as HTMLSelectElement)
                         .value as PageLayoutStackBelow;
-                      const { bandIndex, rowIndex } = selection.value as {
-                        bandIndex: number;
-                        rowIndex: number;
-                      };
+                      const path = rowPathOf(selection.value);
+                      if (!path) return;
+                      const { bandIndex, rowIndex } = path;
                       await commit$(
                         bands.map((b, bi) => {
                           if (bi !== bandIndex) return b;
@@ -1924,53 +1991,50 @@ export const PageBuilderWorkspace = component$<PageBuilderWorkspaceProps>((props
                   {translateApp(props.lang, 'pages.rowJustify')}
                   <select
                     class={`${ADMIN_NATIVE_SELECT_COMPACT_CLASS} mt-1 w-full`}
-                    value={
-                      bands[selection.value.bandIndex]?.rows[selection.value.rowIndex]?.justify ||
-                      'start'
-                    }
+                    value={selectedRow?.justify || 'start'}
                     onChange$={async (e) => {
-                      const justify = (e.target as HTMLSelectElement).value as
-                        | 'start'
-                        | 'center'
-                        | 'end'
-                        | 'between';
-                      const { bandIndex, rowIndex } = selection.value as {
-                        bandIndex: number;
-                        rowIndex: number;
-                      };
+                      const nextJustify = (e.target as HTMLSelectElement)
+                        .value as RowJustify;
+                      const path = rowPathOf(selection.value);
+                      if (!path) return;
                       await commit$(
                         bands.map((b, bi) => {
-                          if (bi !== bandIndex) return b;
+                          if (bi !== path.bandIndex) return b;
                           return {
                             ...b,
                             rows: b.rows.map((r, ri) =>
-                              ri === rowIndex ? { ...r, justify } : r,
+                              ri === path.rowIndex ? { ...r, justify: nextJustify } : r,
                             ),
                           };
                         }),
                       );
                     }}
                   >
-                    {['start', 'center', 'end', 'between'].map((v) => (
-                      <option key={v} class={ADMIN_NATIVE_OPTION_CLASS} value={v}>
-                        {v}
-                      </option>
-                    ))}
+                    <option class={ADMIN_NATIVE_OPTION_CLASS} value="start">
+                      start
+                    </option>
+                    <option class={ADMIN_NATIVE_OPTION_CLASS} value="center">
+                      center
+                    </option>
+                    <option class={ADMIN_NATIVE_OPTION_CLASS} value="end">
+                      end
+                    </option>
+                    <option class={ADMIN_NATIVE_OPTION_CLASS} value="between">
+                      between
+                    </option>
                   </select>
                 </label>
+                </>
                 ) : null}
                 {inspectorTab.value === 'style' ? (
                   <div class="space-y-4">
                     <BuilderBackgroundFields
                       lang={props.lang}
-                      settings={
-                        bands[selection.value.bandIndex]?.rows[selection.value.rowIndex]?.settings
-                      }
+                      settings={selectedRow?.settings}
                       onChange$={$(async (next) => {
-                        const { bandIndex, rowIndex } = selection.value as {
-                          bandIndex: number;
-                          rowIndex: number;
-                        };
+                        const path = rowPathOf(selection.value);
+                        if (!path) return;
+                        const { bandIndex, rowIndex } = path;
                         await commit$(
                           bands.map((b, bi) => {
                             if (bi !== bandIndex) return b;
@@ -1987,18 +2051,15 @@ export const PageBuilderWorkspace = component$<PageBuilderWorkspaceProps>((props
                     <BuilderStylePanel
                       lang={props.lang}
                       widgetType={CONTAINER_STYLE_TYPE}
-                      styles={
-                        bands[selection.value.bandIndex]?.rows[selection.value.rowIndex]?.styles
-                      }
+                      styles={selectedRow?.styles}
                       device={previewDevice.value as StyleBreakpoint}
                       onDevice$={$((device: StyleBreakpoint) => {
                         previewDevice.value = device;
                       })}
                       onChange$={$(async (next: BuilderStyles) => {
-                        const { bandIndex, rowIndex } = selection.value as {
-                          bandIndex: number;
-                          rowIndex: number;
-                        };
+                        const path = rowPathOf(selection.value);
+                        if (!path) return;
+                        const { bandIndex, rowIndex } = path;
                         await commit$(
                           bands.map((b, bi) => {
                             if (bi !== bandIndex) return b;
@@ -2017,14 +2078,11 @@ export const PageBuilderWorkspace = component$<PageBuilderWorkspaceProps>((props
                 {inspectorTab.value === 'advanced' ? (
                   <BuilderResponsiveVisibilityFields
                     lang={props.lang}
-                    hideOn={
-                      bands[selection.value.bandIndex]?.rows[selection.value.rowIndex]?.hide_on
-                    }
+                    hideOn={selectedRow?.hide_on}
                     onChange$={$(async (next: DeviceHideOn) => {
-                      const { bandIndex, rowIndex } = selection.value as {
-                        bandIndex: number;
-                        rowIndex: number;
-                      };
+                      const path = rowPathOf(selection.value);
+                      if (!path) return;
+                      const { bandIndex, rowIndex } = path;
                       await commit$(
                         bands.map((b, bi) => {
                           if (bi !== bandIndex) return b;
@@ -2061,11 +2119,9 @@ export const PageBuilderWorkspace = component$<PageBuilderWorkspaceProps>((props
                         type="button"
                         class="rounded border border-gray-300 px-2 py-1 text-[11px] font-medium text-gray-700 hover:border-primary-400 hover:text-primary-700 dark:border-gray-600 dark:text-gray-200"
                         onClick$={async () => {
-                          const { bandIndex, rowIndex, colIndex } = selection.value as {
-                            bandIndex: number;
-                            rowIndex: number;
-                            colIndex: number;
-                          };
+                          const path = colPathOf(selection.value);
+                          if (!path) return;
+                          const { bandIndex, rowIndex, colIndex } = path;
                           await commit$(
                             bands.map((b, bi) => {
                               if (bi !== bandIndex) return b;
@@ -2112,19 +2168,14 @@ export const PageBuilderWorkspace = component$<PageBuilderWorkspaceProps>((props
                       value={
                         selection.value &&
                         (selection.value.kind === 'column' || selection.value.kind === 'block')
-                          ? normalizeColumnSpans(
-                              bands[selection.value.bandIndex]?.rows[selection.value.rowIndex]
-                                ?.columns[selection.value.colIndex]?.span,
-                            )[device]
+                          ? normalizeColumnSpans(selectedCol?.span)[device]
                           : 12
                       }
                       onInput$={async (e) => {
                         const n = Number((e.target as HTMLInputElement).value);
-                        const { bandIndex, rowIndex, colIndex } = selection.value as {
-                          bandIndex: number;
-                          rowIndex: number;
-                          colIndex: number;
-                        };
+                        const path = colPathOf(selection.value);
+                        if (!path) return;
+                        const { bandIndex, rowIndex, colIndex } = path;
                         await commit$(
                           bands.map((b, bi) => {
                             if (bi !== bandIndex) return b;
@@ -2162,17 +2213,11 @@ export const PageBuilderWorkspace = component$<PageBuilderWorkspaceProps>((props
                   <div class="space-y-4">
                     <BuilderBackgroundFields
                       lang={props.lang}
-                      settings={
-                        bands[selection.value.bandIndex]?.rows[selection.value.rowIndex]?.columns[
-                          selection.value.colIndex
-                        ]?.settings
-                      }
+                      settings={selectedCol?.settings}
                       onChange$={$(async (next) => {
-                        const { bandIndex, rowIndex, colIndex } = selection.value as {
-                          bandIndex: number;
-                          rowIndex: number;
-                          colIndex: number;
-                        };
+                        const path = colPathOf(selection.value);
+                        if (!path) return;
+                        const { bandIndex, rowIndex, colIndex } = path;
                         await commit$(
                           bands.map((b, bi) => {
                             if (bi !== bandIndex) return b;
@@ -2195,21 +2240,15 @@ export const PageBuilderWorkspace = component$<PageBuilderWorkspaceProps>((props
                     <BuilderStylePanel
                       lang={props.lang}
                       widgetType={CONTAINER_STYLE_TYPE}
-                      styles={
-                        bands[selection.value.bandIndex]?.rows[selection.value.rowIndex]?.columns[
-                          selection.value.colIndex
-                        ]?.styles
-                      }
+                      styles={selectedCol?.styles}
                       device={previewDevice.value as StyleBreakpoint}
                       onDevice$={$((device: StyleBreakpoint) => {
                         previewDevice.value = device;
                       })}
                       onChange$={$(async (next: BuilderStyles) => {
-                        const { bandIndex, rowIndex, colIndex } = selection.value as {
-                          bandIndex: number;
-                          rowIndex: number;
-                          colIndex: number;
-                        };
+                        const path = colPathOf(selection.value);
+                        if (!path) return;
+                        const { bandIndex, rowIndex, colIndex } = path;
                         await commit$(
                           bands.map((b, bi) => {
                             if (bi !== bandIndex) return b;
@@ -2234,17 +2273,11 @@ export const PageBuilderWorkspace = component$<PageBuilderWorkspaceProps>((props
                 {inspectorTab.value === 'advanced' ? (
                   <BuilderResponsiveVisibilityFields
                     lang={props.lang}
-                    hideOn={
-                      bands[selection.value.bandIndex]?.rows[selection.value.rowIndex]?.columns[
-                        selection.value.colIndex
-                      ]?.hide_on
-                    }
+                    hideOn={selectedCol?.hide_on}
                     onChange$={$(async (next: DeviceHideOn) => {
-                      const { bandIndex, rowIndex, colIndex } = selection.value as {
-                        bandIndex: number;
-                        rowIndex: number;
-                        colIndex: number;
-                      };
+                      const path = colPathOf(selection.value);
+                      if (!path) return;
+                      const { bandIndex, rowIndex, colIndex } = path;
                       await commit$(
                         bands.map((b, bi) => {
                           if (bi !== bandIndex) return b;
@@ -2346,7 +2379,7 @@ export const PageBuilderWorkspace = component$<PageBuilderWorkspaceProps>((props
                             },
                           },
                         );
-                        const id = Number((res.data as { id?: number } | undefined)?.id);
+                        const id = Number((res.data as GlobalWidgetCreated | undefined)?.id);
                         if (!id) return;
                         await commit$(
                           updateBlockInBands(bands, selectedBlock.id, (blk) => ({

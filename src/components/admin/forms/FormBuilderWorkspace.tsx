@@ -68,6 +68,10 @@ type Selection =
 
 type DragFieldPath = { rowIndex: number; fieldIndex: number };
 
+type FormInspectorTab = 'content' | 'style' | 'advanced';
+
+type FormWorkspaceTab = 'fields' | 'actions' | 'settings';
+
 /** Module-level helpers so `$` handlers stay serializable. */
 function usedSpanInRow(
   row: { fields: Array<{ span: { mobile: number; tablet: number; desktop: number } }> },
@@ -148,8 +152,8 @@ export type FormBuilderWorkspaceProps = {
 export const FormBuilderWorkspace = component$<FormBuilderWorkspaceProps>((props) => {
   const device = useSignal<Device>('desktop');
   const selection = useSignal<Selection>(null);
-  const inspectorTab = useSignal<'content' | 'style' | 'advanced'>('content');
-  const tab = useSignal<'fields' | 'actions' | 'settings'>('fields');
+  const inspectorTab = useSignal<FormInspectorTab>('content');
+  const tab = useSignal<FormWorkspaceTab>('fields');
   const dragFieldType = useSignal<string | null>(null);
   const dragFieldPath = useSignal<DragFieldPath | null>(null);
   const dropRowIndex = useSignal<number | null>(null);
