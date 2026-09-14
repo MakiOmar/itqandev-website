@@ -49,19 +49,8 @@ const getApiBaseUrl = () => {
  * Get auth token from storage
  */
 function getAuthToken(): string | null {
-  if (typeof window === 'undefined') {
-    return null;
-  }
-  const session = localStorage.getItem('auth_session');
-  if (!session) {
-    return null;
-  }
-  try {
-    const parsed = JSON.parse(session);
-    return parsed.token || null;
-  } catch {
-    return null;
-  }
+  // Browser auth is the HttpOnly cookie on same-origin /api. Do not read tokens from localStorage.
+  return null;
 }
 
 /**

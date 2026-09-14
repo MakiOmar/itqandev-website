@@ -35,28 +35,6 @@ export type SearchReplaceTablesResponse = {
   };
 };
 
-function getBearerToken(): string | null {
-  if (typeof window === 'undefined') {
-    return null;
-  }
-  const config = getConfig();
-  const session = localStorage.getItem(config.auth.cookieName);
-  if (!session) {
-    return null;
-  }
-  try {
-    const parsed = JSON.parse(session);
-    if (parsed.token && parsed.token !== 'sanctum_cookie') {
-      return parsed.token;
-    }
-  } catch {
-    if (session !== 'sanctum_cookie') {
-      return session;
-    }
-  }
-  return null;
-}
-
 async function srFetch(endpoint: string, init: RequestInit = {}): Promise<Response> {
   const config = getConfig();
   const url = `${config.api.baseUrl}${endpoint}`;
@@ -65,11 +43,6 @@ async function srFetch(endpoint: string, init: RequestInit = {}): Promise<Respon
     'X-Requested-With': 'XMLHttpRequest',
     ...(init.headers as Record<string, string> | undefined),
   };
-
-  const token = getBearerToken();
-  if (token) {
-    headers[config.auth.tokenHeader] = `Bearer ${token}`;
-  }
 
   return fetch(url, {
     credentials: config.api.sanctum ? 'include' : 'same-origin',

@@ -21,28 +21,6 @@ export type DatabaseBackupListResponse = {
   };
 };
 
-function getBearerToken(): string | null {
-  if (typeof window === 'undefined') {
-    return null;
-  }
-  const config = getConfig();
-  const session = localStorage.getItem(config.auth.cookieName);
-  if (!session) {
-    return null;
-  }
-  try {
-    const parsed = JSON.parse(session);
-    if (parsed.token && parsed.token !== 'sanctum_cookie') {
-      return parsed.token;
-    }
-  } catch {
-    if (session !== 'sanctum_cookie') {
-      return session;
-    }
-  }
-  return null;
-}
-
 async function backupFetch(endpoint: string, init: RequestInit = {}): Promise<Response> {
   const config = getConfig();
   const url = `${config.api.baseUrl}${endpoint}`;
@@ -52,10 +30,7 @@ async function backupFetch(endpoint: string, init: RequestInit = {}): Promise<Re
     ...(init.headers as Record<string, string> | undefined),
   };
 
-  const token = getBearerToken();
-  if (token) {
-    headers[config.auth.tokenHeader] = `Bearer ${token}`;
-  } else if (typeof document !== 'undefined') {
+  if (typeof document !== 'undefined') {
     // Sanctum cookie sessions need CSRF on mutating requests.
     const method = (init.method || 'GET').toUpperCase();
     if (['POST', 'PUT', 'PATCH', 'DELETE'].includes(method)) {

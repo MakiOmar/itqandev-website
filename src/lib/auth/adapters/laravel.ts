@@ -6,6 +6,44 @@ import { LaravelApiClient } from '../../api/laravel-client';
 import { extractCookieHeader } from '../../api/client';
 import { resolveMarketingApiBaseUrl } from '../../marketing/resolve-api-base';
 
+const COOKIE_TOKEN_PLACEHOLDER = 'sanctum_cookie';
+
+/** One-shot payload for the login sync action. Never written to localStorage. */
+let pendingCookieSessionJson: string | null = null;
+
+export function takePendingAuthCookiePayload(): string | null {
+  const payload = pendingCookieSessionJson;
+  pendingCookieSessionJson = null;
+  return payload;
+}
+
+function toPublicSession(session: AuthSession): AuthSession {
+  return { ...session, token: COOKIE_TOKEN_PLACEHOLDER };
+}
+
+function persistPublicSession(session: AuthSession, cookieName: string): void {
+  if (typeof window === 'undefined') {
+    return;
+  }
+  localStorage.setItem(cookieName, JSON.stringify(toPublicSession(session)));
+}
+
+function tokenFromSessionJson(raw: string | undefined | null): string | null {
+  if (!raw) {
+    return null;
+  }
+  try {
+    const parsed = JSON.parse(raw) as { token?: string };
+    const token = parsed?.token;
+    if (typeof token === 'string' && token !== '' && token !== COOKIE_TOKEN_PLACEHOLDER) {
+      return token;
+    }
+  } catch {
+    /* ignore */
+  }
+  return null;
+}
+
 /**
  * Laravel Sanctum authentication adapter
  * Handles Laravel's cookie-based authentication
@@ -56,32 +94,29 @@ export class LaravelAuthAdapter implements AuthAdapter {
         updatedAt: laravelUser.updated_at,
       };
 
-      // Laravel Sanctum uses cookie-based auth, but we also need to store token
-      // in localStorage for client-side JavaScript requests
-      const session: AuthSession = {
+      const rawToken = response.data.token || COOKIE_TOKEN_PLACEHOLDER;
+      const serverSession: AuthSession = {
         user,
-        token: response.data.token || 'sanctum_cookie', // Use actual token if provided
-        expiresAt: Date.now() + 24 * 60 * 60 * 1000, // 24 hours
+        token: rawToken,
+        expiresAt: Date.now() + 24 * 60 * 60 * 1000,
       };
 
-      // Store session in cookie for server-side access
+      // Real token stays in the HttpOnly cookie only.
       if (cookie) {
-        cookie.set(this.config.auth.cookieName, JSON.stringify(session), {
+        cookie.set(this.config.auth.cookieName, JSON.stringify(serverSession), {
           path: '/',
           httpOnly: true,
           sameSite: 'lax',
           secure: import.meta.env.PROD,
           maxAge: [1, 'days'],
         });
+      } else if (typeof window !== 'undefined' && rawToken !== COOKIE_TOKEN_PLACEHOLDER) {
+        pendingCookieSessionJson = JSON.stringify(serverSession);
       }
 
-      // Also store in localStorage for client-side JavaScript access
-      // This is needed because HTTP-only cookies cannot be read by JavaScript
-      if (typeof window !== 'undefined') {
-        localStorage.setItem(this.config.auth.cookieName, JSON.stringify(session));
-      }
+      persistPublicSession(serverSession, this.config.auth.cookieName);
 
-      return session;
+      return toPublicSession(serverSession);
     } catch (error: any) {
       console.error('Laravel login error:', error);
       throw error;
@@ -191,7 +226,7 @@ export class LaravelAuthAdapter implements AuthAdapter {
     if (isSsr && import.meta.env.DEV) {
       const fromCookie = this.parseSessionFromAuthCookie(cookie);
       if (fromCookie) {
-        return fromCookie;
+        return toPublicSession(fromCookie);
       }
     }
 
@@ -225,14 +260,15 @@ export class LaravelAuthAdapter implements AuthAdapter {
           updatedAt: laravelUser.updated_at,
         };
 
+        const existingToken = tokenFromSessionJson(cookie?.get(this.config.auth.cookieName)?.value);
         const session: AuthSession = {
           user,
-          token: 'sanctum_cookie',
+          token: existingToken || COOKIE_TOKEN_PLACEHOLDER,
           expiresAt: Date.now() + 24 * 60 * 60 * 1000,
         };
 
-        // Update cookie if provided
-        if (cookie) {
+        // Keep the existing bearer in the HttpOnly cookie; do not replace it with the placeholder.
+        if (cookie && existingToken) {
           cookie.set(this.config.auth.cookieName, JSON.stringify(session), {
             path: '/',
             httpOnly: true,
@@ -242,12 +278,9 @@ export class LaravelAuthAdapter implements AuthAdapter {
           });
         }
 
-        // Also update localStorage for client-side access
-        if (typeof window !== 'undefined') {
-          localStorage.setItem(this.config.auth.cookieName, JSON.stringify(session));
-        }
+        persistPublicSession(session, this.config.auth.cookieName);
 
-        return session;
+        return toPublicSession(session);
       }
     } catch (error: any) {
       // For 401/403 errors, still check cookie fallback
@@ -291,8 +324,8 @@ export class LaravelAuthAdapter implements AuthAdapter {
                 user,
               };
               // Only use cookie if it's not expired and has a valid token
-              if (session.expiresAt > Date.now() && session.token && session.token !== 'sanctum_cookie') {
-                return session;
+              if (session.expiresAt > Date.now() && session.token) {
+                return toPublicSession(session);
               }
             } catch {
               // Invalid session format
@@ -337,7 +370,7 @@ export class LaravelAuthAdapter implements AuthAdapter {
             user,
           };
           if (session.expiresAt > Date.now()) {
-            return session;
+            return toPublicSession(session);
           }
         } catch {
           // Invalid session
@@ -351,7 +384,7 @@ export class LaravelAuthAdapter implements AuthAdapter {
         try {
           const session: AuthSession = JSON.parse(sessionStr);
           if (session.expiresAt > Date.now()) {
-            return session;
+            return toPublicSession(session);
           }
         } catch {
           // Invalid session

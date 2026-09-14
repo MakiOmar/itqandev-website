@@ -108,20 +108,8 @@ export default component$(() => {
       return;
     }
     const base = import.meta.env?.VITE_API_BASE_URL || '/api';
-    const token = (() => {
-      try {
-        const session = localStorage.getItem('auth_session');
-        if (!session) {
-          return null;
-        }
-        return JSON.parse(session).token as string | null;
-      } catch {
-        return null;
-      }
-    })();
     const url = `${String(base).replace(/\/$/, '')}${API_ENDPOINTS.ACTIVITY.EXPORT}`;
     fetch(url, {
-      headers: token ? { Authorization: `Bearer ${token}` } : {},
       credentials: 'include',
     })
       .then((r) => r.blob())

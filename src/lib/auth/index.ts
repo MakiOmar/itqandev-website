@@ -2,7 +2,7 @@ import type { AuthAdapter } from './adapters/base';
 import type { RegisterData } from './types';
 import { getConfig } from '../config';
 import { MockAuthAdapter } from './adapters/mock';
-import { LaravelAuthAdapter } from './adapters/laravel';
+import { LaravelAuthAdapter, takePendingAuthCookiePayload } from './adapters/laravel';
 
 /**
  * Auth adapter factory
@@ -78,4 +78,4 @@ export const auth = {
 // Export adapter types
 export type { AuthAdapter } from './adapters/base';
 export { MockAuthAdapter } from './adapters/mock';
-export { LaravelAuthAdapter } from './adapters/laravel';
+export { LaravelAuthAdapter, takePendingAuthCookiePayload } from './adapters/laravel';

@@ -1,10 +1,9 @@
 /**
  * Marketing API client for public endpoints (mostly unauthenticated).
- * Sends credentials and optional Bearer when editors preview draft content via the marketing site.
+ * Sends credentials so staff preview can use the HttpOnly auth_session cookie on same-origin /api.
  * Uses VITE_API_BASE_URL or VITE_MARKETING_API_URL (dev/stage/prod).
  */
 
-import { getConfig } from '~/lib/config';
 import { parsePublicSiteOriginFromEnv } from '~/lib/seo/canonical-url';
 import { resolveMarketingApiBaseUrl } from './resolve-api-base';
 import { ensureSsrIpv4First } from './ssr-dns';
@@ -113,31 +112,13 @@ function marketingFetchTimeoutMs(): number {
 }
 
 function optionalBrowserBearerHeaders(): Record<string, string> {
-  if (typeof window === 'undefined') {
-    return {};
-  }
-  try {
-    // Must match LaravelApiClient + auth adapter (`getConfig().auth.cookieName`; often `laravel_session`, not `auth_session`).
-    const storageKey = getConfig().auth.cookieName;
-    const raw = localStorage.getItem(storageKey);
-    if (!raw) {
-      return {};
-    }
-    const parsed = JSON.parse(raw) as { token?: string };
-    const token = parsed?.token;
-    if (token && token !== 'sanctum_cookie') {
-      const authHeader = String(import.meta.env?.VITE_AUTH_TOKEN_HEADER ?? 'Authorization');
-      return { [authHeader]: `Bearer ${token}` };
-    }
-  } catch {
-    /* ignore */
-  }
+  // Staff preview uses the HttpOnly auth_session cookie on same-origin /api, not a readable token.
   return {};
 }
 
 /**
  * Fetch wrapper for marketing public API.
- * Browser: `credentials: include` (Sanctum session) + optional Bearer from localStorage (matches dashboard client).
+ * Browser: `credentials: include` so the HttpOnly auth_session cookie rides on same-origin /api.
  * SSR: pass `forwardCookies` / `forwardAuthorization` from the incoming document request so loaders can preview drafts.
  */
 export async function marketingFetch<T>(

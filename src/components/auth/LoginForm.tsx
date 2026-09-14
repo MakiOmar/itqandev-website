@@ -48,15 +48,21 @@ export const LoginForm = component$<LoginFormProps>((props) => {
     }
 
     try {
-      const { auth } = await import('../../lib/auth');
+      const { auth, takePendingAuthCookiePayload } = await import('../../lib/auth');
       const session = await auth.login({ email, password });
       if (!session) {
         clientError.value = 'Invalid email or password';
         return;
       }
 
+      const cookiePayload = takePendingAuthCookiePayload();
+      if (!cookiePayload) {
+        clientError.value = 'Failed to persist session. Please try again.';
+        return;
+      }
+
       const syncResult = await props.syncSessionAction.submit({
-        sessionJson: JSON.stringify(session),
+        sessionJson: cookiePayload,
       });
 
       if (syncResult.value?.failed) {

@@ -58,10 +58,13 @@ export default component$(() => {
     const config = getConfig();
     const sessionKey = config.auth.cookieName;
     const session = userSession.value;
-    if (session?.token && session.token !== 'sanctum_cookie') {
+    if (session?.user) {
       const existing = localStorage.getItem(sessionKey);
       if (!existing) {
-        localStorage.setItem(sessionKey, JSON.stringify(session));
+        localStorage.setItem(
+          sessionKey,
+          JSON.stringify({ ...session, token: 'sanctum_cookie' }),
+        );
       }
     }
 

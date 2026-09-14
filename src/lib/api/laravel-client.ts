@@ -91,27 +91,7 @@ export class LaravelApiClient {
     let token: string | null = null;
 
     if (typeof window !== 'undefined') {
-      // Client-side: check localStorage first
-      const session = localStorage.getItem(config.auth.cookieName);
-      if (session) {
-        try {
-          const parsed = JSON.parse(session);
-          // Only use token if it's not the placeholder
-          if (parsed.token && parsed.token !== 'sanctum_cookie') {
-            // Sanctum tokens don't expire by default (expiration: null in config)
-            // Use the token if it exists - let the server reject it if truly invalid
-            // This fixes the issue where valid tokens are rejected due to stale expiresAt
-            token = parsed.token;
-          }
-          // Token is 'sanctum_cookie' - rely on cookie-based auth, don't send Bearer token
-          // This will be handled by credentials: 'include' in the request
-        } catch {
-          // Invalid session, try as plain token
-          if (session && session !== 'sanctum_cookie') {
-            token = session;
-          }
-        }
-      }
+      // Browser never reads a Bearer from localStorage. Same-origin /api sends the HttpOnly cookie.
     } else {
       // Server-side: try to get token from server cookies
       token = this.getTokenFromServerCookies();
