@@ -487,7 +487,9 @@
     "deleteConfirm": "Are you sure you want to delete this testimonial?",
     "noTestimonials": "No testimonials",
     "videoLink": "Video Link",
-    "approvedLabel": "Approved"
+    "approvedLabel": "Approved",
+    "carouselPrev": "Previous testimonials",
+    "carouselNext": "Next testimonials"
   },
   "blog": {
     "title": "Blog",
@@ -948,7 +950,8 @@
       "tech_stack": "Tech stack",
       "blog_preview": "Blog preview",
       "cta": "Call to action",
-      "form": "Form"
+      "form": "Form",
+      "testimonial_list": "Testimonials"
     },
     "fields": {
       "headline": "Headline",
@@ -976,7 +979,15 @@
       "floating_icons_enabled": "Floating icons around image",
       "floating_icons": "Floating icons",
       "category_ids": "Categories in filter",
-      "columns": "Grid columns"
+      "columns": "Grid columns",
+      "layout": "Layout",
+      "card_style": "Card style",
+      "show_rating": "Show rating",
+      "show_avatar": "Show avatar",
+      "show_role": "Show role / company",
+      "show_project": "Show project",
+      "autoplay": "Autoplay (carousel)",
+      "autoplay_seconds": "Autoplay interval (seconds)"
     },
     "categoryMultiHint": "Check categories to show as filter tabs/sidebar. Leave all unchecked to show every category with published projects.",
     "categoriesLoading": "Loading categories…",

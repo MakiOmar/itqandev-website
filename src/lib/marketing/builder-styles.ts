@@ -77,6 +77,7 @@ export const WIDGET_STYLE_GROUPS: Record<string, readonly StyleGroupId[]> = {
   blog_preview: ['layout', 'spacing', 'border', 'custom'],
   projects_list: ['layout', 'spacing', 'border', 'custom'],
   loop_grid: ['layout', 'spacing', 'border', 'custom'],
+  testimonial_list: ['typography', 'layout', 'spacing', 'border', 'custom'],
   form: ['typography', 'layout', 'spacing', 'border', 'custom'],
 };
 

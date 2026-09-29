@@ -70,3 +70,35 @@ export function gridColumnClassNames(columns: ResponsiveColumns): string {
 }
 
 export const GRID_COLUMN_OPTIONS = [1, 2, 3, 4] as const;
+
+/** Slide widths for `gap-6` carousels so N cards fill the track exactly. */
+const BASIS: Record<number, string> = {
+  1: 'basis-full',
+  2: 'basis-[calc((100%-1.5rem)/2)]',
+  3: 'basis-[calc((100%-3rem)/3)]',
+  4: 'basis-[calc((100%-4.5rem)/4)]',
+};
+
+const MD_BASIS: Record<number, string> = {
+  1: 'md:basis-full',
+  2: 'md:basis-[calc((100%-1.5rem)/2)]',
+  3: 'md:basis-[calc((100%-3rem)/3)]',
+  4: 'md:basis-[calc((100%-4.5rem)/4)]',
+};
+
+const LG_BASIS: Record<number, string> = {
+  1: 'lg:basis-full',
+  2: 'lg:basis-[calc((100%-1.5rem)/2)]',
+  3: 'lg:basis-[calc((100%-3rem)/3)]',
+  4: 'lg:basis-[calc((100%-4.5rem)/4)]',
+};
+
+/** Per-breakpoint slide width classes (visible cards = column count). */
+export function carouselItemBasisClassNames(columns: ResponsiveColumns): string {
+  return [
+    'shrink-0 grow-0',
+    BASIS[clampGridColumns(columns.mobile)],
+    MD_BASIS[clampGridColumns(columns.tablet)],
+    LG_BASIS[clampGridColumns(columns.desktop)],
+  ].join(' ');
+}

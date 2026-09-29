@@ -12,6 +12,7 @@ import { FormRenderer } from '~/components/marketing/forms/FormRenderer';
 import { BlogPostsList } from '~/components/marketing/blog/BlogPostsList';
 import { PortfolioProjectsList } from '~/components/marketing/portfolio/PortfolioProjectsList';
 import { AtomicWidgetView } from '~/components/marketing/widgets/AtomicWidgetView';
+import { TestimonialsWidget } from '~/components/marketing/widgets/TestimonialsWidget';
 import { StyledBuilderLeaf } from '~/components/marketing/widgets/StyledBuilderLeaf';
 import { ContentKitView } from '~/components/marketing/kits/ContentKitView';
 import { isFeatureModuleEnabled } from '~/lib/api/project-settings';
@@ -76,6 +77,7 @@ const WIDGET_TYPES = new Set([
   'post_info',
   'archive_title',
   'loop_grid',
+  'testimonial_list',
 ]);
 
 const CONTENT_KITS = new Set([
@@ -176,6 +178,12 @@ function renderBlock(
     );
   };
 
+  if (block.type === 'testimonial_list') {
+    if (!showTestimonialsModule) return null;
+    return wrap(
+      <TestimonialsWidget settings={settings} testimonials={props.testimonials} uiLocale={props.uiLocale} />,
+    );
+  }
   if (kind === 'widget' || WIDGET_TYPES.has(block.type)) {
     return wrap(
       <AtomicWidgetView
