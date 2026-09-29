@@ -490,7 +490,7 @@ export async function getPageBuilderMarketingSupport(
     getHomeCaseStudiesForTabs(locale, fetchContext),
     getPortfolioCategories(locale, fetchContext),
     getTestimonials(locale, fetchContext),
-    getBlogPosts(),
+    getBlogPosts(locale, fetchContext),
   ]);
   return {
     caseStudies,
@@ -550,37 +550,18 @@ export async function getFeaturedCaseStudies(
   return mergeCaseStudiesPreferringFeatured(featured, all, cap);
 }
 
-/** Get approved testimonials (API when configured, else local JSON). Respects locale via X-Content-Locale when using the API. */
+/**
+ * Approved testimonials for the requested locale. With a marketing API configured the
+ * database is the only source (empty list hides the section); local JSON is for API-less setups.
+ */
 export async function getTestimonials(
   locale?: string,
   fetchContext?: MarketingFetchContext,
 ): Promise<Testimonial[]> {
-  const live = await fetchTestimonialsFromApi(locale, fetchContext);
-  if (live.length > 0) {
-    return live;
+  if (hasMarketingApiBase(fetchContext)) {
+    return fetchTestimonialsFromApi(locale, fetchContext);
   }
-  // Strict API-only mode: no local placeholder when the marketing API is configured.
-  if (contentSource === 'api' && hasMarketingApiBase(fetchContext)) {
-    return [];
-  }
-
-  if (contentSource === 'api') {
-    try {
-      const q = new URLSearchParams();
-      q.set('per_page', '48');
-      const path = `${MARKETING_ENDPOINTS.testimonials}?${q.toString()}`;
-      const payload = await marketingGet<unknown>(path, locale, fetchContext);
-      const list = unwrapMarketingListRecords(payload as Record<string, unknown>)
-        .map((raw) => mapPublicTestimonialRecord(raw))
-        .filter((t) => t.quote.length > 0 && t.approved !== false);
-      if (list.length > 0) {
-        return list;
-      }
-    } catch {
-      /* fall through */
-    }
-  }
-  return Promise.resolve(testimonials.filter((t) => t.approved !== false));
+  return testimonials.filter((t) => t.approved !== false);
 }
 
 function normalizeServiceFromPublicApi(raw: Record<string, unknown>): Service {

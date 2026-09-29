@@ -223,6 +223,7 @@ The dashboard automatically uses the Laravel client when `VITE_LARAVEL_SANCTUM=t
 The marketing site uses a **content layer** (`src/lib/marketing/content-layer.ts`) that can read from local JSON/markdown or from the Laravel API.
 
 - **Env:** `VITE_MARKETING_CONTENT_SOURCE=local` (default) or `api`. When `api`, set `VITE_API_BASE_URL` or `VITE_MARKETING_API_URL` to the Laravel base URL.
+- **Testimonials:** whenever a marketing API base URL is configured, only approved database testimonials for the requested locale are shown (an empty list hides the section); `src/content/testimonials.json` is used only without an API.
 - **Local content:** `src/content/case-studies.json`, `src/content/testimonials.json`, `src/content/site.json`, `src/content/blog.json`. Interfaces in `src/lib/marketing/types.ts` so switching to API only requires implementing the same types on the backend.
 - **When using API:** Add public (unauthenticated) routes in Laravel, e.g. `GET /api/public/projects`, `GET /api/public/blog-posts`, `GET /api/public/testimonials`, and optionally `GET /api/public/site-content`. Response shapes should match the payloads expected by the content layer (see types and existing JSON files). No backend changes are required to run the marketing site with local content.
 
