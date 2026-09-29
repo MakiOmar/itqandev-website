@@ -19,6 +19,8 @@ import {
   columnSpanClassNames,
   isPageLayoutBand,
   normalizeColumnSpans,
+  rowFlexStyle,
+  rowGapClass,
 } from '~/lib/marketing/page-layout-utils';
 import { filterPageSectionsForDevice } from '~/lib/marketing/device-visibility';
 import { useLayoutDevice } from '~/lib/marketing/layout-device-context';
@@ -27,6 +29,7 @@ import {
   defaultHomepageSections,
   type HomepageSectionInstance,
   type PageLayoutBand,
+  type PageLayoutBlock,
   type PageSectionNode,
 } from '~/lib/marketing/appearance-types';
 import type { CaseStudy, Testimonial, BlogPost, Service, ContactInfo } from '~/lib/marketing/types';
@@ -43,20 +46,6 @@ import {
   hasWidgetStyleControls,
   type BuilderStyles,
 } from '~/lib/marketing/builder-styles';
-
-const GAP_CLASS: Record<number, string> = {
-  0: 'gap-0',
-  1: 'gap-1',
-  2: 'gap-2',
-  3: 'gap-3',
-  4: 'gap-4',
-  5: 'gap-5',
-  6: 'gap-6',
-  8: 'gap-8',
-  10: 'gap-10',
-  12: 'gap-12',
-  16: 'gap-16',
-};
 
 const WIDGET_TYPES = new Set([
   'heading',
@@ -369,6 +358,14 @@ function renderBlock(
   }
 }
 
+/** Render one leaf (widget / kit / inner band) exactly as inside a public layout column. */
+export function renderLayoutBlock(
+  block: PageLayoutBlock,
+  props: HomepageSectionsRendererProps,
+): JSXOutput {
+  return renderBlock(block, { ...props, embedKits: true });
+}
+
 function renderLayoutBand(band: PageLayoutBand, props: HomepageSectionsRendererProps) {
   const bandProps: HomepageSectionsRendererProps = { ...props, embedKits: true };
   const inner = (
@@ -379,8 +376,6 @@ function renderLayoutBand(band: PageLayoutBand, props: HomepageSectionsRendererP
       class="w-full space-y-8 py-6 sm:space-y-10 sm:py-8 lg:py-10"
     >
       {(band.rows ?? []).map((row) => {
-        const gap = typeof row.gap === 'number' ? row.gap : 4;
-        const gapClass = GAP_CLASS[gap] ?? 'gap-4';
         const stackBelow = row.stack_below ?? 'none';
         return (
           <LayoutNodeShell
@@ -391,28 +386,10 @@ function renderLayoutBand(band: PageLayoutBand, props: HomepageSectionsRendererP
             class="w-full rounded-xl"
           >
             <div
-              class={`grid grid-cols-12 items-stretch ${gapClass} ${
+              class={`grid grid-cols-12 items-stretch ${rowGapClass(row.gap)} ${
                 row.direction === 'column' ? 'flex flex-col' : ''
               }`}
-              style={{
-                justifyContent:
-                  row.justify === 'center'
-                    ? 'center'
-                    : row.justify === 'end'
-                      ? 'end'
-                      : row.justify === 'between'
-                        ? 'space-between'
-                        : 'start',
-                alignItems:
-                  row.align === 'start'
-                    ? 'start'
-                    : row.align === 'center'
-                      ? 'center'
-                      : row.align === 'end'
-                        ? 'end'
-                        : 'stretch',
-                flexWrap: row.wrap === false ? 'nowrap' : 'wrap',
-              }}
+              style={rowFlexStyle(row)}
             >
               {(row.columns ?? []).map((col) => {
                 const span = normalizeColumnSpans(col.span);

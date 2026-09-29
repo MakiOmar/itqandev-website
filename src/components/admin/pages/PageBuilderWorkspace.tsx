@@ -18,15 +18,21 @@ import {
 import {
   effectiveSpanForDevice,
   previewColSpanClass,
+  rowFlexStyle,
+  rowGapClass,
 } from '~/lib/marketing/page-layout-utils';
+import { isHiddenOnDevice } from '~/lib/marketing/device-visibility';
 import {
   isAppearanceFieldTranslatable,
   readAppearanceSettingValue,
   writeAppearanceSettingValue,
 } from '~/lib/admin/appearance-locale-settings';
-import { HomepageSectionsRenderer } from '~/components/marketing/home-sections/HomepageSectionsRenderer';
-import { ChromeLayoutRenderer } from '~/components/marketing/chrome/ChromeLayoutRenderer';
-import { LocaleTransitionProvider } from '~/components/common/LocaleTransitionOverlay';
+import { LayoutNodeShell } from '~/components/marketing/layout/LayoutNodeShell';
+import {
+  PageBuilderCanvasBlock,
+  type BuilderPreviewContext,
+} from '~/components/admin/pages/PageBuilderCanvasBlock';
+import { PageBuilderViewMode } from '~/components/admin/pages/PageBuilderViewMode';
 import { appearanceSectionLabel } from '~/lib/i18n/appearance-labels';
 import { translateApp } from '~/lib/i18n/useTranslate';
 import {
@@ -247,19 +253,6 @@ type GlobalWidgetCreated = { id?: number };
 type BandLayoutWidth = 'boxed' | 'full';
 
 type RowJustify = 'start' | 'center' | 'end' | 'between';
-
-type BuilderLivePreviewShellProps = {
-  open: Signal<boolean>;
-  previewSurface?: 'page' | 'chrome';
-  bands: PageLayoutBand[];
-  uiLocale: string;
-  pageTitle: string;
-  siteLanguages: SiteLanguageRow[];
-  previewBranding?: PageBuilderWorkspaceProps['previewBranding'];
-  previewSupport?: PageBuilderWorkspaceProps['previewSupport'];
-  isDarkMode: boolean;
-  previewDevice: LayoutBreakpoint;
-};
 
 /** Module-level so `$` handlers do not capture non-serializable closures. */
 function usedSpanInRow(
@@ -526,98 +519,30 @@ function findRowWithRemaining(
 function previewFrameClass(device: LayoutBreakpoint): string {
   if (device === 'mobile') return 'mx-auto w-full max-w-[390px]';
   if (device === 'tablet') return 'mx-auto w-full max-w-[820px]';
-  return 'mx-auto w-full max-w-5xl';
+  return 'mx-auto w-full';
 }
 
-/** Admin live preview has no PublicMenuResolver inject — seed sample links when empty. */
-function withChromePreviewMenuSamples(bands: PageLayoutBand[]): PageLayoutBand[] {
-  const sample = [
-    { label: 'Home', href: '/', open_in_new_tab: false, children: [] },
-    { label: 'About', href: '/about/', open_in_new_tab: false, children: [] },
-    { label: 'Contact', href: '/contact/', open_in_new_tab: false, children: [] },
-  ];
-  return bands.map((band) => ({
-    ...band,
-    rows: (band.rows || []).map((row) => ({
-      ...row,
-      columns: (row.columns || []).map((col) => ({
-        ...col,
-        blocks: (col.blocks || []).map((block) => {
-          if (block.type !== 'header_menu' && block.type !== 'footer_menu' && block.type !== 'footer_links') {
-            return block;
-          }
-          const settings = { ...(block.settings || {}) } as Record<string, unknown>;
-          const items = settings.items;
-          if (Array.isArray(items) && items.length > 0) {
-            return block;
-          }
-          return { ...block, settings: { ...settings, items: sample } };
-        }),
-      })),
-    })),
-  }));
+/** True when the click belongs to this canvas node, not a nested band/row/column/block. */
+function isOwnBuilderNodeClick(e: Event, el: Element): boolean {
+  const target = e.target as Element | null;
+  return !!target && target.closest('[data-builder-node]') === el;
 }
 
-/** Isolates live-preview visibility so toggle off cannot leave a stuck pane. */
-const BuilderLivePreviewShell = component$<BuilderLivePreviewShellProps>((props) => {
-  const visible = props.open.value;
-  return (
-    <div
-      class={[
-        'mb-4 overflow-hidden rounded-lg border border-primary-200 bg-white dark:border-primary-800 dark:bg-slate-950',
-        visible ? '' : 'hidden',
-      ].join(' ')}
-      hidden={!visible}
-      aria-hidden={visible ? 'false' : 'true'}
-    >
-      <LayoutDeviceProvider device={props.previewDevice}>
-      {props.previewSurface === 'chrome' ? (
-        <div class="border-b border-slate-200 py-3 dark:border-slate-700">
-          {/* Public chrome kits need locale-transition context (language switcher). */}
-          <LocaleTransitionProvider>
-            <ChromeLayoutRenderer
-              sections={withChromePreviewMenuSamples(props.bands)}
-              uiLocale={props.uiLocale}
-              branding={{
-                name: props.previewBranding?.name || props.pageTitle || 'Preview',
-                logo: props.previewBranding?.logo || '',
-                logoDark: props.previewBranding?.logoDark || '',
-                logoLight: props.previewBranding?.logoLight || '',
-                site_languages: props.siteLanguages || [],
-              }}
-              features={{}}
-              isDarkMode={props.isDarkMode}
-              bandClass="flex items-center"
-            />
-          </LocaleTransitionProvider>
-        </div>
-      ) : (
-        <HomepageSectionsRenderer
-          sections={props.bands}
-          uiLocale={props.uiLocale}
-          services={props.previewSupport?.services ?? []}
-          caseStudies={props.previewSupport?.caseStudies ?? []}
-          portfolioCategories={props.previewSupport?.portfolioCategories ?? []}
-          testimonials={props.previewSupport?.testimonials ?? []}
-          blogPosts={props.previewSupport?.blogPosts ?? []}
-          techStack={props.previewSupport?.techStack ?? []}
-          branding={{
-            name: props.pageTitle || 'Preview',
-            logo: '',
-            logoDark: '',
-            logoLight: '',
-            site_languages: [],
-            features: { projects: true, testimonials: true, blog: true, services: true },
-          }}
-          allowDefaultSections={false}
-          layoutAware={true}
-          pageContext={{ title: props.pageTitle || 'Page' }}
-        />
-      )}
-      </LayoutDeviceProvider>
-    </div>
-  );
-});
+/** Non-layout outline overlay for a canvas node (selected / drop target / hover). */
+function builderOutlineClass(selected: boolean, dropTarget: boolean, hoverClass: string): string {
+  return [
+    'pointer-events-none absolute inset-0 z-30 outline -outline-offset-1',
+    selected || dropTarget
+      ? 'outline-2 outline-primary-500'
+      : `outline-1 outline-dashed outline-transparent ${hoverClass}`,
+    dropTarget ? 'bg-primary-500/10' : '',
+  ].join(' ');
+}
+
+/** Nodes hidden for the active device stay editable but dimmed (public render omits them). */
+function hiddenOnDeviceClass(node: { hide_on?: unknown }, device: LayoutBreakpoint): string {
+  return isHiddenOnDevice(node.hide_on, device) ? 'opacity-40' : '';
+}
 
 export const PageBuilderWorkspace = component$<PageBuilderWorkspaceProps>((props) => {
   const bands = ensurePageLayoutBands(props.sections.value);
@@ -635,11 +560,9 @@ export const PageBuilderWorkspace = component$<PageBuilderWorkspaceProps>((props
   const redoStack = useSignal<string[]>([]);
   const globalsList = useSignal<GlobalWidgetApiRow[]>([]);
   const savedBands = useSignal<SavedBuilderBand[]>([]);
-  const showLivePreview = useSignal(false);
+  const viewMode = useSignal(false);
   const showNavigator = useSignal(false);
   const inspectorTab = useSignal<InspectorTab>('content');
-  /** Keep preview DOM after first open so off is CSS-only (avoids stuck pane). */
-  const livePreviewMounted = useSignal(false);
   const previewIsDark = useSignal(false);
 
   useTask$(({ track }) => {
@@ -722,6 +645,19 @@ export const PageBuilderWorkspace = component$<PageBuilderWorkspaceProps>((props
   const selectedBlock = blockAtSelection(bands, selection.value);
   const selectedRow = rowAtSelection(bands, selection.value);
   const selectedCol = colAtSelection(bands, selection.value);
+  const previewCtx: BuilderPreviewContext = {
+    surface: props.previewSurface ?? 'page',
+    uiLocale: props.activeLocale.value || props.defaultLocale,
+    pageTitle: props.pageTitle || 'Preview',
+    siteLanguages: props.siteLanguages || [],
+    branding: props.previewBranding,
+    support: props.previewSupport,
+    isDarkMode: previewIsDark.value,
+  };
+  const resolvedBands =
+    props.livePreviewOverride?.value && props.livePreviewOverride.value.length > 0
+      ? ensurePageLayoutBands(props.livePreviewOverride.value)
+      : null;
 
   return (
     <div class="flex h-full min-h-0 flex-col">
@@ -800,14 +736,13 @@ export const PageBuilderWorkspace = component$<PageBuilderWorkspaceProps>((props
         </div>
         <button
           type="button"
-          aria-pressed={showLivePreview.value ? 'true' : 'false'}
-          aria-label={translateApp(props.lang, 'pages.livePreview')}
-          title={translateApp(props.lang, 'pages.livePreview')}
-          class={builderToolbarToggleClass(showLivePreview.value)}
+          aria-haspopup="dialog"
+          aria-label={translateApp(props.lang, 'pages.viewPage')}
+          title={translateApp(props.lang, 'pages.viewPage')}
+          class={builderToolbarToggleClass(viewMode.value)}
           onClick$={() => {
-            const next = !showLivePreview.value;
-            showLivePreview.value = next;
-            if (next) livePreviewMounted.value = true;
+            showNavigator.value = false;
+            viewMode.value = true;
           }}
         >
           <BuilderToolbarIcon name="preview" />
@@ -1137,42 +1072,38 @@ export const PageBuilderWorkspace = component$<PageBuilderWorkspaceProps>((props
           />
         ) : null}
 
-        {/* Canvas — sized to active device */}
-        <main class="min-w-0 flex-1 overflow-y-auto bg-slate-200/40 p-4 sm:p-6 dark:bg-slate-950/40">
+        {viewMode.value ? (
+          <PageBuilderViewMode
+            lang={props.lang}
+            ctx={previewCtx}
+            bands={resolvedBands ?? bands}
+            chromeKind={
+              props.exportBuilderKind === 'header' || props.exportBuilderKind === 'footer'
+                ? props.exportBuilderKind
+                : undefined
+            }
+            device={previewDevice}
+            onClose$={$(() => {
+              viewMode.value = false;
+            })}
+          />
+        ) : null}
+
+        {/* Canvas — final render with editor outlines/handles, sized to active device */}
+        <main class="min-w-0 flex-1 overflow-y-auto bg-slate-200/60 p-4 sm:p-6 dark:bg-slate-950/60">
           <div
+            data-public-page
             class={[
               previewFrameClass(previewDevice.value),
-              'min-h-[60vh] rounded-xl border border-gray-300 bg-slate-50/90 p-3 shadow-inner transition-[max-width] duration-300 dark:border-gray-700 dark:bg-slate-900/80',
+              'relative isolate min-h-[60vh] bg-gradient-to-br from-slate-50 via-blue-50/30 to-indigo-50/20 shadow-lg transition-[max-width] duration-300 dark:from-slate-900 dark:via-slate-800/30 dark:to-slate-900/20',
+              previewCtx.surface === 'chrome' ? 'py-3' : '',
             ].join(' ')}
           >
-            <p class="mb-3 text-center text-[11px] font-medium uppercase tracking-wide text-gray-500">
-              {translateApp(props.lang, `pages.device.${previewDevice.value}`)}{' '}
-              {translateApp(props.lang, 'pages.previewFrame')}
-            </p>
-
-            {livePreviewMounted.value ? (
-              <BuilderLivePreviewShell
-                open={showLivePreview}
-                previewSurface={props.previewSurface}
-                bands={
-                  props.livePreviewOverride?.value && props.livePreviewOverride.value.length > 0
-                    ? ensurePageLayoutBands(props.livePreviewOverride.value)
-                    : bands
-                }
-                uiLocale={props.activeLocale.value || props.defaultLocale}
-                pageTitle={props.pageTitle || 'Preview'}
-                siteLanguages={props.siteLanguages || []}
-                previewBranding={props.previewBranding}
-                previewSupport={props.previewSupport}
-                isDarkMode={previewIsDark.value}
-                previewDevice={previewDevice.value}
-              />
-            ) : null}
-
+            <LayoutDeviceProvider device={previewDevice.value}>
             {bands.length === 0 ? (
               <div
                 class={[
-                  'rounded-xl border border-dashed px-6 py-16 text-center',
+                  'm-4 rounded-xl border border-dashed px-6 py-16 text-center',
                   dragWidgetType.value
                     ? 'border-primary-500 bg-primary-50/50 dark:bg-primary-950/20'
                     : 'border-gray-300 bg-white/70 dark:border-gray-700 dark:bg-slate-900/50',
@@ -1206,38 +1137,50 @@ export const PageBuilderWorkspace = component$<PageBuilderWorkspaceProps>((props
                 </p>
               </div>
             ) : (
-              <ul class="space-y-4">
+              <>
                 {bands.map((band, bandIndex) => {
                   const bandSelected =
                     selection.value?.kind === 'band' && selection.value.bandIndex === bandIndex;
+                  const boxed = (band.layout_width ?? 'boxed') !== 'full';
                   return (
-                    <li
+                    <section
                       key={band.id}
+                      data-builder-node
                       class={[
-                        'rounded-xl border bg-white p-3 shadow-sm dark:bg-slate-900',
-                        bandSelected
-                          ? 'border-primary-500 ring-2 ring-primary-500/30'
-                          : 'border-gray-200 dark:border-gray-700',
+                        'group/band relative',
+                        boxed ? 'mx-auto w-full max-w-6xl px-4 sm:px-6 lg:px-8' : 'w-full',
+                        hiddenOnDeviceClass(band, previewDevice.value),
                       ].join(' ')}
+                      onClick$={(e, el) => {
+                        if (isOwnBuilderNodeClick(e, el)) {
+                          selection.value = { kind: 'band', bandIndex };
+                        }
+                      }}
                     >
-                      <div class="mb-2 flex flex-wrap items-center gap-2">
+                      <div
+                        aria-hidden="true"
+                        class={builderOutlineClass(bandSelected, false, 'group-hover/band:outline-primary-300')}
+                      />
+                      {/* Band handle */}
+                      <div
+                        stoppropagation:click
+                        class={[
+                          'absolute start-1/2 top-0 z-40 -translate-x-1/2 items-center gap-0.5 rounded-b-md bg-primary-600 px-1 py-0.5 text-[11px] font-medium text-white shadow rtl:translate-x-1/2',
+                          bandSelected ? 'flex' : 'hidden group-hover/band:flex',
+                        ].join(' ')}
+                      >
                         <button
                           type="button"
-                          class="text-sm font-semibold text-gray-900 dark:text-gray-100"
+                          class="rounded px-1.5 py-0.5 hover:bg-primary-700"
                           onClick$={() => {
                             selection.value = { kind: 'band', bandIndex };
                           }}
                         >
-                          {translateApp(props.lang, 'pages.band')} #{bandIndex + 1}
+                          {translateApp(props.lang, 'pages.band')} {bandIndex + 1}
                         </button>
-                        <span class="text-[11px] text-gray-400">
-                          {band.layout_width === 'full'
-                            ? translateApp(props.lang, 'appearance.layoutFull')
-                            : translateApp(props.lang, 'appearance.layoutBoxed')}
-                        </span>
                         <button
                           type="button"
-                          class="rounded border px-2 py-0.5 text-xs dark:border-gray-600"
+                          class="rounded px-1.5 py-0.5 hover:bg-primary-700"
                           onClick$={async () => {
                             const next = bands.map((b, i) =>
                               i === bandIndex
@@ -1247,11 +1190,13 @@ export const PageBuilderWorkspace = component$<PageBuilderWorkspaceProps>((props
                             await commit$(next);
                           }}
                         >
-                          {translateApp(props.lang, 'pages.addRow')}
+                          + {translateApp(props.lang, 'pages.addRow')}
                         </button>
                         <button
                           type="button"
-                          class="ms-auto rounded border border-red-500 bg-red-600 px-2 py-0.5 text-xs font-medium text-white hover:bg-red-500"
+                          class="rounded px-1.5 py-0.5 font-bold hover:bg-red-600"
+                          title={translateApp(props.lang, 'appearance.remove')}
+                          aria-label={translateApp(props.lang, 'appearance.remove')}
                           onClick$={async () => {
                             selection.value = null;
                             await commit$(
@@ -1261,11 +1206,25 @@ export const PageBuilderWorkspace = component$<PageBuilderWorkspaceProps>((props
                             );
                           }}
                         >
-                          {translateApp(props.lang, 'appearance.remove')}
+                          ×
                         </button>
                       </div>
 
-                      <ul class="space-y-3">
+                      <LayoutNodeShell
+                        id={band.id}
+                        settings={band.settings}
+                        styles={band.styles}
+                        class={
+                          previewCtx.surface === 'chrome'
+                            ? 'w-full'
+                            : 'w-full space-y-8 py-6 sm:space-y-10 sm:py-8 lg:py-10'
+                        }
+                      >
+                        {band.rows.length === 0 ? (
+                          <div class="rounded-lg border border-dashed border-gray-300 px-3 py-6 text-center text-xs text-gray-500 dark:border-gray-600">
+                            {translateApp(props.lang, 'pages.addRow')}
+                          </div>
+                        ) : null}
                         {band.rows.map((row, rowIndex) => {
                           const rowSelected =
                             selection.value?.kind === 'row' &&
@@ -1276,17 +1235,20 @@ export const PageBuilderWorkspace = component$<PageBuilderWorkspaceProps>((props
                           const remaining = Math.max(0, 12 - usedSpan);
                           const rowKey = `${bandIndex}-${rowIndex}`;
                           const isRowDropTarget = dropRowKey.value === rowKey;
+                          const dragging = !!(dragWidgetType.value || dragBlock.value);
                           return (
-                            <li
+                            <div
                               key={row.id}
+                              data-builder-node
                               class={[
-                                'rounded-lg border border-dashed p-2',
-                                isRowDropTarget
-                                  ? 'border-primary-500 ring-2 ring-primary-500/40 bg-primary-50/40 dark:bg-primary-950/20'
-                                  : rowSelected
-                                    ? 'border-primary-500 bg-primary-50/40 dark:bg-primary-950/20'
-                                    : 'border-gray-300 dark:border-gray-600',
+                                'group/row relative',
+                                hiddenOnDeviceClass(row, previewDevice.value),
                               ].join(' ')}
+                              onClick$={(e, el) => {
+                                if (isOwnBuilderNodeClick(e, el)) {
+                                  selection.value = { kind: 'row', bandIndex, rowIndex };
+                                }
+                              }}
                               onDragOver$={(e) => {
                                 if (dragWidgetType.value || dragBlock.value) {
                                   e.preventDefault();
@@ -1355,25 +1317,34 @@ export const PageBuilderWorkspace = component$<PageBuilderWorkspaceProps>((props
                                 }
                               }}
                             >
-                              <div class="mb-2 flex flex-wrap items-center gap-2">
+                              <div
+                                aria-hidden="true"
+                                class={builderOutlineClass(
+                                  rowSelected,
+                                  isRowDropTarget,
+                                  'group-hover/row:outline-sky-400',
+                                )}
+                              />
+                              {/* Row handle */}
+                              <div
+                                stoppropagation:click
+                                class={[
+                                  'absolute start-0 top-0 z-40 items-center gap-0.5 rounded-ee-md bg-sky-600 px-1 py-0.5 text-[11px] font-medium text-white shadow',
+                                  rowSelected ? 'flex' : 'hidden group-hover/row:flex',
+                                ].join(' ')}
+                              >
                                 <button
                                   type="button"
-                                  class="text-xs font-semibold uppercase text-gray-500"
+                                  class="rounded px-1.5 py-0.5 hover:bg-sky-700"
                                   onClick$={() => {
                                     selection.value = { kind: 'row', bandIndex, rowIndex };
                                   }}
                                 >
-                                  {translateApp(props.lang, 'pages.row')} {rowIndex + 1}
+                                  {translateApp(props.lang, 'pages.row')} {rowIndex + 1} · {usedSpan}/12
                                 </button>
-                                <span class="text-[11px] text-gray-400">
-                                  {usedSpan}/12
-                                  {remaining > 0
-                                    ? ` · ${translateApp(props.lang, 'pages.remainingSpan')} ${remaining}`
-                                    : ''}
-                                </span>
                                 <button
                                   type="button"
-                                  class="rounded border px-2 py-0.5 text-[11px] dark:border-gray-600"
+                                  class="rounded px-1.5 py-0.5 hover:bg-sky-700"
                                   onClick$={async () => {
                                     const free = Math.max(
                                       0,
@@ -1400,11 +1371,11 @@ export const PageBuilderWorkspace = component$<PageBuilderWorkspaceProps>((props
                                     await commit$(next);
                                   }}
                                 >
-                                  {translateApp(props.lang, 'pages.addColumn')}
+                                  + {translateApp(props.lang, 'pages.addColumn')}
                                 </button>
                                 <button
                                   type="button"
-                                  class="rounded border px-2 py-0.5 text-[11px] dark:border-gray-600"
+                                  class="rounded px-1.5 py-0.5 hover:bg-sky-700"
                                   onClick$={async () => {
                                     const sel = selection.value;
                                     const colIndex =
@@ -1434,421 +1405,428 @@ export const PageBuilderWorkspace = component$<PageBuilderWorkspaceProps>((props
                                     await commit$(next);
                                   }}
                                 >
-                                  {translateApp(props.lang, 'pages.addInnerBand')}
+                                  + {translateApp(props.lang, 'pages.addInnerBand')}
                                 </button>
                               </div>
 
-                              {/* Exact device grid: 12 cols + effective span for active device */}
-                              <div class="grid grid-cols-12 gap-2">
-                                {row.columns.map((col, colIndex) => {
-                                  const spans = normalizeColumnSpans(col.span);
-                                  const effective = effectiveSpanForDevice(
-                                    spans,
-                                    stackBelow,
-                                    previewDevice.value,
-                                  );
-                                  const colKey = `${bandIndex}-${rowIndex}-${colIndex}`;
-                                  const isDropTarget = dropColumnKey.value === colKey;
-                                  const colSelected =
-                                    selection.value?.kind === 'column' &&
-                                    selection.value.bandIndex === bandIndex &&
-                                    selection.value.rowIndex === rowIndex &&
-                                    selection.value.colIndex === colIndex;
-                                  return (
-                                    <div
-                                      key={col.id}
-                                      class={[
-                                        previewColSpanClass(effective),
-                                        'rounded-md border bg-gray-50 p-2 dark:bg-slate-950',
-                                        isDropTarget
-                                          ? 'border-primary-500 ring-2 ring-primary-500/40'
-                                          : colSelected
-                                            ? 'border-primary-500 ring-1 ring-primary-500/40'
-                                            : 'border-gray-200 dark:border-gray-700',
-                                      ].join(' ')}
-                                      onDragOver$={(e) => {
-                                        if (dragWidgetType.value || dragBlock.value) {
+                              <LayoutNodeShell
+                                id={row.id}
+                                settings={row.settings}
+                                styles={row.styles}
+                                class="w-full rounded-xl"
+                              >
+                                {/* Exact device grid: 12 cols + effective span for active device */}
+                                <div
+                                  class={[
+                                    'grid grid-cols-12 items-stretch',
+                                    rowGapClass(row.gap),
+                                    row.direction === 'column' ? 'flex flex-col' : '',
+                                  ].join(' ')}
+                                  style={rowFlexStyle(row)}
+                                >
+                                  {row.columns.map((col, colIndex) => {
+                                    const spans = normalizeColumnSpans(col.span);
+                                    const effective = effectiveSpanForDevice(
+                                      spans,
+                                      stackBelow,
+                                      previewDevice.value,
+                                    );
+                                    const colKey = `${bandIndex}-${rowIndex}-${colIndex}`;
+                                    const isDropTarget = dropColumnKey.value === colKey;
+                                    const colSelected =
+                                      selection.value?.kind === 'column' &&
+                                      selection.value.bandIndex === bandIndex &&
+                                      selection.value.rowIndex === rowIndex &&
+                                      selection.value.colIndex === colIndex;
+                                    return (
+                                      <div
+                                        key={col.id}
+                                        data-builder-node
+                                        class={[
+                                          previewColSpanClass(effective),
+                                          'group/col relative min-h-12',
+                                          hiddenOnDeviceClass(col, previewDevice.value),
+                                        ].join(' ')}
+                                        onClick$={(e, el) => {
+                                          if (isOwnBuilderNodeClick(e, el)) {
+                                            selection.value = {
+                                              kind: 'column',
+                                              bandIndex,
+                                              rowIndex,
+                                              colIndex,
+                                            };
+                                          }
+                                        }}
+                                        onDragOver$={(e) => {
+                                          if (dragWidgetType.value || dragBlock.value) {
+                                            e.preventDefault();
+                                            e.stopPropagation();
+                                            dropColumnKey.value = colKey;
+                                            dropRowKey.value = null;
+                                          }
+                                        }}
+                                        onDragLeave$={() => {
+                                          if (dropColumnKey.value === colKey) {
+                                            dropColumnKey.value = null;
+                                          }
+                                        }}
+                                        onDrop$={async (e) => {
                                           e.preventDefault();
                                           e.stopPropagation();
-                                          dropColumnKey.value = colKey;
-                                          dropRowKey.value = null;
-                                        }
-                                      }}
-                                      onDragLeave$={() => {
-                                        if (dropColumnKey.value === colKey) {
+                                          const widgetType =
+                                            dragWidgetType.value ||
+                                            e.dataTransfer?.getData(WIDGET_DND) ||
+                                            e.dataTransfer?.getData('text/plain') ||
+                                            null;
+                                          const from = dragBlock.value;
                                           dropColumnKey.value = null;
-                                        }
-                                      }}
-                                      onDrop$={async (e) => {
-                                        e.preventDefault();
-                                        e.stopPropagation();
-                                        const widgetType =
-                                          dragWidgetType.value ||
-                                          e.dataTransfer?.getData(WIDGET_DND) ||
-                                          e.dataTransfer?.getData('text/plain') ||
-                                          null;
-                                        const from = dragBlock.value;
-                                        dropColumnKey.value = null;
-                                        dropRowKey.value = null;
-                                        dragWidgetType.value = null;
-                                        dragBlock.value = null;
+                                          dropRowKey.value = null;
+                                          dragWidgetType.value = null;
+                                          dragBlock.value = null;
 
-                                        if (widgetType) {
-                                          const inserted = insertWidgetIntoColumn(
-                                            bands,
-                                            props.registry.value,
-                                            widgetType,
-                                            bandIndex,
-                                            rowIndex,
-                                            colIndex,
-                                          );
-                                          if (!inserted) return;
-                                          await commit$(inserted.bands);
-                                          selection.value = {
-                                            kind: 'block',
-                                            bandIndex,
-                                            rowIndex,
-                                            colIndex,
-                                            blockIndex: inserted.blockIndex,
-                                          };
-                                          return;
-                                        }
-
-                                        if (from) {
-                                          const moved = moveBlockToColumn(
-                                            bands,
-                                            from,
-                                            bandIndex,
-                                            rowIndex,
-                                            colIndex,
-                                          );
-                                          if (!moved) return;
-                                          await commit$(moved.bands);
-                                          selection.value = {
-                                            kind: 'block',
-                                            bandIndex,
-                                            rowIndex,
-                                            colIndex,
-                                            blockIndex: moved.blockIndex,
-                                          };
-                                        }
-                                      }}
-                                    >
-                                      <div class="mb-1 flex flex-wrap items-center gap-1">
-                                        <button
-                                          type="button"
-                                          class="min-w-0 flex-1 truncate text-start text-[11px] font-medium text-gray-600 dark:text-gray-300"
-                                          onClick$={() => {
-                                            selection.value = {
-                                              kind: 'column',
+                                          if (widgetType) {
+                                            const inserted = insertWidgetIntoColumn(
+                                              bands,
+                                              props.registry.value,
+                                              widgetType,
                                               bandIndex,
                                               rowIndex,
                                               colIndex,
-                                            };
-                                          }}
-                                        >
-                                          {translateApp(props.lang, 'pages.column')} {colIndex + 1} ·{' '}
-                                          {effective}/12
-                                        </button>
-                                        <button
-                                          type="button"
-                                          class="inline-flex h-6 min-w-6 items-center justify-center rounded border border-gray-400 bg-white px-1.5 text-xs font-semibold text-gray-800 hover:border-primary-500 hover:bg-primary-50 hover:text-primary-800 dark:border-gray-500 dark:bg-slate-800 dark:text-white dark:hover:border-primary-400 dark:hover:bg-slate-700"
-                                          title={translateApp(props.lang, 'pages.editColumn')}
-                                          aria-label={translateApp(props.lang, 'pages.editColumn')}
-                                          onClick$={(e) => {
-                                            e.stopPropagation();
-                                            selection.value = {
-                                              kind: 'column',
-                                              bandIndex,
-                                              rowIndex,
-                                              colIndex,
-                                            };
-                                          }}
-                                        >
-                                          ✎
-                                        </button>
-                                        <button
-                                          type="button"
-                                          class="inline-flex h-6 min-w-6 items-center justify-center rounded border border-red-500 bg-red-600 px-1.5 text-xs font-bold leading-none text-white hover:bg-red-500"
-                                          title={translateApp(props.lang, 'pages.removeColumn')}
-                                          aria-label={translateApp(props.lang, 'pages.removeColumn')}
-                                          onClick$={async (e) => {
-                                            e.stopPropagation();
-                                            selection.value = null;
-                                            const current = ensurePageLayoutBands(
-                                              props.sections.value,
                                             );
-                                            const next = current.map((b, bi) => {
-                                              if (bi !== bandIndex) return b;
-                                              return {
-                                                ...b,
-                                                rows: b.rows
-                                                  .map((r, ri) => {
-                                                    if (ri !== rowIndex) return r;
-                                                    return {
-                                                      ...r,
-                                                      columns: r.columns.filter(
-                                                        (_, ci) => ci !== colIndex,
-                                                      ),
-                                                    };
-                                                  })
-                                                  .filter((r) => r.columns.length > 0),
-                                              };
-                                            });
-                                            await commit$(next);
-                                          }}
+                                            if (!inserted) return;
+                                            await commit$(inserted.bands);
+                                            selection.value = {
+                                              kind: 'block',
+                                              bandIndex,
+                                              rowIndex,
+                                              colIndex,
+                                              blockIndex: inserted.blockIndex,
+                                            };
+                                            return;
+                                          }
+
+                                          if (from) {
+                                            const moved = moveBlockToColumn(
+                                              bands,
+                                              from,
+                                              bandIndex,
+                                              rowIndex,
+                                              colIndex,
+                                            );
+                                            if (!moved) return;
+                                            await commit$(moved.bands);
+                                            selection.value = {
+                                              kind: 'block',
+                                              bandIndex,
+                                              rowIndex,
+                                              colIndex,
+                                              blockIndex: moved.blockIndex,
+                                            };
+                                          }
+                                        }}
+                                      >
+                                        <div
+                                          aria-hidden="true"
+                                          class={builderOutlineClass(
+                                            colSelected,
+                                            isDropTarget,
+                                            'group-hover/col:outline-gray-400',
+                                          )}
+                                        />
+                                        {/* Column handle */}
+                                        <div
+                                          stoppropagation:click
+                                          class={[
+                                            'absolute end-0 top-0 z-40 items-center gap-0.5 rounded-es-md bg-gray-700 px-1 py-0.5 text-[11px] font-medium text-white shadow',
+                                            colSelected ? 'flex' : 'hidden group-hover/col:flex',
+                                          ].join(' ')}
                                         >
-                                          ×
-                                        </button>
-                                      </div>
-                                      <ul class="min-h-[3rem] space-y-1">
-                                        {col.blocks.length === 0 ? (
-                                          <li class="rounded border border-dashed border-gray-300 px-2 py-3 text-center text-[11px] text-gray-400 dark:border-gray-600">
-                                            {translateApp(props.lang, 'pages.dropWidgetHere')}
-                                          </li>
-                                        ) : null}
-                                        {col.blocks.map((block, blockIndex) => {
-                                          const entry = props.registry.value.find(
-                                            (r) => r.type === block.type,
-                                          );
-                                          const blockSelected =
-                                            selection.value?.kind === 'block' &&
-                                            selection.value.bandIndex === bandIndex &&
-                                            selection.value.rowIndex === rowIndex &&
-                                            selection.value.colIndex === colIndex &&
-                                            selection.value.blockIndex === blockIndex;
-                                          return (
-                                            <li
-                                              key={block.id}
-                                              draggable={true}
-                                              class={[
-                                                'flex cursor-grab items-center gap-1 rounded border px-2 py-1.5 text-xs font-medium active:cursor-grabbing',
-                                                blockSelected
-                                                  ? 'border-primary-500 bg-primary-600 text-white'
-                                                  : 'border-gray-200 bg-white text-gray-800 dark:border-gray-700 dark:bg-slate-900 dark:text-gray-100',
-                                              ].join(' ')}
-                                              onClick$={() => {
-                                                selection.value = {
-                                                  kind: 'block',
-                                                  bandIndex,
-                                                  rowIndex,
-                                                  colIndex,
-                                                  blockIndex,
+                                          <button
+                                            type="button"
+                                            class="rounded px-1.5 py-0.5 hover:bg-gray-800"
+                                            title={translateApp(props.lang, 'pages.editColumn')}
+                                            onClick$={() => {
+                                              selection.value = {
+                                                kind: 'column',
+                                                bandIndex,
+                                                rowIndex,
+                                                colIndex,
+                                              };
+                                            }}
+                                          >
+                                            {translateApp(props.lang, 'pages.column')} {colIndex + 1} · {effective}/12
+                                          </button>
+                                          <button
+                                            type="button"
+                                            class="rounded px-1.5 py-0.5 font-bold hover:bg-red-600"
+                                            title={translateApp(props.lang, 'pages.removeColumn')}
+                                            aria-label={translateApp(props.lang, 'pages.removeColumn')}
+                                            onClick$={async () => {
+                                              selection.value = null;
+                                              const current = ensurePageLayoutBands(
+                                                props.sections.value,
+                                              );
+                                              const next = current.map((b, bi) => {
+                                                if (bi !== bandIndex) return b;
+                                                return {
+                                                  ...b,
+                                                  rows: b.rows
+                                                    .map((r, ri) => {
+                                                      if (ri !== rowIndex) return r;
+                                                      return {
+                                                        ...r,
+                                                        columns: r.columns.filter(
+                                                          (_, ci) => ci !== colIndex,
+                                                        ),
+                                                      };
+                                                    })
+                                                    .filter((r) => r.columns.length > 0),
                                                 };
-                                              }}
-                                              onDragStart$={(e) => {
-                                                dragWidgetType.value = null;
-                                                dragBlock.value = {
-                                                  bandIndex,
-                                                  rowIndex,
-                                                  colIndex,
-                                                  blockIndex,
-                                                };
-                                                const dt = e.dataTransfer;
-                                                if (dt) {
-                                                  dt.effectAllowed = 'move';
-                                                  dt.setData('text/plain', block.id);
-                                                }
-                                              }}
-                                              onDragEnd$={clearDrag$}
-                                              onDragOver$={(e) => e.preventDefault()}
-                                              onDrop$={async (e) => {
-                                                e.preventDefault();
-                                                e.stopPropagation();
-                                                const from = dragBlock.value;
-                                                const widgetType = dragWidgetType.value;
-                                                await clearDrag$();
+                                              });
+                                              await commit$(next);
+                                            }}
+                                          >
+                                            ×
+                                          </button>
+                                        </div>
 
-                                                if (widgetType) {
-                                                  const inserted = insertWidgetIntoColumn(
-                                                    bands,
-                                                    props.registry.value,
-                                                    widgetType,
-                                                    bandIndex,
-                                                    rowIndex,
-                                                    colIndex,
-                                                  );
-                                                  if (!inserted) return;
-                                                  await commit$(inserted.bands);
-                                                  selection.value = {
-                                                    kind: 'block',
-                                                    bandIndex,
-                                                    rowIndex,
-                                                    colIndex,
-                                                    blockIndex: inserted.blockIndex,
-                                                  };
-                                                  return;
-                                                }
+                                        <LayoutNodeShell
+                                          id={col.id}
+                                          settings={col.settings}
+                                          styles={col.styles}
+                                          class="h-full"
+                                        >
+                                          <div class="h-full space-y-6">
+                                            {col.blocks.length === 0 ? (
+                                              <div class="flex min-h-16 items-center justify-center rounded border border-dashed border-gray-300 px-2 text-center text-[11px] text-gray-400 dark:border-gray-600">
+                                                {translateApp(props.lang, 'pages.dropWidgetHere')}
+                                              </div>
+                                            ) : null}
+                                            {col.blocks.map((block, blockIndex) => {
+                                              const entry = props.registry.value.find(
+                                                (r) => r.type === block.type,
+                                              );
+                                              const blockLabel = appearanceSectionLabel(
+                                                props.lang,
+                                                block.type,
+                                                entry?.label || block.type,
+                                              );
+                                              const blockSelected =
+                                                selection.value?.kind === 'block' &&
+                                                selection.value.bandIndex === bandIndex &&
+                                                selection.value.rowIndex === rowIndex &&
+                                                selection.value.colIndex === colIndex &&
+                                                selection.value.blockIndex === blockIndex;
+                                              const resolved =
+                                                resolvedBands?.[bandIndex]?.rows[rowIndex]?.columns[colIndex]
+                                                  ?.blocks[blockIndex];
+                                              const shown =
+                                                resolved && resolved.id === block.id ? resolved : block;
+                                              return (
+                                                <div
+                                                  key={block.id}
+                                                  data-builder-node
+                                                  preventdefault:click
+                                                  class={[
+                                                    'group/block relative cursor-pointer',
+                                                    block.enabled === false ? 'opacity-40' : '',
+                                                    hiddenOnDeviceClass(block, previewDevice.value),
+                                                  ].join(' ')}
+                                                  onClick$={(e, el) => {
+                                                    if (isOwnBuilderNodeClick(e, el)) {
+                                                      selection.value = {
+                                                        kind: 'block',
+                                                        bandIndex,
+                                                        rowIndex,
+                                                        colIndex,
+                                                        blockIndex,
+                                                      };
+                                                    }
+                                                  }}
+                                                  onDragOver$={(e) => e.preventDefault()}
+                                                  onDrop$={async (e) => {
+                                                    e.preventDefault();
+                                                    e.stopPropagation();
+                                                    const from = dragBlock.value;
+                                                    const widgetType = dragWidgetType.value;
+                                                    await clearDrag$();
 
-                                                if (!from) return;
-                                                const moved = moveBlockToColumn(
-                                                  bands,
-                                                  from,
-                                                  bandIndex,
-                                                  rowIndex,
-                                                  colIndex,
-                                                  blockIndex,
-                                                );
-                                                if (!moved) return;
-                                                await commit$(moved.bands);
-                                                selection.value = {
-                                                  kind: 'block',
-                                                  bandIndex,
-                                                  rowIndex,
-                                                  colIndex,
-                                                  blockIndex: moved.blockIndex,
-                                                };
-                                              }}
-                                            >
-                                              <span class="min-w-0 flex-1 truncate">
-                                                {appearanceSectionLabel(
-                                                  props.lang,
-                                                  block.type,
-                                                  entry?.label || block.type,
-                                                )}
-                                              </span>
-                                              <button
-                                                type="button"
-                                                class="inline-flex h-5 min-w-5 shrink-0 items-center justify-center rounded border border-red-500 bg-red-600 px-1 text-[11px] font-bold leading-none text-white hover:bg-red-500"
-                                                title={translateApp(props.lang, 'pages.removeWidget')}
-                                                aria-label={translateApp(
-                                                  props.lang,
-                                                  'pages.removeWidget',
-                                                )}
-                                                onClick$={async (e) => {
-                                                  e.stopPropagation();
-                                                  const current = ensurePageLayoutBands(
-                                                    props.sections.value,
-                                                  );
-                                                  const next = current.map((b, bi) => {
-                                                    if (bi !== bandIndex) return b;
-                                                    return {
-                                                      ...b,
-                                                      rows: b.rows.map((r, ri) => {
-                                                        if (ri !== rowIndex) return r;
-                                                        return {
-                                                          ...r,
-                                                          columns: r.columns.map((c, ci) => {
-                                                            if (ci !== colIndex) return c;
-                                                            return {
-                                                              ...c,
-                                                              blocks: c.blocks.filter(
-                                                                (_, i) => i !== blockIndex,
-                                                              ),
-                                                            };
-                                                          }),
-                                                        };
-                                                      }),
+                                                    if (widgetType) {
+                                                      const inserted = insertWidgetIntoColumn(
+                                                        bands,
+                                                        props.registry.value,
+                                                        widgetType,
+                                                        bandIndex,
+                                                        rowIndex,
+                                                        colIndex,
+                                                      );
+                                                      if (!inserted) return;
+                                                      await commit$(inserted.bands);
+                                                      selection.value = {
+                                                        kind: 'block',
+                                                        bandIndex,
+                                                        rowIndex,
+                                                        colIndex,
+                                                        blockIndex: inserted.blockIndex,
+                                                      };
+                                                      return;
+                                                    }
+
+                                                    if (!from) return;
+                                                    const moved = moveBlockToColumn(
+                                                      bands,
+                                                      from,
+                                                      bandIndex,
+                                                      rowIndex,
+                                                      colIndex,
+                                                      blockIndex,
+                                                    );
+                                                    if (!moved) return;
+                                                    await commit$(moved.bands);
+                                                    selection.value = {
+                                                      kind: 'block',
+                                                      bandIndex,
+                                                      rowIndex,
+                                                      colIndex,
+                                                      blockIndex: moved.blockIndex,
                                                     };
-                                                  });
-                                                  if (
-                                                    selection.value?.kind === 'block' &&
-                                                    selection.value.bandIndex === bandIndex &&
-                                                    selection.value.rowIndex === rowIndex &&
-                                                    selection.value.colIndex === colIndex &&
-                                                    selection.value.blockIndex === blockIndex
-                                                  ) {
-                                                    selection.value = null;
-                                                  }
-                                                  await commit$(next);
-                                                }}
-                                              >
-                                                ×
-                                              </button>
-                                            </li>
-                                          );
-                                        })}
-                                      </ul>
+                                                  }}
+                                                >
+                                                  {/* Final render; embeds are inert so clicks reach the editor */}
+                                                  <div
+                                                    data-label={blockLabel}
+                                                    class="[&_iframe]:pointer-events-none [&_video]:pointer-events-none empty:flex empty:min-h-10 empty:items-center empty:justify-center empty:rounded empty:border empty:border-dashed empty:border-gray-300 empty:text-xs empty:text-gray-400 empty:before:content-[attr(data-label)] dark:empty:border-gray-600"
+                                                  >
+                                                    <PageBuilderCanvasBlock block={shown} ctx={previewCtx} />
+                                                  </div>
+                                                  <div
+                                                    aria-hidden="true"
+                                                    class={builderOutlineClass(
+                                                      blockSelected,
+                                                      false,
+                                                      'group-hover/block:outline-primary-400',
+                                                    )}
+                                                  />
+                                                  {/* Block handle: drag grip + label + remove */}
+                                                  <div
+                                                    stoppropagation:click
+                                                    class={[
+                                                      'absolute end-0 top-0 z-40 items-center gap-0.5 rounded-es-md bg-primary-600 px-1 py-0.5 text-[11px] font-medium text-white shadow',
+                                                      blockSelected ? 'flex' : 'hidden group-hover/block:flex',
+                                                    ].join(' ')}
+                                                  >
+                                                    <span
+                                                      draggable={true}
+                                                      class="flex cursor-grab items-center gap-1 rounded px-1.5 py-0.5 hover:bg-primary-700 active:cursor-grabbing"
+                                                      title={blockLabel}
+                                                      onClick$={() => {
+                                                        selection.value = {
+                                                          kind: 'block',
+                                                          bandIndex,
+                                                          rowIndex,
+                                                          colIndex,
+                                                          blockIndex,
+                                                        };
+                                                      }}
+                                                      onDragStart$={(e) => {
+                                                        dragWidgetType.value = null;
+                                                        dragBlock.value = {
+                                                          bandIndex,
+                                                          rowIndex,
+                                                          colIndex,
+                                                          blockIndex,
+                                                        };
+                                                        const dt = e.dataTransfer;
+                                                        if (dt) {
+                                                          dt.effectAllowed = 'move';
+                                                          dt.setData('text/plain', block.id);
+                                                        }
+                                                      }}
+                                                      onDragEnd$={clearDrag$}
+                                                    >
+                                                      <svg class="h-3 w-3" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                                                        <path d="M7 4a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0Zm0 6a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0Zm-1.5 7.5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3ZM16 4a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0Zm-1.5 7.5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3ZM16 16a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0Z" />
+                                                      </svg>
+                                                      <span class="max-w-[10rem] truncate">{blockLabel}</span>
+                                                    </span>
+                                                    <button
+                                                      type="button"
+                                                      class="rounded px-1.5 py-0.5 font-bold hover:bg-red-600"
+                                                      title={translateApp(props.lang, 'pages.removeWidget')}
+                                                      aria-label={translateApp(props.lang, 'pages.removeWidget')}
+                                                      onClick$={async () => {
+                                                        const current = ensurePageLayoutBands(
+                                                          props.sections.value,
+                                                        );
+                                                        const next = current.map((b, bi) => {
+                                                          if (bi !== bandIndex) return b;
+                                                          return {
+                                                            ...b,
+                                                            rows: b.rows.map((r, ri) => {
+                                                              if (ri !== rowIndex) return r;
+                                                              return {
+                                                                ...r,
+                                                                columns: r.columns.map((c, ci) => {
+                                                                  if (ci !== colIndex) return c;
+                                                                  return {
+                                                                    ...c,
+                                                                    blocks: c.blocks.filter(
+                                                                      (_, i) => i !== blockIndex,
+                                                                    ),
+                                                                  };
+                                                                }),
+                                                              };
+                                                            }),
+                                                          };
+                                                        });
+                                                        if (
+                                                          selection.value?.kind === 'block' &&
+                                                          selection.value.bandIndex === bandIndex &&
+                                                          selection.value.rowIndex === rowIndex &&
+                                                          selection.value.colIndex === colIndex &&
+                                                          selection.value.blockIndex === blockIndex
+                                                        ) {
+                                                          selection.value = null;
+                                                        }
+                                                        await commit$(next);
+                                                      }}
+                                                    >
+                                                      ×
+                                                    </button>
+                                                  </div>
+                                                </div>
+                                              );
+                                            })}
+                                          </div>
+                                        </LayoutNodeShell>
+                                      </div>
+                                    );
+                                  })}
+                                  {remaining > 0 && dragging ? (
+                                    <div
+                                      class={[
+                                        previewColSpanClass(remaining),
+                                        'flex min-h-16 items-center justify-center rounded-md border border-dashed border-primary-400/60 bg-primary-50/30 px-2 text-center text-[11px] text-primary-700 dark:border-primary-500/50 dark:bg-primary-950/20 dark:text-primary-300',
+                                        isRowDropTarget && !dropColumnKey.value
+                                          ? 'ring-2 ring-primary-500/40'
+                                          : '',
+                                      ].join(' ')}
+                                    >
+                                      {translateApp(props.lang, 'pages.dropWidgetHere')}
                                     </div>
-                                  );
-                                })}
-                                {remaining > 0 ? (
-                                  <div
-                                    class={[
-                                      previewColSpanClass(remaining),
-                                      'flex min-h-[4.5rem] items-center justify-center rounded-md border border-dashed border-primary-400/60 bg-primary-50/30 px-2 text-center text-[11px] text-primary-700 dark:border-primary-500/50 dark:bg-primary-950/20 dark:text-primary-300',
-                                      isRowDropTarget && !dropColumnKey.value
-                                        ? 'ring-2 ring-primary-500/40'
-                                        : '',
-                                    ].join(' ')}
-                                    onDragOver$={(e) => {
-                                      if (dragWidgetType.value || dragBlock.value) {
-                                        e.preventDefault();
-                                        e.stopPropagation();
-                                        dropRowKey.value = rowKey;
-                                        dropColumnKey.value = null;
-                                      }
-                                    }}
-                                    onDrop$={async (e) => {
-                                      e.preventDefault();
-                                      e.stopPropagation();
-                                      const widgetType =
-                                        dragWidgetType.value ||
-                                        e.dataTransfer?.getData(WIDGET_DND) ||
-                                        null;
-                                      const from = dragBlock.value;
-                                      dropColumnKey.value = null;
-                                      dropRowKey.value = null;
-                                      dragWidgetType.value = null;
-                                      dragBlock.value = null;
-
-                                      if (from) {
-                                        const moved = moveBlockIntoRemaining(
-                                          bands,
-                                          from,
-                                          bandIndex,
-                                          rowIndex,
-                                          previewDevice.value,
-                                        );
-                                        if (!moved) return;
-                                        await commit$(moved.bands);
-                                        selection.value = {
-                                          kind: 'block',
-                                          bandIndex,
-                                          rowIndex,
-                                          colIndex: moved.colIndex,
-                                          blockIndex: moved.blockIndex,
-                                        };
-                                        return;
-                                      }
-
-                                      if (
-                                        widgetType &&
-                                        props.registry.value.some((r) => r.type === widgetType)
-                                      ) {
-                                        const inserted = insertWidgetIntoRemaining(
-                                          bands,
-                                          props.registry.value,
-                                          widgetType,
-                                          bandIndex,
-                                          rowIndex,
-                                          previewDevice.value,
-                                        );
-                                        if (!inserted) return;
-                                        await commit$(inserted.bands);
-                                        selection.value = {
-                                          kind: 'block',
-                                          bandIndex,
-                                          rowIndex,
-                                          colIndex: inserted.colIndex,
-                                          blockIndex: inserted.blockIndex,
-                                        };
-                                      }
-                                    }}
-                                  >
-                                    {translateApp(props.lang, 'pages.dropWidgetHere')}
-                                  </div>
-                                ) : null}
-                              </div>
-                            </li>
+                                  ) : null}
+                                </div>
+                              </LayoutNodeShell>
+                            </div>
                           );
                         })}
-                      </ul>
-                    </li>
+                      </LayoutNodeShell>
+                    </section>
                   );
                 })}
-              </ul>
+              </>
             )}
+            </LayoutDeviceProvider>
           </div>
         </main>
 

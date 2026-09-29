@@ -328,6 +328,8 @@
     "kitsTab": "Kits",
     "paletteSearch": "Search widgets & kits…",
     "livePreview": "Live preview",
+    "viewPage": "Preview page",
+    "backToEditor": "Back to editor",
     "blockWidgets": "Content blocks",
     "inspector": "Inspector",
     "navigator": "Navigator",

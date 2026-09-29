@@ -22,6 +22,12 @@ function isAdminPageBuilderPath(pathname: string): boolean {
   );
 }
 
+/** Builder "view page" iframe document: public page chrome only, no dashboard shell. */
+function isAdminBuilderPreviewPath(pathname: string): boolean {
+  const logical = stripUiLocaleFromPathname(pathname.replace(/\/+$/, '') || '/');
+  return logical === '/admin/builder-preview';
+}
+
 /**
  * Dashboard chrome (sidebar, header, settings, auth sync).
  * Kept separate from admin layout so /admin/login does not load useVisibleTask QRL chunks.
@@ -141,6 +147,10 @@ export const AuthenticatedAdminLayout = component$((props: { settings?: ProjectS
 
   if (!adminAuth.value) {
     return null;
+  }
+
+  if (isAdminBuilderPreviewPath(location.url.pathname)) {
+    return <Slot />;
   }
 
   // Fullscreen page builder: auth bootstrap only — no dashboard sidebar/header chrome.

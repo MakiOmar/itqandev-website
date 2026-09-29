@@ -6,6 +6,7 @@ import type {
   ColumnSpans,
   LayoutBreakpoint,
   PageLayoutBand,
+  PageLayoutRow,
   PageLayoutStackBelow,
   PageSectionNode,
 } from './appearance-types';
@@ -129,6 +130,45 @@ export function effectiveSpanForDevice(
 /** Static Tailwind class for a single span (builder device preview — no responsive prefixes). */
 export function previewColSpanClass(span: number): string {
   return COL_SPAN[clampSpan(span)] ?? 'col-span-12';
+}
+
+const ROW_GAP_CLASS: Record<number, string> = {
+  0: 'gap-0',
+  1: 'gap-1',
+  2: 'gap-2',
+  3: 'gap-3',
+  4: 'gap-4',
+  5: 'gap-5',
+  6: 'gap-6',
+  8: 'gap-8',
+  10: 'gap-10',
+  12: 'gap-12',
+  16: 'gap-16',
+};
+
+/** Grid gap class for a layout row (`row.gap`, default 4). */
+export function rowGapClass(gap: unknown): string {
+  const n = typeof gap === 'number' ? gap : 4;
+  return ROW_GAP_CLASS[n] ?? 'gap-4';
+}
+
+/** Inline justify / align / wrap for a layout row grid. */
+export function rowFlexStyle(row: Pick<PageLayoutRow, 'justify' | 'align' | 'wrap'>): Record<string, string> {
+  const justify =
+    row.justify === 'center'
+      ? 'center'
+      : row.justify === 'end'
+        ? 'end'
+        : row.justify === 'between'
+          ? 'space-between'
+          : 'start';
+  const align =
+    row.align === 'start' || row.align === 'center' || row.align === 'end' ? row.align : 'stretch';
+  return {
+    justifyContent: justify,
+    alignItems: align,
+    flexWrap: row.wrap === false ? 'nowrap' : 'wrap',
+  };
 }
 
 /** Kit `limit` fields are stored as 1–24 in Appearance / Theme Builder. */
