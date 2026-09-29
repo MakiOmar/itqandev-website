@@ -519,7 +519,7 @@ function findRowWithRemaining(
 function previewFrameClass(device: LayoutBreakpoint): string {
   if (device === 'mobile') return 'mx-auto w-full max-w-[390px]';
   if (device === 'tablet') return 'mx-auto w-full max-w-[820px]';
-  return 'mx-auto w-full';
+  return 'mx-auto w-full min-w-[1024px]';
 }
 
 /** True when the click belongs to this canvas node, not a nested band/row/column/block. */
@@ -1090,9 +1090,12 @@ export const PageBuilderWorkspace = component$<PageBuilderWorkspaceProps>((props
         ) : null}
 
         {/* Canvas — final render with editor outlines/handles, sized to active device */}
-        <main class="min-w-0 flex-1 overflow-y-auto bg-slate-200/60 p-4 sm:p-6 dark:bg-slate-950/60">
+        <main class="min-w-0 flex-1 overflow-auto bg-slate-200/60 p-4 sm:p-6 dark:bg-slate-950/60">
+          {/* data-builder-canvas: admin CSS maps md:/lg: to container queries on this frame (postcss/builder-canvas-container-queries.js) */}
           <div
             data-public-page
+            data-builder-canvas
+            style={{ containerType: 'inline-size', containerName: 'builder-canvas' }}
             class={[
               previewFrameClass(previewDevice.value),
               'relative isolate min-h-[60vh] bg-gradient-to-br from-slate-50 via-blue-50/30 to-indigo-50/20 shadow-lg transition-[max-width] duration-300 dark:from-slate-900 dark:via-slate-800/30 dark:to-slate-900/20',
