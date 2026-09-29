@@ -42,7 +42,11 @@ import {
 import { BuilderStylePanel } from '~/components/admin/BuilderStylePanel';
 import { BuilderBackgroundFields } from '~/components/admin/BuilderBackgroundFields';
 import { BuilderShapeDividerFields } from '~/components/admin/BuilderShapeDividerFields';
-import { PageBuilderNavigator } from '~/components/admin/pages/PageBuilderNavigator';
+import {
+  PageBuilderNavigator,
+  navigatorPathToSelection,
+} from '~/components/admin/pages/PageBuilderNavigator';
+import { moveLayoutTreeNode } from '~/lib/admin/page-layout-tree';
 import { LayoutDeviceProvider } from '~/lib/marketing/layout-device-context';
 import { normalizeHideOn, type DeviceHideOn } from '~/lib/marketing/device-visibility';
 import type { BuilderStyles, StyleBreakpoint } from '~/lib/marketing/builder-styles';
@@ -628,6 +632,7 @@ export const PageBuilderWorkspace = component$<PageBuilderWorkspaceProps>((props
   const globalsList = useSignal<GlobalWidgetApiRow[]>([]);
   const savedBands = useSignal<SavedBuilderBand[]>([]);
   const showLivePreview = useSignal(false);
+  const showNavigator = useSignal(false);
   const inspectorTab = useSignal<InspectorTab>('content');
   /** Keep preview DOM after first open so off is CSS-only (avoids stuck pane). */
   const livePreviewMounted = useSignal(false);
@@ -795,6 +800,27 @@ export const PageBuilderWorkspace = component$<PageBuilderWorkspaceProps>((props
           }}
         >
           {translateApp(props.lang, 'pages.livePreview')}
+        </button>
+        {/* Navigator modal toggle */}
+        <button
+          type="button"
+          aria-haspopup="dialog"
+          aria-pressed={showNavigator.value ? 'true' : 'false'}
+          aria-label={translateApp(props.lang, 'pages.navigatorOpen')}
+          title={translateApp(props.lang, 'pages.navigatorOpen')}
+          class={[
+            'rounded-lg border p-1.5',
+            showNavigator.value
+              ? 'border-primary-500 bg-primary-50 text-primary-800 dark:bg-primary-950 dark:text-primary-200'
+              : 'border-gray-300 text-gray-700 dark:border-gray-600 dark:text-gray-200',
+          ].join(' ')}
+          onClick$={() => {
+            showNavigator.value = !showNavigator.value;
+          }}
+        >
+          <svg class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+            <path d="M3 4a1 1 0 0 1 1-1h5a1 1 0 0 1 0 2H4a1 1 0 0 1-1-1Zm3 5a1 1 0 0 1 1-1h6a1 1 0 1 1 0 2H7a1 1 0 0 1-1-1Zm3 5a1 1 0 0 1 1-1h6a1 1 0 1 1 0 2h-6a1 1 0 0 1-1-1ZM4 7a1 1 0 0 1 1 1v5a1 1 0 0 0 1 1h1a1 1 0 1 1 0 2H6a3 3 0 0 1-3-3V8a1 1 0 0 1 1-1Z" />
+          </svg>
         </button>
         <button
           type="button"
@@ -1080,14 +1106,26 @@ export const PageBuilderWorkspace = component$<PageBuilderWorkspaceProps>((props
           </div>
         </aside>
 
-        <PageBuilderNavigator
-          lang={props.lang}
-          bands={bands}
-          selection={selection.value}
-          onSelect$={$((next) => {
-            selection.value = next;
-          })}
-        />
+        {showNavigator.value ? (
+          <PageBuilderNavigator
+            lang={props.lang}
+            bands={bands}
+            selection={selection.value}
+            onSelect$={$((next) => {
+              selection.value = next;
+            })}
+            onMove$={$(async (from, to, position) => {
+              const current = ensurePageLayoutBands(props.sections.value);
+              const moved = moveLayoutTreeNode(current, from, to, position);
+              if (!moved) return;
+              await commit$(moved.bands);
+              selection.value = navigatorPathToSelection(moved.path);
+            })}
+            onClose$={$(() => {
+              showNavigator.value = false;
+            })}
+          />
+        ) : null}
 
         {/* Canvas — sized to active device */}
         <main class="min-w-0 flex-1 overflow-y-auto bg-slate-200/40 p-4 sm:p-6 dark:bg-slate-950/40">
