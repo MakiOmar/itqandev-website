@@ -62,7 +62,12 @@ export const TestimonialsWidget = component$<TestimonialsWidgetProps>((props) =>
           </a>
         </p>
       ) : opts.layout === 'carousel' ? (
-        <TestimonialsCarousel uiLocale={props.uiLocale} autoplay={opts.autoplay} autoplayMs={opts.autoplayMs}>
+        <TestimonialsCarousel
+          uiLocale={props.uiLocale}
+          autoplay={opts.autoplay}
+          autoplayMs={opts.autoplayMs}
+          arrowsPosition={opts.arrowsPosition}
+        >
           {cards(`${carouselItemBasisClassNames(opts.columns)} snap-start`)}
         </TestimonialsCarousel>
       ) : (

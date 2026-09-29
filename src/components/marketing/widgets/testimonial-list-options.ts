@@ -1,7 +1,22 @@
 import { normalizeResponsiveColumns, type ResponsiveColumns } from '~/lib/marketing/grid-columns';
 import type { TestimonialCardVariant } from '~/components/marketing/TestimonialCard';
 
+export const CAROUSEL_ARROWS_POSITIONS = [
+  'sides',
+  'top_left',
+  'top_center',
+  'top_right',
+  'top_between',
+  'bottom_left',
+  'bottom_center',
+  'bottom_right',
+  'bottom_between',
+] as const;
+
+export type CarouselArrowsPosition = (typeof CAROUSEL_ARROWS_POSITIONS)[number];
+
 export type TestimonialListOptions = {
+  arrowsPosition: CarouselArrowsPosition;
   title: string;
   subtitle: string;
   layout: 'grid' | 'carousel';
@@ -46,5 +61,8 @@ export function testimonialListOptions(settings: Record<string, unknown>): Testi
     showProject: flag(settings.show_project, true),
     autoplay: flag(settings.autoplay, false),
     autoplayMs: clampInt(settings.autoplay_seconds, 3, 15, 6) * 1000,
+    arrowsPosition: (CAROUSEL_ARROWS_POSITIONS as readonly string[]).includes(String(settings.arrows_position))
+      ? (settings.arrows_position as CarouselArrowsPosition)
+      : 'sides',
   };
 }

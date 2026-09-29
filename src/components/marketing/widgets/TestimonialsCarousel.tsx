@@ -1,12 +1,22 @@
 import { component$, useSignal, useVisibleTask$, $, Slot } from '@builder.io/qwik';
 import { isUiLocaleRtl } from '~/lib/i18n/ui-locale-segments';
 import { translateApp } from '~/lib/i18n/useTranslate';
+import type { CarouselArrowsPosition } from './testimonial-list-options';
 
 export type TestimonialsCarouselProps = {
   uiLocale: string;
   autoplay: boolean;
   autoplayMs: number;
+  arrowsPosition: CarouselArrowsPosition;
 };
+
+/** Left/right are physical screen sides; flex start flips under RTL, so swap there. */
+function arrowsJustifyClass(align: 'left' | 'center' | 'right' | 'between', rtl: boolean): string {
+  if (align === 'center') return 'justify-center';
+  if (align === 'between') return 'justify-between';
+  const start = align === 'left' ? !rtl : rtl;
+  return start ? 'justify-start' : 'justify-end';
+}
 
 const CHEVRON_BTN =
   'inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 shadow-sm transition hover:bg-slate-50 disabled:pointer-events-none disabled:opacity-30 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700';
@@ -82,35 +92,64 @@ export const TestimonialsCarousel = component$<TestimonialsCarouselProps>((props
     });
   });
 
+  const prevBtn = (
+    <button
+      type="button"
+      class={CHEVRON_BTN}
+      aria-label={translateApp(props.uiLocale, 'testimonials.carouselPrev')}
+      disabled={!canPrev.value}
+      onClick$={() => step(-1)}
+    >
+      {/* Chevron points toward the reading-start side */}
+      <span aria-hidden="true">{rtl ? '›' : '‹'}</span>
+    </button>
+  );
+  const nextBtn = (
+    <button
+      type="button"
+      class={CHEVRON_BTN}
+      aria-label={translateApp(props.uiLocale, 'testimonials.carouselNext')}
+      disabled={!canNext.value}
+      onClick$={() => step(1)}
+    >
+      <span aria-hidden="true">{rtl ? '‹' : '›'}</span>
+    </button>
+  );
+  const track = (
+    <ul
+      ref={trackRef}
+      class="flex min-w-0 flex-1 snap-x snap-mandatory gap-6 overflow-x-auto scroll-smooth pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+      role="list"
+      dir={rtl ? 'rtl' : 'ltr'}
+    >
+      <Slot />
+    </ul>
+  );
+
+  if (props.arrowsPosition === 'sides') {
+    return (
+      <div class="flex items-center gap-2" data-testimonials-carousel>
+        {prevBtn}
+        {track}
+        {nextBtn}
+      </div>
+    );
+  }
+
+  const [edge, align] = props.arrowsPosition.split('_') as ['top' | 'bottom', 'left' | 'center' | 'right' | 'between'];
+  // Arrow row wrapper: physical alignment, independent of page direction
+  const nav = (
+    <div class={`flex items-center gap-2 ${arrowsJustifyClass(align, rtl)}`} dir={rtl ? 'rtl' : 'ltr'}>
+      {prevBtn}
+      {nextBtn}
+    </div>
+  );
+
   return (
-    <div class="flex items-center gap-2" data-testimonials-carousel>
-      <button
-        type="button"
-        class={CHEVRON_BTN}
-        aria-label={translateApp(props.uiLocale, 'testimonials.carouselPrev')}
-        disabled={!canPrev.value}
-        onClick$={() => step(-1)}
-      >
-        {/* Chevron points toward the reading-start side */}
-        <span aria-hidden="true">{rtl ? '›' : '‹'}</span>
-      </button>
-      <ul
-        ref={trackRef}
-        class="flex min-w-0 flex-1 snap-x snap-mandatory gap-6 overflow-x-auto scroll-smooth pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
-        role="list"
-        dir={rtl ? 'rtl' : 'ltr'}
-      >
-        <Slot />
-      </ul>
-      <button
-        type="button"
-        class={CHEVRON_BTN}
-        aria-label={translateApp(props.uiLocale, 'testimonials.carouselNext')}
-        disabled={!canNext.value}
-        onClick$={() => step(1)}
-      >
-        <span aria-hidden="true">{rtl ? '‹' : '›'}</span>
-      </button>
+    <div class="flex flex-col gap-4" data-testimonials-carousel>
+      {edge === 'top' ? nav : null}
+      {track}
+      {edge === 'bottom' ? nav : null}
     </div>
   );
 });

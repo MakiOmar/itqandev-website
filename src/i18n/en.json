@@ -994,7 +994,8 @@
       "show_role": "Show role / company",
       "show_project": "Show project",
       "autoplay": "Autoplay (carousel)",
-      "autoplay_seconds": "Autoplay interval (seconds)"
+      "autoplay_seconds": "Autoplay interval (seconds)",
+      "arrows_position": "Arrows position (carousel)"
     },
     "categoryMultiHint": "Check categories to show as filter tabs/sidebar. Leave all unchecked to show every category with published projects.",
     "categoriesLoading": "Loading categories…",
