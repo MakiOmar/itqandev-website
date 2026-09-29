@@ -142,6 +142,7 @@ export default component$(() => {
         const row = t.translations?.find((x) => String(x?.locale).toLowerCase() === l.code.toLowerCase());
         return {
           locale: l.code,
+          client_name: row?.client_name ?? '',
           content: row?.content ?? '',
           client_role: row?.client_role ?? '',
           company: row?.company ?? '',
@@ -170,6 +171,7 @@ export default component$(() => {
     );
     formData.value = {
       ...formData.value,
+      client_name: m.client_name,
       client_role: m.client_role,
       company: m.company,
       content: m.content,
@@ -333,6 +335,7 @@ export default component$(() => {
                   );
                   return {
                     locale: l.code,
+                    client_name: tr?.client_name ?? '',
                     content: tr?.content ?? '',
                     client_role: tr?.client_role ?? '',
                     company: tr?.company ?? '',
@@ -372,17 +375,17 @@ export default component$(() => {
             <input
               id="client_name"
               type="text"
-              value={isPrimaryEditing.value ? formData.value.client_name : canonicalClientName.value}
-              disabled={!isPrimaryEditing.value}
+              value={formData.value.client_name}
               onInput$={(e) => {
                 formData.value = { ...formData.value, client_name: (e.target as HTMLInputElement).value };
               }}
-              class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-primary-500 focus:outline-none focus:ring focus:ring-primary-200 disabled:cursor-not-allowed disabled:bg-gray-100 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:disabled:bg-gray-800 dark:focus:ring-primary-700/40"
+              class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-primary-500 focus:outline-none focus:ring focus:ring-primary-200 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:focus:ring-primary-700/40"
               required
             />
+            {/* Secondary locale: name is optional and falls back to the primary one */}
             {!isPrimaryEditing.value && (
               <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                {translateApp(lang, 'contentTranslations.defaultHint')}
+                {translateApp(lang, 'testimonials.clientNameTranslationHint')}
               </p>
             )}
           </div>

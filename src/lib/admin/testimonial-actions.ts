@@ -25,6 +25,12 @@ export function mapTestimonialFromApi(raw: Record<string, unknown>): Testimonial
     ? (translationsRaw as Record<string, unknown>[]).map((tr) => ({
         id: tr.id != null ? Number(tr.id) : undefined,
         locale: String(tr.locale ?? ''),
+        client_name:
+          tr.client_name != null
+            ? String(tr.client_name)
+            : tr.clientName != null
+              ? String(tr.clientName)
+              : null,
         content: tr.content != null ? String(tr.content) : null,
         client_role:
           tr.client_role != null
@@ -135,6 +141,12 @@ function testimonialPayloadForApi(data: {
   return body;
 }
 
+/** Empty when unchanged from the primary name so the locale keeps falling back to it. */
+function translatedClientName(edited: string, canonical: string): string {
+  const name = edited.trim();
+  return name === canonical.trim() ? '' : name;
+}
+
 const toBool = (v: unknown) => v === true || v === '1' || v === 'on' || v === 'true';
 
 export const testimonialFormSchema = z
@@ -212,6 +224,7 @@ async function runTestimonialCreateWithApiClient(
         (data as { translations_json?: string }).translations_json,
         editingLocale,
         {
+          client_name: translatedClientName(String(data.client_name ?? ''), canonicalClientName),
           content: String(data.content || ''),
           client_role: String(data.client_role ?? ''),
           company: String(data.company ?? ''),
@@ -317,6 +330,7 @@ async function runTestimonialUpdateWithApiClient(
         (data as { translations_json?: string }).translations_json,
         editingLocale,
         {
+          client_name: translatedClientName(String(data.client_name ?? ''), canonicalClientName),
           content: String(data.content || ''),
           client_role: String(data.client_role ?? ''),
           company: String(data.company ?? ''),

@@ -231,21 +231,23 @@ export function mergeTestimonialFieldsForUiLocale(
   siteLanguages: SiteLanguageRow[] | undefined | null,
   siteDefaultLocale: string | undefined | null,
   contentLocaleOverride?: string | null,
-): { content: string; client_role: string; company: string } {
+): { client_name: string; content: string; client_role: string; company: string } {
   const primary = primaryLocaleForContent(
     siteLanguages,
     siteDefaultLocale,
     contentLocaleOverride ?? testimonial.contentLocale ?? null,
   );
   const u = uiLocale.toLowerCase();
+  const baseName = testimonial.clientName ?? '';
   const baseContent = testimonial.content ?? '';
   const baseRole = testimonial.clientRole ?? '';
   const baseCompany = testimonial.company ?? '';
   if (u === primary) {
-    return { content: baseContent, client_role: baseRole, company: baseCompany };
+    return { client_name: baseName, content: baseContent, client_role: baseRole, company: baseCompany };
   }
   const row = testimonial.translations?.find((t) => String(t?.locale).toLowerCase() === u);
   return {
+    client_name: row?.client_name != null && row.client_name !== '' ? row.client_name : baseName,
     content: row?.content != null && row.content !== '' ? row.content : baseContent,
     client_role: row?.client_role != null && row.client_role !== '' ? row.client_role : baseRole,
     company: row?.company != null && row.company !== '' ? row.company : baseCompany,
@@ -255,7 +257,7 @@ export function mergeTestimonialFieldsForUiLocale(
 export function mergeSecondaryTestimonialTranslations(
   translationsJson: string | undefined,
   uiLocale: string,
-  edited: { content: string; client_role: string; company: string },
+  edited: { client_name?: string; content: string; client_role: string; company: string },
 ): unknown[] {
   const base = parseTranslationsJson(translationsJson) ?? [];
   const u = uiLocale.toLowerCase();
@@ -267,6 +269,7 @@ export function mergeSecondaryTestimonialTranslations(
   });
   const row = {
     locale: u,
+    client_name: edited.client_name ?? '',
     content: edited.content,
     client_role: edited.client_role,
     company: edited.company,

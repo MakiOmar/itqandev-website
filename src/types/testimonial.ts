@@ -5,6 +5,7 @@
 export interface TestimonialTranslationRow {
   id?: number;
   locale: string;
+  client_name?: string | null;
   content?: string | null;
   client_role?: string | null;
   company?: string | null;
@@ -42,6 +43,7 @@ export interface TestimonialCreateInput {
   approved?: boolean;
   translations?: Array<{
     locale: string;
+    client_name?: string;
     content?: string;
     client_role?: string;
     company?: string;

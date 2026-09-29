@@ -73,7 +73,7 @@ export default component$(() => {
       contentLocaleDraft.value.trim() !== '' ? contentLocaleDraft.value.trim() : null,
     );
     translationsJson.value = JSON.stringify(
-      secondaries.map((l) => ({ locale: l.code, content: '', client_role: '', company: '' })),
+      secondaries.map((l) => ({ locale: l.code, client_name: '', content: '', client_role: '', company: '' })),
     );
   });
 
@@ -221,17 +221,17 @@ export default component$(() => {
             <input
               id="client_name"
               type="text"
-              value={isPrimaryEditing.value ? formData.value.client_name : canonicalClientName.value}
-              disabled={!isPrimaryEditing.value}
+              value={formData.value.client_name}
               onInput$={(e) => {
                 formData.value = { ...formData.value, client_name: (e.target as HTMLInputElement).value };
               }}
-              class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-primary-500 focus:outline-none focus:ring focus:ring-primary-200 disabled:cursor-not-allowed disabled:bg-gray-100 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:disabled:bg-gray-800 dark:focus:ring-primary-700/40"
+              class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-primary-500 focus:outline-none focus:ring focus:ring-primary-200 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:focus:ring-primary-700/40"
               required
             />
+            {/* Secondary locale: name is optional and falls back to the primary one */}
             {!isPrimaryEditing.value && (
               <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                {translateApp(lang, 'contentTranslations.defaultHint')}
+                {translateApp(lang, 'testimonials.clientNameTranslationHint')}
               </p>
             )}
           </div>

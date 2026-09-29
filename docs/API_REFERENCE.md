@@ -845,7 +845,7 @@ Locale-aware JSON export/import is available for admin translatable types. Each 
 - **projects:** `title`, `summary`, `description`, `featured`, `slug`, `id`
 - **services:** `name`, `short_description`, `description`, `process[]`, `deliverables[]`, `slug`, `id`
 - **blog_posts:** `title`, `excerpt`, `content`, `featured`, `slug`, `id`
-- **testimonials:** `content`, `client_role`, `company`, `client_name` (primary only), `project_id`, `id` — no `slug`; match by **`id`** on import
+- **testimonials:** `client_name`, `content`, `client_role`, `company`, `project_id`, `id` — no `slug`; match by **`id`** on import. `client_name` is translatable (`translations[].client_name`); an empty translated name falls back to the primary one, and a translated name alone does not make the testimonial count as having content in that locale
 - **pages:** `title`, `excerpt`, `slug`, `id`, `status`, `parent_id`, `parent_slug`, `exclude_from_search`, **`sections`** (full page-builder layout tree). Optional `translations: [{ locale, title, excerpt }]` applies extra title/excerpt locales in one import. Nested pages export parents before children when possible; import resolves `parent_slug` if `parent_id` is missing. **New** pages get a unique `slug` (`privacy-policy`, then `privacy-policy-2`, …) via `UniqueContentSlug`; matching `id` or existing `slug` updates in `upsert` mode.
 
 Export uses the same locale visibility rules as each type’s admin list (`scopeQueryForPresentationLocale` + presenter overlay). Import modes: `upsert` (default) or `translation_only` (query/body `mode`).
