@@ -180,12 +180,14 @@ const AppearanceSettingFieldControl = component$<FieldControlProps>((props) => {
 
   if (field.type === 'select') {
     const options = field.options ?? [];
+    // Unsaved/unknown values show the first option, which renderers treat as the default.
+    const current = options.some((opt) => opt.value === asString(raw)) ? asString(raw) : (options[0]?.value ?? '');
     return (
       <div>
         <label class="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-300">{label}</label>
         <select
           class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm dark:border-gray-600 dark:bg-slate-900"
-          value={asString(raw)}
+          value={current}
           onChange$={async (e) => {
             await props.onSettingsChange$(
               writeAppearanceSettingValue(
@@ -200,7 +202,7 @@ const AppearanceSettingFieldControl = component$<FieldControlProps>((props) => {
           }}
         >
           {options.map((opt) => (
-            <option key={opt.value} value={opt.value}>
+            <option key={opt.value} value={opt.value} selected={opt.value === current}>
               {opt.label}
             </option>
           ))}

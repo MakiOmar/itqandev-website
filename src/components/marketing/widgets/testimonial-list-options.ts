@@ -51,7 +51,8 @@ export function testimonialListOptions(settings: Record<string, unknown>): Testi
   return {
     title: typeof settings.title === 'string' ? settings.title.trim() : '',
     subtitle: typeof settings.subtitle === 'string' ? settings.subtitle.trim() : '',
-    layout: settings.layout === 'carousel' ? 'carousel' : 'grid',
+    // `carousel` toggle; legacy `layout: 'carousel'` still applies when the toggle was never saved.
+    layout: flag(settings.carousel, settings.layout === 'carousel') ? 'carousel' : 'grid',
     limit: clampInt(settings.limit, 1, 24, 6),
     columns: settings.columns ? normalizeResponsiveColumns(settings.columns) : { ...DEFAULT_COLUMNS },
     cardStyle: settings.card_style === 'minimal' ? 'minimal' : 'card',
