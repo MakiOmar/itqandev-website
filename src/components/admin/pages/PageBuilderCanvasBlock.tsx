@@ -120,6 +120,6 @@ export const PageBuilderCanvasBlock = component$<PageBuilderCanvasBlockProps>(
         </LocaleTransitionProvider>
       );
     }
-    return <>{renderLayoutBlock(props.block, builderPageRendererProps(props.ctx))}</>;
+    return <>{renderLayoutBlock(props.block, { ...builderPageRendererProps(props.ctx), editorPreview: true })}</>;
   },
 );

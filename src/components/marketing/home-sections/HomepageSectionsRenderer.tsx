@@ -128,6 +128,8 @@ export type HomepageSectionsRendererProps = {
   portfolioSkillSlug?: string | null;
   /** SSR payload for `blog_posts_list` kit (articles / blog page). */
   blogList?: BlogPostListResult | null;
+  /** Builder editing canvas: widgets may show authoring hints the public site never renders. */
+  editorPreview?: boolean;
 };
 
 function renderBlock(
@@ -181,7 +183,12 @@ function renderBlock(
   if (block.type === 'testimonial_list') {
     if (!showTestimonialsModule) return null;
     return wrap(
-      <TestimonialsWidget settings={settings} testimonials={props.testimonials} uiLocale={props.uiLocale} />,
+      <TestimonialsWidget
+        settings={settings}
+        testimonials={props.testimonials}
+        uiLocale={props.uiLocale}
+        editorPreview={props.editorPreview}
+      />,
     );
   }
   if (kind === 'widget' || WIDGET_TYPES.has(block.type)) {

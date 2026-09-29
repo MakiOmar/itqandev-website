@@ -527,6 +527,7 @@ export const PageSectionsEditor = component$<PageSectionsEditorProps>((props) =>
                                       <div class="border-t border-gray-200 p-2 dark:border-gray-700">
                                         {(entry?.settings_fields?.length ?? 0) > 0 ? (
                                           <AppearanceSettingsFields
+                                            key={`${block.id}:${block.type}`}
                                             fields={entry!.settings_fields!}
                                             values={block.settings ?? {}}
                                             onSettingsChange$={async (nextSettings) => {

@@ -2,6 +2,8 @@ import { normalizeResponsiveColumns, type ResponsiveColumns } from '~/lib/market
 import type { TestimonialCardVariant } from '~/components/marketing/TestimonialCard';
 
 export type TestimonialListOptions = {
+  title: string;
+  subtitle: string;
   layout: 'grid' | 'carousel';
   limit: number;
   columns: ResponsiveColumns;
@@ -32,6 +34,8 @@ function flag(raw: unknown, fallback: boolean): boolean {
 /** Normalized `testimonial_list` widget settings (mirrors WidgetRegistry defaults). */
 export function testimonialListOptions(settings: Record<string, unknown>): TestimonialListOptions {
   return {
+    title: typeof settings.title === 'string' ? settings.title.trim() : '',
+    subtitle: typeof settings.subtitle === 'string' ? settings.subtitle.trim() : '',
     layout: settings.layout === 'carousel' ? 'carousel' : 'grid',
     limit: clampInt(settings.limit, 1, 24, 6),
     columns: settings.columns ? normalizeResponsiveColumns(settings.columns) : { ...DEFAULT_COLUMNS },

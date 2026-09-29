@@ -1,7 +1,7 @@
 /**
  * Shared fullscreen layout builder for Appearance → Header / Footer / Body (by layout id).
  */
-import { component$, useSignal, useVisibleTask$, $ } from '@builder.io/qwik';
+import { component$, useSignal, useTask$, useVisibleTask$, $ } from '@builder.io/qwik';
 import { PageBuilderWorkspace } from '~/components/admin/pages/PageBuilderWorkspace';
 import { usePublicSiteMeta } from '../../../routes/[lang]/admin/layout';
 import { useTranslate, translateApp } from '~/lib/i18n/useTranslate';
@@ -70,6 +70,9 @@ export const ChromeAppearanceBuilder = component$<ChromeAppearanceBuilderProps>(
   const previewRecordId = useSignal('');
   const previewRecords = useSignal<PreviewRecordOption[]>([]);
   const previewOverride = useSignal<PageSectionNode[] | null>(null);
+  /** Preview as was applied; re-resolved after each save so dynamic tags follow edits. */
+  const previewAsActive = useSignal(false);
+  const resolvedSectionsJson = useSignal('');
   const previewBranding = useSignal<PreviewBrandingState>({
     name: '',
     logo: '',
@@ -206,11 +209,21 @@ export const ChromeAppearanceBuilder = component$<ChromeAppearanceBuilderProps>(
       const body = ((res as { data?: unknown })?.data ?? res) as { sections?: PageSectionNode[] };
       if (Array.isArray(body.sections)) {
         previewOverride.value = ensurePageLayoutBands(body.sections);
+        previewAsActive.value = true;
+        resolvedSectionsJson.value = JSON.stringify(sections.value);
       }
     } catch (e) {
       showError(translateApp(lang, 'common.error'), {
         text: formatAppearanceError(e, translateApp(lang, 'common.error')),
       });
+    }
+  });
+
+  // Resolved copy reflects the saved layout; show live blocks as soon as the editor diverges from it.
+  useTask$(({ track }) => {
+    const json = JSON.stringify(track(() => sections.value));
+    if (previewOverride.value && json !== resolvedSectionsJson.value) {
+      previewOverride.value = null;
     }
   });
 
@@ -228,6 +241,9 @@ export const ChromeAppearanceBuilder = component$<ChromeAppearanceBuilderProps>(
         sections.value = ensurePageLayoutBands(res.data.sections as PageSectionNode[]);
       }
       showSuccess(res.message || translateApp(lang, 'common.saved'));
+      if (previewAsActive.value && previewRecordId.value) {
+        await applyPreviewAs$();
+      }
     } finally {
       saving.value = false;
     }

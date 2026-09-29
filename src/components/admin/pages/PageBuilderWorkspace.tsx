@@ -523,6 +523,11 @@ function previewFrameClass(device: LayoutBreakpoint): string {
 }
 
 /** True when the click belongs to this canvas node, not a nested band/row/column/block. */
+/** Remounts inspector panels per selected node; child settings panels do not pick up new field lists otherwise. */
+function inspectorKey(selection: unknown, nodeId = ''): string {
+  return `${JSON.stringify(selection)}|${nodeId}`;
+}
+
 function isOwnBuilderNodeClick(e: Event, el: Element): boolean {
   const target = e.target as Element | null;
   return !!target && target.closest('[data-builder-node]') === el;
@@ -1855,7 +1860,7 @@ export const PageBuilderWorkspace = component$<PageBuilderWorkspaceProps>((props
             ) : null}
 
             {selection.value?.kind === 'band' ? (
-              <div class="space-y-3">
+              <div key={inspectorKey(selection.value)} class="space-y-3">
                 <p class="text-sm font-medium">
                   {translateApp(props.lang, 'pages.band')} #{selection.value.bandIndex + 1}
                 </p>
@@ -1975,7 +1980,7 @@ export const PageBuilderWorkspace = component$<PageBuilderWorkspaceProps>((props
             ) : null}
 
             {selection.value?.kind === 'row' ? (
-              <div class="space-y-3">
+              <div key={inspectorKey(selection.value)} class="space-y-3">
                 <p class="text-sm font-medium">
                   {translateApp(props.lang, 'pages.row')} {selection.value.rowIndex + 1}
                 </p>
@@ -2130,7 +2135,7 @@ export const PageBuilderWorkspace = component$<PageBuilderWorkspaceProps>((props
             ) : null}
 
             {selection.value?.kind === 'column' ? (
-              <div class="space-y-3">
+              <div key={inspectorKey(selection.value)} class="space-y-3">
                 <p class="text-sm font-medium">
                   {translateApp(props.lang, 'pages.column')} {selection.value.colIndex + 1}
                 </p>
@@ -2333,7 +2338,7 @@ export const PageBuilderWorkspace = component$<PageBuilderWorkspaceProps>((props
             ) : null}
 
             {selection.value?.kind === 'block' && selectedBlock ? (
-              <div class="space-y-3">
+              <div key={inspectorKey(selection.value, `${selectedBlock.id}:${selectedBlock.type}`)} class="space-y-3">
                 <p class="text-sm font-medium">
                   {appearanceSectionLabel(
                     props.lang,

@@ -31,7 +31,9 @@ import {
 } from '~/components/admin/BuilderResponsiveVisibilityFields';
 import { BuilderStylePanel } from '~/components/admin/BuilderStylePanel';
 import { normalizeHideOn, type DeviceHideOn } from '~/lib/marketing/device-visibility';
-import type { BuilderStyles, StyleBreakpoint } from '~/lib/marketing/builder-styles';
+import { hasAnyStyles, type BuilderStyles, type StyleBreakpoint } from '~/lib/marketing/builder-styles';
+import { StyledBuilderLeaf } from '~/components/marketing/widgets/StyledBuilderLeaf';
+import { renderFieldControl } from '~/components/marketing/forms/form-field-control';
 import type { FormBuilderDocument } from '~/lib/admin/builder-import-export';
 import type {
   FormActionNode,
@@ -768,9 +770,22 @@ export const FormBuilderWorkspace = component$<FormBuilderWorkspaceProps>((props
                               ×
                             </button>
                           </div>
-                          <div class="rounded border border-dashed border-gray-300 px-2 py-3 text-center text-[11px] text-gray-400 dark:border-gray-600">
-                            {field.type}
-                          </div>
+                          {field.type === 'hidden' ? (
+                            <div class="rounded border border-dashed border-gray-300 px-2 py-3 text-center text-[11px] text-gray-400 dark:border-gray-600">
+                              {field.type}
+                            </div>
+                          ) : (
+                            // Live render of the public control; inert so drag and selection stay on the cell.
+                            <div class="pointer-events-none select-none" aria-hidden="true">
+                              {hasAnyStyles(field.styles) ? (
+                                <StyledBuilderLeaf id={field.id} styles={field.styles} settings={field.settings}>
+                                  {renderFieldControl(field)}
+                                </StyledBuilderLeaf>
+                              ) : (
+                                renderFieldControl(field)
+                              )}
+                            </div>
+                          )}
                         </div>
                       );
                     })}
@@ -813,7 +828,7 @@ export const FormBuilderWorkspace = component$<FormBuilderWorkspaceProps>((props
             ) : null}
 
 {selectedField && selection.value?.kind === 'field' ? (
-              <div class="space-y-3">
+              <div key={`field:${selectedField.id}`} class="space-y-3">
                 <p class="text-sm font-medium">
                   {String(selectedField.settings.label || selectedField.type)}
                 </p>
@@ -878,6 +893,7 @@ export const FormBuilderWorkspace = component$<FormBuilderWorkspaceProps>((props
                   if (!(entry?.settings_fields?.length ?? 0)) return null;
                   return (
                     <AppearanceSettingsFields
+                      key={`${selectedField.id}:${selectedField.type}`}
                       fields={entry!.settings_fields! as any}
                       values={selectedField.settings ?? {}}
                       onSettingsChange$={async (nextSettings) => {
@@ -986,7 +1002,7 @@ export const FormBuilderWorkspace = component$<FormBuilderWorkspaceProps>((props
             ) : null}
 
 {selectedAction && selection.value?.kind === 'action' ? (
-              <div class="space-y-3">
+              <div key={`action:${selection.value.actionIndex}:${selectedAction.type}`} class="space-y-3">
                 <p class="text-sm font-medium">{selectedAction.type}</p>
                 {(() => {
                   const entry = props.actionRegistry.value.find(
@@ -995,6 +1011,7 @@ export const FormBuilderWorkspace = component$<FormBuilderWorkspaceProps>((props
                   if (!(entry?.settings_fields?.length ?? 0)) return null;
                   return (
                     <AppearanceSettingsFields
+                      key={`${(selection.value as { actionIndex: number }).actionIndex}:${selectedAction.type}`}
                       fields={entry!.settings_fields! as any}
                       values={selectedAction.settings ?? {}}
                       onSettingsChange$={async (nextSettings) => {
