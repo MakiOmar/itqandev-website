@@ -14,9 +14,11 @@ import { adminTestimonialEditHref, useAppRoutes } from '../../../../lib/constant
 import type { Testimonial } from '../../../../types';
 import {
   mapTestimonialFromApi,
+  runTestimonialBulkApprovalFromBrowser,
   runTestimonialBulkDeleteFromBrowser,
   runTestimonialDeleteFromBrowser,
 } from '../../../../lib/admin/testimonial-actions';
+import { showError as showErrorToast, showSuccess as showSuccessToast } from '../../../../lib/utils/toast';
 import { useLocaleAwareList } from '../../../../lib/hooks/useLocaleAwareList';
 import { usePublicSiteMeta } from '../layout';
 import { primaryLocaleForContent } from '../../../../lib/content-display-locale';
@@ -72,6 +74,7 @@ export default component$(() => {
   const testimonialsLoader = useTestimonialsList();
   const langConfig = usePublicSiteMeta();
   const deleteRunning = useSignal(false);
+  const bulkRunning = useSignal(false);
 
   const { items: testimonials, loading, refetch } = useLocaleAwareList<Testimonial>(
     testimonialsLoader,
@@ -166,6 +169,32 @@ export default component$(() => {
     const toDelete = new Set(selectedItems.value);
     testimonials.value = testimonials.value.filter((t) => !toDelete.has(String(t.id)));
     selectedItems.value = [];
+  });
+
+  const bulkApprovalText = {
+    approved: String(translateApp(lang, 'testimonials.bulkApproved')),
+    unapproved: String(translateApp(lang, 'testimonials.bulkUnapproved')),
+  };
+
+  const handleBulkApproval = $(async (approved: boolean) => {
+    if (selectedItems.value.length === 0 || bulkRunning.value) return;
+    bulkRunning.value = true;
+    const result = await runTestimonialBulkApprovalFromBrowser(selectedItems.value, approved);
+    bulkRunning.value = false;
+
+    if (!result.ok) {
+      showErrorToast(result.message);
+      return;
+    }
+
+    const changed = new Set(selectedItems.value);
+    testimonials.value = testimonials.value.map((t) =>
+      changed.has(String(t.id)) ? { ...t, approved } : t,
+    );
+    selectedItems.value = [];
+    showSuccessToast(
+      (approved ? bulkApprovalText.approved : bulkApprovalText.unapproved).replace('{count}', String(result.updated)),
+    );
   });
 
   const toggleSelect = $((id: string) => {
@@ -266,6 +295,23 @@ export default component$(() => {
               <span>
                 {selectedItems.value.length} {translateApp(lang, 'common.selected')}
               </span>
+              {/* Bulk approve / unapprove */}
+              <button
+                type="button"
+                disabled={bulkRunning.value}
+                onClick$={() => handleBulkApproval(true)}
+                class="rounded bg-green-600 px-2 py-1 text-white hover:bg-green-700 disabled:opacity-60"
+              >
+                {translateApp(lang, 'testimonials.bulkApprove')}
+              </button>
+              <button
+                type="button"
+                disabled={bulkRunning.value}
+                onClick$={() => handleBulkApproval(false)}
+                class="rounded border border-gray-300 bg-white px-2 py-1 text-gray-700 hover:bg-gray-50 disabled:opacity-60 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700"
+              >
+                {translateApp(lang, 'testimonials.bulkUnapprove')}
+              </button>
               <button
                 type="button"
                 onClick$={handleBulkDelete}

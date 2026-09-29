@@ -438,6 +438,31 @@ export async function runTestimonialDeleteFromBrowser(id: string | number): Prom
   return runTestimonialDeleteWithApiClient(String(id), getApiClient(null) as TestimonialDeleteClient);
 }
 
+export type RunTestimonialBulkApprovalResult =
+  | { ok: true; updated: number }
+  | { ok: false; message: string };
+
+/** Browser bulk approve / unapprove. */
+export async function runTestimonialBulkApprovalFromBrowser(
+  ids: (string | number)[],
+  approved: boolean,
+): Promise<RunTestimonialBulkApprovalResult> {
+  const numericIds = normalizeTestimonialIds(ids.map((id) => String(id)));
+  if (numericIds.length === 0) {
+    return { ok: false, message: 'No testimonials selected' };
+  }
+  try {
+    const res = (await (getApiClient(null) as TestimonialBulkDeleteClient).post(
+      API_ENDPOINTS.TESTIMONIALS.BULK_APPROVAL,
+      { ids: numericIds, approved },
+    )) as { data?: { updated?: number }; updated?: number };
+    const updated = Number(res?.data?.updated ?? res?.updated ?? numericIds.length);
+    return { ok: true, updated };
+  } catch (err: unknown) {
+    return { ok: false, message: formatTestimonialApiError(err) || 'Failed to update testimonials' };
+  }
+}
+
 export async function runTestimonialBulkDeleteFromBrowser(
   ids: (string | number)[],
 ): Promise<RunTestimonialDeleteResult> {

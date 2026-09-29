@@ -491,7 +491,11 @@
     "carouselPrev": "Previous testimonials",
     "carouselNext": "Next testimonials",
     "editorEmpty": "No approved testimonials for this language yet — this widget stays hidden on the live site until there are some.",
-    "editorEmptyLink": "Manage testimonials"
+    "editorEmptyLink": "Manage testimonials",
+    "bulkApprove": "Approve",
+    "bulkUnapprove": "Unapprove",
+    "bulkApproved": "{count} testimonials approved",
+    "bulkUnapproved": "{count} testimonials unapproved"
   },
   "blog": {
     "title": "Blog",

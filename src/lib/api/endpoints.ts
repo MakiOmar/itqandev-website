@@ -176,6 +176,7 @@ export const API_ENDPOINTS = {
     UPDATE: (id: string | number) => `/v1/testimonials/${id}`,
     DELETE: (id: string | number) => `/v1/testimonials/${id}`,
     BULK_DELETE: '/v1/testimonials/bulk-delete',
+    BULK_APPROVAL: '/v1/testimonials/bulk-approval',
     EXPORT: '/v1/testimonials/export',
     IMPORT: '/v1/testimonials/import',
   },

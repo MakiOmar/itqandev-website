@@ -491,7 +491,11 @@
     "carouselPrev": "آراء العملاء السابقة",
     "carouselNext": "آراء العملاء التالية",
     "editorEmpty": "لا توجد آراء عملاء معتمدة لهذه اللغة بعد — ستبقى هذه الأداة مخفية في الموقع حتى تتوفر آراء.",
-    "editorEmptyLink": "إدارة آراء العملاء"
+    "editorEmptyLink": "إدارة آراء العملاء",
+    "bulkApprove": "اعتماد",
+    "bulkUnapprove": "إلغاء الاعتماد",
+    "bulkApproved": "تم اعتماد {count} من آراء العملاء",
+    "bulkUnapproved": "تم إلغاء اعتماد {count} من آراء العملاء"
   },
   "blog": {
     "title": "المدونة",

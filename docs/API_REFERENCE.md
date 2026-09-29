@@ -811,6 +811,19 @@ User::create([
 
 ---
 
+## Bulk actions (authenticated)
+
+Admin list pages act on selected rows. All endpoints take `ids: int[]` (1–500, must exist), use the `throttle:bulk` limiter, and are gated by the module's `feature.module:*` flag.
+
+| Method | Path | Body | Response |
+|--------|------|------|----------|
+| POST | `/api/v1/testimonials/bulk-delete` | `{ ids }` | `{ deleted, message }` |
+| POST | `/api/v1/testimonials/bulk-approval` | `{ ids, approved: boolean }` | `{ updated, approved, message }` — policy `bulkUpdate` (same rights as editing a testimonial); only approved testimonials appear in public listings and the Testimonials widget/kit |
+
+Other content types expose `POST /api/v1/<type>/bulk-delete` with the same `{ ids }` body.
+
+---
+
 ## Translatable content export / import (authenticated)
 
 Locale-aware JSON export/import is available for admin translatable types. Each module is gated by its `feature.module:*` flag. All endpoints require Sanctum auth and a valid **`X-Content-Locale`** header (enabled site language).
