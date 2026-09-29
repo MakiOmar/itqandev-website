@@ -32,9 +32,13 @@ import { translateApp } from '~/lib/i18n/useTranslate';
 import {
   ADMIN_NATIVE_OPTION_CLASS,
   ADMIN_NATIVE_SELECT_COMPACT_CLASS,
-  ADMIN_PRIMARY_BUTTON_CLASS,
 } from '~/lib/admin/native-select-classes';
 import { BuilderImportExportButtons } from '~/components/admin/BuilderImportExportButtons';
+import {
+  BUILDER_TOOLBAR_ICON_BTN,
+  BuilderToolbarIcon,
+  builderToolbarToggleClass,
+} from '~/components/admin/BuilderToolbarIcons';
 import {
   BuilderInspectorTabs,
   BuilderResponsiveVisibilityFields,
@@ -724,9 +728,11 @@ export const PageBuilderWorkspace = component$<PageBuilderWorkspaceProps>((props
       <header class="flex flex-shrink-0 flex-wrap items-center gap-3 border-b border-gray-200 bg-white px-4 py-2 dark:border-gray-800 dark:bg-slate-900">
         <Link
           href={props.classicEditHref}
-          class="rounded-lg border border-gray-300 px-3 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:border-gray-600 dark:text-gray-200 dark:hover:bg-gray-800"
+          class={BUILDER_TOOLBAR_ICON_BTN}
+          aria-label={translateApp(props.lang, 'pages.exitBuilder')}
+          title={translateApp(props.lang, 'pages.exitBuilder')}
         >
-          {translateApp(props.lang, 'pages.exitBuilder')}
+          <BuilderToolbarIcon name="exit" />
         </Link>
         <div class="min-w-0 flex-1">
           {props.breadcrumbs && props.breadcrumbs.length > 0 ? (
@@ -765,13 +771,21 @@ export const PageBuilderWorkspace = component$<PageBuilderWorkspaceProps>((props
             {translateApp(props.lang, 'pages.builderHint')}
           </p>
         </div>
-        <div class="inline-flex rounded-lg border border-gray-300 p-0.5 dark:border-gray-600">
+        {/* Preview device switch */}
+        <div
+          class="inline-flex rounded-lg border border-gray-300 p-0.5 dark:border-gray-600"
+          role="group"
+          aria-label={translateApp(props.lang, 'pages.previewDevice')}
+        >
           {(['mobile', 'tablet', 'desktop'] as LayoutBreakpoint[]).map((device) => (
             <button
               key={device}
               type="button"
+              aria-pressed={previewDevice.value === device ? 'true' : 'false'}
+              aria-label={translateApp(props.lang, `pages.device.${device}`)}
+              title={translateApp(props.lang, `pages.device.${device}`)}
               class={[
-                'rounded-md px-2.5 py-1 text-xs font-medium',
+                'inline-flex h-8 w-8 items-center justify-center rounded-md',
                 previewDevice.value === device
                   ? 'bg-primary-600 text-white'
                   : 'text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800',
@@ -780,26 +794,23 @@ export const PageBuilderWorkspace = component$<PageBuilderWorkspaceProps>((props
                 previewDevice.value = device;
               }}
             >
-              {translateApp(props.lang, `pages.device.${device}`)}
+              <BuilderToolbarIcon name={device} />
             </button>
           ))}
         </div>
         <button
           type="button"
           aria-pressed={showLivePreview.value ? 'true' : 'false'}
-          class={[
-            'rounded-lg border px-3 py-1.5 text-xs font-medium',
-            showLivePreview.value
-              ? 'border-primary-500 bg-primary-50 text-primary-800 dark:bg-primary-950 dark:text-primary-200'
-              : 'border-gray-300 text-gray-700 dark:border-gray-600 dark:text-gray-200',
-          ].join(' ')}
+          aria-label={translateApp(props.lang, 'pages.livePreview')}
+          title={translateApp(props.lang, 'pages.livePreview')}
+          class={builderToolbarToggleClass(showLivePreview.value)}
           onClick$={() => {
             const next = !showLivePreview.value;
             showLivePreview.value = next;
             if (next) livePreviewMounted.value = true;
           }}
         >
-          {translateApp(props.lang, 'pages.livePreview')}
+          <BuilderToolbarIcon name="preview" />
         </button>
         {/* Navigator modal toggle */}
         <button
@@ -808,23 +819,18 @@ export const PageBuilderWorkspace = component$<PageBuilderWorkspaceProps>((props
           aria-pressed={showNavigator.value ? 'true' : 'false'}
           aria-label={translateApp(props.lang, 'pages.navigatorOpen')}
           title={translateApp(props.lang, 'pages.navigatorOpen')}
-          class={[
-            'rounded-lg border p-1.5',
-            showNavigator.value
-              ? 'border-primary-500 bg-primary-50 text-primary-800 dark:bg-primary-950 dark:text-primary-200'
-              : 'border-gray-300 text-gray-700 dark:border-gray-600 dark:text-gray-200',
-          ].join(' ')}
+          class={builderToolbarToggleClass(showNavigator.value)}
           onClick$={() => {
             showNavigator.value = !showNavigator.value;
           }}
         >
-          <svg class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-            <path d="M3 4a1 1 0 0 1 1-1h5a1 1 0 0 1 0 2H4a1 1 0 0 1-1-1Zm3 5a1 1 0 0 1 1-1h6a1 1 0 1 1 0 2H7a1 1 0 0 1-1-1Zm3 5a1 1 0 0 1 1-1h6a1 1 0 1 1 0 2h-6a1 1 0 0 1-1-1ZM4 7a1 1 0 0 1 1 1v5a1 1 0 0 0 1 1h1a1 1 0 1 1 0 2H6a3 3 0 0 1-3-3V8a1 1 0 0 1 1-1Z" />
-          </svg>
+          <BuilderToolbarIcon name="navigator" />
         </button>
         <button
           type="button"
-          class="rounded-lg border border-gray-300 px-3 py-1.5 text-xs font-medium dark:border-gray-600"
+          class={BUILDER_TOOLBAR_ICON_BTN}
+          aria-label={translateApp(props.lang, 'pages.undo')}
+          title={translateApp(props.lang, 'pages.undo')}
           disabled={undoStack.value.length === 0}
           onClick$={() => {
             const prev = undoStack.value[undoStack.value.length - 1];
@@ -835,11 +841,13 @@ export const PageBuilderWorkspace = component$<PageBuilderWorkspaceProps>((props
             selection.value = null;
           }}
         >
-          {translateApp(props.lang, 'pages.undo')}
+          <BuilderToolbarIcon name="undo" />
         </button>
         <button
           type="button"
-          class="rounded-lg border border-gray-300 px-3 py-1.5 text-xs font-medium dark:border-gray-600"
+          class={BUILDER_TOOLBAR_ICON_BTN}
+          aria-label={translateApp(props.lang, 'pages.redo')}
+          title={translateApp(props.lang, 'pages.redo')}
           disabled={redoStack.value.length === 0}
           onClick$={() => {
             const next = redoStack.value[redoStack.value.length - 1];
@@ -850,10 +858,11 @@ export const PageBuilderWorkspace = component$<PageBuilderWorkspaceProps>((props
             selection.value = null;
           }}
         >
-          {translateApp(props.lang, 'pages.redo')}
+          <BuilderToolbarIcon name="redo" />
         </button>
         <BuilderImportExportButtons
           lang={props.lang}
+          iconOnly
           builder={props.exportBuilderKind || 'page'}
           filenameBase={props.pageTitle || 'page'}
           disabled={props.saving.value}
@@ -866,13 +875,14 @@ export const PageBuilderWorkspace = component$<PageBuilderWorkspaceProps>((props
         />
         <button
           type="button"
-          class={ADMIN_PRIMARY_BUTTON_CLASS}
+          class="inline-flex h-9 w-9 items-center justify-center rounded-lg bg-primary-600 text-white hover:bg-primary-700 disabled:cursor-not-allowed disabled:opacity-60"
           disabled={props.saving.value}
+          aria-busy={props.saving.value ? 'true' : 'false'}
+          aria-label={translateApp(props.lang, props.saving.value ? 'common.loading' : 'common.save')}
+          title={translateApp(props.lang, props.saving.value ? 'common.loading' : 'common.save')}
           onClick$={props.onSave$}
         >
-          {props.saving.value
-            ? translateApp(props.lang, 'common.loading')
-            : translateApp(props.lang, 'common.save')}
+          <BuilderToolbarIcon name={props.saving.value ? 'spinner' : 'save'} />
         </button>
       </header>
 

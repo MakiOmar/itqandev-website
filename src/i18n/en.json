@@ -366,6 +366,7 @@
     "stackNone": "Use spans",
     "stackTablet": "Stack on mobile",
     "stackDesktop": "Stack below desktop",
+    "previewDevice": "Preview device",
     "device": {
       "mobile": "Mobile",
       "tablet": "Tablet",

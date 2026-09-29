@@ -6,6 +6,7 @@ import {
   type BuilderKind,
 } from '~/lib/admin/builder-import-export';
 import { useSwal } from '~/lib/hooks/useSwal';
+import { BUILDER_TOOLBAR_ICON_BTN, BuilderToolbarIcon } from '~/components/admin/BuilderToolbarIcons';
 import { translateApp } from '~/lib/i18n/useTranslate';
 
 const SECONDARY_BTN =
@@ -17,6 +18,8 @@ export type BuilderImportExportButtonsProps = {
   /** Used in the downloaded filename, e.g. page slug or form title. */
   filenameBase: string;
   disabled?: boolean;
+  /** Render compact icon buttons (label moves to aria-label / tooltip). */
+  iconOnly?: boolean;
   /** Snapshot the current in-editor document for this builder kind. */
   getDocument$: QRL<() => unknown>;
   /** Replace in-editor state; caller persists with Save. */
@@ -88,23 +91,31 @@ export const BuilderImportExportButtons = component$<BuilderImportExportButtonsP
     }
   });
 
+  const exportLabel = translateApp(props.lang, 'builderExport.export');
+  const importLabel = translateApp(props.lang, 'builderExport.import');
+  const btnClass = props.iconOnly ? BUILDER_TOOLBAR_ICON_BTN : SECONDARY_BTN;
+
   return (
     <div class="inline-flex flex-wrap items-center gap-2" data-builder-ie>
       <button
         type="button"
-        class={SECONDARY_BTN}
+        class={btnClass}
         disabled={props.disabled}
+        aria-label={props.iconOnly ? exportLabel : undefined}
+        title={props.iconOnly ? exportLabel : undefined}
         onClick$={onExport$}
       >
-        {translateApp(props.lang, 'builderExport.export')}
+        {props.iconOnly ? <BuilderToolbarIcon name="export" /> : exportLabel}
       </button>
       <button
         type="button"
-        class={SECONDARY_BTN}
+        class={btnClass}
         disabled={props.disabled}
+        aria-label={props.iconOnly ? importLabel : undefined}
+        title={props.iconOnly ? importLabel : undefined}
         onClick$={onImportPick$}
       >
-        {translateApp(props.lang, 'builderExport.import')}
+        {props.iconOnly ? <BuilderToolbarIcon name="import" /> : importLabel}
       </button>
       <input
         type="file"

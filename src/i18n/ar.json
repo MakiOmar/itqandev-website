@@ -366,6 +366,7 @@
     "stackNone": "استخدم العروض",
     "stackTablet": "تكديس على الجوال",
     "stackDesktop": "تكديس أسفل سطح المكتب",
+    "previewDevice": "جهاز المعاينة",
     "device": {
       "mobile": "جوال",
       "tablet": "لوحي",
