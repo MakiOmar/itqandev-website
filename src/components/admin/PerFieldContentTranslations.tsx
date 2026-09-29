@@ -301,11 +301,12 @@ export const ContentPrimaryLanguageSelect = component$<{
           props.onChange$?.(v);
         }}
       >
-        <option class={ADMIN_NATIVE_OPTION_CLASS} value="">
+        {/* `selected` on options: SSR ignores select[value], so reloads would show the first option */}
+        <option class={ADMIN_NATIVE_OPTION_CLASS} value="" selected={props.value === ''}>
           {`${props.useSiteDefaultLabel} (${props.defaultLocale})`}
         </option>
         {props.siteLanguages.map((l) => (
-          <option class={ADMIN_NATIVE_OPTION_CLASS} key={l.code} value={l.code}>
+          <option class={ADMIN_NATIVE_OPTION_CLASS} key={l.code} value={l.code} selected={props.value === l.code}>
             {`${l.native_label || l.label} (${l.code})`}
           </option>
         ))}
