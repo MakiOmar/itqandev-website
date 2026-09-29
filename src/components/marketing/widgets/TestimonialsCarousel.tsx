@@ -18,6 +18,24 @@ function arrowsJustifyClass(align: 'left' | 'center' | 'right' | 'between', rtl:
   return start ? 'justify-start' : 'justify-end';
 }
 
+/** SVG instead of ‹ › text: those glyphs are bidi-mirrored inside RTL content and would point the wrong way. */
+function ChevronIcon({ pointsLeft }: { pointsLeft: boolean }) {
+  return (
+    <svg
+      class="h-4 w-4"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="2.5"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      aria-hidden="true"
+    >
+      <path d={pointsLeft ? 'M15 18l-6-6 6-6' : 'M9 18l6-6-6-6'} />
+    </svg>
+  );
+}
+
 const CHEVRON_BTN =
   'inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 shadow-sm transition hover:bg-slate-50 disabled:pointer-events-none disabled:opacity-30 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700';
 
@@ -101,7 +119,7 @@ export const TestimonialsCarousel = component$<TestimonialsCarouselProps>((props
       onClick$={() => step(-1)}
     >
       {/* Chevron points toward the reading-start side */}
-      <span aria-hidden="true">{rtl ? '›' : '‹'}</span>
+      <ChevronIcon pointsLeft={!rtl} />
     </button>
   );
   const nextBtn = (
@@ -112,7 +130,7 @@ export const TestimonialsCarousel = component$<TestimonialsCarouselProps>((props
       disabled={!canNext.value}
       onClick$={() => step(1)}
     >
-      <span aria-hidden="true">{rtl ? '‹' : '›'}</span>
+      <ChevronIcon pointsLeft={rtl} />
     </button>
   );
   const track = (
