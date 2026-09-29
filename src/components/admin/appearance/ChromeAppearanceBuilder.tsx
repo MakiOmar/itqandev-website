@@ -235,7 +235,7 @@ export const ChromeAppearanceBuilder = component$<ChromeAppearanceBuilderProps>(
       });
       if (!res.success) {
         showError(translateApp(lang, 'common.error'), { text: res.error || '' });
-        return;
+        return false;
       }
       if (res.data?.sections) {
         sections.value = ensurePageLayoutBands(res.data.sections as PageSectionNode[]);
@@ -244,6 +244,7 @@ export const ChromeAppearanceBuilder = component$<ChromeAppearanceBuilderProps>(
       if (previewAsActive.value && previewRecordId.value) {
         await applyPreviewAs$();
       }
+      return true;
     } finally {
       saving.value = false;
     }

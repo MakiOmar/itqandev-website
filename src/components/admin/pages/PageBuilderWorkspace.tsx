@@ -1,4 +1,14 @@
-import { component$, useSignal, useTask$, useVisibleTask$, $, type QRL, type Signal } from '@builder.io/qwik';
+import {
+  component$,
+  useComputed$,
+  useSignal,
+  useTask$,
+  useVisibleTask$,
+  $,
+  type QRL,
+  type Signal,
+} from '@builder.io/qwik';
+import { showError } from '~/lib/utils/toast';
 import { Link } from '@builder.io/qwik-city';
 import { AppearanceSettingsFields } from '~/components/admin/appearance/AppearanceSettingsFields';
 import { MediaSelector } from '~/components/common/MediaSelector';
@@ -140,7 +150,8 @@ export type PageBuilderWorkspaceProps = {
   siteLanguages: SiteLanguageRow[];
   defaultLocale: string;
   activeLocale: Signal<string>;
-  onSave$: QRL<() => Promise<void>>;
+  /** Resolves `true` when the document was persisted (clears the unsaved-changes state). */
+  onSave$: QRL<() => Promise<boolean>>;
   saving: Signal<boolean>;
   /** Live preview: page widgets vs header/footer chrome kits. */
   previewSurface?: 'page' | 'chrome';
@@ -589,19 +600,32 @@ export const PageBuilderWorkspace = component$<PageBuilderWorkspaceProps>((props
     savedBands.value = listSavedBuilderBands();
   });
 
-  const autosaveArmed = useSignal(false);
-  // Debounced autosave (skips the first hydrate).
+  // Saving is manual only; this snapshot drives the unsaved-changes badge and leave warning.
+  const savedSnapshot = useSignal(JSON.stringify(props.sections.value));
+  const hasUnsavedChanges = useComputed$(
+    () => JSON.stringify(props.sections.value) !== savedSnapshot.value,
+  );
+
+  const save$ = $(async () => {
+    try {
+      if (await props.onSave$()) {
+        savedSnapshot.value = JSON.stringify(props.sections.value);
+      }
+    } catch (err) {
+      console.error('Builder save failed', err);
+      showError(translateApp(props.lang, 'common.error'));
+    }
+  });
+
   // eslint-disable-next-line qwik/no-use-visible-task
   useVisibleTask$(({ track, cleanup }) => {
-    track(() => JSON.stringify(props.sections.value));
-    if (!autosaveArmed.value) {
-      autosaveArmed.value = true;
-      return;
-    }
-    const timer = window.setTimeout(() => {
-      void props.onSave$();
-    }, 2500);
-    cleanup(() => window.clearTimeout(timer));
+    if (!track(() => hasUnsavedChanges.value)) return;
+    const warn = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+      e.returnValue = '';
+    };
+    window.addEventListener('beforeunload', warn);
+    cleanup(() => window.removeEventListener('beforeunload', warn));
   });
 
   // eslint-disable-next-line qwik/no-use-visible-task
@@ -813,16 +837,29 @@ export const PageBuilderWorkspace = component$<PageBuilderWorkspaceProps>((props
             selection.value = null;
           })}
         />
+        {/* Manual save; amber dot marks unsaved changes */}
         <button
           type="button"
-          class="inline-flex h-9 w-9 items-center justify-center rounded-lg bg-primary-600 text-white hover:bg-primary-700 disabled:cursor-not-allowed disabled:opacity-60"
+          class="relative inline-flex h-9 w-9 items-center justify-center rounded-lg bg-primary-600 text-white hover:bg-primary-700 disabled:cursor-not-allowed disabled:opacity-60"
           disabled={props.saving.value}
           aria-busy={props.saving.value ? 'true' : 'false'}
-          aria-label={translateApp(props.lang, props.saving.value ? 'common.loading' : 'common.save')}
-          title={translateApp(props.lang, props.saving.value ? 'common.loading' : 'common.save')}
-          onClick$={props.onSave$}
+          aria-label={translateApp(
+            props.lang,
+            props.saving.value ? 'common.loading' : hasUnsavedChanges.value ? 'pages.saveUnsaved' : 'common.save',
+          )}
+          title={translateApp(
+            props.lang,
+            props.saving.value ? 'common.loading' : hasUnsavedChanges.value ? 'pages.saveUnsaved' : 'common.save',
+          )}
+          onClick$={save$}
         >
           <BuilderToolbarIcon name={props.saving.value ? 'spinner' : 'save'} />
+          {hasUnsavedChanges.value && !props.saving.value ? (
+            <span
+              class="absolute -end-1 -top-1 h-3 w-3 rounded-full border-2 border-white bg-amber-400 dark:border-slate-900"
+              aria-hidden="true"
+            />
+          ) : null}
         </button>
       </header>
 

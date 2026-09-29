@@ -106,9 +106,10 @@ export default component$(() => {
       });
       if (result.success) {
         await success(translateApp(lang, 'common.updated'));
-      } else {
-        await showError(result.error || translateApp(lang, 'common.error'));
+        return true;
       }
+      await showError(result.error || translateApp(lang, 'common.error'));
+      return false;
     } finally {
       saving.value = false;
     }

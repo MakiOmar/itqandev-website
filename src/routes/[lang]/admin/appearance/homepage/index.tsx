@@ -60,12 +60,13 @@ export default component$(() => {
       const res = await saveHomepageBuilderFromBrowser(sections.value);
       if (!res.success) {
         showError(translateApp(lang, 'common.error'), { text: res.error || '' });
-        return;
+        return false;
       }
       if (res.data?.sections) {
         sections.value = ensurePageLayoutBands(res.data.sections as PageSectionNode[]);
       }
       showSuccess(res.message || translateApp(lang, 'common.saved'));
+      return true;
     } finally {
       saving.value = false;
     }

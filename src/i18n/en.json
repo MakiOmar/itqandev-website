@@ -312,6 +312,7 @@
     "layoutEmpty": "Add a band with a block, or an empty band and place blocks into columns.",
     "openBuilder": "Open builder",
     "exitBuilder": "← Classic editor",
+    "saveUnsaved": "Save (unsaved changes)",
     "builderTitle": "Page builder",
     "builderHint": "Drag widgets onto a column or the free span. Drop selects the block and opens the inspector. Device toggles preview real spans.",
     "dragWidgetsHint": "Drag a block onto a column or the remaining space. Click adds to the selected column, free span, or a new band.",
