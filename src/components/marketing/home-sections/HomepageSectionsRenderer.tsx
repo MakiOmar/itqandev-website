@@ -249,6 +249,7 @@ function renderBlock(
         <TestimonialsHomeSection
           settings={settings}
           testimonials={props.testimonials}
+          uiLocale={props.uiLocale}
           embedded={embedded}
         />,
       );

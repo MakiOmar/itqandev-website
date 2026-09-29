@@ -7,6 +7,7 @@ import { AnimatedReveal } from '~/components/marketing/AnimatedReveal';
 import { CaseStudyCard } from '~/components/marketing/CaseStudyCard';
 import { CategoryTabsCarousel } from '~/components/marketing/CategoryTabsCarousel';
 import { TestimonialGrid } from '~/components/marketing/TestimonialGrid';
+import { testimonialListOptions } from '~/components/marketing/widgets/testimonial-list-options';
 import { BlogCard } from '~/components/marketing/BlogCard';
 import { resolveServiceIconUrl } from '~/lib/marketing/service-icons';
 import { resolveLaravelMediaUrl } from '~/lib/marketing/resolve-laravel-media-url';
@@ -473,13 +474,15 @@ export const CaseStudiesHomeSection = component$<
 export const TestimonialsHomeSection = component$<{
   settings?: Record<string, unknown>;
   testimonials: Testimonial[];
+  uiLocale: string;
   embedded?: boolean;
-}>(({ settings, testimonials, embedded }) => {
+}>(({ settings, testimonials, uiLocale, embedded }) => {
   if (testimonials.length === 0) return null;
   const title = settingString(settings, 'title', 'What our clients say');
   const subtitle = settingString(settings, 'subtitle', 'Trusted by startups and enterprises.');
   const limit = settingInt(settings, 'limit', 6);
   const clearFill = sectionFillSuppressed(settings, embedded);
+  const layout = testimonialListOptions(settings ?? {});
 
   return (
     <Section variant={clearFill ? 'default' : 'muted'} flush={Boolean(embedded)}>
@@ -487,6 +490,16 @@ export const TestimonialsHomeSection = component$<{
         testimonials={testimonials.slice(0, limit)}
         title={title}
         subtitle={subtitle}
+        carousel={
+          layout.layout === 'carousel'
+            ? {
+                uiLocale,
+                autoplay: layout.autoplay,
+                autoplayMs: layout.autoplayMs,
+                arrowsPosition: layout.arrowsPosition,
+              }
+            : undefined
+        }
       />
     </Section>
   );
