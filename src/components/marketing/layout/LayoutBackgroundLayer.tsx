@@ -4,9 +4,11 @@ import {
   builderBackgroundOverlayStyle,
   hasInteractiveBackground,
   hasVisibleBackground,
+  isLazyImageBackground,
   readBuilderBackground,
   type BuilderBackground,
 } from '~/lib/marketing/builder-background';
+import { LazyBackgroundImage } from './LazyBackgroundImage';
 import { LazyParticlesBackground } from '~/components/marketing/LazyParticlesBackground';
 import { RainLinesBackground } from './RainLinesBackground';
 
@@ -31,7 +33,11 @@ export const LayoutBackgroundLayer = component$<LayoutBackgroundLayerProps>((pro
       ].join(' ')}
       aria-hidden="true"
     >
-      {inline ? <div class="absolute inset-0" style={inline} /> : null}
+      {inline && isLazyImageBackground(bg) ? (
+        <LazyBackgroundImage style={inline} />
+      ) : inline ? (
+        <div class="absolute inset-0" style={inline} />
+      ) : null}
       {overlay ? <div class="absolute inset-0" style={overlay} /> : null}
       {bg.type === 'particles' ? (
         <LazyParticlesBackground

@@ -1349,6 +1349,8 @@
       "overlay": "Colour overlay",
       "overlayColor": "Overlay colour",
       "overlayOpacity": "Overlay opacity",
+      "lazyLoad": "Lazy load image",
+      "lazyLoadHint": "Loads the image only when the section nears the screen. Turn off for images visible on page load (e.g. the hero).",
       "density": "Density",
       "speed": "Speed",
       "opacity": "Opacity",

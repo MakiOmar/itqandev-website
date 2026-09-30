@@ -20,6 +20,8 @@ export type BuilderBackground = {
   image_url?: string;
   /** Media library id of the image (the URL is stored alongside so rendering needs no lookup). */
   image_id?: number;
+  /** Defer the download until the band is near the viewport (default on; stored only as `false`). */
+  image_lazy?: boolean;
   image_size?: 'cover' | 'contain' | 'auto';
   image_position?: string;
   image_repeat?: 'no-repeat' | 'repeat' | 'repeat-x' | 'repeat-y';
@@ -39,6 +41,12 @@ export type BuilderBackground = {
 };
 
 export const DEFAULT_BUILDER_BACKGROUND: BuilderBackground = { type: 'none' };
+
+export const LAZY_BACKGROUND_VAR = '--bg-lazy-image';
+
+export function isLazyImageBackground(bg: BuilderBackground): boolean {
+  return bg.type === 'image' && Boolean(bg.image_url) && bg.image_lazy !== false;
+}
 
 function clampNum(v: unknown, min: number, max: number, fallback: number): number {
   const n = typeof v === 'number' ? v : Number(v);
@@ -82,6 +90,7 @@ export function readBuilderBackground(settings: Record<string, unknown> | undefi
         ? row.image_repeat
         : 'no-repeat',
     image_id: typeof row.image_id === 'number' && row.image_id > 0 ? row.image_id : undefined,
+    image_lazy: row.image_lazy !== false,
     overlay: row.overlay === true,
     overlay_color: typeof row.overlay_color === 'string' && row.overlay_color ? row.overlay_color : '#000000',
     overlay_opacity: clampNum(row.overlay_opacity, 0, 100, 50),
@@ -112,8 +121,10 @@ export function builderBackgroundInlineStyle(bg: BuilderBackground): Record<stri
   }
   if (bg.type === 'image' && bg.image_url) {
     const url = resolveLaravelMediaUrl(bg.image_url) || bg.image_url;
+    const image = `url("${url.replace(/"/g, '\\"')}")`;
     return {
-      backgroundImage: `url("${url.replace(/"/g, '\\"')}")`,
+      // Lazy: the URL waits in a custom property (not fetched) until LazyBackgroundImage applies it.
+      ...(bg.image_lazy === false ? { backgroundImage: image } : { [LAZY_BACKGROUND_VAR]: image }),
       backgroundSize: bg.image_size || 'cover',
       backgroundPosition: bg.image_position || 'center',
       backgroundRepeat: bg.image_repeat || 'no-repeat',

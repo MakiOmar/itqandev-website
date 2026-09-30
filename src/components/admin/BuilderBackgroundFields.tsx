@@ -216,6 +216,22 @@ export const BuilderBackgroundFields = component$<BuilderBackgroundFieldsProps>(
             </select>
           </label>
 
+          {/* Lazy load (default on); turn off for above-the-fold images such as the hero band */}
+          <label class={ADMIN_CHECKBOX_LABEL_CLASS}>
+            <input
+              type="checkbox"
+              class={ADMIN_CHECKBOX_CLASS}
+              checked={bg.image_lazy !== false}
+              onChange$={async (e) => {
+                await patch({ image_lazy: (e.target as HTMLInputElement).checked ? undefined : false });
+              }}
+            />
+            {translateApp(props.lang, 'builder.background.lazyLoad')}
+          </label>
+          <p class="-mt-2 text-xs text-slate-500 dark:text-slate-400">
+            {translateApp(props.lang, 'builder.background.lazyLoadHint')}
+          </p>
+
           {/* Colour overlay over the image (e.g. to keep text readable) */}
           <label class={ADMIN_CHECKBOX_LABEL_CLASS}>
             <input
