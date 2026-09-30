@@ -20,6 +20,17 @@
   transform: translateY(calc(-100% + 100cqh));
 }
 
+/* Detailed card: title and summary always take two lines of their own line height. */
+.case-study-detailed-lines {
+  min-height: 2.9em;
+  min-height: 2lh;
+}
+
+/* Detailed card: exactly two chip rows (chip = 1rem text + 0.25rem padding + 2px border, 0.5rem gap). */
+.case-study-detailed-chips {
+  height: calc(2 * (1.25rem + 2px) + 0.5rem);
+}
+
 @media (prefers-reduced-motion: reduce) {
   .case-study-card-image {
     transition: none;

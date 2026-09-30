@@ -461,7 +461,7 @@ export const CaseStudiesHomeSection = component$<
           <ul class={`mx-auto mt-10 max-w-6xl gap-6 lg:gap-8 ${gridClass}`} role="list">
             {filteredItems.map((cs, i) => (
               <li key={cs.id}>
-                <AnimatedReveal delay={i * 80}>
+                <AnimatedReveal delay={i * 80} class="h-full">
                   {detailedCards ? <CaseStudyDetailedCard caseStudy={cs} /> : <CaseStudyCard caseStudy={cs} />}
                 </AnimatedReveal>
               </li>

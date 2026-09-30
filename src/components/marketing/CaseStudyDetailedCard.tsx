@@ -46,31 +46,36 @@ export const CaseStudyDetailedCard = component$<CaseStudyDetailedCardProps>(({ c
 
         {/* Body */}
         <div class="flex flex-1 flex-col gap-3 p-5 sm:p-6">
-          {category ? (
-            <span class="inline-flex w-fit max-w-full truncate rounded-full bg-rose-50 px-3 py-1 text-xs font-semibold text-rose-600 dark:bg-rose-500/15 dark:text-rose-300">
-              {category}
-            </span>
-          ) : null}
+          {/* Each part reserves a fixed height so cards in a row line up section by section */}
+          <span
+            class={`inline-flex w-fit max-w-full truncate rounded-full bg-rose-50 px-3 py-1 text-xs font-semibold text-rose-600 dark:bg-rose-500/15 dark:text-rose-300 ${category ? '' : 'invisible'}`}
+            aria-hidden={category ? undefined : 'true'}
+          >
+            {category || '\u00a0'}
+          </span>
 
           <div>
-            <h3 class="text-xl font-bold tracking-tight text-indigo-700 dark:text-indigo-300">{caseStudy.title}</h3>
-            {caseStudy.summary ? (
-              <p class="mt-1 line-clamp-2 text-sm text-slate-600 dark:text-slate-400">{caseStudy.summary}</p>
-            ) : null}
+            <h3
+              class="case-study-detailed-lines line-clamp-2 text-xl font-bold tracking-tight text-indigo-700 dark:text-indigo-300"
+              title={caseStudy.title}
+            >
+              {caseStudy.title}
+            </h3>
+            <p class="case-study-detailed-lines mt-1 line-clamp-2 text-sm text-slate-600 dark:text-slate-400">
+              {caseStudy.summary}
+            </p>
           </div>
 
-          {chips.length > 0 ? (
-            <ul class="flex flex-wrap gap-2" role="list">
-              {chips.map((chip) => (
-                <li
-                  key={chip}
-                  class="rounded-md border border-slate-200 bg-slate-50 px-2 py-0.5 text-xs font-medium text-slate-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300"
-                >
-                  {chip}
-                </li>
-              ))}
-            </ul>
-          ) : null}
+          <ul class="case-study-detailed-chips flex flex-wrap content-start gap-2 overflow-hidden" role="list">
+            {chips.map((chip) => (
+              <li
+                key={chip}
+                class="max-w-full truncate rounded-md border border-slate-200 bg-slate-50 px-2 py-0.5 text-xs font-medium leading-4 text-slate-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300"
+              >
+                {chip}
+              </li>
+            ))}
+          </ul>
 
           {/* The whole card is the link; this is its visual call to action */}
           <span class="mt-auto flex w-full items-center justify-center gap-2 rounded-xl bg-indigo-50 px-4 py-3 text-sm font-semibold text-indigo-700 transition-colors group-hover:bg-indigo-600 group-hover:text-white dark:bg-indigo-950/60 dark:text-indigo-200 dark:group-hover:bg-indigo-600 dark:group-hover:text-white">
