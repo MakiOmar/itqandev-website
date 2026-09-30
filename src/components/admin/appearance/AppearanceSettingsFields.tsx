@@ -938,11 +938,11 @@ export const AppearanceSettingsFields = component$<AppearanceSettingsFieldsProps
 
   const sharedFields = props.fields
     .filter((f) => !isAppearanceFieldTranslatable(f))
-    // Keep category picker near the top of shared settings so it is not buried.
+    // Card style first, then the category picker, so neither is buried under long lists.
     .slice()
     .sort((a, b) => {
       const rank = (f: AppearanceSettingField) =>
-        f.type === 'category_multi' ? 0 : f.type === 'responsive_columns' ? 2 : 1;
+        f.key === 'card_style' ? -1 : f.type === 'category_multi' ? 0 : f.type === 'responsive_columns' ? 2 : 1;
       return rank(a) - rank(b);
     });
   const localizedFields = props.fields.filter((f) => isAppearanceFieldTranslatable(f));
