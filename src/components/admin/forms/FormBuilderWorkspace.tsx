@@ -778,7 +778,7 @@ export const FormBuilderWorkspace = component$<FormBuilderWorkspaceProps>((props
                             // Live render of the public control; inert so drag and selection stay on the cell.
                             <div class="pointer-events-none select-none" aria-hidden="true">
                               {hasAnyStyles(field.styles) ? (
-                                <StyledBuilderLeaf id={field.id} styles={field.styles} settings={field.settings}>
+                                <StyledBuilderLeaf id={field.id} styles={{ ...field.styles }} settings={{ ...field.settings }}>
                                   {renderFieldControl(field)}
                                 </StyledBuilderLeaf>
                               ) : (

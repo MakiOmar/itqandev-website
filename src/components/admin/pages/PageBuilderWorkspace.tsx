@@ -1920,6 +1920,10 @@ export const PageBuilderWorkspace = component$<PageBuilderWorkspaceProps>((props
                   const bandSelected =
                     selection.value?.kind === 'band' && selection.value.bandIndex === bandIndex;
                   const boxed = (band.layout_width ?? 'boxed') !== 'full';
+                  // Locals, not `band.settings` in JSX: the optimizer marks member props on plain
+                  // loop items immutable, so the shell would never see background/style edits.
+                  const bandSettings = band.settings;
+                  const bandStyles = band.styles;
                   return (
                     <section
                       key={band.id}
@@ -2007,8 +2011,8 @@ export const PageBuilderWorkspace = component$<PageBuilderWorkspaceProps>((props
 
                       <LayoutNodeShell
                         id={band.id}
-                        settings={band.settings}
-                        styles={band.styles}
+                        settings={bandSettings}
+                        styles={bandStyles}
                         class={
                           previewCtx.surface === 'chrome'
                             ? 'w-full'
@@ -2031,6 +2035,8 @@ export const PageBuilderWorkspace = component$<PageBuilderWorkspaceProps>((props
                           const rowKey = `${bandIndex}-${rowIndex}`;
                           const isRowDropTarget = dropRowKey.value === rowKey;
                           const dragging = !!(dragWidgetType.value || dragBlock.value);
+                          const rowSettings = row.settings;
+                          const rowStyles = row.styles;
                           return (
                             <div
                               key={row.id}
@@ -2234,8 +2240,8 @@ export const PageBuilderWorkspace = component$<PageBuilderWorkspaceProps>((props
 
                               <LayoutNodeShell
                                 id={row.id}
-                                settings={row.settings}
-                                styles={row.styles}
+                                settings={rowSettings}
+                                styles={rowStyles}
                                 class="w-full rounded-xl"
                               >
                                 {/* Exact device grid: 12 cols + effective span for active device */}
@@ -2256,6 +2262,8 @@ export const PageBuilderWorkspace = component$<PageBuilderWorkspaceProps>((props
                                     );
                                     const colKey = `${bandIndex}-${rowIndex}-${colIndex}`;
                                     const isDropTarget = dropColumnKey.value === colKey;
+                                    const colSettings = col.settings;
+                                    const colStyles = col.styles;
                                     const colSelected =
                                       selection.value?.kind === 'column' &&
                                       selection.value.bandIndex === bandIndex &&
@@ -2415,8 +2423,8 @@ export const PageBuilderWorkspace = component$<PageBuilderWorkspaceProps>((props
 
                                         <LayoutNodeShell
                                           id={col.id}
-                                          settings={col.settings}
-                                          styles={col.styles}
+                                          settings={colSettings}
+                                          styles={colStyles}
                                           class="h-full"
                                         >
                                           <div class="h-full space-y-6">
