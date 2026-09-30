@@ -1,6 +1,7 @@
 import { component$ } from '@builder.io/qwik';
 import {
   builderBackgroundInlineStyle,
+  builderBackgroundOverlayStyle,
   hasInteractiveBackground,
   hasVisibleBackground,
   readBuilderBackground,
@@ -19,6 +20,7 @@ export const LayoutBackgroundLayer = component$<LayoutBackgroundLayerProps>((pro
   if (!hasVisibleBackground(bg)) return null;
 
   const inline = builderBackgroundInlineStyle(bg);
+  const overlay = builderBackgroundOverlayStyle(bg);
   const interactive = hasInteractiveBackground(bg);
 
   return (
@@ -30,6 +32,7 @@ export const LayoutBackgroundLayer = component$<LayoutBackgroundLayerProps>((pro
       aria-hidden="true"
     >
       {inline ? <div class="absolute inset-0" style={inline} /> : null}
+      {overlay ? <div class="absolute inset-0" style={overlay} /> : null}
       {bg.type === 'particles' ? (
         <LazyParticlesBackground
           density={bg.particles_density}

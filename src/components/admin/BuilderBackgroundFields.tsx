@@ -1,5 +1,7 @@
-import { component$, type QRL } from '@builder.io/qwik';
+import { $, component$, useSignal, type QRL } from '@builder.io/qwik';
 import {
+  ADMIN_CHECKBOX_CLASS,
+  ADMIN_CHECKBOX_LABEL_CLASS,
   ADMIN_FORM_INPUT_CLASS,
   ADMIN_FORM_LABEL_CLASS,
   ADMIN_NATIVE_OPTION_CLASS,
@@ -12,6 +14,9 @@ import {
 } from '~/lib/marketing/builder-background';
 import { translateApp } from '~/lib/i18n/useTranslate';
 import { ColorPickerField } from '~/components/admin/ColorPickerField';
+import { MediaSelector } from '~/components/common/MediaSelector';
+import { resolveLaravelMediaUrl } from '~/lib/marketing/resolve-laravel-media-url';
+import type { Media } from '~/types/media';
 
 export type BuilderBackgroundFieldsProps = {
   lang: string;
@@ -30,6 +35,8 @@ const BACKGROUND_TYPES: BuilderBackgroundType[] = [
 
 export const BuilderBackgroundFields = component$<BuilderBackgroundFieldsProps>((props) => {
   const bg = readBuilderBackground(props.settings);
+  const pickerOpen = useSignal(false);
+  const previewSrc = bg.image_url ? resolveLaravelMediaUrl(bg.image_url) || bg.image_url : '';
 
   const patch = async (partial: Partial<BuilderBackground>) => {
     const next: BuilderBackground = { ...bg, ...partial };
@@ -130,18 +137,62 @@ export const BuilderBackgroundFields = component$<BuilderBackgroundFieldsProps>(
 
       {bg.type === 'image' ? (
         <div class="space-y-3">
-          <label class={ADMIN_FORM_LABEL_CLASS}>
-            {translateApp(props.lang, 'builder.background.imageUrl')}
-            <input
-              type="url"
-              class={`${ADMIN_FORM_INPUT_CLASS} mt-1`}
-              value={bg.image_url || ''}
-              placeholder="https://…"
-              onInput$={async (e) => {
-                await patch({ image_url: (e.target as HTMLInputElement).value });
-              }}
+          {/* Image comes from the media library; the URL is kept on the node so rendering needs no lookup */}
+          <div>
+            <span class={ADMIN_FORM_LABEL_CLASS}>{translateApp(props.lang, 'builder.background.image')}</span>
+            <div class="mt-1 flex items-start gap-3">
+              {previewSrc ? (
+                <img
+                  src={previewSrc}
+                  alt=""
+                  width={96}
+                  height={64}
+                  class="h-16 w-24 shrink-0 rounded border border-gray-200 object-cover dark:border-gray-600"
+                />
+              ) : (
+                <div class="flex h-16 w-24 shrink-0 items-center justify-center rounded border border-dashed border-gray-300 text-center text-[11px] text-gray-400 dark:border-gray-600">
+                  {translateApp(props.lang, 'appearance.noImage')}
+                </div>
+              )}
+              <div class="flex flex-col gap-2">
+                <button
+                  type="button"
+                  class="rounded-lg bg-primary-600 px-3 py-2 text-xs font-medium text-white hover:bg-primary-700"
+                  onClick$={() => {
+                    pickerOpen.value = true;
+                  }}
+                >
+                  {translateApp(props.lang, 'appearance.selectFromLibrary')}
+                </button>
+                {bg.image_url ? (
+                  <button
+                    type="button"
+                    class="rounded-lg border border-gray-300 px-3 py-2 text-xs dark:border-gray-600 dark:text-gray-200"
+                    onClick$={async () => {
+                      await patch({ image_url: undefined, image_id: undefined });
+                    }}
+                  >
+                    {translateApp(props.lang, 'appearance.clear')}
+                  </button>
+                ) : null}
+              </div>
+            </div>
+          </div>
+          {pickerOpen.value ? (
+            <MediaSelector
+              title={translateApp(props.lang, 'appearance.selectImage')}
+              accept="image/*"
+              onSelect={$(async (media: Media) => {
+                pickerOpen.value = false;
+                const url = media.url || media.thumbnailUrl || '';
+                if (!url) return;
+                await patch({ image_url: url, image_id: typeof media.id === 'number' ? media.id : undefined });
+              })}
+              onClose={$(() => {
+                pickerOpen.value = false;
+              })}
             />
-          </label>
+          ) : null}
           <label class={ADMIN_FORM_LABEL_CLASS}>
             {translateApp(props.lang, 'builder.background.imageSize')}
             <select
@@ -164,6 +215,48 @@ export const BuilderBackgroundFields = component$<BuilderBackgroundFieldsProps>(
               </option>
             </select>
           </label>
+
+          {/* Colour overlay over the image (e.g. to keep text readable) */}
+          <label class={ADMIN_CHECKBOX_LABEL_CLASS}>
+            <input
+              type="checkbox"
+              class={ADMIN_CHECKBOX_CLASS}
+              checked={bg.overlay === true}
+              onChange$={async (e) => {
+                await patch({ overlay: (e.target as HTMLInputElement).checked });
+              }}
+            />
+            {translateApp(props.lang, 'builder.background.overlay')}
+          </label>
+          {bg.overlay ? (
+            <div class="grid gap-3 sm:grid-cols-2">
+              <label class={ADMIN_FORM_LABEL_CLASS}>
+                {translateApp(props.lang, 'builder.background.overlayColor')}
+                <ColorPickerField
+                  value={bg.overlay_color || '#000000'}
+                  lang={props.lang}
+                  class="mt-1 block h-9 w-full"
+                  label={translateApp(props.lang, 'builder.background.overlayColor')}
+                  onChange$={async (next) => {
+                    await patch({ overlay_color: next || '#000000' });
+                  }}
+                />
+              </label>
+              <label class={ADMIN_FORM_LABEL_CLASS}>
+                {translateApp(props.lang, 'builder.background.overlayOpacity')} ({bg.overlay_opacity ?? 50}%)
+                <input
+                  type="range"
+                  min={0}
+                  max={100}
+                  class="mt-1 w-full"
+                  value={bg.overlay_opacity ?? 50}
+                  onInput$={async (e) => {
+                    await patch({ overlay_opacity: Number((e.target as HTMLInputElement).value) });
+                  }}
+                />
+              </label>
+            </div>
+          ) : null}
         </div>
       ) : null}
 

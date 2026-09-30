@@ -1,6 +1,7 @@
 /**
  * Page builder band / row / column backgrounds (Elementor-style + particles + animated rain).
  */
+import { resolveLaravelMediaUrl } from './resolve-laravel-media-url';
 
 export type BuilderBackgroundType =
   | 'none'
@@ -17,9 +18,15 @@ export type BuilderBackground = {
   gradient_to?: string;
   gradient_angle?: number;
   image_url?: string;
+  /** Media library id of the image (the URL is stored alongside so rendering needs no lookup). */
+  image_id?: number;
   image_size?: 'cover' | 'contain' | 'auto';
   image_position?: string;
   image_repeat?: 'no-repeat' | 'repeat' | 'repeat-x' | 'repeat-y';
+  /** Colour layer painted over the image; opacity is 0–100. */
+  overlay?: boolean;
+  overlay_color?: string;
+  overlay_opacity?: number;
   particles_density?: number;
   particles_speed?: number;
   particles_opacity?: number;
@@ -74,6 +81,10 @@ export function readBuilderBackground(settings: Record<string, unknown> | undefi
       row.image_repeat === 'repeat-y'
         ? row.image_repeat
         : 'no-repeat',
+    image_id: typeof row.image_id === 'number' && row.image_id > 0 ? row.image_id : undefined,
+    overlay: row.overlay === true,
+    overlay_color: typeof row.overlay_color === 'string' && row.overlay_color ? row.overlay_color : '#000000',
+    overlay_opacity: clampNum(row.overlay_opacity, 0, 100, 50),
     particles_density: clampNum(row.particles_density, 10, 100, 50),
     particles_speed: clampNum(row.particles_speed, 10, 100, 40),
     particles_opacity: clampNum(row.particles_opacity, 10, 100, 55),
@@ -100,14 +111,26 @@ export function builderBackgroundInlineStyle(bg: BuilderBackground): Record<stri
     };
   }
   if (bg.type === 'image' && bg.image_url) {
+    const url = resolveLaravelMediaUrl(bg.image_url) || bg.image_url;
     return {
-      backgroundImage: `url("${bg.image_url.replace(/"/g, '\\"')}")`,
+      backgroundImage: `url("${url.replace(/"/g, '\\"')}")`,
       backgroundSize: bg.image_size || 'cover',
       backgroundPosition: bg.image_position || 'center',
       backgroundRepeat: bg.image_repeat || 'no-repeat',
     };
   }
   return null;
+}
+
+/** Overlay layer over an image background, or null when it is off / fully transparent. */
+export function builderBackgroundOverlayStyle(bg: BuilderBackground): Record<string, string> | null {
+  if (bg.type !== 'image' || !bg.image_url || !bg.overlay) return null;
+  const opacity = bg.overlay_opacity ?? 50;
+  if (opacity <= 0) return null;
+  return {
+    backgroundColor: bg.overlay_color || '#000000',
+    opacity: String(opacity / 100),
+  };
 }
 
 export function hasInteractiveBackground(bg: BuilderBackground): boolean {
