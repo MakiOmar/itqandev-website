@@ -1296,7 +1296,7 @@
       "hoverBackground": "الخلفية عند التمرير",
       "activeTextColor": "لون النص النشط",
       "activeBackground": "الخلفية النشطة",
-      "activeIndicator": "لون الخط السفلي النشط",
+      "activeIndicator": "لون الحد السفلي للتبويب النشط",
       "buttonSize": "حجم الزر",
       "iconSize": "حجم الأيقونة",
       "iconColor": "لون الأيقونة",

@@ -1296,7 +1296,7 @@
       "hoverBackground": "Hover background",
       "activeTextColor": "Active text colour",
       "activeBackground": "Active background",
-      "activeIndicator": "Active underline colour",
+      "activeIndicator": "Active bottom border colour",
       "buttonSize": "Button size",
       "iconSize": "Icon size",
       "iconColor": "Icon colour",
