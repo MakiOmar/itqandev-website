@@ -1,10 +1,12 @@
 import {
   component$,
   useSignal,
+  useStyles$,
   useVisibleTask$,
   $,
   type QRL,
 } from '@builder.io/qwik';
+import styles from '~/components/marketing/widgets/category-tabs.css?inline';
 import { isUiLocaleRtl } from '~/lib/i18n/ui-locale-segments';
 import { translateApp } from '~/lib/i18n/useTranslate';
 
@@ -23,11 +25,20 @@ export type CategoryTabsCarouselProps = {
   onSelect$: QRL<(tab: 'all' | string) => void>;
 };
 
+/** Nav chevron; sized and coloured by `.ct-nav` (Style tab → Navigation buttons). */
+const Chevron = (props: { towardRight: boolean }) => (
+  <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d={props.towardRight ? 'M9 6l6 6-6 6' : 'M15 6l-6 6 6 6'} />
+  </svg>
+);
+
 /**
  * Horizontal category tabs with prev/next controls (no native scrollbar).
- * Chevrons and scroll delta flip for RTL locales.
+ * Chevrons and scroll delta flip for RTL locales. Colours/sizes come from category-tabs.css,
+ * overridable by the host widget's Style tab.
  */
 export const CategoryTabsCarousel = component$<CategoryTabsCarouselProps>((props) => {
+  useStyles$(styles);
   const scrollerRef = useSignal<HTMLDivElement>();
   const canPrev = useSignal(false);
   const canNext = useSignal(false);
@@ -96,33 +107,23 @@ export const CategoryTabsCarousel = component$<CategoryTabsCarouselProps>((props
     }, 320);
   });
 
-  const tabClass = (selected: boolean) =>
-    `shrink-0 snap-start px-4 py-2.5 text-sm font-medium transition-colors ${
-      selected
-        ? 'border-b-2 border-primary-600 text-primary-700 dark:border-primary-400 dark:text-primary-300'
-        : 'border-b-2 border-transparent text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200'
-    }`;
-
-  const chevronBtn =
-    'inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 shadow-sm transition hover:bg-slate-50 disabled:pointer-events-none disabled:opacity-30 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700';
-
   return (
-    <div class="mt-8" data-category-tabs-carousel>
+    <div class="ct-root mt-8" data-category-tabs-carousel>
       <div class="flex items-center gap-2">
         <button
           type="button"
-          class={chevronBtn}
+          class="ct-nav"
           aria-label={translateApp(props.uiLocale, 'homePage.tabsPrev')}
           disabled={!canPrev.value}
           onClick$={() => scrollByDir$('prev')}
         >
           {/* Visual chevron: points toward start (leading side) */}
-          <span aria-hidden="true">{rtl ? '›' : '‹'}</span>
+          <Chevron towardRight={rtl} />
         </button>
 
         <div
           ref={scrollerRef}
-          class="flex min-w-0 flex-1 gap-1 overflow-x-auto scroll-smooth border-b border-slate-200 pb-px dark:border-slate-700 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden snap-x snap-mandatory"
+          class="ct-rail flex min-w-0 flex-1 gap-1 overflow-x-auto scroll-smooth pb-px [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden snap-x snap-mandatory"
           role="tablist"
           aria-label={props.label}
           dir={rtl ? 'rtl' : 'ltr'}
@@ -131,7 +132,7 @@ export const CategoryTabsCarousel = component$<CategoryTabsCarouselProps>((props
             type="button"
             role="tab"
             aria-selected={props.activeTab === 'all'}
-            class={tabClass(props.activeTab === 'all')}
+            class="ct-tab"
             onClick$={() => props.onSelect$('all')}
           >
             {props.allLabel}
@@ -142,7 +143,7 @@ export const CategoryTabsCarousel = component$<CategoryTabsCarouselProps>((props
               type="button"
               role="tab"
               aria-selected={props.activeTab === category.slug}
-              class={tabClass(props.activeTab === category.slug)}
+              class="ct-tab"
               onClick$={() => props.onSelect$(category.slug)}
             >
               {category.name}
@@ -152,12 +153,12 @@ export const CategoryTabsCarousel = component$<CategoryTabsCarouselProps>((props
 
         <button
           type="button"
-          class={chevronBtn}
+          class="ct-nav"
           aria-label={translateApp(props.uiLocale, 'homePage.tabsNext')}
           disabled={!canNext.value}
           onClick$={() => scrollByDir$('next')}
         >
-          <span aria-hidden="true">{rtl ? '‹' : '›'}</span>
+          <Chevron towardRight={!rtl} />
         </button>
       </div>
     </div>

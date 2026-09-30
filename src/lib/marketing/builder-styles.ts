@@ -45,6 +45,9 @@ export const STYLE_GROUP_ORDER = [
   'border',
   'hover',
   'caption',
+  'tabs',
+  'nav_buttons',
+  'link',
   'custom',
 ] as const;
 
@@ -72,7 +75,7 @@ export const WIDGET_STYLE_GROUPS: Record<string, readonly StyleGroupId[]> = {
   flip_box: ['typography', 'layout', 'spacing', 'border', 'hover', 'custom'],
   trust_badges: ['typography', 'spacing', 'border', 'custom'],
   button: ['typography', 'layout', 'spacing', 'border', 'hover', 'custom'],
-  case_studies: ['layout', 'spacing', 'border', 'custom'],
+  case_studies: ['tabs', 'nav_buttons', 'link', 'layout', 'spacing', 'border', 'custom'],
   services_teaser: ['layout', 'spacing', 'border', 'custom'],
   testimonials: ['layout', 'spacing', 'border', 'custom'],
   blog_preview: ['layout', 'spacing', 'border', 'custom'],
@@ -168,6 +171,22 @@ function shadowToCss(value: unknown): string | null {
   return `${inset}${value.h}px ${value.v}px ${value.blur}px ${value.spread}px ${value.color}`;
 }
 
+/**
+ * Widget-part keys (filter tabs, carousel nav buttons, section link). Emitted as `--s-*` vars;
+ * each widget's CSS maps them onto its own elements. Colours/weights/transforms pass through
+ * (already sanitised on save), lengths go through lengthToCss.
+ */
+const WIDGET_PART_STRING_KEYS = [
+  'tab_color', 'tab_bg', 'tab_hover_color', 'tab_hover_bg', 'tab_active_color', 'tab_active_bg',
+  'tab_indicator_color', 'tab_font_weight',
+  'nav_color', 'nav_bg', 'nav_border_color', 'nav_hover_color', 'nav_hover_bg',
+  'link_color', 'link_hover_color', 'link_font_weight', 'link_transform',
+] as const;
+const WIDGET_PART_LENGTH_KEYS = [
+  'tab_font_size', 'tab_radius', 'nav_size', 'nav_icon_size', 'nav_radius',
+  'link_font_size', 'link_letter_spacing',
+] as const;
+
 function varName(key: string, suffix: '' | '-md' | '-lg'): string {
   return `--s-${key.replace(/_/g, '-')}${suffix}`;
 }
@@ -232,6 +251,8 @@ function emitBagVars(bag: StyleBag, suffix: '' | '-md' | '-lg', out: Record<stri
   set('text-transform', typeof bag.text_transform === 'string' ? bag.text_transform : null);
   set('font-style', typeof bag.font_style === 'string' ? bag.font_style : null);
   set('text-decoration', typeof bag.text_decoration === 'string' ? bag.text_decoration : null);
+  for (const key of WIDGET_PART_STRING_KEYS) set(key, typeof bag[key] === 'string' ? (bag[key] as string) : null);
+  for (const key of WIDGET_PART_LENGTH_KEYS) set(key, lengthToCss(bag[key]));
 
   if (isDims(bag.margin)) {
     const u = bag.margin.unit === 'auto' ? 'px' : bag.margin.unit;

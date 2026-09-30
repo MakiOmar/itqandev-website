@@ -66,6 +66,20 @@ export const DEFAULT_DIMENSIONS: StyleDimensions = {
   linked: true,
 };
 
+const WEIGHT_OPTIONS = [
+  { value: '400', labelKey: 'builder.style.weightNormal' },
+  { value: '500', labelKey: 'builder.style.weightMedium' },
+  { value: '600', labelKey: 'builder.style.weightSemibold' },
+  { value: '700', labelKey: 'builder.style.weightBold' },
+];
+
+const TRANSFORM_OPTIONS = [
+  { value: 'none', labelKey: 'builder.style.transformNone' },
+  { value: 'uppercase', labelKey: 'builder.style.transformUpper' },
+  { value: 'lowercase', labelKey: 'builder.style.transformLower' },
+  { value: 'capitalize', labelKey: 'builder.style.transformCap' },
+];
+
 export const STYLE_CONTROLS: StyleControl[] = [
   {
     key: 'type_role',
@@ -247,6 +261,30 @@ export const STYLE_CONTROLS: StyleControl[] = [
   { key: 'caption_line_height', group: 'caption', type: 'length', min: 0, max: 80 },
   { key: 'caption_letter_spacing', group: 'caption', type: 'length', min: -5, max: 20 },
   { key: 'caption_spacing', group: 'caption', type: 'length', min: 0, max: 80 },
+  { key: 'tab_font_size', group: 'tabs', type: 'length', min: 8, max: 48 },
+  { key: 'tab_font_weight', group: 'tabs', type: 'select', options: WEIGHT_OPTIONS },
+  { key: 'tab_color', group: 'tabs', type: 'color' },
+  { key: 'tab_bg', group: 'tabs', type: 'color' },
+  { key: 'tab_hover_color', group: 'tabs', type: 'color' },
+  { key: 'tab_hover_bg', group: 'tabs', type: 'color' },
+  { key: 'tab_active_color', group: 'tabs', type: 'color' },
+  { key: 'tab_active_bg', group: 'tabs', type: 'color' },
+  { key: 'tab_indicator_color', group: 'tabs', type: 'color' },
+  { key: 'tab_radius', group: 'tabs', type: 'length', min: 0, max: 100 },
+  { key: 'nav_size', group: 'nav_buttons', type: 'length', min: 20, max: 96 },
+  { key: 'nav_icon_size', group: 'nav_buttons', type: 'length', min: 8, max: 64 },
+  { key: 'nav_color', group: 'nav_buttons', type: 'color' },
+  { key: 'nav_bg', group: 'nav_buttons', type: 'color' },
+  { key: 'nav_border_color', group: 'nav_buttons', type: 'color' },
+  { key: 'nav_hover_color', group: 'nav_buttons', type: 'color' },
+  { key: 'nav_hover_bg', group: 'nav_buttons', type: 'color' },
+  { key: 'nav_radius', group: 'nav_buttons', type: 'length', min: 0, max: 100 },
+  { key: 'link_font_size', group: 'link', type: 'length', min: 8, max: 48 },
+  { key: 'link_font_weight', group: 'link', type: 'select', options: WEIGHT_OPTIONS },
+  { key: 'link_transform', group: 'link', type: 'select', options: TRANSFORM_OPTIONS },
+  { key: 'link_letter_spacing', group: 'link', type: 'length', min: -5, max: 20 },
+  { key: 'link_color', group: 'link', type: 'color' },
+  { key: 'link_hover_color', group: 'link', type: 'color' },
   { key: 'custom_css', group: 'custom', type: 'textarea' },
 ];
 

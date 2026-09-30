@@ -1,0 +1,153 @@
+/*
+ * Category filter tabs + prev/next buttons (CategoryTabsCarousel).
+ * `--ct-d-*` are theme defaults (light / dark). `--s-*` come from the host widget's Style tab
+ * (Filter tabs / Navigation buttons groups) and are already resolved per breakpoint
+ * (base = mobile, -md = tablet, -lg = desktop), so each tier needs only one fallback.
+ */
+.ct-root {
+  --ct-d-tab: #64748b;
+  --ct-d-tab-hover: #1e293b;
+  --ct-d-tab-active: #0369a1;
+  --ct-d-indicator: #0284c7;
+  --ct-d-nav: #475569;
+  --ct-d-nav-bg: #ffffff;
+  --ct-d-nav-border: #e2e8f0;
+  --ct-d-nav-hover-bg: #f8fafc;
+  --ct-d-rail: #e2e8f0;
+
+  --ct-tab-size: var(--s-tab-font-size, 0.875rem);
+  --ct-tab-weight: var(--s-tab-font-weight, 500);
+  --ct-tab-color: var(--s-tab-color, var(--ct-d-tab));
+  --ct-tab-bg: var(--s-tab-bg, transparent);
+  --ct-tab-hover-color: var(--s-tab-hover-color, var(--ct-d-tab-hover));
+  --ct-tab-hover-bg: var(--s-tab-hover-bg, var(--ct-tab-bg));
+  --ct-tab-active-color: var(--s-tab-active-color, var(--ct-d-tab-active));
+  --ct-tab-active-bg: var(--s-tab-active-bg, var(--ct-tab-bg));
+  --ct-indicator: var(--s-tab-indicator-color, var(--ct-d-indicator));
+  --ct-tab-radius: var(--s-tab-radius, 0);
+  --ct-nav-size: var(--s-nav-size, 2.25rem);
+  --ct-nav-icon: var(--s-nav-icon-size, 1rem);
+  --ct-nav-color: var(--s-nav-color, var(--ct-d-nav));
+  --ct-nav-bg: var(--s-nav-bg, var(--ct-d-nav-bg));
+  --ct-nav-border: var(--s-nav-border-color, var(--ct-d-nav-border));
+  --ct-nav-hover-color: var(--s-nav-hover-color, var(--ct-nav-color));
+  --ct-nav-hover-bg: var(--s-nav-hover-bg, var(--ct-d-nav-hover-bg));
+  --ct-nav-radius: var(--s-nav-radius, 9999px);
+}
+:where(.dark, .dark *) .ct-root {
+  --ct-d-tab: #94a3b8;
+  --ct-d-tab-hover: #e2e8f0;
+  --ct-d-tab-active: #7dd3fc;
+  --ct-d-indicator: #38bdf8;
+  --ct-d-nav: #cbd5e1;
+  --ct-d-nav-bg: #1e293b;
+  --ct-d-nav-border: #475569;
+  --ct-d-nav-hover-bg: #334155;
+  --ct-d-rail: #334155;
+}
+
+.ct-rail {
+  border-bottom: 1px solid var(--ct-d-rail);
+}
+
+.ct-tab {
+  flex-shrink: 0;
+  scroll-snap-align: start;
+  padding: 0.625rem 1rem;
+  border-bottom: 2px solid transparent;
+  border-radius: var(--ct-tab-radius);
+  background: var(--ct-tab-bg);
+  color: var(--ct-tab-color);
+  font-size: var(--ct-tab-size);
+  font-weight: var(--ct-tab-weight);
+  line-height: 1.43;
+  transition:
+    color 150ms,
+    background-color 150ms,
+    border-color 150ms;
+}
+.ct-tab:hover {
+  background: var(--ct-tab-hover-bg);
+  color: var(--ct-tab-hover-color);
+}
+.ct-tab[aria-selected='true'] {
+  border-bottom-color: var(--ct-indicator);
+  background: var(--ct-tab-active-bg);
+  color: var(--ct-tab-active-color);
+}
+
+.ct-nav {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: var(--ct-nav-size);
+  height: var(--ct-nav-size);
+  border: 1px solid var(--ct-nav-border);
+  border-radius: var(--ct-nav-radius);
+  background: var(--ct-nav-bg);
+  color: var(--ct-nav-color);
+  box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  transition:
+    color 150ms,
+    background-color 150ms,
+    opacity 150ms;
+}
+.ct-nav:hover {
+  background: var(--ct-nav-hover-bg);
+  color: var(--ct-nav-hover-color);
+}
+.ct-nav:disabled {
+  pointer-events: none;
+  opacity: 0.3;
+}
+.ct-nav svg {
+  width: var(--ct-nav-icon);
+  height: var(--ct-nav-icon);
+}
+
+@media (min-width: 768px) {
+  .ct-root {
+    --ct-tab-size: var(--s-tab-font-size-md, 0.875rem);
+    --ct-tab-weight: var(--s-tab-font-weight-md, 500);
+    --ct-tab-color: var(--s-tab-color-md, var(--ct-d-tab));
+    --ct-tab-bg: var(--s-tab-bg-md, transparent);
+    --ct-tab-hover-color: var(--s-tab-hover-color-md, var(--ct-d-tab-hover));
+    --ct-tab-hover-bg: var(--s-tab-hover-bg-md, var(--ct-tab-bg));
+    --ct-tab-active-color: var(--s-tab-active-color-md, var(--ct-d-tab-active));
+    --ct-tab-active-bg: var(--s-tab-active-bg-md, var(--ct-tab-bg));
+    --ct-indicator: var(--s-tab-indicator-color-md, var(--ct-d-indicator));
+    --ct-tab-radius: var(--s-tab-radius-md, 0);
+    --ct-nav-size: var(--s-nav-size-md, 2.25rem);
+    --ct-nav-icon: var(--s-nav-icon-size-md, 1rem);
+    --ct-nav-color: var(--s-nav-color-md, var(--ct-d-nav));
+    --ct-nav-bg: var(--s-nav-bg-md, var(--ct-d-nav-bg));
+    --ct-nav-border: var(--s-nav-border-color-md, var(--ct-d-nav-border));
+    --ct-nav-hover-color: var(--s-nav-hover-color-md, var(--ct-nav-color));
+    --ct-nav-hover-bg: var(--s-nav-hover-bg-md, var(--ct-d-nav-hover-bg));
+    --ct-nav-radius: var(--s-nav-radius-md, 9999px);
+  }
+}
+
+@media (min-width: 1024px) {
+  .ct-root {
+    --ct-tab-size: var(--s-tab-font-size-lg, 0.875rem);
+    --ct-tab-weight: var(--s-tab-font-weight-lg, 500);
+    --ct-tab-color: var(--s-tab-color-lg, var(--ct-d-tab));
+    --ct-tab-bg: var(--s-tab-bg-lg, transparent);
+    --ct-tab-hover-color: var(--s-tab-hover-color-lg, var(--ct-d-tab-hover));
+    --ct-tab-hover-bg: var(--s-tab-hover-bg-lg, var(--ct-tab-bg));
+    --ct-tab-active-color: var(--s-tab-active-color-lg, var(--ct-d-tab-active));
+    --ct-tab-active-bg: var(--s-tab-active-bg-lg, var(--ct-tab-bg));
+    --ct-indicator: var(--s-tab-indicator-color-lg, var(--ct-d-indicator));
+    --ct-tab-radius: var(--s-tab-radius-lg, 0);
+    --ct-nav-size: var(--s-nav-size-lg, 2.25rem);
+    --ct-nav-icon: var(--s-nav-icon-size-lg, 1rem);
+    --ct-nav-color: var(--s-nav-color-lg, var(--ct-d-nav));
+    --ct-nav-bg: var(--s-nav-bg-lg, var(--ct-d-nav-bg));
+    --ct-nav-border: var(--s-nav-border-color-lg, var(--ct-d-nav-border));
+    --ct-nav-hover-color: var(--s-nav-hover-color-lg, var(--ct-nav-color));
+    --ct-nav-hover-bg: var(--s-nav-hover-bg-lg, var(--ct-d-nav-hover-bg));
+    --ct-nav-radius: var(--s-nav-radius-lg, 9999px);
+  }
+}

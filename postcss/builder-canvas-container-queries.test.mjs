@@ -41,6 +41,11 @@ test('site.css only excludes the canvas; no container copy', () => {
   assert.doesNotMatch(out, /@container/);
 });
 
+test('widget stylesheets get container copies for the canvas device preview', () => {
+  const out = run('@media (min-width: 768px) { .ct-root { --x: 1 } }', 'C:/app/src/components/marketing/widgets/category-tabs.css?inline');
+  assert.match(out, /@container builder-canvas \(min-width: 768px\) \{ :where\(\[data-builder-canvas\]\) \.ct-root/);
+});
+
 test('non-width media and other stylesheets are left untouched', () => {
   const hover = '@media (hover: hover) { .a:hover { color: red } }';
   assert.equal(run(hover), hover);

@@ -1287,7 +1287,20 @@
       "textColor": "Text colour",
       "roleHeading": "Heading font",
       "roleBody": "Body font",
-      "roleAccent": "Accent font"
+      "roleAccent": "Accent font",
+      "groupTabs": "Filter tabs",
+      "groupNavButtons": "Navigation buttons",
+      "groupLink": "View portfolio link",
+      "background": "Background",
+      "hoverTextColor": "Hover text colour",
+      "hoverBackground": "Hover background",
+      "activeTextColor": "Active text colour",
+      "activeBackground": "Active background",
+      "activeIndicator": "Active underline colour",
+      "buttonSize": "Button size",
+      "iconSize": "Icon size",
+      "iconColor": "Icon colour",
+      "hoverIconColor": "Hover icon colour"
     },
     "background": {
       "type": "Background type",

@@ -69,7 +69,7 @@ function mapRuleSelectors(parent, mapSelector) {
  * @returns {'full' | 'exclude' | false}
  */
 export function defaultCanvasMode(file) {
-  if (/[\\/](styles[\\/]admin|marketing[\\/]builder-widget-styles)\.css$/.test(file)) return 'full';
+  if (/[\\/](styles[\\/]admin|marketing[\\/]builder-widget-styles|marketing[\\/]widgets[\\/][\w-]+)\.css(\?.*)?$/.test(file)) return 'full';
   if (/[\\/]styles[\\/]site\.css$/.test(file)) return 'exclude';
   return false;
 }
@@ -82,8 +82,7 @@ export default function builderCanvasContainerQueries(opts = {}) {
   return {
     postcssPlugin: 'builder-canvas-container-queries',
     OnceExit(root) {
-      const mode = modeFor(root.source?.input?.file ?? '');
-      if (!mode) return;
+      const mode = modeFor(root.source?.input?.file ?? '');      if (!mode) return;
       root.walkAtRules('media', (media) => {
         if (!isWidthOnlyQuery(media.params)) return;
         if (mode === 'full') {

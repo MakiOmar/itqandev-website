@@ -1287,7 +1287,20 @@
       "textColor": "لون النص",
       "roleHeading": "خط العناوين",
       "roleBody": "خط النص",
-      "roleAccent": "خط مميز"
+      "roleAccent": "خط مميز",
+      "groupTabs": "تبويبات التصفية",
+      "groupNavButtons": "أزرار التنقل",
+      "groupLink": "رابط عرض المحفظة",
+      "background": "الخلفية",
+      "hoverTextColor": "لون النص عند التمرير",
+      "hoverBackground": "الخلفية عند التمرير",
+      "activeTextColor": "لون النص النشط",
+      "activeBackground": "الخلفية النشطة",
+      "activeIndicator": "لون الخط السفلي النشط",
+      "buttonSize": "حجم الزر",
+      "iconSize": "حجم الأيقونة",
+      "iconColor": "لون الأيقونة",
+      "hoverIconColor": "لون الأيقونة عند التمرير"
     },
     "background": {
       "type": "نوع الخلفية",

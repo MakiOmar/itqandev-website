@@ -1,0 +1,63 @@
+/*
+ * Case studies section "View portfolio" link. `--s-link-*` come from the widget's Style tab
+ * (View portfolio link group), resolved per breakpoint (base = mobile, -md, -lg).
+ */
+.cs-root {
+  --cs-d-link: #0284c7;
+  --cs-d-link-hover: #0369a1;
+
+  --cs-link-size: var(--s-link-font-size, 0.875rem);
+  --cs-link-weight: var(--s-link-font-weight, 500);
+  --cs-link-transform: var(--s-link-transform, none);
+  --cs-link-spacing: var(--s-link-letter-spacing, normal);
+  --cs-link-color: var(--s-link-color, var(--cs-d-link));
+  --cs-link-hover: var(--s-link-hover-color, var(--cs-d-link-hover));
+}
+:where(.dark, .dark *) .cs-root {
+  --cs-d-link: #38bdf8;
+  --cs-d-link-hover: #7dd3fc;
+}
+
+.cs-link {
+  color: var(--cs-link-color);
+  font-size: var(--cs-link-size);
+  font-weight: var(--cs-link-weight);
+  line-height: 1.43;
+  letter-spacing: var(--cs-link-spacing);
+  text-transform: var(--cs-link-transform);
+  transition: color 150ms;
+}
+.cs-link:hover {
+  color: var(--cs-link-hover);
+}
+
+/* Mobile outline button: keeps its own chrome, takes only Style tab values that are set. */
+.cs-link-label {
+  color: var(--s-link-color, inherit);
+  font-size: var(--s-link-font-size, inherit);
+  font-weight: var(--s-link-font-weight, inherit);
+  letter-spacing: var(--s-link-letter-spacing, inherit);
+  text-transform: var(--s-link-transform, inherit);
+}
+
+@media (min-width: 768px) {
+  .cs-root {
+    --cs-link-size: var(--s-link-font-size-md, 0.875rem);
+    --cs-link-weight: var(--s-link-font-weight-md, 500);
+    --cs-link-transform: var(--s-link-transform-md, none);
+    --cs-link-spacing: var(--s-link-letter-spacing-md, normal);
+    --cs-link-color: var(--s-link-color-md, var(--cs-d-link));
+    --cs-link-hover: var(--s-link-hover-color-md, var(--cs-d-link-hover));
+  }
+}
+
+@media (min-width: 1024px) {
+  .cs-root {
+    --cs-link-size: var(--s-link-font-size-lg, 0.875rem);
+    --cs-link-weight: var(--s-link-font-weight-lg, 500);
+    --cs-link-transform: var(--s-link-transform-lg, none);
+    --cs-link-spacing: var(--s-link-letter-spacing-lg, normal);
+    --cs-link-color: var(--s-link-color-lg, var(--cs-d-link));
+    --cs-link-hover: var(--s-link-hover-color-lg, var(--cs-d-link-hover));
+  }
+}

@@ -1,4 +1,4 @@
-import { component$, useSignal } from '@builder.io/qwik';
+import { component$, useSignal, useStyles$ } from '@builder.io/qwik';
 import { Link } from '@builder.io/qwik-city';
 import { Container } from '~/components/marketing/Container';
 import { Section } from '~/components/marketing/Section';
@@ -21,6 +21,7 @@ import type { HeroFloatingIcon } from '~/lib/marketing/appearance-types';
 import { gridColumnClassNames, normalizeResponsiveColumns } from '~/lib/marketing/grid-columns';
 import { translateApp } from '~/lib/i18n/useTranslate';
 import './hero-floating-icons.css';
+import caseStudiesStyles from '~/components/marketing/widgets/case-studies.css?inline';
 
 function settingString(settings: Record<string, unknown> | undefined, key: string, fallback: string): string {
   const v = settings?.[key];
@@ -378,6 +379,7 @@ export const CaseStudiesHomeSection = component$<
   const columns = normalizeResponsiveColumns(settings?.columns);
   const gridClass = gridColumnClassNames(columns);
   const activeTab = useSignal<'all' | string>('all');
+  useStyles$(caseStudiesStyles);
 
   if (caseStudies.length === 0) return null;
 
@@ -414,7 +416,7 @@ export const CaseStudiesHomeSection = component$<
 
   return (
     <Section flush={Boolean(embedded)}>
-      <Container>
+      <Container class="cs-root">
         <AnimatedReveal>
           <div class="flex items-end justify-between gap-4">
             <div class="min-w-0 text-start">
@@ -425,7 +427,7 @@ export const CaseStudiesHomeSection = component$<
             </div>
             <Link
               href={routes.portfolio}
-              class="hidden shrink-0 text-sm font-medium text-primary-600 hover:text-primary-700 dark:text-primary-400 sm:block"
+              class="cs-link hidden shrink-0 sm:block"
             >
               {translateApp(uiLocale, 'homePage.viewPortfolio')}
             </Link>
@@ -463,7 +465,7 @@ export const CaseStudiesHomeSection = component$<
 
         <div class="mt-8 text-center sm:hidden">
           <Button href={routes.portfolio} variant="outline">
-            {translateApp(uiLocale, 'homePage.viewPortfolio')}
+            <span class="cs-link-label">{translateApp(uiLocale, 'homePage.viewPortfolio')}</span>
           </Button>
         </div>
       </Container>
