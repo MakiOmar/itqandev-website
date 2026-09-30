@@ -207,6 +207,8 @@ export const API_ENDPOINTS = {
   MEDIA: {
     LIST: '/v1/media',
     GET: (id: string | number) => `/v1/media/${id}`,
+    /** `?ids=1,2,3` (max 200) → `[{ id, url, mime_type }]` */
+    LOOKUP: '/v1/media/lookup',
     UPLOAD: '/v1/media/upload',
     UPDATE: (id: string | number) => `/v1/media/${id}`,
     DELETE: (id: string | number) => `/v1/media/${id}`,

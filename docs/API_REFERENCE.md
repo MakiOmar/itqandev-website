@@ -638,6 +638,8 @@ Public shell resolves header/footer via **record FK → theme template slot → 
 
 `PUT /api/v1/media/{id}`: `alt_text`, `description`, optional `locale`, optional `translations` map for secondary locales (`media_translations` table). Primary locale writes columns on `media`. Response includes overlaid `alt_text` / `description` and, when loaded, a `translations` bag.
 
+`GET /api/v1/media/lookup?ids=54,37,44`: bulk id → URL lookup used by the page builder canvas to preview widgets that store media ids. `ids` is a comma-separated list (or array) of 1–200 positive integers; requires media `viewAny`. Returns `{ data: [{ id, url, mime_type }] }`; unknown ids are omitted. 422 on invalid/too many ids, 403 without permission.
+
 ### GET `/api/public/site-content`
 
 Returns localized marketing blocks from `marketing_site_content` in project settings: `pricingTiers`, `faq`, `contact`, `about`, `techStack`.

@@ -73,6 +73,13 @@ import { normalizeHideOn, type DeviceHideOn } from '~/lib/marketing/device-visib
 import type { BuilderStyles, StyleBreakpoint } from '~/lib/marketing/builder-styles';
 import { CONTAINER_STYLE_TYPE } from '~/lib/marketing/builder-styles';
 import { getApiClient } from '~/lib/api/client';
+import {
+  bandsWithBuilderMediaPreview,
+  MEDIA_LOOKUP_CHUNK,
+  missingBuilderMediaIds,
+  withBuilderMediaPreview,
+  type MediaUrlMap,
+} from '~/lib/admin/builder-media-preview';
 import { API_ENDPOINTS } from '~/lib/api/endpoints';
 import type { PageBuilderDocument } from '~/lib/admin/builder-import-export';
 import type {
@@ -585,7 +592,9 @@ export const PageBuilderWorkspace = component$<PageBuilderWorkspaceProps>((props
   const bands = ensurePageLayoutBands(props.sections.value);
   const previewDevice = useSignal<LayoutBreakpoint>('desktop');
   const selection = useSignal<PageBuilderSelection>(null);
-  const mediaPreviewById = useSignal<Record<string, string>>({});
+  const mediaPreviewById = useSignal<MediaUrlMap>({});
+  /** Ids already requested from the lookup (found or not), so edits don't refetch them. */
+  const mediaLookedUp = useSignal<number[]>([]);
   const mediaTarget = useSignal<MediaPickerTarget | null>(null);
   const dragBlock = useSignal<BlockPath | null>(null);
   const dragWidgetType = useSignal<string | null>(null);
@@ -628,6 +637,43 @@ export const PageBuilderWorkspace = component$<PageBuilderWorkspaceProps>((props
       globalsList.value = [];
     }
     savedBands.value = listSavedBuilderBands();
+  });
+
+  // Library images are stored by id; fetch their URLs (one request per 200 ids) so the canvas
+  // renders them like the public page. Re-runs on edits, but only for ids not requested yet.
+  // eslint-disable-next-line qwik/no-use-visible-task
+  useVisibleTask$(async ({ track }) => {
+    const sections = track(() => props.sections.value);
+    // The registry loads after mount; field types are needed to find media ids.
+    const registry = track(() => props.registry.value);
+    const tried = new Set(mediaLookedUp.value);
+    const ids = missingBuilderMediaIds(
+      ensurePageLayoutBands(sections),
+      registry,
+      mediaPreviewById.value,
+    ).filter((id) => !tried.has(id));
+    if (ids.length === 0) return;
+    mediaLookedUp.value = [...mediaLookedUp.value, ...ids];
+    const found: MediaUrlMap = {};
+    for (let i = 0; i < ids.length; i += MEDIA_LOOKUP_CHUNK) {
+      const chunk = ids.slice(i, i + MEDIA_LOOKUP_CHUNK);
+      try {
+        type LookupRow = { id: number; url: string };
+        const res = await getApiClient(null).get<LookupRow[] | { data?: LookupRow[] }>(
+          `${API_ENDPOINTS.MEDIA.LOOKUP}?ids=${chunk.join(',')}`,
+        );
+        const body = res.data;
+        const rows = Array.isArray(body) ? body : Array.isArray(body?.data) ? body.data : [];
+        for (const row of rows) {
+          if (row?.id && row.url) found[String(row.id)] = row.url;
+        }
+      } catch (err) {
+        console.error('Builder media lookup failed', err);
+      }
+    }
+    if (Object.keys(found).length > 0) {
+      mediaPreviewById.value = { ...mediaPreviewById.value, ...found };
+    }
   });
 
   // Saving is manual only; this snapshot drives the unsaved-changes badge and leave warning.
@@ -1871,7 +1917,7 @@ export const PageBuilderWorkspace = component$<PageBuilderWorkspaceProps>((props
           <PageBuilderViewMode
             lang={props.lang}
             ctx={previewCtx}
-            bands={resolvedBands ?? bands}
+            bands={bandsWithBuilderMediaPreview(resolvedBands ?? bands, props.registry.value, mediaPreviewById.value)}
             chromeKind={
               props.exportBuilderKind === 'header' || props.exportBuilderKind === 'footer'
                 ? props.exportBuilderKind
@@ -2548,7 +2594,10 @@ export const PageBuilderWorkspace = component$<PageBuilderWorkspaceProps>((props
                                                     data-label={blockLabel}
                                                     class="[&_iframe]:pointer-events-none [&_video]:pointer-events-none empty:flex empty:min-h-10 empty:items-center empty:justify-center empty:rounded empty:border empty:border-dashed empty:border-gray-300 empty:text-xs empty:text-gray-400 empty:before:content-[attr(data-label)] dark:empty:border-gray-600"
                                                   >
-                                                    <PageBuilderCanvasBlock block={shown} ctx={previewCtx} />
+                                                    <PageBuilderCanvasBlock
+                                                      block={withBuilderMediaPreview(shown, props.registry.value, mediaPreviewById.value)}
+                                                      ctx={previewCtx}
+                                                    />
                                                   </div>
                                                   <div
                                                     aria-hidden="true"
