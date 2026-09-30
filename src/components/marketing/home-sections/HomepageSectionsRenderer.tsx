@@ -390,7 +390,7 @@ function renderLayoutBand(band: PageLayoutBand, props: HomepageSectionsRendererP
       id={band.id}
       settings={band.settings}
       styles={band.styles}
-      class="w-full space-y-8 py-6 sm:space-y-10 sm:py-8 lg:py-10"
+      class="w-full py-6 sm:py-8 lg:py-10"
     >
       {(band.rows ?? []).map((row) => {
         const stackBelow = row.stack_below ?? 'none';

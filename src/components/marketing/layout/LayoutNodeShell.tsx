@@ -16,6 +16,7 @@ export type LayoutNodeShellProps = {
   settings?: Record<string, unknown>;
   /** Container Style tab bags (layout / spacing / border / custom). */
   styles?: BuilderStyles | null;
+  /** Shell classes. No `space-*` utilities: background/divider overlays are direct children and would get margins. */
   class?: string;
 };
 

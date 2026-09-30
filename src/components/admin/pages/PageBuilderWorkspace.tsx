@@ -2012,7 +2012,7 @@ export const PageBuilderWorkspace = component$<PageBuilderWorkspaceProps>((props
                         class={
                           previewCtx.surface === 'chrome'
                             ? 'w-full'
-                            : 'w-full space-y-8 py-6 sm:space-y-10 sm:py-8 lg:py-10'
+                            : 'w-full py-6 sm:py-8 lg:py-10'
                         }
                       >
                         {band.rows.length === 0 ? (
