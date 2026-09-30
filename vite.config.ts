@@ -96,6 +96,10 @@ function manualVendorChunk(id: string): string | undefined {
   if (id.includes("sweetalert2")) {
     return "sweetalert2";
   }
+  // Admin colour picker: loaded on first open only, never with the public vendor chunk.
+  if (id.includes("@simonwep/pickr")) {
+    return "pickr";
+  }
   if (id.includes("@qwik-ui")) {
     return "qwik-ui";
   }

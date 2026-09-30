@@ -3,6 +3,7 @@
  */
 import { component$, $, type QRL } from '@builder.io/qwik';
 import { translateApp } from '~/lib/i18n/useTranslate';
+import { ColorPickerField } from '~/components/admin/ColorPickerField';
 import {
   ADMIN_CHECKBOX_CLASS,
   ADMIN_CHECKBOX_LABEL_CLASS,
@@ -425,11 +426,12 @@ const ColorControl = component$<{
         />
       </div>
       <div class="flex flex-wrap items-center gap-2">
-        <input
-          type="color"
-          class="h-9 w-12 cursor-pointer rounded border border-gray-300 bg-white p-0.5 dark:border-gray-600 dark:bg-gray-900"
-          value={pickerValue}
-          onInput$={(e) => props.onPatch$(props.control.key, (e.target as HTMLInputElement).value)}
+        <ColorPickerField
+          value={hex}
+          fallback={pickerValue}
+          lang={props.lang}
+          label={fieldLabel(props.lang, props.control.key)}
+          onChange$={(next) => props.onPatch$(props.control.key, next === '' ? undefined : next)}
         />
         <input
           type="text"
@@ -603,11 +605,12 @@ const ShadowControl = component$<{
         />
       </div>
       <div class="flex items-center gap-2">
-        <input
-          type="color"
-          class="h-8 w-10 cursor-pointer rounded border border-gray-300 p-0.5 dark:border-gray-600"
-          value={s.color.slice(0, 7)}
-          onInput$={(e) => write({ color: (e.target as HTMLInputElement).value })}
+        <ColorPickerField
+          value={s.color}
+          lang={props.lang}
+          class="h-8 w-10"
+          label={fieldLabel(props.lang, props.control.key)}
+          onChange$={(next) => write({ color: next || '#00000066' })}
         />
         <input
           type="text"

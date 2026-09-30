@@ -1304,6 +1304,10 @@
       "rainDown": "Top to bottom",
       "rainUp": "Bottom to top",
       "rainBoth": "Both directions"
+    },
+    "colorPicker": {
+      "open": "Choose colour",
+      "loadError": "Could not load the colour picker."
     }
   }
 }

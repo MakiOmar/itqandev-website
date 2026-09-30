@@ -13,6 +13,7 @@ import {
   writeAppearanceSettingValue,
 } from '~/lib/admin/appearance-locale-settings';
 import { SharedRepeaterTranslationsEditor } from './SharedRepeaterTranslationsEditor';
+import { ColorPickerField } from '~/components/admin/ColorPickerField';
 import {
   appearanceMediaId,
   appearanceMediaPreviewSrc,
@@ -780,16 +781,18 @@ const AppearanceSettingFieldControl = component$<FieldControlProps>((props) => {
           {label}
         </label>
         <div class="flex flex-wrap items-center gap-2">
-          <input
-            type="color"
-            class="h-9 w-12 cursor-pointer rounded border border-gray-300 bg-white p-0.5 dark:border-gray-600 dark:bg-gray-900"
-            value={pickerValue}
-            onInput$={async (e) => {
+          <ColorPickerField
+            value={hex}
+            fallback={pickerValue}
+            alpha={false}
+            lang={props.lang}
+            label={label}
+            onChange$={async (next) => {
               await props.onSettingsChange$(
                 writeAppearanceSettingValue(
                   props.values,
                   field.key,
-                  (e.target as HTMLInputElement).value,
+                  next,
                   props.activeLocale,
                   props.defaultLocale,
                   false,

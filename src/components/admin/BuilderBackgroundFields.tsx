@@ -11,6 +11,7 @@ import {
   type BuilderBackgroundType,
 } from '~/lib/marketing/builder-background';
 import { translateApp } from '~/lib/i18n/useTranslate';
+import { ColorPickerField } from '~/components/admin/ColorPickerField';
 
 export type BuilderBackgroundFieldsProps = {
   lang: string;
@@ -73,12 +74,13 @@ export const BuilderBackgroundFields = component$<BuilderBackgroundFieldsProps>(
       {bg.type === 'color' ? (
         <label class={ADMIN_FORM_LABEL_CLASS}>
           {translateApp(props.lang, 'builder.background.color')}
-          <input
-            type="color"
-            class="mt-1 h-9 w-full cursor-pointer rounded border border-gray-300 dark:border-gray-600"
+          <ColorPickerField
             value={/^#/.test(bg.color || '') ? bg.color! : '#0389a1'}
-            onInput$={async (e) => {
-              await patch({ color: (e.target as HTMLInputElement).value });
+            lang={props.lang}
+            class="mt-1 block h-9 w-full"
+            label={translateApp(props.lang, 'builder.background.color')}
+            onChange$={async (next) => {
+              await patch({ color: next || '#0389a1' });
             }}
           />
         </label>
@@ -88,23 +90,25 @@ export const BuilderBackgroundFields = component$<BuilderBackgroundFieldsProps>(
         <div class="grid gap-3 sm:grid-cols-2">
           <label class={ADMIN_FORM_LABEL_CLASS}>
             {translateApp(props.lang, 'builder.background.gradientFrom')}
-            <input
-              type="color"
-              class="mt-1 h-9 w-full cursor-pointer rounded border border-gray-300 dark:border-gray-600"
+            <ColorPickerField
               value={bg.gradient_from || '#0389a1'}
-              onInput$={async (e) => {
-                await patch({ gradient_from: (e.target as HTMLInputElement).value });
+              lang={props.lang}
+              class="mt-1 block h-9 w-full"
+              label={translateApp(props.lang, 'builder.background.gradientFrom')}
+              onChange$={async (next) => {
+                await patch({ gradient_from: next || '#0389a1' });
               }}
             />
           </label>
           <label class={ADMIN_FORM_LABEL_CLASS}>
             {translateApp(props.lang, 'builder.background.gradientTo')}
-            <input
-              type="color"
-              class="mt-1 h-9 w-full cursor-pointer rounded border border-gray-300 dark:border-gray-600"
+            <ColorPickerField
               value={bg.gradient_to || '#0ea5e9'}
-              onInput$={async (e) => {
-                await patch({ gradient_to: (e.target as HTMLInputElement).value });
+              lang={props.lang}
+              class="mt-1 block h-9 w-full"
+              label={translateApp(props.lang, 'builder.background.gradientTo')}
+              onChange$={async (next) => {
+                await patch({ gradient_to: next || '#0ea5e9' });
               }}
             />
           </label>

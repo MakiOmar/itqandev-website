@@ -1,13 +1,13 @@
 import { component$, useSignal, useVisibleTask$, $ } from '@builder.io/qwik';
 import type { DocumentHead } from '@builder.io/qwik-city';
 import { PageHeader } from '~/components/common/PageHeader';
+import { ColorPickerField } from '~/components/admin/ColorPickerField';
 import { useTranslate, translateApp } from '~/lib/i18n/useTranslate';
 import { useSwal } from '~/lib/hooks/useSwal';
 import { getApiClient } from '~/lib/api/client';
 import { API_ENDPOINTS } from '~/lib/api/endpoints';
 import {
   ADMIN_FORM_CARD_CLASS,
-  ADMIN_FORM_INPUT_CLASS,
   ADMIN_FORM_LABEL_CLASS,
   ADMIN_PRIMARY_BUTTON_CLASS,
 } from '~/lib/admin/native-select-classes';
@@ -66,16 +66,21 @@ export default component$(() => {
         {(['primary', 'secondary', 'text', 'accent', 'muted'] as const).map((key) => (
           <label key={key} class={ADMIN_FORM_LABEL_CLASS}>
             {key}
-            <input
-              class={ADMIN_FORM_INPUT_CLASS}
-              type="color"
-              value={colors[key]}
-              onInput$={(e) => {
-                const next = { ...kit.value! };
-                next.colors = { ...next.colors, [key]: (e.target as HTMLInputElement).value };
-                kit.value = next;
-              }}
-            />
+            <div class="mt-1 flex items-center gap-2">
+              <ColorPickerField
+                value={colors[key]}
+                alpha={false}
+                lang={lang}
+                label={key}
+                onChange$={(next) => {
+                  if (!next) return;
+                  const updated = { ...kit.value! };
+                  updated.colors = { ...updated.colors, [key]: next };
+                  kit.value = updated;
+                }}
+              />
+              <span class="font-mono text-xs text-gray-500">{colors[key]}</span>
+            </div>
           </label>
         ))}
         <button type="button" class={ADMIN_PRIMARY_BUTTON_CLASS} disabled={saving.value} onClick$={onSave$}>

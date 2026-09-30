@@ -1,5 +1,6 @@
 import { component$, type QRL } from '@builder.io/qwik';
 import { translateApp } from '~/lib/i18n/useTranslate';
+import { ColorPickerField } from '~/components/admin/ColorPickerField';
 import { ADMIN_NATIVE_OPTION_CLASS, ADMIN_NATIVE_SELECT_COMPACT_CLASS } from '~/lib/admin/native-select-classes';
 
 const PRESETS = ['none', 'wave', 'tilt', 'curve', 'triangle', 'mountains'] as const;
@@ -66,12 +67,14 @@ export const BuilderShapeDividerFields = component$<{
               <div class="mt-2 grid grid-cols-2 gap-2">
                 <label class="text-[11px]">
                   {translateApp(props.lang, 'builder.background.color')}
-                  <input
-                    type="color"
-                    class="mt-1 h-8 w-full"
+                  <ColorPickerField
                     value={val.color || '#0389a1'}
-                    onInput$={async (e) => {
-                      await patch(edge, { ...val, color: (e.target as HTMLInputElement).value });
+                    alpha={false}
+                    lang={props.lang}
+                    class="mt-1 block h-8 w-full"
+                    label={translateApp(props.lang, 'builder.background.color')}
+                    onChange$={async (next) => {
+                      await patch(edge, { ...val, color: next || '#0389a1' });
                     }}
                   />
                 </label>

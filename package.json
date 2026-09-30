@@ -81,6 +81,7 @@
     "@qwik-ui/headless": "^0.7.4",
     "@qwik-ui/styled": "^0.4.1",
     "@qwikest/icons": "^0.0.13",
+    "@simonwep/pickr": "^1.10.2",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "lottie-web": "^5.13.0",
