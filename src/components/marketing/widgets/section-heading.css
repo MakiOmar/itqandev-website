@@ -1,0 +1,75 @@
+/*
+ * Section title and subtitle shared by widgets with Title / Subtitle Style groups (case studies,
+ * testimonials). `--s-title-*` / `--s-subtitle-*` come from the widget's Style tab, resolved per
+ * breakpoint (base = mobile, -md = tablet, -lg = desktop). Defaults match the former
+ * text-3xl sm:text-4xl font-bold tracking-tight / text-lg classes.
+ */
+.sh-title {
+  --sh-d-title: #0f172a;
+  color: var(--s-title-color, var(--sh-d-title));
+  font-size: var(--s-title-font-size, 1.875rem);
+  font-weight: var(--s-title-font-weight, 700);
+  line-height: var(--s-title-line-height, 1.2);
+  letter-spacing: var(--s-title-letter-spacing, -0.025em);
+  text-transform: var(--s-title-transform, none);
+}
+.sh-subtitle {
+  --sh-d-subtitle: #475569;
+  color: var(--s-subtitle-color, var(--sh-d-subtitle));
+  font-size: var(--s-subtitle-font-size, 1.125rem);
+  font-weight: var(--s-subtitle-font-weight, 400);
+  line-height: var(--s-subtitle-line-height, 1.556);
+  letter-spacing: var(--s-subtitle-letter-spacing, normal);
+  text-transform: var(--s-subtitle-transform, none);
+}
+:where(.dark, .dark *) .sh-title {
+  --sh-d-title: #ffffff;
+}
+:where(.dark, .dark *) .sh-subtitle {
+  --sh-d-subtitle: #94a3b8;
+}
+
+@media (min-width: 640px) {
+  .sh-title {
+    font-size: var(--s-title-font-size, 2.25rem);
+    line-height: var(--s-title-line-height, 1.11);
+  }
+}
+
+@media (min-width: 768px) {
+  .sh-title {
+    color: var(--s-title-color-md, var(--sh-d-title));
+    font-size: var(--s-title-font-size-md, 2.25rem);
+    font-weight: var(--s-title-font-weight-md, 700);
+    line-height: var(--s-title-line-height-md, 1.11);
+    letter-spacing: var(--s-title-letter-spacing-md, -0.025em);
+    text-transform: var(--s-title-transform-md, none);
+  }
+  .sh-subtitle {
+    color: var(--s-subtitle-color-md, var(--sh-d-subtitle));
+    font-size: var(--s-subtitle-font-size-md, 1.125rem);
+    font-weight: var(--s-subtitle-font-weight-md, 400);
+    line-height: var(--s-subtitle-line-height-md, 1.556);
+    letter-spacing: var(--s-subtitle-letter-spacing-md, normal);
+    text-transform: var(--s-subtitle-transform-md, none);
+  }
+}
+
+@media (min-width: 1024px) {
+  .sh-title {
+    color: var(--s-title-color-lg, var(--sh-d-title));
+    font-size: var(--s-title-font-size-lg, 2.25rem);
+    font-weight: var(--s-title-font-weight-lg, 700);
+    line-height: var(--s-title-line-height-lg, 1.11);
+    letter-spacing: var(--s-title-letter-spacing-lg, -0.025em);
+    text-transform: var(--s-title-transform-lg, none);
+  }
+  .sh-subtitle {
+    color: var(--s-subtitle-color-lg, var(--sh-d-subtitle));
+    font-size: var(--s-subtitle-font-size-lg, 1.125rem);
+    font-weight: var(--s-subtitle-font-weight-lg, 400);
+    line-height: var(--s-subtitle-line-height-lg, 1.556);
+    letter-spacing: var(--s-subtitle-letter-spacing-lg, normal);
+    text-transform: var(--s-subtitle-transform-lg, none);
+  }
+}

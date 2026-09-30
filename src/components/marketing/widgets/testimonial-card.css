@@ -1,0 +1,194 @@
+/*
+ * Testimonial card (TestimonialCard). `--s-card-*`, `--s-rating-*`, `--s-quote-*`, `--s-author-*`
+ * and `--s-avatar-*` come from the host widget's Style tab, resolved per breakpoint (base = mobile,
+ * -md = tablet, -lg = desktop). `--tc-d-*` are theme defaults (light / dark).
+ * Text sizes, weights and spacing without a default are left unset when not styled, so they
+ * inherit (e.g. from the widget's Typography group).
+ */
+.tc-root {
+  --tc-d-bg: rgb(255 255 255 / 0.75);
+  --tc-d-border: #e2e8f0;
+  --tc-d-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --tc-d-blur: blur(12px);
+  --tc-d-star: #fbbf24;
+  --tc-d-star-empty: #e2e8f0;
+  --tc-d-quote: #334155;
+  --tc-d-name: #0f172a;
+  --tc-d-divider: #e2e8f0;
+  --tc-d-meta: #64748b;
+  --tc-d-ring: #e2e8f0;
+
+  --tc-bg: var(--s-card-bg, var(--tc-d-bg));
+  --tc-border: var(--s-card-border-color, var(--tc-d-border));
+  --tc-hover-border: var(--s-card-hover-border-color, var(--tc-border));
+  --tc-bw: var(--s-card-border-width, 1px);
+  --tc-radius: var(--s-card-radius, 0.75rem);
+  --tc-pad: var(--s-card-padding, 1.5rem);
+  --tc-shadow: var(--s-card-shadow, var(--tc-d-shadow));
+  --tc-hover-shadow: var(--s-card-hover-shadow, var(--tc-shadow));
+  --tc-star: var(--s-rating-color, var(--tc-d-star));
+  --tc-star-empty: var(--s-rating-empty-color, var(--tc-d-star-empty));
+  --tc-star-size: var(--s-rating-size);
+  --tc-quote-size: var(--s-quote-font-size);
+  --tc-quote-weight: var(--s-quote-font-weight);
+  --tc-quote-lh: var(--s-quote-line-height);
+  --tc-quote-spacing: var(--s-quote-letter-spacing);
+  --tc-quote-style: var(--s-quote-font-style, normal);
+  --tc-quote-color: var(--s-quote-color, var(--tc-d-quote));
+  --tc-name-size: var(--s-author-name-font-size);
+  --tc-name-weight: var(--s-author-name-font-weight, 600);
+  --tc-name-transform: var(--s-author-name-transform, none);
+  --tc-name-spacing: var(--s-author-name-letter-spacing);
+  --tc-name-color: var(--s-author-name-color, var(--tc-d-name));
+  --tc-divider: var(--s-author-divider-color, var(--tc-d-divider));
+  --tc-meta-size: var(--s-author-meta-font-size, 0.875rem);
+  --tc-meta-weight: var(--s-author-meta-font-weight);
+  --tc-meta-color: var(--s-author-meta-color, var(--tc-d-meta));
+  --tc-avatar-size: var(--s-avatar-size, 2.5rem);
+  --tc-avatar-radius: var(--s-avatar-radius, 9999px);
+  --tc-ring-width: var(--s-avatar-ring-width, 2px);
+  --tc-ring-color: var(--s-avatar-ring-color, var(--tc-d-ring));
+}
+:where(.dark, .dark *) .tc-root {
+  --tc-d-bg: rgb(30 41 59 / 0.5);
+  --tc-d-border: #334155;
+  --tc-d-blur: none;
+  --tc-d-star-empty: #475569;
+  --tc-d-quote: #cbd5e1;
+  --tc-d-name: #ffffff;
+  --tc-d-divider: #475569;
+  --tc-d-meta: #94a3b8;
+  --tc-d-ring: #475569;
+}
+
+.tc-card {
+  padding: var(--tc-pad);
+  border: var(--tc-bw) solid var(--tc-border);
+  border-radius: var(--tc-radius);
+  background: var(--tc-bg);
+  box-shadow: var(--tc-shadow);
+  backdrop-filter: var(--tc-d-blur);
+  transition:
+    border-color 150ms,
+    box-shadow 150ms;
+}
+.tc-card:hover {
+  border-color: var(--tc-hover-border);
+  box-shadow: var(--tc-hover-shadow);
+}
+
+.tc-stars {
+  font-size: var(--tc-star-size);
+}
+.tc-star {
+  color: var(--tc-star-empty);
+}
+.tc-star[data-on] {
+  color: var(--tc-star);
+}
+
+.tc-quote {
+  color: var(--tc-quote-color);
+  font-size: var(--tc-quote-size);
+  font-weight: var(--tc-quote-weight);
+  font-style: var(--tc-quote-style);
+  line-height: var(--tc-quote-lh);
+  letter-spacing: var(--tc-quote-spacing);
+}
+
+.tc-card .tc-footer {
+  padding-top: 1rem;
+  border-top: 1px solid var(--tc-divider);
+}
+
+.tc-avatar {
+  width: var(--tc-avatar-size);
+  height: var(--tc-avatar-size);
+  border-radius: var(--tc-avatar-radius);
+  box-shadow: 0 0 0 var(--tc-ring-width) var(--tc-ring-color);
+}
+
+.tc-name {
+  color: var(--tc-name-color);
+  font-size: var(--tc-name-size);
+  font-weight: var(--tc-name-weight);
+  letter-spacing: var(--tc-name-spacing);
+  text-transform: var(--tc-name-transform);
+}
+
+.tc-meta {
+  color: var(--tc-meta-color);
+  font-size: var(--tc-meta-size);
+  font-weight: var(--tc-meta-weight);
+  line-height: 1.43;
+}
+
+@media (min-width: 768px) {
+  .tc-root {
+    --tc-bg: var(--s-card-bg-md, var(--tc-d-bg));
+    --tc-border: var(--s-card-border-color-md, var(--tc-d-border));
+    --tc-hover-border: var(--s-card-hover-border-color-md, var(--tc-border));
+    --tc-bw: var(--s-card-border-width-md, 1px);
+    --tc-radius: var(--s-card-radius-md, 0.75rem);
+    --tc-pad: var(--s-card-padding-md, 1.5rem);
+    --tc-shadow: var(--s-card-shadow-md, var(--tc-d-shadow));
+    --tc-hover-shadow: var(--s-card-hover-shadow-md, var(--tc-shadow));
+    --tc-star: var(--s-rating-color-md, var(--tc-d-star));
+    --tc-star-empty: var(--s-rating-empty-color-md, var(--tc-d-star-empty));
+    --tc-star-size: var(--s-rating-size-md);
+    --tc-quote-size: var(--s-quote-font-size-md);
+    --tc-quote-weight: var(--s-quote-font-weight-md);
+    --tc-quote-lh: var(--s-quote-line-height-md);
+    --tc-quote-spacing: var(--s-quote-letter-spacing-md);
+    --tc-quote-style: var(--s-quote-font-style-md, normal);
+    --tc-quote-color: var(--s-quote-color-md, var(--tc-d-quote));
+    --tc-name-size: var(--s-author-name-font-size-md);
+    --tc-name-weight: var(--s-author-name-font-weight-md, 600);
+    --tc-name-transform: var(--s-author-name-transform-md, none);
+    --tc-name-spacing: var(--s-author-name-letter-spacing-md);
+    --tc-name-color: var(--s-author-name-color-md, var(--tc-d-name));
+    --tc-divider: var(--s-author-divider-color-md, var(--tc-d-divider));
+    --tc-meta-size: var(--s-author-meta-font-size-md, 0.875rem);
+    --tc-meta-weight: var(--s-author-meta-font-weight-md);
+    --tc-meta-color: var(--s-author-meta-color-md, var(--tc-d-meta));
+    --tc-avatar-size: var(--s-avatar-size-md, 2.5rem);
+    --tc-avatar-radius: var(--s-avatar-radius-md, 9999px);
+    --tc-ring-width: var(--s-avatar-ring-width-md, 2px);
+    --tc-ring-color: var(--s-avatar-ring-color-md, var(--tc-d-ring));
+  }
+}
+
+@media (min-width: 1024px) {
+  .tc-root {
+    --tc-bg: var(--s-card-bg-lg, var(--tc-d-bg));
+    --tc-border: var(--s-card-border-color-lg, var(--tc-d-border));
+    --tc-hover-border: var(--s-card-hover-border-color-lg, var(--tc-border));
+    --tc-bw: var(--s-card-border-width-lg, 1px);
+    --tc-radius: var(--s-card-radius-lg, 0.75rem);
+    --tc-pad: var(--s-card-padding-lg, 1.5rem);
+    --tc-shadow: var(--s-card-shadow-lg, var(--tc-d-shadow));
+    --tc-hover-shadow: var(--s-card-hover-shadow-lg, var(--tc-shadow));
+    --tc-star: var(--s-rating-color-lg, var(--tc-d-star));
+    --tc-star-empty: var(--s-rating-empty-color-lg, var(--tc-d-star-empty));
+    --tc-star-size: var(--s-rating-size-lg);
+    --tc-quote-size: var(--s-quote-font-size-lg);
+    --tc-quote-weight: var(--s-quote-font-weight-lg);
+    --tc-quote-lh: var(--s-quote-line-height-lg);
+    --tc-quote-spacing: var(--s-quote-letter-spacing-lg);
+    --tc-quote-style: var(--s-quote-font-style-lg, normal);
+    --tc-quote-color: var(--s-quote-color-lg, var(--tc-d-quote));
+    --tc-name-size: var(--s-author-name-font-size-lg);
+    --tc-name-weight: var(--s-author-name-font-weight-lg, 600);
+    --tc-name-transform: var(--s-author-name-transform-lg, none);
+    --tc-name-spacing: var(--s-author-name-letter-spacing-lg);
+    --tc-name-color: var(--s-author-name-color-lg, var(--tc-d-name));
+    --tc-divider: var(--s-author-divider-color-lg, var(--tc-d-divider));
+    --tc-meta-size: var(--s-author-meta-font-size-lg, 0.875rem);
+    --tc-meta-weight: var(--s-author-meta-font-weight-lg);
+    --tc-meta-color: var(--s-author-meta-color-lg, var(--tc-d-meta));
+    --tc-avatar-size: var(--s-avatar-size-lg, 2.5rem);
+    --tc-avatar-radius: var(--s-avatar-radius-lg, 9999px);
+    --tc-ring-width: var(--s-avatar-ring-width-lg, 2px);
+    --tc-ring-color: var(--s-avatar-ring-color-lg, var(--tc-d-ring));
+  }
+}

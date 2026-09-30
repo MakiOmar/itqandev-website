@@ -129,6 +129,37 @@ const CASE_CARD_CONTROLS: StyleControl[] = [
   { key: 'card_chip_radius', group: 'card_chips', type: 'length', min: 0, max: 100 },
 ];
 
+const FONT_STYLE_OPTIONS = [
+  { value: 'normal', labelKey: 'builder.style.styleNormal' },
+  { value: 'italic', labelKey: 'builder.style.styleItalic' },
+];
+
+/** Testimonial card: stars, quote, author name / role, avatar. */
+const TESTIMONIAL_CONTROLS: StyleControl[] = [
+  { key: 'rating_color', group: 'rating', type: 'color' },
+  { key: 'rating_empty_color', group: 'rating', type: 'color' },
+  { key: 'rating_size', group: 'rating', type: 'length', min: 8, max: 48 },
+  { key: 'quote_font_size', group: 'quote', type: 'length', min: 8, max: 48 },
+  { key: 'quote_font_weight', group: 'quote', type: 'select', options: WEIGHT_OPTIONS },
+  { key: 'quote_line_height', group: 'quote', type: 'length', min: 0, max: 80 },
+  { key: 'quote_letter_spacing', group: 'quote', type: 'length', min: -5, max: 20 },
+  { key: 'quote_font_style', group: 'quote', type: 'select', options: FONT_STYLE_OPTIONS },
+  { key: 'quote_color', group: 'quote', type: 'color' },
+  { key: 'author_name_font_size', group: 'author_name', type: 'length', min: 8, max: 40 },
+  { key: 'author_name_font_weight', group: 'author_name', type: 'select', options: WEIGHT_OPTIONS },
+  { key: 'author_name_transform', group: 'author_name', type: 'select', options: TRANSFORM_OPTIONS },
+  { key: 'author_name_letter_spacing', group: 'author_name', type: 'length', min: -5, max: 20 },
+  { key: 'author_name_color', group: 'author_name', type: 'color' },
+  { key: 'author_divider_color', group: 'author_name', type: 'color' },
+  { key: 'author_meta_font_size', group: 'author_meta', type: 'length', min: 8, max: 32 },
+  { key: 'author_meta_font_weight', group: 'author_meta', type: 'select', options: WEIGHT_OPTIONS },
+  { key: 'author_meta_color', group: 'author_meta', type: 'color' },
+  { key: 'avatar_size', group: 'avatar', type: 'length', min: 16, max: 160 },
+  { key: 'avatar_radius', group: 'avatar', type: 'length', min: 0, max: 100 },
+  { key: 'avatar_ring_width', group: 'avatar', type: 'length', min: 0, max: 12 },
+  { key: 'avatar_ring_color', group: 'avatar', type: 'color' },
+];
+
 /** Full button styling for a button part. The card button spans the card, so it has no min width. */
 function buttonControls(part: ButtonPart): StyleControl[] {
   const controls: StyleControl[] = [
@@ -364,6 +395,7 @@ export const STYLE_CONTROLS: StyleControl[] = [
   { key: 'link_hover_color', group: 'link', type: 'color' },
   ...CASE_CARD_CONTROLS,
   ...buttonControls('btn_card'),
+  ...TESTIMONIAL_CONTROLS,
   { key: 'custom_css', group: 'custom', type: 'textarea' },
 ];
 

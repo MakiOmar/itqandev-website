@@ -1,4 +1,5 @@
-import { component$ } from '@builder.io/qwik';
+import { component$, useStyles$ } from '@builder.io/qwik';
+import sectionHeadingStyles from '~/components/marketing/widgets/section-heading.css?inline';
 import type { Testimonial } from '../../lib/marketing/types';
 import { carouselItemBasisClassNames } from '../../lib/marketing/grid-columns';
 import { Container } from './Container';
@@ -25,6 +26,7 @@ const CAROUSEL_SLIDE_CLASS = `${carouselItemBasisClassNames({ mobile: 1, tablet:
 
 export const TestimonialGrid = component$<TestimonialGridProps>(
   ({ testimonials, title = 'What our clients say', subtitle, carousel }) => {
+    useStyles$(sectionHeadingStyles);
     if (!testimonials.length) return null;
 
     const items = (itemClass?: string) =>
@@ -38,12 +40,10 @@ export const TestimonialGrid = component$<TestimonialGridProps>(
       <section class="py-16 sm:py-20 lg:py-24" aria-labelledby="testimonials-heading">
         <Container>
           <div class="mx-auto max-w-2xl text-center">
-            <h2 id="testimonials-heading" class="text-3xl font-bold tracking-tight text-slate-900 dark:text-white sm:text-4xl">
+            <h2 id="testimonials-heading" class="sh-title">
               {title}
             </h2>
-            {subtitle && (
-              <p class="mt-2 text-lg text-slate-600 dark:text-slate-400">{subtitle}</p>
-            )}
+            {subtitle && <p class="sh-subtitle mt-2">{subtitle}</p>}
           </div>
           {carousel ? (
             <div class="mx-auto mt-12 max-w-5xl">

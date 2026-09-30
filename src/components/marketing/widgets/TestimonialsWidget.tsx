@@ -1,4 +1,5 @@
-import { component$ } from '@builder.io/qwik';
+import { component$, useStyles$ } from '@builder.io/qwik';
+import sectionHeadingStyles from './section-heading.css?inline';
 import type { Testimonial } from '~/lib/marketing/types';
 import { TestimonialCard } from '~/components/marketing/TestimonialCard';
 import { carouselItemBasisClassNames, gridColumnClassNames } from '~/lib/marketing/grid-columns';
@@ -17,6 +18,7 @@ export type TestimonialsWidgetProps = {
 
 /** `testimonial_list` page-builder widget: approved testimonials for the page locale as grid or carousel. */
 export const TestimonialsWidget = component$<TestimonialsWidgetProps>((props) => {
+  useStyles$(sectionHeadingStyles);
   const opts = testimonialListOptions(props.settings);
   const items = props.testimonials.slice(0, opts.limit);
   if (items.length === 0 && !props.editorPreview) return null;
@@ -41,10 +43,10 @@ export const TestimonialsWidget = component$<TestimonialsWidgetProps>((props) =>
       {opts.title || opts.subtitle ? (
         <div class="mx-auto mb-10 max-w-2xl text-center">
           {opts.title ? (
-            <h2 class="text-3xl font-bold tracking-tight text-slate-900 dark:text-white sm:text-4xl">{opts.title}</h2>
+            <h2 class="sh-title">{opts.title}</h2>
           ) : null}
           {opts.subtitle ? (
-            <p class="mt-2 text-lg text-slate-600 dark:text-slate-400">{opts.subtitle}</p>
+            <p class="sh-subtitle mt-2">{opts.subtitle}</p>
           ) : null}
         </div>
       ) : null}

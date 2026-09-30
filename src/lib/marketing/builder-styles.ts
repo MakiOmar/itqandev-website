@@ -58,6 +58,11 @@ export const STYLE_GROUP_ORDER = [
   'card_summary',
   'card_chips',
   'btn_card',
+  'rating',
+  'quote',
+  'author_name',
+  'author_meta',
+  'avatar',
   'custom',
 ] as const;
 
@@ -92,11 +97,17 @@ export const WIDGET_STYLE_GROUPS: Record<string, readonly StyleGroupId[]> = {
     'layout', 'spacing', 'border', 'custom',
   ],
   services_teaser: ['layout', 'spacing', 'border', 'custom'],
-  testimonials: ['layout', 'spacing', 'border', 'custom'],
+  testimonials: [
+    'title', 'subtitle', 'card_box', 'rating', 'quote', 'author_name', 'author_meta', 'avatar', 'nav_buttons',
+    'layout', 'spacing', 'border', 'custom',
+  ],
   blog_preview: ['layout', 'spacing', 'border', 'custom'],
   projects_list: ['layout', 'spacing', 'border', 'custom'],
   loop_grid: ['layout', 'spacing', 'border', 'custom'],
-  testimonial_list: ['typography', 'layout', 'spacing', 'border', 'custom'],
+  testimonial_list: [
+    'typography', 'title', 'subtitle', 'card_box', 'rating', 'quote', 'author_name', 'author_meta', 'avatar',
+    'nav_buttons', 'layout', 'spacing', 'border', 'custom',
+  ],
   form: ['typography', 'layout', 'spacing', 'border', 'custom'],
 };
 
@@ -222,6 +233,22 @@ export const CASE_CARD_STYLE_KEYS = {
   card_chip_bg: 'color', card_chip_border_color: 'color', card_chip_radius: 'length',
 } as const satisfies Record<string, 'color' | 'string' | 'length' | 'shadow'>;
 
+/** Testimonial card parts (stars, quote, author, avatar); the card box reuses the `card_*` keys above. */
+export const TESTIMONIAL_STYLE_KEYS = {
+  rating_color: 'color', rating_empty_color: 'color', rating_size: 'length',
+  quote_font_size: 'length', quote_font_weight: 'string', quote_line_height: 'length',
+  quote_letter_spacing: 'length', quote_font_style: 'string', quote_color: 'color',
+  author_name_font_size: 'length', author_name_font_weight: 'string', author_name_transform: 'string',
+  author_name_letter_spacing: 'length', author_name_color: 'color', author_divider_color: 'color',
+  author_meta_font_size: 'length', author_meta_font_weight: 'string', author_meta_color: 'color',
+  avatar_size: 'length', avatar_radius: 'length', avatar_ring_width: 'length', avatar_ring_color: 'color',
+} as const satisfies Record<string, 'color' | 'string' | 'length' | 'shadow'>;
+
+const PART_STYLE_KEYS: Record<string, 'color' | 'string' | 'length' | 'shadow'> = {
+  ...CASE_CARD_STYLE_KEYS,
+  ...TESTIMONIAL_STYLE_KEYS,
+};
+
 /** Button parts (`btn_primary_*`, `btn_secondary_*`, `btn_card_*`): hero CTAs and the case study card button. */
 export const BUTTON_PARTS = ['btn_primary', 'btn_secondary', 'btn_card'] as const;
 export type ButtonPart = (typeof BUTTON_PARTS)[number];
@@ -299,7 +326,7 @@ function emitBagVars(bag: StyleBag, suffix: '' | '-md' | '-lg', out: Record<stri
   set('text-decoration', typeof bag.text_decoration === 'string' ? bag.text_decoration : null);
   for (const key of WIDGET_PART_STRING_KEYS) set(key, typeof bag[key] === 'string' ? (bag[key] as string) : null);
   for (const key of WIDGET_PART_LENGTH_KEYS) set(key, lengthToCss(bag[key]));
-  for (const [key, kind] of Object.entries(CASE_CARD_STYLE_KEYS)) {
+  for (const [key, kind] of Object.entries(PART_STYLE_KEYS)) {
     const v = bag[key];
     if (kind === 'length') set(key, lengthToCss(v));
     else if (kind === 'shadow') set(key, shadowToCss(v));

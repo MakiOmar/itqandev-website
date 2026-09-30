@@ -23,6 +23,7 @@ import { gridColumnClassNames, normalizeResponsiveColumns } from '~/lib/marketin
 import { translateApp } from '~/lib/i18n/useTranslate';
 import './hero-floating-icons.css';
 import caseStudiesStyles from '~/components/marketing/widgets/case-studies.css?inline';
+import sectionHeadingStyles from '~/components/marketing/widgets/section-heading.css?inline';
 import heroButtonStyles from '~/components/marketing/widgets/hero-buttons.css?inline';
 
 function settingString(settings: Record<string, unknown> | undefined, key: string, fallback: string): string {
@@ -387,6 +388,7 @@ export const CaseStudiesHomeSection = component$<
   const gridClass = gridColumnClassNames(columns);
   const activeTab = useSignal<'all' | string>('all');
   useStyles$(caseStudiesStyles);
+  useStyles$(sectionHeadingStyles);
 
   if (caseStudies.length === 0) return null;
 
@@ -428,8 +430,8 @@ export const CaseStudiesHomeSection = component$<
         <AnimatedReveal>
           <div class="flex items-end justify-between gap-4">
             <div class="min-w-0 text-start">
-              <h2 class="cs-title">{title}</h2>
-              <p class="cs-subtitle mt-2">{subtitle}</p>
+              <h2 class="sh-title">{title}</h2>
+              <p class="sh-subtitle mt-2">{subtitle}</p>
             </div>
             <Link
               href={routes.portfolio}

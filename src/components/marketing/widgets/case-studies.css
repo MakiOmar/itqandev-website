@@ -1,10 +1,8 @@
 /*
- * Case studies section title, subtitle and "View portfolio" link. `--s-title-*`, `--s-subtitle-*`
- * and `--s-link-*` come from the widget's Style tab, resolved per breakpoint (base = mobile, -md, -lg).
+ * Case studies "View portfolio" link. `--s-link-*` come from the widget's Style tab, resolved per
+ * breakpoint (base = mobile, -md, -lg). Title and subtitle use section-heading.css.
  */
 .cs-root {
-  --cs-d-title: #0f172a;
-  --cs-d-subtitle: #475569;
   --cs-d-link: #0284c7;
   --cs-d-link-hover: #0369a1;
 
@@ -16,35 +14,8 @@
   --cs-link-hover: var(--s-link-hover-color, var(--cs-d-link-hover));
 }
 :where(.dark, .dark *) .cs-root {
-  --cs-d-title: #ffffff;
-  --cs-d-subtitle: #94a3b8;
   --cs-d-link: #38bdf8;
   --cs-d-link-hover: #7dd3fc;
-}
-
-/* Defaults match the former text-3xl sm:text-4xl font-bold tracking-tight / text-lg classes. */
-.cs-title {
-  color: var(--s-title-color, var(--cs-d-title));
-  font-size: var(--s-title-font-size, 1.875rem);
-  font-weight: var(--s-title-font-weight, 700);
-  line-height: var(--s-title-line-height, 1.2);
-  letter-spacing: var(--s-title-letter-spacing, -0.025em);
-  text-transform: var(--s-title-transform, none);
-}
-.cs-subtitle {
-  color: var(--s-subtitle-color, var(--cs-d-subtitle));
-  font-size: var(--s-subtitle-font-size, 1.125rem);
-  font-weight: var(--s-subtitle-font-weight, 400);
-  line-height: var(--s-subtitle-line-height, 1.556);
-  letter-spacing: var(--s-subtitle-letter-spacing, normal);
-  text-transform: var(--s-subtitle-transform, none);
-}
-
-@media (min-width: 640px) {
-  .cs-title {
-    font-size: var(--s-title-font-size, 2.25rem);
-    line-height: var(--s-title-line-height, 1.11);
-  }
 }
 
 .cs-link {
@@ -78,22 +49,6 @@
     --cs-link-color: var(--s-link-color-md, var(--cs-d-link));
     --cs-link-hover: var(--s-link-hover-color-md, var(--cs-d-link-hover));
   }
-  .cs-title {
-    color: var(--s-title-color-md, var(--cs-d-title));
-    font-size: var(--s-title-font-size-md, 2.25rem);
-    font-weight: var(--s-title-font-weight-md, 700);
-    line-height: var(--s-title-line-height-md, 1.11);
-    letter-spacing: var(--s-title-letter-spacing-md, -0.025em);
-    text-transform: var(--s-title-transform-md, none);
-  }
-  .cs-subtitle {
-    color: var(--s-subtitle-color-md, var(--cs-d-subtitle));
-    font-size: var(--s-subtitle-font-size-md, 1.125rem);
-    font-weight: var(--s-subtitle-font-weight-md, 400);
-    line-height: var(--s-subtitle-line-height-md, 1.556);
-    letter-spacing: var(--s-subtitle-letter-spacing-md, normal);
-    text-transform: var(--s-subtitle-transform-md, none);
-  }
 }
 
 @media (min-width: 1024px) {
@@ -104,21 +59,5 @@
     --cs-link-spacing: var(--s-link-letter-spacing-lg, normal);
     --cs-link-color: var(--s-link-color-lg, var(--cs-d-link));
     --cs-link-hover: var(--s-link-hover-color-lg, var(--cs-d-link-hover));
-  }
-  .cs-title {
-    color: var(--s-title-color-lg, var(--cs-d-title));
-    font-size: var(--s-title-font-size-lg, 2.25rem);
-    font-weight: var(--s-title-font-weight-lg, 700);
-    line-height: var(--s-title-line-height-lg, 1.11);
-    letter-spacing: var(--s-title-letter-spacing-lg, -0.025em);
-    text-transform: var(--s-title-transform-lg, none);
-  }
-  .cs-subtitle {
-    color: var(--s-subtitle-color-lg, var(--cs-d-subtitle));
-    font-size: var(--s-subtitle-font-size-lg, 1.125rem);
-    font-weight: var(--s-subtitle-font-weight-lg, 400);
-    line-height: var(--s-subtitle-line-height-lg, 1.556);
-    letter-spacing: var(--s-subtitle-letter-spacing-lg, normal);
-    text-transform: var(--s-subtitle-transform-lg, none);
   }
 }

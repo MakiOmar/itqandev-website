@@ -1,4 +1,5 @@
-import { component$, useSignal, useVisibleTask$, $, Slot } from '@builder.io/qwik';
+import { component$, useSignal, useVisibleTask$, useStyles$, $, Slot } from '@builder.io/qwik';
+import navStyles from './category-tabs.css?inline';
 import { isUiLocaleRtl } from '~/lib/i18n/ui-locale-segments';
 import { translateApp } from '~/lib/i18n/useTranslate';
 import type { CarouselArrowsPosition } from './testimonial-list-options';
@@ -22,7 +23,6 @@ function arrowsJustifyClass(align: 'left' | 'center' | 'right' | 'between', rtl:
 function ChevronIcon({ pointsLeft }: { pointsLeft: boolean }) {
   return (
     <svg
-      class="h-4 w-4"
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
@@ -36,14 +36,13 @@ function ChevronIcon({ pointsLeft }: { pointsLeft: boolean }) {
   );
 }
 
-const CHEVRON_BTN =
-  'inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 shadow-sm transition hover:bg-slate-50 disabled:pointer-events-none disabled:opacity-30 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700';
-
 /**
+ * Prev/next buttons reuse `.ct-nav` from category-tabs.css (Style tab → Navigation buttons).
  * Scroll-snap track for testimonial slides (slides are the slotted `<li>` children).
  * Autoplay pauses on hover/focus and is skipped for `prefers-reduced-motion`.
  */
 export const TestimonialsCarousel = component$<TestimonialsCarouselProps>((props) => {
+  useStyles$(navStyles);
   const trackRef = useSignal<HTMLUListElement>();
   const canPrev = useSignal(false);
   const canNext = useSignal(false);
@@ -113,7 +112,7 @@ export const TestimonialsCarousel = component$<TestimonialsCarouselProps>((props
   const prevBtn = (
     <button
       type="button"
-      class={CHEVRON_BTN}
+      class="ct-nav"
       aria-label={translateApp(props.uiLocale, 'testimonials.carouselPrev')}
       disabled={!canPrev.value}
       onClick$={() => step(-1)}
@@ -125,7 +124,7 @@ export const TestimonialsCarousel = component$<TestimonialsCarouselProps>((props
   const nextBtn = (
     <button
       type="button"
-      class={CHEVRON_BTN}
+      class="ct-nav"
       aria-label={translateApp(props.uiLocale, 'testimonials.carouselNext')}
       disabled={!canNext.value}
       onClick$={() => step(1)}
@@ -146,7 +145,7 @@ export const TestimonialsCarousel = component$<TestimonialsCarouselProps>((props
 
   if (props.arrowsPosition === 'sides') {
     return (
-      <div class="flex items-center gap-2" data-testimonials-carousel>
+      <div class="ct-root flex items-center gap-2" data-testimonials-carousel>
         {prevBtn}
         {track}
         {nextBtn}
@@ -164,7 +163,7 @@ export const TestimonialsCarousel = component$<TestimonialsCarouselProps>((props
   );
 
   return (
-    <div class="flex flex-col gap-4" data-testimonials-carousel>
+    <div class="ct-root flex flex-col gap-4" data-testimonials-carousel>
       {edge === 'top' ? nav : null}
       {track}
       {edge === 'bottom' ? nav : null}
