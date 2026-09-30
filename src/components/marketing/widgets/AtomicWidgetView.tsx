@@ -2,6 +2,7 @@ import { component$ } from '@builder.io/qwik';
 import { Button } from '~/components/marketing/Button';
 import { MarketingImageLightbox } from '~/components/marketing/MarketingImageLightbox';
 import { LottiePlayer } from '~/components/marketing/widgets/LottiePlayer';
+import { TrustBadgesWidget } from '~/components/marketing/widgets/TrustBadgesWidget';
 import { SvgIcon } from '~/components/marketing/SvgIcon';
 
 export type AtomicWidgetProps = {
@@ -373,6 +374,8 @@ export const AtomicWidgetView = component$<AtomicWidgetProps>((props) => {
           </div>
         </div>
       );
+    case 'trust_badges':
+      return <TrustBadgesWidget settings={s} />;
     case 'post_title':
       return <h1 class="text-3xl font-bold text-slate-900 dark:text-white">{str(s, 'text') || str(s, 'fallback', 'Title')}</h1>;
     case 'post_excerpt':

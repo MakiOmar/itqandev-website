@@ -70,6 +70,7 @@ export const WIDGET_STYLE_GROUPS: Record<string, readonly StyleGroupId[]> = {
   gallery: ['layout', 'spacing', 'image', 'border', 'hover', 'caption', 'custom'],
   lottie: ['layout', 'spacing', 'border', 'custom'],
   flip_box: ['typography', 'layout', 'spacing', 'border', 'hover', 'custom'],
+  trust_badges: ['typography', 'spacing', 'border', 'custom'],
   button: ['typography', 'layout', 'spacing', 'border', 'hover', 'custom'],
   case_studies: ['layout', 'spacing', 'border', 'custom'],
   services_teaser: ['layout', 'spacing', 'border', 'custom'],

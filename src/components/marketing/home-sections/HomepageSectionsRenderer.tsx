@@ -70,6 +70,7 @@ const WIDGET_TYPES = new Set([
   'social_links',
   'lottie',
   'flip_box',
+  'trust_badges',
   'post_title',
   'post_excerpt',
   'post_content',

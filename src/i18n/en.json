@@ -959,7 +959,8 @@
       "blog_preview": "Blog preview",
       "cta": "Call to action",
       "form": "Form",
-      "testimonial_list": "Testimonials"
+      "testimonial_list": "Testimonials",
+      "trust_badges": "Trust badges"
     },
     "fields": {
       "headline": "Headline",
@@ -997,7 +998,16 @@
       "autoplay": "Autoplay (carousel)",
       "autoplay_seconds": "Autoplay interval (seconds)",
       "arrows_position": "Arrows position (carousel)",
-      "carousel": "Carousel"
+      "carousel": "Carousel",
+      "badges": "Badges",
+      "icon_position": "Icon position",
+      "icon_size": "Icon size (px)",
+      "mobile_layout": "Mobile layout",
+      "tablet_layout": "Tablet layout",
+      "show_dividers": "Show dividers",
+      "divider_color": "Divider color",
+      "divider_height": "Divider height (px)",
+      "divider_style": "Divider style"
     },
     "categoryMultiHint": "Check categories to show as filter tabs/sidebar. Leave all unchecked to show every category with published projects.",
     "categoriesLoading": "Loading categories…",
@@ -1031,7 +1041,7 @@
     "iconPicker": {
       "title": "Icon library",
       "choose": "Icon library",
-      "upload": "Upload SVG",
+      "upload": "Upload icon",
       "remove": "Remove",
       "none": "No icon",
       "search": "Search icons…",
@@ -1044,7 +1054,10 @@
     },
     "editingLocaleCopy": "Editing {{locale}} copy. Empty fields fall back to the default language.",
     "singleLanguageHint": "Only one content language is configured.",
-    "addLanguageLink": "Add another in Settings → Languages"
+    "addLanguageLink": "Add another in Settings → Languages",
+    "sharedRepeaterHint": "Icons and order are shared across languages. Enter the {{locale}} text; empty fields fall back to the default language.",
+    "sharedRepeaterEmpty": "No items yet. Add them in the default language.",
+    "sharedRepeaterSaveFirst": "Save the layout first to translate this new item."
   },
   "header": {
     "logout": "Logout",

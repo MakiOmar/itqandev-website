@@ -7,9 +7,12 @@ import { HeroFloatingIconsEditor } from './HeroFloatingIconsEditor';
 import { IconPickerField } from './IconPickerField';
 import {
   isAppearanceFieldTranslatable,
+  isSharedRepeaterField,
+  newRepeaterRowId,
   readAppearanceSettingValue,
   writeAppearanceSettingValue,
 } from '~/lib/admin/appearance-locale-settings';
+import { SharedRepeaterTranslationsEditor } from './SharedRepeaterTranslationsEditor';
 import {
   appearanceMediaId,
   appearanceMediaPreviewSrc,
@@ -339,6 +342,20 @@ const AppearanceSettingFieldControl = component$<FieldControlProps>((props) => {
   }
 
   if (field.type === 'repeater') {
+    const sharedRows = isSharedRepeaterField(field);
+    if (sharedRows && props.activeLocale.toLowerCase() !== props.defaultLocale.toLowerCase()) {
+      return (
+        <SharedRepeaterTranslationsEditor
+          field={field}
+          label={label}
+          values={props.values}
+          activeLocale={props.activeLocale}
+          defaultLocale={props.defaultLocale}
+          lang={props.lang}
+          onSettingsChange$={props.onSettingsChange$}
+        />
+      );
+    }
     const rows = Array.isArray(raw) ? (raw as Record<string, unknown>[]) : [];
     const itemFields = field.item_fields ?? [];
     return (
@@ -349,7 +366,7 @@ const AppearanceSettingFieldControl = component$<FieldControlProps>((props) => {
             type="button"
             class="rounded border border-gray-300 px-2 py-1 text-xs hover:bg-gray-50 dark:border-gray-600 dark:hover:bg-slate-800"
             onClick$={async () => {
-              const blank: Record<string, unknown> = {};
+              const blank: Record<string, unknown> = sharedRows ? { id: newRepeaterRowId() } : {};
               for (const f of itemFields) blank[f.key] = f.type === 'boolean' ? false : f.type === 'number' ? 0 : f.type === 'repeater' ? [] : '';
               await props.onSettingsChange$(
                 writeAppearanceSettingValue(
@@ -420,6 +437,29 @@ const AppearanceSettingFieldControl = component$<FieldControlProps>((props) => {
                         }}
                       />
                     </div>
+                  );
+                }
+                if (sub.type === 'icon') {
+                  return (
+                    <IconPickerField
+                      key={sub.key}
+                      label={sub.label}
+                      value={subVal}
+                      lang={props.lang}
+                      onChange$={async (next) => {
+                        const copy = rows.map((r, i) => (i === rowIndex ? { ...r, [sub.key]: next } : r));
+                        await props.onSettingsChange$(
+                          writeAppearanceSettingValue(
+                            props.values,
+                            field.key,
+                            copy,
+                            props.activeLocale,
+                            props.defaultLocale,
+                            translatable,
+                          ),
+                        );
+                      }}
+                    />
                   );
                 }
                 if (sub.type === 'media') {

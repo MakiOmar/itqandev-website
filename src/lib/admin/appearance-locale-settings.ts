@@ -13,6 +13,48 @@ export function isAppearanceFieldTranslatable(field: AppearanceSettingField): bo
   );
 }
 
+/**
+ * Shared repeater: rows are the same in every language; only item fields marked `translatable: true`
+ * are translated, stored as `translations.{loc}.{key}.{rowId}.{itemKey}` (backend SharedRepeaterTranslations).
+ */
+export function isSharedRepeaterField(field: AppearanceSettingField): boolean {
+  return (
+    field.type === 'repeater' &&
+    field.translatable === false &&
+    (field.item_fields ?? []).some((f) => f.translatable === true)
+  );
+}
+
+export function newRepeaterRowId(): string {
+  return `itm_${Math.random().toString(36).slice(2, 10)}`;
+}
+
+export type SharedRepeaterBag = Record<string, Record<string, string>>;
+
+export function readSharedRepeaterBag(
+  settings: Record<string, unknown>,
+  key: string,
+  locale: string,
+  defaultLocale: string,
+): SharedRepeaterBag {
+  const raw = readAppearanceSettingValue(settings, key, locale, defaultLocale, true);
+  return raw && typeof raw === 'object' && !Array.isArray(raw) ? (raw as SharedRepeaterBag) : {};
+}
+
+export function writeSharedRepeaterText(
+  settings: Record<string, unknown>,
+  key: string,
+  rowId: string,
+  itemKey: string,
+  value: string,
+  locale: string,
+  defaultLocale: string,
+): Record<string, unknown> {
+  const bag = readSharedRepeaterBag(settings, key, locale, defaultLocale);
+  const row = { ...(bag[rowId] ?? {}), [itemKey]: value };
+  return writeAppearanceSettingValue(settings, key, { ...bag, [rowId]: row }, locale, defaultLocale, true);
+}
+
 export function readAppearanceSettingValue(
   settings: Record<string, unknown>,
   key: string,

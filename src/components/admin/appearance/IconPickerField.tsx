@@ -169,11 +169,11 @@ export const IconPickerField = component$<IconPickerFieldProps>((props) => {
         </div>
       ) : null}
 
-      {/* Upload SVG: media library restricted to SVG */}
+      {/* Upload icon: media library restricted to images (SVG, WebP, PNG, …) */}
       {uploadOpen.value ? (
         <MediaSelector
           title={t('upload')}
-          accept="image/svg+xml"
+          accept="image/*"
           onSelect={$(async (media: Media) => {
             uploadOpen.value = false;
             const url = media.url || '';
