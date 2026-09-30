@@ -1,0 +1,325 @@
+/*
+ * Detailed case study card. `--s-card-*` and `--s-btn-card-*` come from the case studies widget's
+ * Style tab, resolved per breakpoint (base = mobile, -md = tablet, -lg = desktop). `--csd-d-*` are
+ * theme defaults (light / dark). Tiers only remap variables; element rules below read `--csd-*`.
+ */
+.csd-card {
+  --csd-d-bg: #ffffff;
+  --csd-d-border: #e2e8f0;
+  --csd-d-hover-border: #a5b4fc;
+  --csd-d-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --csd-d-hover-shadow: 0 20px 25px -5px rgb(99 102 241 / 0.1), 0 8px 10px -6px rgb(99 102 241 / 0.1);
+  --csd-d-cat: #e11d48;
+  --csd-d-cat-bg: #fff1f2;
+  --csd-d-title: #4338ca;
+  --csd-d-summary: #475569;
+  --csd-d-chip: #475569;
+  --csd-d-chip-bg: #f8fafc;
+  --csd-d-chip-border: #e2e8f0;
+  --csd-d-btn: #4338ca;
+  --csd-d-btn-bg: #eef2ff;
+}
+:where(.dark, .dark *) .csd-card {
+  --csd-d-bg: #0f172a;
+  --csd-d-border: rgb(51 65 85 / 0.7);
+  --csd-d-hover-border: rgb(99 102 241 / 0.5);
+  --csd-d-shadow: 0 1px 2px 0 rgb(30 27 75 / 0.3);
+  --csd-d-hover-shadow: 0 20px 25px -5px rgb(99 102 241 / 0.2), 0 8px 10px -6px rgb(99 102 241 / 0.2);
+  --csd-d-cat: #fda4af;
+  --csd-d-cat-bg: rgb(244 63 94 / 0.15);
+  --csd-d-title: #a5b4fc;
+  --csd-d-summary: #94a3b8;
+  --csd-d-chip: #cbd5e1;
+  --csd-d-chip-bg: #1e293b;
+  --csd-d-chip-border: #334155;
+  --csd-d-btn: #c7d2fe;
+  --csd-d-btn-bg: rgb(30 27 75 / 0.6);
+}
+
+.csd-card {
+  --csd-bg: var(--s-card-bg, var(--csd-d-bg));
+  --csd-border: var(--s-card-border-color, var(--csd-d-border));
+  --csd-hover-border: var(--s-card-hover-border-color, var(--csd-d-hover-border));
+  --csd-bw: var(--s-card-border-width, 1px);
+  --csd-radius: var(--s-card-radius, 1.5rem);
+  --csd-pad: var(--s-card-padding, 1.25rem);
+  --csd-shadow: var(--s-card-shadow, var(--csd-d-shadow));
+  --csd-hover-shadow: var(--s-card-hover-shadow, var(--csd-d-hover-shadow));
+  --csd-cat-size: var(--s-card-cat-font-size, 0.75rem);
+  --csd-cat-weight: var(--s-card-cat-font-weight, 600);
+  --csd-cat-transform: var(--s-card-cat-transform, none);
+  --csd-cat-spacing: var(--s-card-cat-letter-spacing, normal);
+  --csd-cat-color: var(--s-card-cat-color, var(--csd-d-cat));
+  --csd-cat-bg: var(--s-card-cat-bg, var(--csd-d-cat-bg));
+  --csd-cat-radius: var(--s-card-cat-radius, 9999px);
+  --csd-title-size: var(--s-card-title-font-size, 1.25rem);
+  --csd-title-weight: var(--s-card-title-font-weight, 700);
+  --csd-title-lh: var(--s-card-title-line-height, 1.4);
+  --csd-title-spacing: var(--s-card-title-letter-spacing, -0.025em);
+  --csd-title-transform: var(--s-card-title-transform, none);
+  --csd-title-color: var(--s-card-title-color, var(--csd-d-title));
+  --csd-title-hover: var(--s-card-title-hover-color, var(--csd-title-color));
+  --csd-summary-size: var(--s-card-summary-font-size, 0.875rem);
+  --csd-summary-weight: var(--s-card-summary-font-weight, 400);
+  --csd-summary-lh: var(--s-card-summary-line-height, 1.43);
+  --csd-summary-color: var(--s-card-summary-color, var(--csd-d-summary));
+  --csd-chip-size: var(--s-card-chip-font-size, 0.75rem);
+  --csd-chip-weight: var(--s-card-chip-font-weight, 500);
+  --csd-chip-color: var(--s-card-chip-color, var(--csd-d-chip));
+  --csd-chip-bg: var(--s-card-chip-bg, var(--csd-d-chip-bg));
+  --csd-chip-border: var(--s-card-chip-border-color, var(--csd-d-chip-border));
+  --csd-chip-radius: var(--s-card-chip-radius, 0.375rem);
+  --csd-btn-color: var(--s-btn-card-color, var(--csd-d-btn));
+  --csd-btn-bg: var(--s-btn-card-bg, var(--csd-d-btn-bg));
+  --csd-btn-border: var(--s-btn-card-border-color, transparent);
+  --csd-btn-hover-color: var(--s-btn-card-hover-color, #ffffff);
+  --csd-btn-hover-bg: var(--s-btn-card-hover-bg, #4f46e5);
+  --csd-btn-hover-border: var(--s-btn-card-hover-border-color, var(--csd-btn-border));
+  --csd-btn-bw: var(--s-btn-card-border-width, 1px);
+  --csd-btn-radius: var(--s-btn-card-radius, 0.75rem);
+  --csd-btn-py: var(--s-btn-card-padding-y, 0.75rem);
+  --csd-btn-px: var(--s-btn-card-padding-x, 1rem);
+  --csd-btn-size: var(--s-btn-card-font-size, 0.875rem);
+  --csd-btn-weight: var(--s-btn-card-font-weight, 600);
+  --csd-btn-transform: var(--s-btn-card-transform, none);
+  --csd-btn-spacing: var(--s-btn-card-letter-spacing, normal);
+  --csd-btn-shadow: var(--s-btn-card-shadow, none);
+  --csd-btn-hover-shadow: var(--s-btn-card-hover-shadow, var(--csd-btn-shadow));
+}
+
+@media (min-width: 768px) {
+  .csd-card {
+    --csd-bg: var(--s-card-bg-md, var(--csd-d-bg));
+    --csd-border: var(--s-card-border-color-md, var(--csd-d-border));
+    --csd-hover-border: var(--s-card-hover-border-color-md, var(--csd-d-hover-border));
+    --csd-bw: var(--s-card-border-width-md, 1px);
+    --csd-radius: var(--s-card-radius-md, 1.5rem);
+    --csd-pad: var(--s-card-padding-md, 1.5rem);
+    --csd-shadow: var(--s-card-shadow-md, var(--csd-d-shadow));
+    --csd-hover-shadow: var(--s-card-hover-shadow-md, var(--csd-d-hover-shadow));
+    --csd-cat-size: var(--s-card-cat-font-size-md, 0.75rem);
+    --csd-cat-weight: var(--s-card-cat-font-weight-md, 600);
+    --csd-cat-transform: var(--s-card-cat-transform-md, none);
+    --csd-cat-spacing: var(--s-card-cat-letter-spacing-md, normal);
+    --csd-cat-color: var(--s-card-cat-color-md, var(--csd-d-cat));
+    --csd-cat-bg: var(--s-card-cat-bg-md, var(--csd-d-cat-bg));
+    --csd-cat-radius: var(--s-card-cat-radius-md, 9999px);
+    --csd-title-size: var(--s-card-title-font-size-md, 1.25rem);
+    --csd-title-weight: var(--s-card-title-font-weight-md, 700);
+    --csd-title-lh: var(--s-card-title-line-height-md, 1.4);
+    --csd-title-spacing: var(--s-card-title-letter-spacing-md, -0.025em);
+    --csd-title-transform: var(--s-card-title-transform-md, none);
+    --csd-title-color: var(--s-card-title-color-md, var(--csd-d-title));
+    --csd-title-hover: var(--s-card-title-hover-color-md, var(--csd-title-color));
+    --csd-summary-size: var(--s-card-summary-font-size-md, 0.875rem);
+    --csd-summary-weight: var(--s-card-summary-font-weight-md, 400);
+    --csd-summary-lh: var(--s-card-summary-line-height-md, 1.43);
+    --csd-summary-color: var(--s-card-summary-color-md, var(--csd-d-summary));
+    --csd-chip-size: var(--s-card-chip-font-size-md, 0.75rem);
+    --csd-chip-weight: var(--s-card-chip-font-weight-md, 500);
+    --csd-chip-color: var(--s-card-chip-color-md, var(--csd-d-chip));
+    --csd-chip-bg: var(--s-card-chip-bg-md, var(--csd-d-chip-bg));
+    --csd-chip-border: var(--s-card-chip-border-color-md, var(--csd-d-chip-border));
+    --csd-chip-radius: var(--s-card-chip-radius-md, 0.375rem);
+    --csd-btn-color: var(--s-btn-card-color-md, var(--csd-d-btn));
+    --csd-btn-bg: var(--s-btn-card-bg-md, var(--csd-d-btn-bg));
+    --csd-btn-border: var(--s-btn-card-border-color-md, transparent);
+    --csd-btn-hover-color: var(--s-btn-card-hover-color-md, #ffffff);
+    --csd-btn-hover-bg: var(--s-btn-card-hover-bg-md, #4f46e5);
+    --csd-btn-hover-border: var(--s-btn-card-hover-border-color-md, var(--csd-btn-border));
+    --csd-btn-bw: var(--s-btn-card-border-width-md, 1px);
+    --csd-btn-radius: var(--s-btn-card-radius-md, 0.75rem);
+    --csd-btn-py: var(--s-btn-card-padding-y-md, 0.75rem);
+    --csd-btn-px: var(--s-btn-card-padding-x-md, 1rem);
+    --csd-btn-size: var(--s-btn-card-font-size-md, 0.875rem);
+    --csd-btn-weight: var(--s-btn-card-font-weight-md, 600);
+    --csd-btn-transform: var(--s-btn-card-transform-md, none);
+    --csd-btn-spacing: var(--s-btn-card-letter-spacing-md, normal);
+    --csd-btn-shadow: var(--s-btn-card-shadow-md, none);
+    --csd-btn-hover-shadow: var(--s-btn-card-hover-shadow-md, var(--csd-btn-shadow));
+  }
+}
+
+@media (min-width: 1024px) {
+  .csd-card {
+    --csd-bg: var(--s-card-bg-lg, var(--csd-d-bg));
+    --csd-border: var(--s-card-border-color-lg, var(--csd-d-border));
+    --csd-hover-border: var(--s-card-hover-border-color-lg, var(--csd-d-hover-border));
+    --csd-bw: var(--s-card-border-width-lg, 1px);
+    --csd-radius: var(--s-card-radius-lg, 1.5rem);
+    --csd-pad: var(--s-card-padding-lg, 1.5rem);
+    --csd-shadow: var(--s-card-shadow-lg, var(--csd-d-shadow));
+    --csd-hover-shadow: var(--s-card-hover-shadow-lg, var(--csd-d-hover-shadow));
+    --csd-cat-size: var(--s-card-cat-font-size-lg, 0.75rem);
+    --csd-cat-weight: var(--s-card-cat-font-weight-lg, 600);
+    --csd-cat-transform: var(--s-card-cat-transform-lg, none);
+    --csd-cat-spacing: var(--s-card-cat-letter-spacing-lg, normal);
+    --csd-cat-color: var(--s-card-cat-color-lg, var(--csd-d-cat));
+    --csd-cat-bg: var(--s-card-cat-bg-lg, var(--csd-d-cat-bg));
+    --csd-cat-radius: var(--s-card-cat-radius-lg, 9999px);
+    --csd-title-size: var(--s-card-title-font-size-lg, 1.25rem);
+    --csd-title-weight: var(--s-card-title-font-weight-lg, 700);
+    --csd-title-lh: var(--s-card-title-line-height-lg, 1.4);
+    --csd-title-spacing: var(--s-card-title-letter-spacing-lg, -0.025em);
+    --csd-title-transform: var(--s-card-title-transform-lg, none);
+    --csd-title-color: var(--s-card-title-color-lg, var(--csd-d-title));
+    --csd-title-hover: var(--s-card-title-hover-color-lg, var(--csd-title-color));
+    --csd-summary-size: var(--s-card-summary-font-size-lg, 0.875rem);
+    --csd-summary-weight: var(--s-card-summary-font-weight-lg, 400);
+    --csd-summary-lh: var(--s-card-summary-line-height-lg, 1.43);
+    --csd-summary-color: var(--s-card-summary-color-lg, var(--csd-d-summary));
+    --csd-chip-size: var(--s-card-chip-font-size-lg, 0.75rem);
+    --csd-chip-weight: var(--s-card-chip-font-weight-lg, 500);
+    --csd-chip-color: var(--s-card-chip-color-lg, var(--csd-d-chip));
+    --csd-chip-bg: var(--s-card-chip-bg-lg, var(--csd-d-chip-bg));
+    --csd-chip-border: var(--s-card-chip-border-color-lg, var(--csd-d-chip-border));
+    --csd-chip-radius: var(--s-card-chip-radius-lg, 0.375rem);
+    --csd-btn-color: var(--s-btn-card-color-lg, var(--csd-d-btn));
+    --csd-btn-bg: var(--s-btn-card-bg-lg, var(--csd-d-btn-bg));
+    --csd-btn-border: var(--s-btn-card-border-color-lg, transparent);
+    --csd-btn-hover-color: var(--s-btn-card-hover-color-lg, #ffffff);
+    --csd-btn-hover-bg: var(--s-btn-card-hover-bg-lg, #4f46e5);
+    --csd-btn-hover-border: var(--s-btn-card-hover-border-color-lg, var(--csd-btn-border));
+    --csd-btn-bw: var(--s-btn-card-border-width-lg, 1px);
+    --csd-btn-radius: var(--s-btn-card-radius-lg, 0.75rem);
+    --csd-btn-py: var(--s-btn-card-padding-y-lg, 0.75rem);
+    --csd-btn-px: var(--s-btn-card-padding-x-lg, 1rem);
+    --csd-btn-size: var(--s-btn-card-font-size-lg, 0.875rem);
+    --csd-btn-weight: var(--s-btn-card-font-weight-lg, 600);
+    --csd-btn-transform: var(--s-btn-card-transform-lg, none);
+    --csd-btn-spacing: var(--s-btn-card-letter-spacing-lg, normal);
+    --csd-btn-shadow: var(--s-btn-card-shadow-lg, none);
+    --csd-btn-hover-shadow: var(--s-btn-card-hover-shadow-lg, var(--csd-btn-shadow));
+  }
+}
+
+.csd-card {
+  display: flex;
+  height: 100%;
+  flex-direction: column;
+  overflow: hidden;
+  background-color: var(--csd-bg);
+  border: var(--csd-bw) solid var(--csd-border);
+  border-radius: var(--csd-radius);
+  box-shadow: var(--csd-shadow);
+  transition: transform 300ms, border-color 300ms, box-shadow 300ms;
+}
+.group:hover .csd-card {
+  transform: translateY(-2px);
+  border-color: var(--csd-hover-border);
+  box-shadow: var(--csd-hover-shadow);
+}
+
+.csd-body {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: var(--csd-pad);
+}
+
+.csd-category {
+  display: inline-block;
+  width: fit-content;
+  max-width: 100%;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  padding: 0.25rem 0.75rem;
+  border-radius: var(--csd-cat-radius);
+  background-color: var(--csd-cat-bg);
+  color: var(--csd-cat-color);
+  font-size: var(--csd-cat-size);
+  font-weight: var(--csd-cat-weight);
+  line-height: 1.333;
+  letter-spacing: var(--csd-cat-spacing);
+  text-transform: var(--csd-cat-transform);
+}
+
+/* Title and summary always take two lines of their own line height, so cards in a row align. */
+.csd-title,
+.csd-summary {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  min-height: 2.9em;
+  min-height: 2lh;
+}
+.csd-title {
+  color: var(--csd-title-color);
+  font-size: var(--csd-title-size);
+  font-weight: var(--csd-title-weight);
+  line-height: var(--csd-title-lh);
+  letter-spacing: var(--csd-title-spacing);
+  text-transform: var(--csd-title-transform);
+  transition: color 150ms;
+}
+.group:hover .csd-title {
+  color: var(--csd-title-hover);
+}
+.csd-summary {
+  margin-top: 0.25rem;
+  color: var(--csd-summary-color);
+  font-size: var(--csd-summary-size);
+  font-weight: var(--csd-summary-weight);
+  line-height: var(--csd-summary-lh);
+}
+
+/* Exactly two chip rows; sizes are in em of the chip font size so they follow it. */
+.csd-chips {
+  display: flex;
+  flex-wrap: wrap;
+  align-content: flex-start;
+  gap: 0.5rem;
+  overflow: hidden;
+  font-size: var(--csd-chip-size);
+  height: calc(2 * (1.667em + 2px) + 0.5rem);
+}
+.csd-chip {
+  max-width: 100%;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  padding: 0.167em 0.667em;
+  border: 1px solid var(--csd-chip-border);
+  border-radius: var(--csd-chip-radius);
+  background-color: var(--csd-chip-bg);
+  color: var(--csd-chip-color);
+  font-weight: var(--csd-chip-weight);
+  line-height: 1.333em;
+}
+
+.csd-button {
+  display: flex;
+  width: 100%;
+  margin-top: auto;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: var(--csd-btn-py) var(--csd-btn-px);
+  border: var(--csd-btn-bw) solid var(--csd-btn-border);
+  border-radius: var(--csd-btn-radius);
+  background-color: var(--csd-btn-bg);
+  color: var(--csd-btn-color);
+  font-size: var(--csd-btn-size);
+  font-weight: var(--csd-btn-weight);
+  line-height: 1.43;
+  letter-spacing: var(--csd-btn-spacing);
+  text-transform: var(--csd-btn-transform);
+  box-shadow: var(--csd-btn-shadow);
+  transition: color 150ms, background-color 150ms, border-color 150ms, box-shadow 150ms;
+}
+.group:hover .csd-button {
+  border-color: var(--csd-btn-hover-border);
+  background-color: var(--csd-btn-hover-bg);
+  color: var(--csd-btn-hover-color);
+  box-shadow: var(--csd-btn-hover-shadow);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .group:hover .csd-card {
+    transform: none;
+  }
+}

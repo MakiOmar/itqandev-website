@@ -6,6 +6,7 @@ import {
   widgetHasMediaStyleChrome,
   MEDIA_ONLY_STYLE_KEYS,
   type BuilderStyles,
+  type ButtonPart,
   type StyleBreakpoint,
   type StyleDimensions,
   type StyleFilters,
@@ -92,9 +93,45 @@ function sectionTextControls(part: 'title' | 'subtitle', maxSize: number): Style
   ];
 }
 
-/** Full button styling for a button part (`btn_primary_*`, `btn_secondary_*`). */
-function buttonControls(part: 'btn_primary' | 'btn_secondary'): StyleControl[] {
-  return [
+/** Detailed case study card: box, category pill, title, summary and skill chips. */
+const CASE_CARD_CONTROLS: StyleControl[] = [
+  { key: 'card_bg', group: 'card_box', type: 'color' },
+  { key: 'card_border_color', group: 'card_box', type: 'color' },
+  { key: 'card_hover_border_color', group: 'card_box', type: 'color' },
+  { key: 'card_border_width', group: 'card_box', type: 'length', min: 0, max: 20 },
+  { key: 'card_radius', group: 'card_box', type: 'length', min: 0, max: 100 },
+  { key: 'card_padding', group: 'card_box', type: 'length', min: 0, max: 80 },
+  { key: 'card_shadow', group: 'card_box', type: 'shadow' },
+  { key: 'card_hover_shadow', group: 'card_box', type: 'shadow' },
+  { key: 'card_cat_font_size', group: 'card_category', type: 'length', min: 8, max: 32 },
+  { key: 'card_cat_font_weight', group: 'card_category', type: 'select', options: WEIGHT_OPTIONS },
+  { key: 'card_cat_transform', group: 'card_category', type: 'select', options: TRANSFORM_OPTIONS },
+  { key: 'card_cat_letter_spacing', group: 'card_category', type: 'length', min: -5, max: 20 },
+  { key: 'card_cat_color', group: 'card_category', type: 'color' },
+  { key: 'card_cat_bg', group: 'card_category', type: 'color' },
+  { key: 'card_cat_radius', group: 'card_category', type: 'length', min: 0, max: 100 },
+  { key: 'card_title_font_size', group: 'card_title', type: 'length', min: 8, max: 64 },
+  { key: 'card_title_font_weight', group: 'card_title', type: 'select', options: WEIGHT_OPTIONS },
+  { key: 'card_title_line_height', group: 'card_title', type: 'length', min: 0, max: 120 },
+  { key: 'card_title_letter_spacing', group: 'card_title', type: 'length', min: -5, max: 20 },
+  { key: 'card_title_transform', group: 'card_title', type: 'select', options: TRANSFORM_OPTIONS },
+  { key: 'card_title_color', group: 'card_title', type: 'color' },
+  { key: 'card_title_hover_color', group: 'card_title', type: 'color' },
+  { key: 'card_summary_font_size', group: 'card_summary', type: 'length', min: 8, max: 40 },
+  { key: 'card_summary_font_weight', group: 'card_summary', type: 'select', options: WEIGHT_OPTIONS },
+  { key: 'card_summary_line_height', group: 'card_summary', type: 'length', min: 0, max: 80 },
+  { key: 'card_summary_color', group: 'card_summary', type: 'color' },
+  { key: 'card_chip_font_size', group: 'card_chips', type: 'length', min: 8, max: 24 },
+  { key: 'card_chip_font_weight', group: 'card_chips', type: 'select', options: WEIGHT_OPTIONS },
+  { key: 'card_chip_color', group: 'card_chips', type: 'color' },
+  { key: 'card_chip_bg', group: 'card_chips', type: 'color' },
+  { key: 'card_chip_border_color', group: 'card_chips', type: 'color' },
+  { key: 'card_chip_radius', group: 'card_chips', type: 'length', min: 0, max: 100 },
+];
+
+/** Full button styling for a button part. The card button spans the card, so it has no min width. */
+function buttonControls(part: ButtonPart): StyleControl[] {
+  const controls: StyleControl[] = [
     { key: `${part}_font_size`, group: part, type: 'length', min: 8, max: 48 },
     { key: `${part}_font_weight`, group: part, type: 'select', options: WEIGHT_OPTIONS },
     { key: `${part}_transform`, group: part, type: 'select', options: TRANSFORM_OPTIONS },
@@ -113,6 +150,7 @@ function buttonControls(part: 'btn_primary' | 'btn_secondary'): StyleControl[] {
     { key: `${part}_shadow`, group: part, type: 'shadow' },
     { key: `${part}_hover_shadow`, group: part, type: 'shadow' },
   ];
+  return part === 'btn_card' ? controls.filter((c) => c.key !== `${part}_min_width`) : controls;
 }
 
 export const STYLE_CONTROLS: StyleControl[] = [
@@ -324,6 +362,8 @@ export const STYLE_CONTROLS: StyleControl[] = [
   { key: 'link_letter_spacing', group: 'link', type: 'length', min: -5, max: 20 },
   { key: 'link_color', group: 'link', type: 'color' },
   { key: 'link_hover_color', group: 'link', type: 'color' },
+  ...CASE_CARD_CONTROLS,
+  ...buttonControls('btn_card'),
   { key: 'custom_css', group: 'custom', type: 'textarea' },
 ];
 

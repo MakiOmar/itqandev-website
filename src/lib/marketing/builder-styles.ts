@@ -52,6 +52,12 @@ export const STYLE_GROUP_ORDER = [
   'tabs',
   'nav_buttons',
   'link',
+  'card_box',
+  'card_category',
+  'card_title',
+  'card_summary',
+  'card_chips',
+  'btn_card',
   'custom',
 ] as const;
 
@@ -80,7 +86,11 @@ export const WIDGET_STYLE_GROUPS: Record<string, readonly StyleGroupId[]> = {
   flip_box: ['typography', 'layout', 'spacing', 'border', 'hover', 'custom'],
   trust_badges: ['typography', 'spacing', 'border', 'custom'],
   button: ['typography', 'layout', 'spacing', 'border', 'hover', 'custom'],
-  case_studies: ['title', 'subtitle', 'tabs', 'nav_buttons', 'link', 'layout', 'spacing', 'border', 'custom'],
+  case_studies: [
+    'title', 'subtitle', 'tabs', 'nav_buttons', 'link',
+    'card_box', 'card_category', 'card_title', 'card_summary', 'card_chips', 'btn_card',
+    'layout', 'spacing', 'border', 'custom',
+  ],
   services_teaser: ['layout', 'spacing', 'border', 'custom'],
   testimonials: ['layout', 'spacing', 'border', 'custom'],
   blog_preview: ['layout', 'spacing', 'border', 'custom'],
@@ -196,8 +206,25 @@ const WIDGET_PART_LENGTH_KEYS = [
   'subtitle_font_size', 'subtitle_line_height', 'subtitle_letter_spacing',
 ] as const;
 
-/** Button parts (`btn_primary_*`, `btn_secondary_*`), e.g. the hero call-to-action buttons. */
-export const BUTTON_PARTS = ['btn_primary', 'btn_secondary'] as const;
+/** Detailed case study card parts. Value kind decides how each key is emitted. */
+export const CASE_CARD_STYLE_KEYS = {
+  card_bg: 'color', card_border_color: 'color', card_hover_border_color: 'color',
+  card_border_width: 'length', card_radius: 'length', card_padding: 'length',
+  card_shadow: 'shadow', card_hover_shadow: 'shadow',
+  card_cat_font_size: 'length', card_cat_font_weight: 'string', card_cat_transform: 'string',
+  card_cat_letter_spacing: 'length', card_cat_color: 'color', card_cat_bg: 'color', card_cat_radius: 'length',
+  card_title_font_size: 'length', card_title_font_weight: 'string', card_title_line_height: 'length',
+  card_title_letter_spacing: 'length', card_title_transform: 'string', card_title_color: 'color',
+  card_title_hover_color: 'color',
+  card_summary_font_size: 'length', card_summary_font_weight: 'string', card_summary_line_height: 'length',
+  card_summary_color: 'color',
+  card_chip_font_size: 'length', card_chip_font_weight: 'string', card_chip_color: 'color',
+  card_chip_bg: 'color', card_chip_border_color: 'color', card_chip_radius: 'length',
+} as const satisfies Record<string, 'color' | 'string' | 'length' | 'shadow'>;
+
+/** Button parts (`btn_primary_*`, `btn_secondary_*`, `btn_card_*`): hero CTAs and the case study card button. */
+export const BUTTON_PARTS = ['btn_primary', 'btn_secondary', 'btn_card'] as const;
+export type ButtonPart = (typeof BUTTON_PARTS)[number];
 export const BUTTON_STRING_SUFFIXES = [
   'color', 'bg', 'border_color', 'hover_color', 'hover_bg', 'hover_border_color', 'font_weight', 'transform',
 ] as const;
@@ -272,6 +299,12 @@ function emitBagVars(bag: StyleBag, suffix: '' | '-md' | '-lg', out: Record<stri
   set('text-decoration', typeof bag.text_decoration === 'string' ? bag.text_decoration : null);
   for (const key of WIDGET_PART_STRING_KEYS) set(key, typeof bag[key] === 'string' ? (bag[key] as string) : null);
   for (const key of WIDGET_PART_LENGTH_KEYS) set(key, lengthToCss(bag[key]));
+  for (const [key, kind] of Object.entries(CASE_CARD_STYLE_KEYS)) {
+    const v = bag[key];
+    if (kind === 'length') set(key, lengthToCss(v));
+    else if (kind === 'shadow') set(key, shadowToCss(v));
+    else set(key, typeof v === 'string' ? v : null);
+  }
   for (const part of BUTTON_PARTS) {
     for (const s of BUTTON_STRING_SUFFIXES) {
       const v = bag[`${part}_${s}`];
