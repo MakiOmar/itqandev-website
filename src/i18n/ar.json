@@ -1291,6 +1291,8 @@
       "groupTabs": "تبويبات التصفية",
       "groupNavButtons": "أزرار التنقل",
       "groupLink": "رابط عرض المحفظة",
+      "groupTitle": "العنوان",
+      "groupSubtitle": "العنوان الفرعي",
       "background": "الخلفية",
       "hoverTextColor": "لون النص عند التمرير",
       "hoverBackground": "الخلفية عند التمرير",

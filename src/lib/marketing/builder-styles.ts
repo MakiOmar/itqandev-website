@@ -45,6 +45,8 @@ export const STYLE_GROUP_ORDER = [
   'border',
   'hover',
   'caption',
+  'title',
+  'subtitle',
   'tabs',
   'nav_buttons',
   'link',
@@ -75,7 +77,7 @@ export const WIDGET_STYLE_GROUPS: Record<string, readonly StyleGroupId[]> = {
   flip_box: ['typography', 'layout', 'spacing', 'border', 'hover', 'custom'],
   trust_badges: ['typography', 'spacing', 'border', 'custom'],
   button: ['typography', 'layout', 'spacing', 'border', 'hover', 'custom'],
-  case_studies: ['tabs', 'nav_buttons', 'link', 'layout', 'spacing', 'border', 'custom'],
+  case_studies: ['title', 'subtitle', 'tabs', 'nav_buttons', 'link', 'layout', 'spacing', 'border', 'custom'],
   services_teaser: ['layout', 'spacing', 'border', 'custom'],
   testimonials: ['layout', 'spacing', 'border', 'custom'],
   blog_preview: ['layout', 'spacing', 'border', 'custom'],
@@ -181,10 +183,14 @@ const WIDGET_PART_STRING_KEYS = [
   'tab_indicator_color', 'tab_font_weight',
   'nav_color', 'nav_bg', 'nav_border_color', 'nav_hover_color', 'nav_hover_bg',
   'link_color', 'link_hover_color', 'link_font_weight', 'link_transform',
+  'title_color', 'title_font_weight', 'title_transform',
+  'subtitle_color', 'subtitle_font_weight', 'subtitle_transform',
 ] as const;
 const WIDGET_PART_LENGTH_KEYS = [
   'tab_font_size', 'tab_radius', 'nav_size', 'nav_icon_size', 'nav_radius',
   'link_font_size', 'link_letter_spacing',
+  'title_font_size', 'title_line_height', 'title_letter_spacing',
+  'subtitle_font_size', 'subtitle_line_height', 'subtitle_letter_spacing',
 ] as const;
 
 function varName(key: string, suffix: '' | '-md' | '-lg'): string {

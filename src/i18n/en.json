@@ -1291,6 +1291,8 @@
       "groupTabs": "Filter tabs",
       "groupNavButtons": "Navigation buttons",
       "groupLink": "View portfolio link",
+      "groupTitle": "Title",
+      "groupSubtitle": "Subtitle",
       "background": "Background",
       "hoverTextColor": "Hover text colour",
       "hoverBackground": "Hover background",

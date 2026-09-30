@@ -80,6 +80,18 @@ const TRANSFORM_OPTIONS = [
   { value: 'capitalize', labelKey: 'builder.style.transformCap' },
 ];
 
+/** Typography + colour for a section heading part (`title_*`, `subtitle_*`). */
+function sectionTextControls(part: 'title' | 'subtitle', maxSize: number): StyleControl[] {
+  return [
+    { key: `${part}_font_size`, group: part, type: 'length', min: 8, max: maxSize },
+    { key: `${part}_font_weight`, group: part, type: 'select', options: WEIGHT_OPTIONS },
+    { key: `${part}_line_height`, group: part, type: 'length', min: 0, max: 160 },
+    { key: `${part}_letter_spacing`, group: part, type: 'length', min: -5, max: 20 },
+    { key: `${part}_transform`, group: part, type: 'select', options: TRANSFORM_OPTIONS },
+    { key: `${part}_color`, group: part, type: 'color' },
+  ];
+}
+
 export const STYLE_CONTROLS: StyleControl[] = [
   {
     key: 'type_role',
@@ -261,6 +273,8 @@ export const STYLE_CONTROLS: StyleControl[] = [
   { key: 'caption_line_height', group: 'caption', type: 'length', min: 0, max: 80 },
   { key: 'caption_letter_spacing', group: 'caption', type: 'length', min: -5, max: 20 },
   { key: 'caption_spacing', group: 'caption', type: 'length', min: 0, max: 80 },
+  ...sectionTextControls('title', 120),
+  ...sectionTextControls('subtitle', 64),
   { key: 'tab_font_size', group: 'tabs', type: 'length', min: 8, max: 48 },
   { key: 'tab_font_weight', group: 'tabs', type: 'select', options: WEIGHT_OPTIONS },
   { key: 'tab_color', group: 'tabs', type: 'color' },

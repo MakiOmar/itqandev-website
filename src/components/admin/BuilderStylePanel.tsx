@@ -50,6 +50,8 @@ const GROUP_LABEL: Record<string, string> = {
   border: 'builder.style.groupBorder',
   hover: 'builder.style.groupHover',
   caption: 'builder.style.groupCaption',
+  title: 'builder.style.groupTitle',
+  subtitle: 'builder.style.groupSubtitle',
   tabs: 'builder.style.groupTabs',
   nav_buttons: 'builder.style.groupNavButtons',
   link: 'builder.style.groupLink',
@@ -121,7 +123,20 @@ const KEY_LABEL: Record<string, string> = {
   link_letter_spacing: 'builder.style.letterSpacing',
   link_color: 'builder.style.textColor',
   link_hover_color: 'builder.style.hoverTextColor',
+  ...sectionTextLabels('title'),
+  ...sectionTextLabels('subtitle'),
 };
+
+function sectionTextLabels(part: 'title' | 'subtitle'): Record<string, string> {
+  return {
+    [`${part}_font_size`]: 'builder.style.fontSize',
+    [`${part}_font_weight`]: 'builder.style.fontWeight',
+    [`${part}_line_height`]: 'builder.style.lineHeight',
+    [`${part}_letter_spacing`]: 'builder.style.letterSpacing',
+    [`${part}_transform`]: 'builder.style.transform',
+    [`${part}_color`]: 'builder.style.textColor',
+  };
+}
 
 type PatchQrl = QRL<(key: string, value: unknown) => void | Promise<void>>;
 
