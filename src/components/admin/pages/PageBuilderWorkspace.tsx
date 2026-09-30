@@ -579,11 +579,14 @@ export const PageBuilderWorkspace = component$<PageBuilderWorkspaceProps>((props
   const viewMode = useSignal(false);
   const showNavigator = useSignal(false);
   const inspectorTab = useSignal<InspectorTab>('content');
+  /** Back keeps the selection so palette inserts still target the selected column. */
+  const sidebarView = useSignal<'palette' | 'controls'>('palette');
   const previewIsDark = useSignal(false);
 
   useTask$(({ track }) => {
     track(() => selection.value);
     inspectorTab.value = 'content';
+    sidebarView.value = selection.value ? 'controls' : 'palette';
   });
 
   // eslint-disable-next-line qwik/no-use-visible-task
@@ -864,234 +867,938 @@ export const PageBuilderWorkspace = component$<PageBuilderWorkspaceProps>((props
       </header>
 
       <div class="flex min-h-0 flex-1">
-        {/* Widget / Kits palette */}
-        <aside class="flex w-72 flex-shrink-0 flex-col border-e border-gray-200 bg-white dark:border-gray-800 dark:bg-slate-900">
-          <div class="border-b border-gray-200 px-3 py-2 dark:border-gray-800">
-            <div class="inline-flex w-full rounded-lg border border-gray-300 p-0.5 dark:border-gray-600">
+        {/* Single sidebar: widgets palette, or the selected node's controls */}
+        {sidebarView.value === 'controls' && selection.value ? (
+          <>
+          {/* Inspector */}
+          <aside class="flex w-80 flex-shrink-0 flex-col border-e border-gray-200 bg-white dark:border-gray-800 dark:bg-slate-900">
+            <div class="flex items-center gap-2 border-b border-gray-200 px-3 py-2 dark:border-gray-800">
               <button
                 type="button"
-                class={[
-                  'flex-1 rounded-md px-2 py-1 text-xs font-semibold',
-                  paletteTab.value === 'widgets'
-                    ? 'bg-primary-600 text-white'
-                    : 'text-gray-600 dark:text-gray-300',
-                ].join(' ')}
+                class="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs font-semibold text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-slate-800"
                 onClick$={() => {
-                  paletteTab.value = 'widgets';
+                  sidebarView.value = 'palette';
                 }}
               >
-                {translateApp(props.lang, 'pages.widgetsTab')}
+                {/* Chevron flips in RTL */}
+                <svg class="h-4 w-4 rtl:rotate-180" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <path d="m15 18-6-6 6-6" />
+                </svg>
+                {translateApp(props.lang, 'pages.backToWidgets')}
               </button>
-              <button
-                type="button"
-                class={[
-                  'flex-1 rounded-md px-2 py-1 text-xs font-semibold',
-                  paletteTab.value === 'kits'
-                    ? 'bg-primary-600 text-white'
-                    : 'text-gray-600 dark:text-gray-300',
-                ].join(' ')}
-                onClick$={() => {
-                  paletteTab.value = 'kits';
-                }}
-              >
-                {translateApp(props.lang, 'pages.kitsTab')}
-              </button>
-              <button
-                type="button"
-                class={[
-                  'flex-1 rounded-md px-2 py-1 text-xs font-semibold',
-                  paletteTab.value === 'globals'
-                    ? 'bg-primary-600 text-white'
-                    : 'text-gray-600 dark:text-gray-300',
-                ].join(' ')}
-                onClick$={() => {
-                  paletteTab.value = 'globals';
-                }}
-              >
-                {translateApp(props.lang, 'pages.globalsTab')}
-              </button>
+              <span class="ms-auto text-xs font-semibold uppercase tracking-wide text-gray-500">
+                {translateApp(props.lang, 'pages.inspector')}
+              </span>
             </div>
-            <input
-              type="search"
-              class="mt-2 w-full rounded-lg border border-gray-300 bg-white px-2 py-1.5 text-xs dark:border-gray-600 dark:bg-slate-950"
-              placeholder={translateApp(props.lang, 'pages.paletteSearch')}
-              value={paletteSearch.value}
-              onInput$={(e) => {
-                paletteSearch.value = (e.target as HTMLInputElement).value;
-              }}
-            />
-          </div>
-          <div class="space-y-2 overflow-y-auto p-3">
-            <button
-              type="button"
-              class="w-full rounded-lg border border-dashed border-gray-300 px-3 py-2 text-start text-sm hover:border-primary-400 dark:border-gray-600"
-              onClick$={async () => {
-                await commit$([...bands, createEmptyBand()]);
-              }}
-            >
-              {translateApp(props.lang, 'pages.addBand')}
-            </button>
-            <p class="text-[11px] text-gray-500 dark:text-gray-400">
-              {translateApp(props.lang, 'pages.dragWidgetsHint')}
-            </p>
-            {savedBands.value.length > 0 ? (
-              <div class="space-y-1">
-                <p class="text-[11px] font-semibold uppercase text-gray-500">
-                  {translateApp(props.lang, 'pages.savedSections')}
-                </p>
-                {savedBands.value.map((row) => (
+            <div class="min-h-0 flex-1 overflow-y-auto p-3">
+
+              {selection.value ? (
+                <BuilderInspectorTabs
+                  lang={props.lang}
+                  tab={inspectorTab.value}
+                  showStyle={Boolean(selection.value)}
+                  onTab$={$((tab) => {
+                    inspectorTab.value = tab;
+                  })}
+                />
+              ) : null}
+
+              {selection.value?.kind === 'band' ? (
+                <div key={inspectorKey(selection.value)} class="space-y-3">
+                  <p class="text-sm font-medium">
+                    {translateApp(props.lang, 'pages.band')} #{selection.value.bandIndex + 1}
+                  </p>
                   <button
-                    key={row.id}
                     type="button"
-                    class="w-full rounded-lg border border-dashed border-gray-300 px-3 py-1.5 text-start text-xs dark:border-gray-600"
-                    onClick$={async () => {
-                      const clone = JSON.parse(JSON.stringify(row.band)) as PageLayoutBand;
-                      clone.id = newBlockId('band');
-                      await commit$([...bands, clone]);
+                    class="rounded border border-gray-300 px-2 py-1 text-xs dark:border-gray-600"
+                    onClick$={() => {
+                      const band = bands[selection.value!.bandIndex];
+                      if (!band) return;
+                      const name = window.prompt(translateApp(props.lang, 'pages.saveSection'), translateApp(props.lang, 'pages.band'));
+                      if (!name) return;
+                      savedBands.value = saveBuilderBand(name, band);
                     }}
                   >
-                    {row.name}
+                    {translateApp(props.lang, 'pages.saveSection')}
                   </button>
-                ))}
-              </div>
-            ) : null}
-            {paletteTab.value === 'globals'
-              ? globalsList.value.map((g) => (
-                  <button
-                    key={g.id}
-                    type="button"
-                    class="w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-start text-sm dark:border-gray-700 dark:bg-slate-950"
-                    onClick$={async () => {
-                      const sel = selection.value;
-                      const block: PageLayoutBlock = {
-                        id: newBlockId('global'),
-                        kind: 'global',
-                        type: 'global',
-                        global_id: g.id,
-                        enabled: true,
-                        settings: {},
-                      };
-                      if (sel?.kind === 'column' || sel?.kind === 'block') {
-                        const next = bands.map((b, bi) => {
-                          if (bi !== sel.bandIndex) return b;
-                          return {
-                            ...b,
-                            rows: b.rows.map((r, ri) => {
-                              if (ri !== sel.rowIndex) return r;
+                  {inspectorTab.value === 'content' ? (
+                  <label class="block text-xs font-medium text-gray-600 dark:text-gray-300">
+                    {translateApp(props.lang, 'appearance.layoutWidth')}
+                    <select
+                      class={`${ADMIN_NATIVE_SELECT_COMPACT_CLASS} mt-1 w-full`}
+                      value={bands[selection.value.bandIndex]?.layout_width || 'boxed'}
+                      onChange$={async (e) => {
+                        const layout_width = (e.target as HTMLSelectElement).value as BandLayoutWidth;
+                        const bi = selection.value!.bandIndex;
+                        await commit$(
+                          bands.map((b, i) => (i === bi ? { ...b, layout_width } : b)),
+                        );
+                      }}
+                    >
+                      <option class={ADMIN_NATIVE_OPTION_CLASS} value="boxed">
+                        {translateApp(props.lang, 'appearance.layoutBoxed')}
+                      </option>
+                      <option class={ADMIN_NATIVE_OPTION_CLASS} value="full">
+                        {translateApp(props.lang, 'appearance.layoutFull')}
+                      </option>
+                    </select>
+                  </label>
+                  ) : null}
+                  {inspectorTab.value === 'style' ? (
+                    <div class="space-y-4">
+                      <BuilderBackgroundFields
+                        lang={props.lang}
+                        settings={bands[selection.value.bandIndex]?.settings}
+                        onChange$={$(async (next) => {
+                          const bi = selection.value!.bandIndex;
+                          await commit$(
+                            bands.map((b, i) => (i === bi ? { ...b, settings: next } : b)),
+                          );
+                        })}
+                      />
+                      <BuilderShapeDividerFields
+                        lang={props.lang}
+                        settings={bands[selection.value.bandIndex]?.settings}
+                        onChange$={$(async (next) => {
+                          const bi = selection.value!.bandIndex;
+                          await commit$(
+                            bands.map((b, i) => (i === bi ? { ...b, settings: next } : b)),
+                          );
+                        })}
+                      />
+                      <BuilderStylePanel
+                        lang={props.lang}
+                        widgetType={CONTAINER_STYLE_TYPE}
+                        styles={bands[selection.value.bandIndex]?.styles}
+                        device={previewDevice.value as StyleBreakpoint}
+                        onDevice$={$((device: StyleBreakpoint) => {
+                          previewDevice.value = device;
+                        })}
+                        onChange$={$(async (next: BuilderStyles) => {
+                          const bi = selection.value!.bandIndex;
+                          await commit$(
+                            bands.map((b, i) => (i === bi ? { ...b, styles: next } : b)),
+                          );
+                        })}
+                      />
+                    </div>
+                  ) : null}
+                  {inspectorTab.value === 'advanced' ? (
+                    <div class="space-y-3">
+                      <label class="flex items-center gap-2 text-xs">
+                        <input
+                          type="checkbox"
+                          checked={bands[selection.value.bandIndex]?.settings?.sticky === true}
+                          onChange$={async (e) => {
+                            const bi = selection.value!.bandIndex;
+                            const checked = (e.target as HTMLInputElement).checked;
+                            await commit$(
+                              bands.map((b, i) =>
+                                i === bi
+                                  ? {
+                                      ...b,
+                                      settings: { ...(b.settings || {}), sticky: checked },
+                                    }
+                                  : b,
+                              ),
+                            );
+                          }}
+                        />
+                        {translateApp(props.lang, 'pages.sticky')}
+                      </label>
+                      <BuilderResponsiveVisibilityFields
+                      lang={props.lang}
+                      hideOn={bands[selection.value.bandIndex]?.hide_on}
+                      onChange$={$(async (next: DeviceHideOn) => {
+                        const bi = selection.value!.bandIndex;
+                        await commit$(
+                          bands.map((b, i) =>
+                            i === bi ? { ...b, hide_on: normalizeHideOn(next) } : b,
+                          ),
+                        );
+                      })}
+                    />
+                    </div>
+                  ) : null}
+                </div>
+              ) : null}
+
+              {selection.value?.kind === 'row' ? (
+                <div key={inspectorKey(selection.value)} class="space-y-3">
+                  <p class="text-sm font-medium">
+                    {translateApp(props.lang, 'pages.row')} {selection.value.rowIndex + 1}
+                  </p>
+                  {inspectorTab.value === 'content' ? (
+                  <>
+                  <label class="block text-xs font-medium text-gray-600 dark:text-gray-300">
+                    {translateApp(props.lang, 'pages.stackBelow')}
+                    <select
+                      class={`${ADMIN_NATIVE_SELECT_COMPACT_CLASS} mt-1 w-full`}
+                      value={selectedRow?.stack_below || 'none'}
+                      onChange$={async (e) => {
+                        const stack_below = (e.target as HTMLSelectElement)
+                          .value as PageLayoutStackBelow;
+                        const path = rowPathOf(selection.value);
+                        if (!path) return;
+                        const { bandIndex, rowIndex } = path;
+                        await commit$(
+                          bands.map((b, bi) => {
+                            if (bi !== bandIndex) return b;
+                            return {
+                              ...b,
+                              rows: b.rows.map((r, ri) =>
+                                ri === rowIndex ? { ...r, stack_below } : r,
+                              ),
+                            };
+                          }),
+                        );
+                      }}
+                    >
+                      <option class={ADMIN_NATIVE_OPTION_CLASS} value="none">
+                        {translateApp(props.lang, 'pages.stackNone')}
+                      </option>
+                      <option class={ADMIN_NATIVE_OPTION_CLASS} value="tablet">
+                        {translateApp(props.lang, 'pages.stackTablet')}
+                      </option>
+                      <option class={ADMIN_NATIVE_OPTION_CLASS} value="desktop">
+                        {translateApp(props.lang, 'pages.stackDesktop')}
+                      </option>
+                    </select>
+                  </label>
+                  <label class="block text-xs font-medium text-gray-600 dark:text-gray-300">
+                    {translateApp(props.lang, 'pages.rowJustify')}
+                    <select
+                      class={`${ADMIN_NATIVE_SELECT_COMPACT_CLASS} mt-1 w-full`}
+                      value={selectedRow?.justify || 'start'}
+                      onChange$={async (e) => {
+                        const nextJustify = (e.target as HTMLSelectElement)
+                          .value as RowJustify;
+                        const path = rowPathOf(selection.value);
+                        if (!path) return;
+                        await commit$(
+                          bands.map((b, bi) => {
+                            if (bi !== path.bandIndex) return b;
+                            return {
+                              ...b,
+                              rows: b.rows.map((r, ri) =>
+                                ri === path.rowIndex ? { ...r, justify: nextJustify } : r,
+                              ),
+                            };
+                          }),
+                        );
+                      }}
+                    >
+                      <option class={ADMIN_NATIVE_OPTION_CLASS} value="start">
+                        start
+                      </option>
+                      <option class={ADMIN_NATIVE_OPTION_CLASS} value="center">
+                        center
+                      </option>
+                      <option class={ADMIN_NATIVE_OPTION_CLASS} value="end">
+                        end
+                      </option>
+                      <option class={ADMIN_NATIVE_OPTION_CLASS} value="between">
+                        between
+                      </option>
+                    </select>
+                  </label>
+                  </>
+                  ) : null}
+                  {inspectorTab.value === 'style' ? (
+                    <div class="space-y-4">
+                      <BuilderBackgroundFields
+                        lang={props.lang}
+                        settings={selectedRow?.settings}
+                        onChange$={$(async (next) => {
+                          const path = rowPathOf(selection.value);
+                          if (!path) return;
+                          const { bandIndex, rowIndex } = path;
+                          await commit$(
+                            bands.map((b, bi) => {
+                              if (bi !== bandIndex) return b;
                               return {
-                                ...r,
-                                columns: r.columns.map((c, ci) => {
-                                  if (ci !== sel.colIndex) return c;
-                                  return { ...c, blocks: [...c.blocks, block] };
+                                ...b,
+                                rows: b.rows.map((r, ri) =>
+                                  ri === rowIndex ? { ...r, settings: next } : r,
+                                ),
+                              };
+                            }),
+                          );
+                        })}
+                      />
+                      <BuilderStylePanel
+                        lang={props.lang}
+                        widgetType={CONTAINER_STYLE_TYPE}
+                        styles={selectedRow?.styles}
+                        device={previewDevice.value as StyleBreakpoint}
+                        onDevice$={$((device: StyleBreakpoint) => {
+                          previewDevice.value = device;
+                        })}
+                        onChange$={$(async (next: BuilderStyles) => {
+                          const path = rowPathOf(selection.value);
+                          if (!path) return;
+                          const { bandIndex, rowIndex } = path;
+                          await commit$(
+                            bands.map((b, bi) => {
+                              if (bi !== bandIndex) return b;
+                              return {
+                                ...b,
+                                rows: b.rows.map((r, ri) =>
+                                  ri === rowIndex ? { ...r, styles: next } : r,
+                                ),
+                              };
+                            }),
+                          );
+                        })}
+                      />
+                    </div>
+                  ) : null}
+                  {inspectorTab.value === 'advanced' ? (
+                    <BuilderResponsiveVisibilityFields
+                      lang={props.lang}
+                      hideOn={selectedRow?.hide_on}
+                      onChange$={$(async (next: DeviceHideOn) => {
+                        const path = rowPathOf(selection.value);
+                        if (!path) return;
+                        const { bandIndex, rowIndex } = path;
+                        await commit$(
+                          bands.map((b, bi) => {
+                            if (bi !== bandIndex) return b;
+                            return {
+                              ...b,
+                              rows: b.rows.map((r, ri) =>
+                                ri === rowIndex ? { ...r, hide_on: normalizeHideOn(next) } : r,
+                              ),
+                            };
+                          }),
+                        );
+                      })}
+                    />
+                  ) : null}
+                </div>
+              ) : null}
+
+              {selection.value?.kind === 'column' ? (
+                <div key={inspectorKey(selection.value)} class="space-y-3">
+                  <p class="text-sm font-medium">
+                    {translateApp(props.lang, 'pages.column')} {selection.value.colIndex + 1}
+                  </p>
+                  {inspectorTab.value === 'content' ? (
+                  <>
+                  <div>
+                    <p class="mb-1.5 text-xs font-medium text-gray-600 dark:text-gray-300">
+                      {translateApp(props.lang, 'pages.spanPresets')} (
+                      {translateApp(props.lang, `pages.device.${previewDevice.value}`)})
+                    </p>
+                    <div class="flex flex-wrap gap-1">
+                      {([12, 8, 6, 4, 3] as const).map((preset) => (
+                        <button
+                          key={preset}
+                          type="button"
+                          class="rounded border border-gray-300 px-2 py-1 text-[11px] font-medium text-gray-700 hover:border-primary-400 hover:text-primary-700 dark:border-gray-600 dark:text-gray-200"
+                          onClick$={async () => {
+                            const path = colPathOf(selection.value);
+                            if (!path) return;
+                            const { bandIndex, rowIndex, colIndex } = path;
+                            await commit$(
+                              bands.map((b, bi) => {
+                                if (bi !== bandIndex) return b;
+                                return {
+                                  ...b,
+                                  rows: b.rows.map((r, ri) => {
+                                    if (ri !== rowIndex) return r;
+                                    return {
+                                      ...r,
+                                      columns: r.columns.map((c, ci) => {
+                                        if (ci !== colIndex) return c;
+                                        return {
+                                          ...c,
+                                          span: {
+                                            ...normalizeColumnSpans(c.span),
+                                            [previewDevice.value]: preset,
+                                          },
+                                        };
+                                      }),
+                                    };
+                                  }),
+                                };
+                              }),
+                            );
+                          }}
+                        >
+                          {preset}/12
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                  {(['mobile', 'tablet', 'desktop'] as LayoutBreakpoint[]).map((device) => (
+                    <label
+                      key={device}
+                      class="block text-xs font-medium text-gray-600 dark:text-gray-300"
+                    >
+                      {translateApp(props.lang, 'pages.span')} (
+                      {translateApp(props.lang, `pages.device.${device}`)})
+                      <input
+                        type="number"
+                        min={1}
+                        max={12}
+                        class="mt-1 w-full rounded border border-gray-300 px-2 py-1.5 text-sm dark:border-gray-600 dark:bg-slate-950"
+                        value={
+                          selection.value &&
+                          (selection.value.kind === 'column' || selection.value.kind === 'block')
+                            ? normalizeColumnSpans(selectedCol?.span)[device]
+                            : 12
+                        }
+                        onInput$={async (e) => {
+                          const n = Number((e.target as HTMLInputElement).value);
+                          const path = colPathOf(selection.value);
+                          if (!path) return;
+                          const { bandIndex, rowIndex, colIndex } = path;
+                          await commit$(
+                            bands.map((b, bi) => {
+                              if (bi !== bandIndex) return b;
+                              return {
+                                ...b,
+                                rows: b.rows.map((r, ri) => {
+                                  if (ri !== rowIndex) return r;
+                                  return {
+                                    ...r,
+                                    columns: r.columns.map((c, ci) => {
+                                      if (ci !== colIndex) return c;
+                                      return {
+                                        ...c,
+                                        span: {
+                                          ...normalizeColumnSpans(c.span),
+                                          [device]: Math.min(
+                                            12,
+                                            Math.max(1, Math.round(n) || 1),
+                                          ),
+                                        },
+                                      };
+                                    }),
+                                  };
                                 }),
                               };
                             }),
+                          );
+                        }}
+                      />
+                    </label>
+                  ))}
+                  </>
+                  ) : null}
+                  {inspectorTab.value === 'style' ? (
+                    <div class="space-y-4">
+                      <BuilderBackgroundFields
+                        lang={props.lang}
+                        settings={selectedCol?.settings}
+                        onChange$={$(async (next) => {
+                          const path = colPathOf(selection.value);
+                          if (!path) return;
+                          const { bandIndex, rowIndex, colIndex } = path;
+                          await commit$(
+                            bands.map((b, bi) => {
+                              if (bi !== bandIndex) return b;
+                              return {
+                                ...b,
+                                rows: b.rows.map((r, ri) => {
+                                  if (ri !== rowIndex) return r;
+                                  return {
+                                    ...r,
+                                    columns: r.columns.map((c, ci) =>
+                                      ci === colIndex ? { ...c, settings: next } : c,
+                                    ),
+                                  };
+                                }),
+                              };
+                            }),
+                          );
+                        })}
+                      />
+                      <BuilderStylePanel
+                        lang={props.lang}
+                        widgetType={CONTAINER_STYLE_TYPE}
+                        styles={selectedCol?.styles}
+                        device={previewDevice.value as StyleBreakpoint}
+                        onDevice$={$((device: StyleBreakpoint) => {
+                          previewDevice.value = device;
+                        })}
+                        onChange$={$(async (next: BuilderStyles) => {
+                          const path = colPathOf(selection.value);
+                          if (!path) return;
+                          const { bandIndex, rowIndex, colIndex } = path;
+                          await commit$(
+                            bands.map((b, bi) => {
+                              if (bi !== bandIndex) return b;
+                              return {
+                                ...b,
+                                rows: b.rows.map((r, ri) => {
+                                  if (ri !== rowIndex) return r;
+                                  return {
+                                    ...r,
+                                    columns: r.columns.map((c, ci) =>
+                                      ci === colIndex ? { ...c, styles: next } : c,
+                                    ),
+                                  };
+                                }),
+                              };
+                            }),
+                          );
+                        })}
+                      />
+                    </div>
+                  ) : null}
+                  {inspectorTab.value === 'advanced' ? (
+                    <BuilderResponsiveVisibilityFields
+                      lang={props.lang}
+                      hideOn={selectedCol?.hide_on}
+                      onChange$={$(async (next: DeviceHideOn) => {
+                        const path = colPathOf(selection.value);
+                        if (!path) return;
+                        const { bandIndex, rowIndex, colIndex } = path;
+                        await commit$(
+                          bands.map((b, bi) => {
+                            if (bi !== bandIndex) return b;
+                            return {
+                              ...b,
+                              rows: b.rows.map((r, ri) => {
+                                if (ri !== rowIndex) return r;
+                                return {
+                                  ...r,
+                                  columns: r.columns.map((c, ci) =>
+                                    ci === colIndex
+                                      ? { ...c, hide_on: normalizeHideOn(next) }
+                                      : c,
+                                  ),
+                                };
+                              }),
+                            };
+                          }),
+                        );
+                      })}
+                    />
+                  ) : null}
+                </div>
+              ) : null}
+
+              {selection.value?.kind === 'block' && selectedBlock ? (
+                <div key={inspectorKey(selection.value, `${selectedBlock.id}:${selectedBlock.type}`)} class="space-y-3">
+                  <p class="text-sm font-medium">
+                    {appearanceSectionLabel(
+                      props.lang,
+                      selectedBlock.type,
+                      props.registry.value.find((r) => r.type === selectedBlock.type)?.label ||
+                        selectedBlock.type,
+                    )}
+                  </p>
+                  {inspectorTab.value === 'content' ? (
+                  <>
+                  {(() => {
+                    const entry = props.registry.value.find((r) => r.type === selectedBlock.type);
+                    if (!(entry?.settings_fields?.length ?? 0)) {
+                      return (
+                        <p class="text-xs text-gray-400">
+                          {translateApp(props.lang, 'appearance.noSectionSettings')}
+                        </p>
+                      );
+                    }
+                    return (
+                      <AppearanceSettingsFields
+                        fields={entry!.settings_fields!}
+                        values={selectedBlock.settings ?? {}}
+                        categoryOptions={(props.previewSupport?.portfolioCategories ?? []).map((c) => ({
+                          id: c.id,
+                          name: c.name,
+                          slug: c.slug,
+                        }))}
+                        onSettingsChange$={async (nextSettings) => {
+                          await commit$(
+                            updateBlockInBands(bands, selectedBlock.id, (blk) => ({
+                              ...blk,
+                              settings: nextSettings,
+                            })),
+                          );
+                        }}
+                        onPickMedia$={async (key, accept) => {
+                          mediaTarget.value = { blockId: selectedBlock.id, key, accept };
+                        }}
+                        languages={props.siteLanguages}
+                        defaultLocale={props.defaultLocale}
+                        activeLocale={props.activeLocale.value}
+                        onLocaleChange$={$((code) => {
+                          props.activeLocale.value = code;
+                        })}
+                        mediaPreviewById={mediaPreviewById.value}
+                        onMediaPreview$={$((mediaId, url) => {
+                          mediaPreviewById.value = {
+                            ...mediaPreviewById.value,
+                            [String(mediaId)]: url,
                           };
-                        });
-                        await commit$(next);
-                        return;
-                      }
-                      const band = createEmptyBand();
-                      band.rows[0].columns[0].blocks = [block];
-                      await commit$([...bands, band]);
-                    }}
-                  >
-                    {g.name}
-                  </button>
-                ))
-              : null}
-            {insertableByCategory.map(([category, entries]) => (
-              <div key={category} class="space-y-1.5">
-                <p class="pt-2 text-[10px] font-semibold uppercase tracking-wide text-gray-400">
-                  {category}
-                </p>
-                {entries.map((entry) => (
-              <button
-                key={`${entry.kind || 'kit'}:${entry.type}`}
-                type="button"
-                draggable={true}
-                class="w-full cursor-grab rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-start text-sm font-medium text-gray-800 hover:border-primary-400 hover:bg-primary-50 hover:text-primary-950 active:cursor-grabbing dark:border-gray-700 dark:bg-slate-950 dark:text-gray-100 dark:hover:border-primary-400 dark:hover:bg-slate-800 dark:hover:text-white"
-                onDragStart$={(e) => {
-                  dragWidgetType.value = entry.type;
-                  dragBlock.value = null;
-                  const dt = e.dataTransfer;
-                  if (dt) {
-                    dt.effectAllowed = 'copy';
-                    dt.setData(WIDGET_DND, entry.type);
-                    dt.setData('text/plain', entry.type);
-                  }
+                        })}
+                        dynamicTags={props.dynamicTags}
+                      />
+                    );
+                  })()}
+                  {selectedBlock.kind !== 'global' ? (
+                    <button
+                      type="button"
+                      class="mt-2 w-full rounded border border-gray-300 px-2 py-1 text-xs dark:border-gray-600"
+                      onClick$={async () => {
+                        try {
+                          const res = await getApiClient(null).post(
+                            API_ENDPOINTS.APPEARANCE.GLOBALS,
+                            {
+                              name: selectedBlock.type,
+                              status: 'published',
+                              document: {
+                                kind: selectedBlock.kind || 'widget',
+                                type: selectedBlock.type,
+                                settings: selectedBlock.settings || {},
+                              },
+                            },
+                          );
+                          const id = Number((res.data as GlobalWidgetCreated | undefined)?.id);
+                          if (!id) return;
+                          await commit$(
+                            updateBlockInBands(bands, selectedBlock.id, (blk) => ({
+                              ...blk,
+                              kind: 'global',
+                              global_id: id,
+                              type: 'global',
+                            })),
+                          );
+                        } catch {
+                          /* ignore */
+                        }
+                      }}
+                    >
+                      {translateApp(props.lang, 'pages.makeGlobal')}
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      class="mt-2 w-full rounded border border-gray-300 px-2 py-1 text-xs dark:border-gray-600"
+                      onClick$={async () => {
+                        await commit$(
+                          updateBlockInBands(bands, selectedBlock.id, (blk) => ({
+                            ...blk,
+                            kind: 'widget',
+                            global_id: undefined,
+                          })),
+                        );
+                      }}
+                    >
+                      {translateApp(props.lang, 'pages.unlinkGlobal')}
+                    </button>
+                  )}
+                  </>
+                  ) : null}
+                  {inspectorTab.value === 'style' ? (
+                    <div class="space-y-4">
+                      <BuilderBackgroundFields
+                        lang={props.lang}
+                        settings={selectedBlock.settings}
+                        onChange$={$(async (next) => {
+                          await commit$(
+                            updateBlockInBands(bands, selectedBlock.id, (blk) => ({
+                              ...blk,
+                              settings: next,
+                            })),
+                          );
+                        })}
+                      />
+                      <BuilderStylePanel
+                        lang={props.lang}
+                        widgetType={selectedBlock.type}
+                        styles={selectedBlock.styles}
+                        device={previewDevice.value as StyleBreakpoint}
+                        onDevice$={$((device: StyleBreakpoint) => {
+                          previewDevice.value = device;
+                        })}
+                        onChange$={$(async (next: BuilderStyles) => {
+                          await commit$(
+                            updateBlockInBands(bands, selectedBlock.id, (blk) => ({
+                              ...blk,
+                              styles: next,
+                            })),
+                          );
+                        })}
+                      />
+                    </div>
+                  ) : null}
+                  {inspectorTab.value === 'advanced' ? (
+                    <BuilderResponsiveVisibilityFields
+                      lang={props.lang}
+                      hideOn={selectedBlock.hide_on}
+                      onChange$={$(async (next: DeviceHideOn) => {
+                        const sel = selection.value;
+                        if (!sel || sel.kind !== 'block') return;
+                        const { bandIndex, rowIndex, colIndex, blockIndex } = sel;
+                        await commit$(
+                          bands.map((b, bi) => {
+                            if (bi !== bandIndex) return b;
+                            return {
+                              ...b,
+                              rows: b.rows.map((r, ri) => {
+                                if (ri !== rowIndex) return r;
+                                return {
+                                  ...r,
+                                  columns: r.columns.map((c, ci) => {
+                                    if (ci !== colIndex) return c;
+                                    return {
+                                      ...c,
+                                      blocks: c.blocks.map((bl, bli) =>
+                                        bli === blockIndex
+                                          ? { ...bl, hide_on: normalizeHideOn(next) }
+                                          : bl,
+                                      ),
+                                    };
+                                  }),
+                                };
+                              }),
+                            };
+                          }),
+                        );
+                      })}
+                    />
+                  ) : null}
+                </div>
+              ) : null}
+            </div>
+          </aside>
+          </>
+        ) : (
+          <>
+          {/* Widget / Kits palette */}
+          <aside class="flex w-80 flex-shrink-0 flex-col border-e border-gray-200 bg-white dark:border-gray-800 dark:bg-slate-900">
+            <div class="border-b border-gray-200 px-3 py-2 dark:border-gray-800">
+              <div class="inline-flex w-full rounded-lg border border-gray-300 p-0.5 dark:border-gray-600">
+                <button
+                  type="button"
+                  class={[
+                    'flex-1 rounded-md px-2 py-1 text-xs font-semibold',
+                    paletteTab.value === 'widgets'
+                      ? 'bg-primary-600 text-white'
+                      : 'text-gray-600 dark:text-gray-300',
+                  ].join(' ')}
+                  onClick$={() => {
+                    paletteTab.value = 'widgets';
+                  }}
+                >
+                  {translateApp(props.lang, 'pages.widgetsTab')}
+                </button>
+                <button
+                  type="button"
+                  class={[
+                    'flex-1 rounded-md px-2 py-1 text-xs font-semibold',
+                    paletteTab.value === 'kits'
+                      ? 'bg-primary-600 text-white'
+                      : 'text-gray-600 dark:text-gray-300',
+                  ].join(' ')}
+                  onClick$={() => {
+                    paletteTab.value = 'kits';
+                  }}
+                >
+                  {translateApp(props.lang, 'pages.kitsTab')}
+                </button>
+                <button
+                  type="button"
+                  class={[
+                    'flex-1 rounded-md px-2 py-1 text-xs font-semibold',
+                    paletteTab.value === 'globals'
+                      ? 'bg-primary-600 text-white'
+                      : 'text-gray-600 dark:text-gray-300',
+                  ].join(' ')}
+                  onClick$={() => {
+                    paletteTab.value = 'globals';
+                  }}
+                >
+                  {translateApp(props.lang, 'pages.globalsTab')}
+                </button>
+              </div>
+              <input
+                type="search"
+                class="mt-2 w-full rounded-lg border border-gray-300 bg-white px-2 py-1.5 text-xs dark:border-gray-600 dark:bg-slate-950"
+                placeholder={translateApp(props.lang, 'pages.paletteSearch')}
+                value={paletteSearch.value}
+                onInput$={(e) => {
+                  paletteSearch.value = (e.target as HTMLInputElement).value;
                 }}
-                onDragEnd$={clearDrag$}
+              />
+            </div>
+            <div class="space-y-2 overflow-y-auto p-3">
+              <button
+                type="button"
+                class="w-full rounded-lg border border-dashed border-gray-300 px-3 py-2 text-start text-sm hover:border-primary-400 dark:border-gray-600"
                 onClick$={async () => {
-                  // Prefer selected column; else row remaining span; else new band.
-                  const sel = selection.value;
-                  if (sel?.kind === 'column' || sel?.kind === 'block') {
-                    const inserted = insertWidgetIntoColumn(
-                      bands,
-                      props.registry.value,
-                      entry.type,
-                      sel.bandIndex,
-                      sel.rowIndex,
-                      sel.colIndex,
-                    );
-                    if (!inserted) return;
-                    await commit$(inserted.bands);
-                    selection.value = {
-                      kind: 'block',
-                      bandIndex: sel.bandIndex,
-                      rowIndex: sel.rowIndex,
-                      colIndex: sel.colIndex,
-                      blockIndex: inserted.blockIndex,
-                    };
-                    return;
-                  }
-                  const preferRow: RowPath | null =
-                    sel?.kind === 'row'
-                      ? { bandIndex: sel.bandIndex, rowIndex: sel.rowIndex }
-                      : sel?.kind === 'band'
-                        ? { bandIndex: sel.bandIndex, rowIndex: 0 }
-                        : null;
-                  const target = findRowWithRemaining(bands, previewDevice.value, preferRow);
-                  if (target) {
-                    const inserted = insertWidgetIntoRemaining(
-                      bands,
-                      props.registry.value,
-                      entry.type,
-                      target.bandIndex,
-                      target.rowIndex,
-                      previewDevice.value,
-                    );
-                    if (!inserted) return;
-                    await commit$(inserted.bands);
-                    selection.value = {
-                      kind: 'block',
-                      bandIndex: target.bandIndex,
-                      rowIndex: target.rowIndex,
-                      colIndex: inserted.colIndex,
-                      blockIndex: inserted.blockIndex,
-                    };
-                    return;
-                  }
-                  const band = createBandWithBlock(props.registry.value, entry.type);
-                  if (!band) return;
-                  const next = [...bands, band];
-                  await commit$(next);
-                  selection.value = {
-                    kind: 'block',
-                    bandIndex: next.length - 1,
-                    rowIndex: 0,
-                    colIndex: 0,
-                    blockIndex: 0,
-                  };
+                  await commit$([...bands, createEmptyBand()]);
                 }}
               >
-                {appearanceSectionLabel(props.lang, entry.type, entry.label)}
+                {translateApp(props.lang, 'pages.addBand')}
               </button>
-                ))}
-              </div>
-            ))}
-          </div>
-        </aside>
+              <p class="text-[11px] text-gray-500 dark:text-gray-400">
+                {translateApp(props.lang, 'pages.dragWidgetsHint')}
+              </p>
+              {savedBands.value.length > 0 ? (
+                <div class="space-y-1">
+                  <p class="text-[11px] font-semibold uppercase text-gray-500">
+                    {translateApp(props.lang, 'pages.savedSections')}
+                  </p>
+                  {savedBands.value.map((row) => (
+                    <button
+                      key={row.id}
+                      type="button"
+                      class="w-full rounded-lg border border-dashed border-gray-300 px-3 py-1.5 text-start text-xs dark:border-gray-600"
+                      onClick$={async () => {
+                        const clone = JSON.parse(JSON.stringify(row.band)) as PageLayoutBand;
+                        clone.id = newBlockId('band');
+                        await commit$([...bands, clone]);
+                      }}
+                    >
+                      {row.name}
+                    </button>
+                  ))}
+                </div>
+              ) : null}
+              {paletteTab.value === 'globals'
+                ? globalsList.value.map((g) => (
+                    <button
+                      key={g.id}
+                      type="button"
+                      class="w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-start text-sm dark:border-gray-700 dark:bg-slate-950"
+                      onClick$={async () => {
+                        const sel = selection.value;
+                        const block: PageLayoutBlock = {
+                          id: newBlockId('global'),
+                          kind: 'global',
+                          type: 'global',
+                          global_id: g.id,
+                          enabled: true,
+                          settings: {},
+                        };
+                        if (sel?.kind === 'column' || sel?.kind === 'block') {
+                          const next = bands.map((b, bi) => {
+                            if (bi !== sel.bandIndex) return b;
+                            return {
+                              ...b,
+                              rows: b.rows.map((r, ri) => {
+                                if (ri !== sel.rowIndex) return r;
+                                return {
+                                  ...r,
+                                  columns: r.columns.map((c, ci) => {
+                                    if (ci !== sel.colIndex) return c;
+                                    return { ...c, blocks: [...c.blocks, block] };
+                                  }),
+                                };
+                              }),
+                            };
+                          });
+                          await commit$(next);
+                          return;
+                        }
+                        const band = createEmptyBand();
+                        band.rows[0].columns[0].blocks = [block];
+                        await commit$([...bands, band]);
+                      }}
+                    >
+                      {g.name}
+                    </button>
+                  ))
+                : null}
+              {insertableByCategory.map(([category, entries]) => (
+                <div key={category} class="space-y-1.5">
+                  <p class="pt-2 text-[10px] font-semibold uppercase tracking-wide text-gray-400">
+                    {category}
+                  </p>
+                  {entries.map((entry) => (
+                <button
+                  key={`${entry.kind || 'kit'}:${entry.type}`}
+                  type="button"
+                  draggable={true}
+                  class="w-full cursor-grab rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-start text-sm font-medium text-gray-800 hover:border-primary-400 hover:bg-primary-50 hover:text-primary-950 active:cursor-grabbing dark:border-gray-700 dark:bg-slate-950 dark:text-gray-100 dark:hover:border-primary-400 dark:hover:bg-slate-800 dark:hover:text-white"
+                  onDragStart$={(e) => {
+                    dragWidgetType.value = entry.type;
+                    dragBlock.value = null;
+                    const dt = e.dataTransfer;
+                    if (dt) {
+                      dt.effectAllowed = 'copy';
+                      dt.setData(WIDGET_DND, entry.type);
+                      dt.setData('text/plain', entry.type);
+                    }
+                  }}
+                  onDragEnd$={clearDrag$}
+                  onClick$={async () => {
+                    // Prefer selected column; else row remaining span; else new band.
+                    const sel = selection.value;
+                    if (sel?.kind === 'column' || sel?.kind === 'block') {
+                      const inserted = insertWidgetIntoColumn(
+                        bands,
+                        props.registry.value,
+                        entry.type,
+                        sel.bandIndex,
+                        sel.rowIndex,
+                        sel.colIndex,
+                      );
+                      if (!inserted) return;
+                      await commit$(inserted.bands);
+                      selection.value = {
+                        kind: 'block',
+                        bandIndex: sel.bandIndex,
+                        rowIndex: sel.rowIndex,
+                        colIndex: sel.colIndex,
+                        blockIndex: inserted.blockIndex,
+                      };
+                      return;
+                    }
+                    const preferRow: RowPath | null =
+                      sel?.kind === 'row'
+                        ? { bandIndex: sel.bandIndex, rowIndex: sel.rowIndex }
+                        : sel?.kind === 'band'
+                          ? { bandIndex: sel.bandIndex, rowIndex: 0 }
+                          : null;
+                    const target = findRowWithRemaining(bands, previewDevice.value, preferRow);
+                    if (target) {
+                      const inserted = insertWidgetIntoRemaining(
+                        bands,
+                        props.registry.value,
+                        entry.type,
+                        target.bandIndex,
+                        target.rowIndex,
+                        previewDevice.value,
+                      );
+                      if (!inserted) return;
+                      await commit$(inserted.bands);
+                      selection.value = {
+                        kind: 'block',
+                        bandIndex: target.bandIndex,
+                        rowIndex: target.rowIndex,
+                        colIndex: inserted.colIndex,
+                        blockIndex: inserted.blockIndex,
+                      };
+                      return;
+                    }
+                    const band = createBandWithBlock(props.registry.value, entry.type);
+                    if (!band) return;
+                    const next = [...bands, band];
+                    await commit$(next);
+                    selection.value = {
+                      kind: 'block',
+                      bandIndex: next.length - 1,
+                      rowIndex: 0,
+                      colIndex: 0,
+                      blockIndex: 0,
+                    };
+                  }}
+                >
+                  {appearanceSectionLabel(props.lang, entry.type, entry.label)}
+                </button>
+                  ))}
+                </div>
+              ))}
+            </div>
+          </aside>
+          </>
+        )}
 
         {showNavigator.value ? (
           <PageBuilderNavigator
@@ -1875,690 +2582,6 @@ export const PageBuilderWorkspace = component$<PageBuilderWorkspaceProps>((props
           </div>
         </main>
 
-        {/* Inspector */}
-        <aside class="flex w-80 flex-shrink-0 flex-col border-s border-gray-200 bg-white dark:border-gray-800 dark:bg-slate-900">
-          <div class="border-b border-gray-200 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-gray-500 dark:border-gray-800">
-            {translateApp(props.lang, 'pages.inspector')}
-          </div>
-          <div class="min-h-0 flex-1 overflow-y-auto p-3">
-            {!selection.value ? (
-              <p class="text-xs text-gray-500">{translateApp(props.lang, 'pages.inspectorEmpty')}</p>
-            ) : null}
-
-            {selection.value ? (
-              <BuilderInspectorTabs
-                lang={props.lang}
-                tab={inspectorTab.value}
-                showStyle={Boolean(selection.value)}
-                onTab$={$((tab) => {
-                  inspectorTab.value = tab;
-                })}
-              />
-            ) : null}
-
-            {selection.value?.kind === 'band' ? (
-              <div key={inspectorKey(selection.value)} class="space-y-3">
-                <p class="text-sm font-medium">
-                  {translateApp(props.lang, 'pages.band')} #{selection.value.bandIndex + 1}
-                </p>
-                <button
-                  type="button"
-                  class="rounded border border-gray-300 px-2 py-1 text-xs dark:border-gray-600"
-                  onClick$={() => {
-                    const band = bands[selection.value!.bandIndex];
-                    if (!band) return;
-                    const name = window.prompt(translateApp(props.lang, 'pages.saveSection'), translateApp(props.lang, 'pages.band'));
-                    if (!name) return;
-                    savedBands.value = saveBuilderBand(name, band);
-                  }}
-                >
-                  {translateApp(props.lang, 'pages.saveSection')}
-                </button>
-                {inspectorTab.value === 'content' ? (
-                <label class="block text-xs font-medium text-gray-600 dark:text-gray-300">
-                  {translateApp(props.lang, 'appearance.layoutWidth')}
-                  <select
-                    class={`${ADMIN_NATIVE_SELECT_COMPACT_CLASS} mt-1 w-full`}
-                    value={bands[selection.value.bandIndex]?.layout_width || 'boxed'}
-                    onChange$={async (e) => {
-                      const layout_width = (e.target as HTMLSelectElement).value as BandLayoutWidth;
-                      const bi = selection.value!.bandIndex;
-                      await commit$(
-                        bands.map((b, i) => (i === bi ? { ...b, layout_width } : b)),
-                      );
-                    }}
-                  >
-                    <option class={ADMIN_NATIVE_OPTION_CLASS} value="boxed">
-                      {translateApp(props.lang, 'appearance.layoutBoxed')}
-                    </option>
-                    <option class={ADMIN_NATIVE_OPTION_CLASS} value="full">
-                      {translateApp(props.lang, 'appearance.layoutFull')}
-                    </option>
-                  </select>
-                </label>
-                ) : null}
-                {inspectorTab.value === 'style' ? (
-                  <div class="space-y-4">
-                    <BuilderBackgroundFields
-                      lang={props.lang}
-                      settings={bands[selection.value.bandIndex]?.settings}
-                      onChange$={$(async (next) => {
-                        const bi = selection.value!.bandIndex;
-                        await commit$(
-                          bands.map((b, i) => (i === bi ? { ...b, settings: next } : b)),
-                        );
-                      })}
-                    />
-                    <BuilderShapeDividerFields
-                      lang={props.lang}
-                      settings={bands[selection.value.bandIndex]?.settings}
-                      onChange$={$(async (next) => {
-                        const bi = selection.value!.bandIndex;
-                        await commit$(
-                          bands.map((b, i) => (i === bi ? { ...b, settings: next } : b)),
-                        );
-                      })}
-                    />
-                    <BuilderStylePanel
-                      lang={props.lang}
-                      widgetType={CONTAINER_STYLE_TYPE}
-                      styles={bands[selection.value.bandIndex]?.styles}
-                      device={previewDevice.value as StyleBreakpoint}
-                      onDevice$={$((device: StyleBreakpoint) => {
-                        previewDevice.value = device;
-                      })}
-                      onChange$={$(async (next: BuilderStyles) => {
-                        const bi = selection.value!.bandIndex;
-                        await commit$(
-                          bands.map((b, i) => (i === bi ? { ...b, styles: next } : b)),
-                        );
-                      })}
-                    />
-                  </div>
-                ) : null}
-                {inspectorTab.value === 'advanced' ? (
-                  <div class="space-y-3">
-                    <label class="flex items-center gap-2 text-xs">
-                      <input
-                        type="checkbox"
-                        checked={bands[selection.value.bandIndex]?.settings?.sticky === true}
-                        onChange$={async (e) => {
-                          const bi = selection.value!.bandIndex;
-                          const checked = (e.target as HTMLInputElement).checked;
-                          await commit$(
-                            bands.map((b, i) =>
-                              i === bi
-                                ? {
-                                    ...b,
-                                    settings: { ...(b.settings || {}), sticky: checked },
-                                  }
-                                : b,
-                            ),
-                          );
-                        }}
-                      />
-                      {translateApp(props.lang, 'pages.sticky')}
-                    </label>
-                    <BuilderResponsiveVisibilityFields
-                    lang={props.lang}
-                    hideOn={bands[selection.value.bandIndex]?.hide_on}
-                    onChange$={$(async (next: DeviceHideOn) => {
-                      const bi = selection.value!.bandIndex;
-                      await commit$(
-                        bands.map((b, i) =>
-                          i === bi ? { ...b, hide_on: normalizeHideOn(next) } : b,
-                        ),
-                      );
-                    })}
-                  />
-                  </div>
-                ) : null}
-              </div>
-            ) : null}
-
-            {selection.value?.kind === 'row' ? (
-              <div key={inspectorKey(selection.value)} class="space-y-3">
-                <p class="text-sm font-medium">
-                  {translateApp(props.lang, 'pages.row')} {selection.value.rowIndex + 1}
-                </p>
-                {inspectorTab.value === 'content' ? (
-                <>
-                <label class="block text-xs font-medium text-gray-600 dark:text-gray-300">
-                  {translateApp(props.lang, 'pages.stackBelow')}
-                  <select
-                    class={`${ADMIN_NATIVE_SELECT_COMPACT_CLASS} mt-1 w-full`}
-                    value={selectedRow?.stack_below || 'none'}
-                    onChange$={async (e) => {
-                      const stack_below = (e.target as HTMLSelectElement)
-                        .value as PageLayoutStackBelow;
-                      const path = rowPathOf(selection.value);
-                      if (!path) return;
-                      const { bandIndex, rowIndex } = path;
-                      await commit$(
-                        bands.map((b, bi) => {
-                          if (bi !== bandIndex) return b;
-                          return {
-                            ...b,
-                            rows: b.rows.map((r, ri) =>
-                              ri === rowIndex ? { ...r, stack_below } : r,
-                            ),
-                          };
-                        }),
-                      );
-                    }}
-                  >
-                    <option class={ADMIN_NATIVE_OPTION_CLASS} value="none">
-                      {translateApp(props.lang, 'pages.stackNone')}
-                    </option>
-                    <option class={ADMIN_NATIVE_OPTION_CLASS} value="tablet">
-                      {translateApp(props.lang, 'pages.stackTablet')}
-                    </option>
-                    <option class={ADMIN_NATIVE_OPTION_CLASS} value="desktop">
-                      {translateApp(props.lang, 'pages.stackDesktop')}
-                    </option>
-                  </select>
-                </label>
-                <label class="block text-xs font-medium text-gray-600 dark:text-gray-300">
-                  {translateApp(props.lang, 'pages.rowJustify')}
-                  <select
-                    class={`${ADMIN_NATIVE_SELECT_COMPACT_CLASS} mt-1 w-full`}
-                    value={selectedRow?.justify || 'start'}
-                    onChange$={async (e) => {
-                      const nextJustify = (e.target as HTMLSelectElement)
-                        .value as RowJustify;
-                      const path = rowPathOf(selection.value);
-                      if (!path) return;
-                      await commit$(
-                        bands.map((b, bi) => {
-                          if (bi !== path.bandIndex) return b;
-                          return {
-                            ...b,
-                            rows: b.rows.map((r, ri) =>
-                              ri === path.rowIndex ? { ...r, justify: nextJustify } : r,
-                            ),
-                          };
-                        }),
-                      );
-                    }}
-                  >
-                    <option class={ADMIN_NATIVE_OPTION_CLASS} value="start">
-                      start
-                    </option>
-                    <option class={ADMIN_NATIVE_OPTION_CLASS} value="center">
-                      center
-                    </option>
-                    <option class={ADMIN_NATIVE_OPTION_CLASS} value="end">
-                      end
-                    </option>
-                    <option class={ADMIN_NATIVE_OPTION_CLASS} value="between">
-                      between
-                    </option>
-                  </select>
-                </label>
-                </>
-                ) : null}
-                {inspectorTab.value === 'style' ? (
-                  <div class="space-y-4">
-                    <BuilderBackgroundFields
-                      lang={props.lang}
-                      settings={selectedRow?.settings}
-                      onChange$={$(async (next) => {
-                        const path = rowPathOf(selection.value);
-                        if (!path) return;
-                        const { bandIndex, rowIndex } = path;
-                        await commit$(
-                          bands.map((b, bi) => {
-                            if (bi !== bandIndex) return b;
-                            return {
-                              ...b,
-                              rows: b.rows.map((r, ri) =>
-                                ri === rowIndex ? { ...r, settings: next } : r,
-                              ),
-                            };
-                          }),
-                        );
-                      })}
-                    />
-                    <BuilderStylePanel
-                      lang={props.lang}
-                      widgetType={CONTAINER_STYLE_TYPE}
-                      styles={selectedRow?.styles}
-                      device={previewDevice.value as StyleBreakpoint}
-                      onDevice$={$((device: StyleBreakpoint) => {
-                        previewDevice.value = device;
-                      })}
-                      onChange$={$(async (next: BuilderStyles) => {
-                        const path = rowPathOf(selection.value);
-                        if (!path) return;
-                        const { bandIndex, rowIndex } = path;
-                        await commit$(
-                          bands.map((b, bi) => {
-                            if (bi !== bandIndex) return b;
-                            return {
-                              ...b,
-                              rows: b.rows.map((r, ri) =>
-                                ri === rowIndex ? { ...r, styles: next } : r,
-                              ),
-                            };
-                          }),
-                        );
-                      })}
-                    />
-                  </div>
-                ) : null}
-                {inspectorTab.value === 'advanced' ? (
-                  <BuilderResponsiveVisibilityFields
-                    lang={props.lang}
-                    hideOn={selectedRow?.hide_on}
-                    onChange$={$(async (next: DeviceHideOn) => {
-                      const path = rowPathOf(selection.value);
-                      if (!path) return;
-                      const { bandIndex, rowIndex } = path;
-                      await commit$(
-                        bands.map((b, bi) => {
-                          if (bi !== bandIndex) return b;
-                          return {
-                            ...b,
-                            rows: b.rows.map((r, ri) =>
-                              ri === rowIndex ? { ...r, hide_on: normalizeHideOn(next) } : r,
-                            ),
-                          };
-                        }),
-                      );
-                    })}
-                  />
-                ) : null}
-              </div>
-            ) : null}
-
-            {selection.value?.kind === 'column' ? (
-              <div key={inspectorKey(selection.value)} class="space-y-3">
-                <p class="text-sm font-medium">
-                  {translateApp(props.lang, 'pages.column')} {selection.value.colIndex + 1}
-                </p>
-                {inspectorTab.value === 'content' ? (
-                <>
-                <div>
-                  <p class="mb-1.5 text-xs font-medium text-gray-600 dark:text-gray-300">
-                    {translateApp(props.lang, 'pages.spanPresets')} (
-                    {translateApp(props.lang, `pages.device.${previewDevice.value}`)})
-                  </p>
-                  <div class="flex flex-wrap gap-1">
-                    {([12, 8, 6, 4, 3] as const).map((preset) => (
-                      <button
-                        key={preset}
-                        type="button"
-                        class="rounded border border-gray-300 px-2 py-1 text-[11px] font-medium text-gray-700 hover:border-primary-400 hover:text-primary-700 dark:border-gray-600 dark:text-gray-200"
-                        onClick$={async () => {
-                          const path = colPathOf(selection.value);
-                          if (!path) return;
-                          const { bandIndex, rowIndex, colIndex } = path;
-                          await commit$(
-                            bands.map((b, bi) => {
-                              if (bi !== bandIndex) return b;
-                              return {
-                                ...b,
-                                rows: b.rows.map((r, ri) => {
-                                  if (ri !== rowIndex) return r;
-                                  return {
-                                    ...r,
-                                    columns: r.columns.map((c, ci) => {
-                                      if (ci !== colIndex) return c;
-                                      return {
-                                        ...c,
-                                        span: {
-                                          ...normalizeColumnSpans(c.span),
-                                          [previewDevice.value]: preset,
-                                        },
-                                      };
-                                    }),
-                                  };
-                                }),
-                              };
-                            }),
-                          );
-                        }}
-                      >
-                        {preset}/12
-                      </button>
-                    ))}
-                  </div>
-                </div>
-                {(['mobile', 'tablet', 'desktop'] as LayoutBreakpoint[]).map((device) => (
-                  <label
-                    key={device}
-                    class="block text-xs font-medium text-gray-600 dark:text-gray-300"
-                  >
-                    {translateApp(props.lang, 'pages.span')} (
-                    {translateApp(props.lang, `pages.device.${device}`)})
-                    <input
-                      type="number"
-                      min={1}
-                      max={12}
-                      class="mt-1 w-full rounded border border-gray-300 px-2 py-1.5 text-sm dark:border-gray-600 dark:bg-slate-950"
-                      value={
-                        selection.value &&
-                        (selection.value.kind === 'column' || selection.value.kind === 'block')
-                          ? normalizeColumnSpans(selectedCol?.span)[device]
-                          : 12
-                      }
-                      onInput$={async (e) => {
-                        const n = Number((e.target as HTMLInputElement).value);
-                        const path = colPathOf(selection.value);
-                        if (!path) return;
-                        const { bandIndex, rowIndex, colIndex } = path;
-                        await commit$(
-                          bands.map((b, bi) => {
-                            if (bi !== bandIndex) return b;
-                            return {
-                              ...b,
-                              rows: b.rows.map((r, ri) => {
-                                if (ri !== rowIndex) return r;
-                                return {
-                                  ...r,
-                                  columns: r.columns.map((c, ci) => {
-                                    if (ci !== colIndex) return c;
-                                    return {
-                                      ...c,
-                                      span: {
-                                        ...normalizeColumnSpans(c.span),
-                                        [device]: Math.min(
-                                          12,
-                                          Math.max(1, Math.round(n) || 1),
-                                        ),
-                                      },
-                                    };
-                                  }),
-                                };
-                              }),
-                            };
-                          }),
-                        );
-                      }}
-                    />
-                  </label>
-                ))}
-                </>
-                ) : null}
-                {inspectorTab.value === 'style' ? (
-                  <div class="space-y-4">
-                    <BuilderBackgroundFields
-                      lang={props.lang}
-                      settings={selectedCol?.settings}
-                      onChange$={$(async (next) => {
-                        const path = colPathOf(selection.value);
-                        if (!path) return;
-                        const { bandIndex, rowIndex, colIndex } = path;
-                        await commit$(
-                          bands.map((b, bi) => {
-                            if (bi !== bandIndex) return b;
-                            return {
-                              ...b,
-                              rows: b.rows.map((r, ri) => {
-                                if (ri !== rowIndex) return r;
-                                return {
-                                  ...r,
-                                  columns: r.columns.map((c, ci) =>
-                                    ci === colIndex ? { ...c, settings: next } : c,
-                                  ),
-                                };
-                              }),
-                            };
-                          }),
-                        );
-                      })}
-                    />
-                    <BuilderStylePanel
-                      lang={props.lang}
-                      widgetType={CONTAINER_STYLE_TYPE}
-                      styles={selectedCol?.styles}
-                      device={previewDevice.value as StyleBreakpoint}
-                      onDevice$={$((device: StyleBreakpoint) => {
-                        previewDevice.value = device;
-                      })}
-                      onChange$={$(async (next: BuilderStyles) => {
-                        const path = colPathOf(selection.value);
-                        if (!path) return;
-                        const { bandIndex, rowIndex, colIndex } = path;
-                        await commit$(
-                          bands.map((b, bi) => {
-                            if (bi !== bandIndex) return b;
-                            return {
-                              ...b,
-                              rows: b.rows.map((r, ri) => {
-                                if (ri !== rowIndex) return r;
-                                return {
-                                  ...r,
-                                  columns: r.columns.map((c, ci) =>
-                                    ci === colIndex ? { ...c, styles: next } : c,
-                                  ),
-                                };
-                              }),
-                            };
-                          }),
-                        );
-                      })}
-                    />
-                  </div>
-                ) : null}
-                {inspectorTab.value === 'advanced' ? (
-                  <BuilderResponsiveVisibilityFields
-                    lang={props.lang}
-                    hideOn={selectedCol?.hide_on}
-                    onChange$={$(async (next: DeviceHideOn) => {
-                      const path = colPathOf(selection.value);
-                      if (!path) return;
-                      const { bandIndex, rowIndex, colIndex } = path;
-                      await commit$(
-                        bands.map((b, bi) => {
-                          if (bi !== bandIndex) return b;
-                          return {
-                            ...b,
-                            rows: b.rows.map((r, ri) => {
-                              if (ri !== rowIndex) return r;
-                              return {
-                                ...r,
-                                columns: r.columns.map((c, ci) =>
-                                  ci === colIndex
-                                    ? { ...c, hide_on: normalizeHideOn(next) }
-                                    : c,
-                                ),
-                              };
-                            }),
-                          };
-                        }),
-                      );
-                    })}
-                  />
-                ) : null}
-              </div>
-            ) : null}
-
-            {selection.value?.kind === 'block' && selectedBlock ? (
-              <div key={inspectorKey(selection.value, `${selectedBlock.id}:${selectedBlock.type}`)} class="space-y-3">
-                <p class="text-sm font-medium">
-                  {appearanceSectionLabel(
-                    props.lang,
-                    selectedBlock.type,
-                    props.registry.value.find((r) => r.type === selectedBlock.type)?.label ||
-                      selectedBlock.type,
-                  )}
-                </p>
-                {inspectorTab.value === 'content' ? (
-                <>
-                {(() => {
-                  const entry = props.registry.value.find((r) => r.type === selectedBlock.type);
-                  if (!(entry?.settings_fields?.length ?? 0)) {
-                    return (
-                      <p class="text-xs text-gray-400">
-                        {translateApp(props.lang, 'appearance.noSectionSettings')}
-                      </p>
-                    );
-                  }
-                  return (
-                    <AppearanceSettingsFields
-                      fields={entry!.settings_fields!}
-                      values={selectedBlock.settings ?? {}}
-                      categoryOptions={(props.previewSupport?.portfolioCategories ?? []).map((c) => ({
-                        id: c.id,
-                        name: c.name,
-                        slug: c.slug,
-                      }))}
-                      onSettingsChange$={async (nextSettings) => {
-                        await commit$(
-                          updateBlockInBands(bands, selectedBlock.id, (blk) => ({
-                            ...blk,
-                            settings: nextSettings,
-                          })),
-                        );
-                      }}
-                      onPickMedia$={async (key, accept) => {
-                        mediaTarget.value = { blockId: selectedBlock.id, key, accept };
-                      }}
-                      languages={props.siteLanguages}
-                      defaultLocale={props.defaultLocale}
-                      activeLocale={props.activeLocale.value}
-                      onLocaleChange$={$((code) => {
-                        props.activeLocale.value = code;
-                      })}
-                      mediaPreviewById={mediaPreviewById.value}
-                      onMediaPreview$={$((mediaId, url) => {
-                        mediaPreviewById.value = {
-                          ...mediaPreviewById.value,
-                          [String(mediaId)]: url,
-                        };
-                      })}
-                      dynamicTags={props.dynamicTags}
-                    />
-                  );
-                })()}
-                {selectedBlock.kind !== 'global' ? (
-                  <button
-                    type="button"
-                    class="mt-2 w-full rounded border border-gray-300 px-2 py-1 text-xs dark:border-gray-600"
-                    onClick$={async () => {
-                      try {
-                        const res = await getApiClient(null).post(
-                          API_ENDPOINTS.APPEARANCE.GLOBALS,
-                          {
-                            name: selectedBlock.type,
-                            status: 'published',
-                            document: {
-                              kind: selectedBlock.kind || 'widget',
-                              type: selectedBlock.type,
-                              settings: selectedBlock.settings || {},
-                            },
-                          },
-                        );
-                        const id = Number((res.data as GlobalWidgetCreated | undefined)?.id);
-                        if (!id) return;
-                        await commit$(
-                          updateBlockInBands(bands, selectedBlock.id, (blk) => ({
-                            ...blk,
-                            kind: 'global',
-                            global_id: id,
-                            type: 'global',
-                          })),
-                        );
-                      } catch {
-                        /* ignore */
-                      }
-                    }}
-                  >
-                    {translateApp(props.lang, 'pages.makeGlobal')}
-                  </button>
-                ) : (
-                  <button
-                    type="button"
-                    class="mt-2 w-full rounded border border-gray-300 px-2 py-1 text-xs dark:border-gray-600"
-                    onClick$={async () => {
-                      await commit$(
-                        updateBlockInBands(bands, selectedBlock.id, (blk) => ({
-                          ...blk,
-                          kind: 'widget',
-                          global_id: undefined,
-                        })),
-                      );
-                    }}
-                  >
-                    {translateApp(props.lang, 'pages.unlinkGlobal')}
-                  </button>
-                )}
-                </>
-                ) : null}
-                {inspectorTab.value === 'style' ? (
-                  <div class="space-y-4">
-                    <BuilderBackgroundFields
-                      lang={props.lang}
-                      settings={selectedBlock.settings}
-                      onChange$={$(async (next) => {
-                        await commit$(
-                          updateBlockInBands(bands, selectedBlock.id, (blk) => ({
-                            ...blk,
-                            settings: next,
-                          })),
-                        );
-                      })}
-                    />
-                    <BuilderStylePanel
-                      lang={props.lang}
-                      widgetType={selectedBlock.type}
-                      styles={selectedBlock.styles}
-                      device={previewDevice.value as StyleBreakpoint}
-                      onDevice$={$((device: StyleBreakpoint) => {
-                        previewDevice.value = device;
-                      })}
-                      onChange$={$(async (next: BuilderStyles) => {
-                        await commit$(
-                          updateBlockInBands(bands, selectedBlock.id, (blk) => ({
-                            ...blk,
-                            styles: next,
-                          })),
-                        );
-                      })}
-                    />
-                  </div>
-                ) : null}
-                {inspectorTab.value === 'advanced' ? (
-                  <BuilderResponsiveVisibilityFields
-                    lang={props.lang}
-                    hideOn={selectedBlock.hide_on}
-                    onChange$={$(async (next: DeviceHideOn) => {
-                      const sel = selection.value;
-                      if (!sel || sel.kind !== 'block') return;
-                      const { bandIndex, rowIndex, colIndex, blockIndex } = sel;
-                      await commit$(
-                        bands.map((b, bi) => {
-                          if (bi !== bandIndex) return b;
-                          return {
-                            ...b,
-                            rows: b.rows.map((r, ri) => {
-                              if (ri !== rowIndex) return r;
-                              return {
-                                ...r,
-                                columns: r.columns.map((c, ci) => {
-                                  if (ci !== colIndex) return c;
-                                  return {
-                                    ...c,
-                                    blocks: c.blocks.map((bl, bli) =>
-                                      bli === blockIndex
-                                        ? { ...bl, hide_on: normalizeHideOn(next) }
-                                        : bl,
-                                    ),
-                                  };
-                                }),
-                              };
-                            }),
-                          };
-                        }),
-                      );
-                    })}
-                  />
-                ) : null}
-              </div>
-            ) : null}
-          </div>
-        </aside>
       </div>
 
       {mediaTarget.value ? (
