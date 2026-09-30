@@ -983,6 +983,8 @@
       "nav_top_space": "مسافة علوية تحت الشريط (بكسل)",
       "watermark_enabled": "نص باهت في الخلفية",
       "watermark_text": "نص العلامة المائية",
+      "watermark_motion": "تحريك النص المائي (حسب اتجاه الصفحة)",
+      "watermark_speed": "مدة دورة النص المائي (بالثواني)",
       "particles_enabled": "جسيمات خلف قسم البطل",
       "particles_density": "كثافة الجسيمات",
       "particles_speed": "سرعة الجسيمات",

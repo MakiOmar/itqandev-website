@@ -139,6 +139,8 @@ export type AppearanceSettingField = {
   accept?: string;
   min?: number;
   max?: number;
+  /** Number fields: value shown when the setting is unset (instances saved before the field existed). */
+  default?: number;
   /** When true, edited per language tab into settings.translations.{locale}. */
   translatable?: boolean;
   options?: Array<{ value: string; label: string }>;

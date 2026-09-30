@@ -750,7 +750,7 @@ const AppearanceSettingFieldControl = component$<FieldControlProps>((props) => {
           min={field.min ?? 1}
           max={field.max ?? 24}
           class="w-full rounded border px-2 py-1 text-sm dark:bg-gray-900"
-          value={Number(raw ?? field.min ?? 1)}
+          value={Number(raw ?? field.default ?? field.min ?? 1)}
           onInput$={async (e) => {
             await props.onSettingsChange$(
               writeAppearanceSettingValue(

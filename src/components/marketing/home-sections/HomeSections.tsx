@@ -16,6 +16,8 @@ import { marketingRoutes } from '~/lib/marketing/constants';
 import { normalizeHeroFloatingIcons } from '~/lib/admin/hero-floating-icons';
 import { resolveHeroParticlesConfig } from '~/lib/marketing/hero-particles';
 import { LazyParticlesBackground } from '~/components/marketing/LazyParticlesBackground';
+import { isUiLocaleRtl } from '~/lib/i18n/ui-locale-segments';
+import { HeroWatermark } from './HeroWatermark';
 import type { CaseStudy, Testimonial, BlogPost, Service } from '~/lib/marketing/types';
 import type { PortfolioCategory } from '~/lib/marketing/content-layer';
 import type { HeroFloatingIcon } from '~/lib/marketing/appearance-types';
@@ -173,14 +175,12 @@ export const HeroHomeSection = component$<HomeSectionSharedProps>(({ settings, u
         />
       ) : null}
       {watermarkEnabled && watermarkText ? (
-        <div
-          class="pointer-events-none absolute inset-0 z-0 flex select-none items-center justify-center overflow-hidden"
-          aria-hidden="true"
-        >
-          <span class="max-w-[95vw] truncate px-4 text-center text-[14vw] font-black leading-none tracking-tight text-slate-900/[0.045] dark:text-white/[0.05] sm:text-[12vw] lg:text-[10vw]">
-            {watermarkText}
-          </span>
-        </div>
+        <HeroWatermark
+          text={watermarkText}
+          motion={settingBool(settings, 'watermark_motion')}
+          durationSeconds={Math.min(120, Math.max(10, settingInt(settings, 'watermark_speed', 40)))}
+          rtl={isUiLocaleRtl(uiLocale)}
+        />
       ) : null}
       <div
         class="pointer-events-none absolute -right-24 -top-24 z-0 h-72 w-72 rounded-full bg-primary-400/25 blur-3xl dark:bg-primary-500/15"

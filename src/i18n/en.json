@@ -983,6 +983,8 @@
       "nav_top_space": "Top space under nav (px)",
       "watermark_enabled": "Faded background text",
       "watermark_text": "Watermark text",
+      "watermark_motion": "Scroll watermark text (follows page direction)",
+      "watermark_speed": "Watermark loop duration (seconds)",
       "particles_enabled": "Particles behind hero",
       "particles_density": "Particles density",
       "particles_speed": "Particles speed",

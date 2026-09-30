@@ -1,0 +1,42 @@
+/*
+ * Hero faded background text, scrolling variant. The track holds two identical halves and slides
+ * by -50%, so the loop is seamless. Motion follows the reading direction: left → right on LTR
+ * pages, right → left on RTL pages (`data-rtl`). The track is forced to `dir="ltr"` so the
+ * translate is physical on both.
+ */
+.hw-track {
+  display: flex;
+  flex-shrink: 0;
+  width: max-content;
+  animation: hw-scroll var(--hw-duration, 40s) linear infinite;
+  will-change: transform;
+}
+.hw-root[data-rtl] .hw-track {
+  animation-direction: reverse;
+}
+.hw-copy {
+  flex-shrink: 0;
+  padding-inline: 0.3em;
+  white-space: nowrap;
+}
+
+@keyframes hw-scroll {
+  from {
+    transform: translateX(-50%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+/* Reduced motion: one centred, static copy (same look as the non-scrolling watermark). */
+@media (prefers-reduced-motion: reduce) {
+  .hw-track {
+    width: 100%;
+    justify-content: center;
+    animation: none;
+  }
+  .hw-copy:not(:first-child) {
+    display: none;
+  }
+}
