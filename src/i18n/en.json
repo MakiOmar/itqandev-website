@@ -391,7 +391,8 @@
     "excludeFromSearchHint": "Search engines get noindex on this page, and it is omitted from listings and the sitemap. Anyone with the URL can still open it. Use this when site-wide indexing is on and you want to hide one page.",
     "excludeFromSearchBadge": "Hidden from search",
     "backToWidgets": "Widgets",
-    "addRowAbove": "Row above"
+    "addRowAbove": "Row above",
+    "addBandAbove": "Band above"
   },
   "forms": {
     "title": "Forms",

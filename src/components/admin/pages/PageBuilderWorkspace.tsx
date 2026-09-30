@@ -116,6 +116,14 @@ function shiftSelectionForRowInsert(
   return { ...sel, rowIndex: sel.rowIndex + 1 };
 }
 
+/** Keeps the selection on the same node after a band is inserted at `bandIndex`. */
+function shiftSelectionForBandInsert(sel: PageBuilderSelection, bandIndex: number): PageBuilderSelection {
+  if (!sel || sel.bandIndex < bandIndex) {
+    return sel;
+  }
+  return { ...sel, bandIndex: sel.bandIndex + 1 };
+}
+
 function groupRegistryByCategory(
   entries: AppearanceRegistryEntry[],
 ): Array<[string, AppearanceRegistryEntry[]]> {
@@ -1947,6 +1955,23 @@ export const PageBuilderWorkspace = component$<PageBuilderWorkspaceProps>((props
                           }}
                         >
                           {translateApp(props.lang, 'pages.band')} {bandIndex + 1}
+                        </button>
+                        {/* Insert an empty band before this one */}
+                        <button
+                          type="button"
+                          class="rounded px-1.5 py-0.5 hover:bg-primary-700"
+                          title={translateApp(props.lang, 'pages.addBandAbove')}
+                          onClick$={async () => {
+                            const next = [...bands.slice(0, bandIndex), createEmptyBand(), ...bands.slice(bandIndex)];
+                            const shifted = shiftSelectionForBandInsert(selection.value, bandIndex);
+                            await commit$(next);
+                            if (shifted !== selection.value) {
+                              selectionReindexed.value = true;
+                              selection.value = shifted;
+                            }
+                          }}
+                        >
+                          + {translateApp(props.lang, 'pages.addBandAbove')}
                         </button>
                         <button
                           type="button"
