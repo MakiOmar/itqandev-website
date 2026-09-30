@@ -702,6 +702,11 @@ export const PageBuilderWorkspace = component$<PageBuilderWorkspaceProps>((props
 
   const insertableByCategory = groupRegistryByCategory(insertable);
   const selectedBlock = blockAtSelection(bands, selection.value);
+  // Inspector props read these locals: `selectedBlock.x` in JSX is frozen by the optimizer, so each
+  // edit would start from the values the block had when it was selected.
+  const selectedBlockSettings = selectedBlock?.settings;
+  const selectedBlockStyles = selectedBlock?.styles;
+  const selectedBlockHideOn = selectedBlock?.hide_on;
   const selectedRow = rowAtSelection(bands, selection.value);
   const selectedCol = colAtSelection(bands, selection.value);
   const previewCtx: BuilderPreviewContext = {
@@ -1536,7 +1541,7 @@ export const PageBuilderWorkspace = component$<PageBuilderWorkspaceProps>((props
                       <InspectorAccordion title={translateApp(props.lang, 'builder.background.title')} group={STYLE_ACCORDION_GROUP} open>
                         <BuilderBackgroundFields
                           lang={props.lang}
-                          settings={selectedBlock.settings}
+                          settings={selectedBlockSettings}
                           onChange$={$(async (next) => {
                             await commit$(
                               updateBlockInBands(bands, selectedBlock.id, (blk) => ({
@@ -1551,7 +1556,7 @@ export const PageBuilderWorkspace = component$<PageBuilderWorkspaceProps>((props
                         openFirst={false}
                         lang={props.lang}
                         widgetType={selectedBlock.type}
-                        styles={selectedBlock.styles}
+                        styles={selectedBlockStyles}
                         device={previewDevice.value as StyleBreakpoint}
                         onDevice$={$((device: StyleBreakpoint) => {
                           previewDevice.value = device;
@@ -1570,7 +1575,7 @@ export const PageBuilderWorkspace = component$<PageBuilderWorkspaceProps>((props
                   {inspectorTab.value === 'advanced' ? (
                     <BuilderResponsiveVisibilityFields
                       lang={props.lang}
-                      hideOn={selectedBlock.hide_on}
+                      hideOn={selectedBlockHideOn}
                       onChange$={$(async (next: DeviceHideOn) => {
                         const sel = selection.value;
                         if (!sel || sel.kind !== 'block') return;

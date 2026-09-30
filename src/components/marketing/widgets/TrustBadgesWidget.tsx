@@ -65,7 +65,7 @@ export const TrustBadgesWidget = component$<{ settings: Record<string, unknown> 
             </span>
           ) : null}
           {badge.text ? (
-            <span class="text-sm font-medium text-slate-800 dark:text-slate-100">{badge.text}</span>
+            <span class="tb-text">{badge.text}</span>
           ) : null}
         </li>
       ))}

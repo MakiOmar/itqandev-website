@@ -217,6 +217,9 @@ export const FormBuilderWorkspace = component$<FormBuilderWorkspaceProps>((props
     selection.value?.kind === 'field'
       ? layout.rows[selection.value.rowIndex]?.fields[selection.value.fieldIndex]
       : null;
+  // Locals for inspector props: `selectedField.x` in JSX is frozen by the optimizer.
+  const selectedFieldStyles = selectedField?.styles;
+  const selectedFieldHideOn = selectedField?.hide_on;
   const selectedAction =
     selection.value?.kind === 'action' ? actions[selection.value.actionIndex] : null;
 
@@ -940,7 +943,7 @@ export const FormBuilderWorkspace = component$<FormBuilderWorkspaceProps>((props
                   <BuilderStylePanel
                     lang={props.lang}
                     widgetType={selectedField.type}
-                    styles={selectedField.styles}
+                    styles={selectedFieldStyles}
                     device={device.value as StyleBreakpoint}
                     onDevice$={$((next: StyleBreakpoint) => {
                       device.value = next;
@@ -961,7 +964,7 @@ export const FormBuilderWorkspace = component$<FormBuilderWorkspaceProps>((props
                 {inspectorTab.value === 'advanced' ? (
                   <BuilderResponsiveVisibilityFields
                     lang={props.lang}
-                    hideOn={selectedField.hide_on}
+                    hideOn={selectedFieldHideOn}
                     onChange$={$(async (next: DeviceHideOn) => {
                       const { rowIndex, fieldIndex } = selection.value as {
                         rowIndex: number;

@@ -1281,7 +1281,13 @@
       "filterBrightness": "سطوع",
       "filterContrast": "تباين",
       "filterSaturate": "تشبع",
-      "filterHue": "صبغة"
+      "filterHue": "صبغة",
+      "groupTypography": "الطباعة",
+      "typeRole": "دور الخط",
+      "textColor": "لون النص",
+      "roleHeading": "خط العناوين",
+      "roleBody": "خط النص",
+      "roleAccent": "خط مميز"
     },
     "background": {
       "type": "نوع الخلفية",

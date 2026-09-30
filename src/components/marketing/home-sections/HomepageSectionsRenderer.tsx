@@ -167,11 +167,14 @@ function renderBlock(
   const kind = block.kind || (WIDGET_TYPES.has(block.type) ? 'widget' : 'kit');
   const wrapStyles = hasWidgetStyleControls(block.type) || hasAnyStyles(block.styles);
   const embedded = props.embedKits === true;
+  // Locals, not `block.styles` in JSX: the optimizer freezes member props of plain objects,
+  // so the builder canvas would keep the first styles it rendered.
+  const blockStyles = block.styles;
   const wrap = (inner: JSXOutput) => {
     // Background sits inside the sized leaf so width/padding Style controls frame the fill.
     const withBg = <LayoutNodeShell settings={settings}>{inner}</LayoutNodeShell>;
     return wrapStyles ? (
-      <StyledBuilderLeaf key={key} id={String(block.id || key)} styles={block.styles} settings={settings}>
+      <StyledBuilderLeaf key={key} id={String(block.id || key)} styles={blockStyles} settings={settings}>
         {withBg}
       </StyledBuilderLeaf>
     ) : (
@@ -385,21 +388,25 @@ export function renderLayoutBlock(
 
 function renderLayoutBand(band: PageLayoutBand, props: HomepageSectionsRendererProps) {
   const bandProps: HomepageSectionsRendererProps = { ...props, embedKits: true };
+  const bandSettings = band.settings;
+  const bandStyles = band.styles;
   const inner = (
     <LayoutNodeShell
       id={band.id}
-      settings={band.settings}
-      styles={band.styles}
+      settings={bandSettings}
+      styles={bandStyles}
       class="w-full py-6 sm:py-8 lg:py-10"
     >
       {(band.rows ?? []).map((row) => {
         const stackBelow = row.stack_below ?? 'none';
+        const rowSettings = row.settings;
+        const rowStyles = row.styles;
         return (
           <LayoutNodeShell
             key={row.id}
             id={row.id}
-            settings={row.settings}
-            styles={row.styles}
+            settings={rowSettings}
+            styles={rowStyles}
             class="w-full rounded-xl"
           >
             <div
@@ -411,12 +418,14 @@ function renderLayoutBand(band: PageLayoutBand, props: HomepageSectionsRendererP
               {(row.columns ?? []).map((col) => {
                 const span = normalizeColumnSpans(col.span);
                 const spanClass = columnSpanClassNames(span, stackBelow);
+                const colSettings = col.settings;
+                const colStyles = col.styles;
                 return (
                   <LayoutNodeShell
                     key={col.id}
                     id={col.id}
-                    settings={col.settings}
-                    styles={col.styles}
+                    settings={colSettings}
+                    styles={colStyles}
                     class={`${spanClass} h-full`}
                   >
                     <div class="h-full space-y-6">

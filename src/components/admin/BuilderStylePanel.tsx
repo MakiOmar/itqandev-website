@@ -43,6 +43,7 @@ const LENGTH_UNITS = STYLE_UNITS.filter((u) => u !== 'auto');
 export const STYLE_ACCORDION_GROUP = 'builder-style';
 
 const GROUP_LABEL: Record<string, string> = {
+  typography: 'builder.style.groupTypography',
   layout: 'builder.style.groupLayout',
   spacing: 'builder.style.groupSpacing',
   image: 'builder.style.groupImage',
@@ -53,6 +54,13 @@ const GROUP_LABEL: Record<string, string> = {
 };
 
 const KEY_LABEL: Record<string, string> = {
+  type_role: 'builder.style.typeRole',
+  font_size: 'builder.style.fontSize',
+  font_weight: 'builder.style.fontWeight',
+  line_height: 'builder.style.lineHeight',
+  letter_spacing: 'builder.style.letterSpacing',
+  text_color: 'builder.style.textColor',
+  text_transform: 'builder.style.transform',
   align: 'builder.style.align',
   width: 'builder.style.width',
   max_width: 'builder.style.maxWidth',

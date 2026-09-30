@@ -142,6 +142,15 @@
     overflow: var(--s-overflow-md, var(--s-overflow, visible));
     z-index: var(--s-z-index-md, var(--s-z-index, auto));
     text-align: var(--s-align-md, var(--s-align, start));
+    font-family: var(--s-font-family-md, var(--s-font-family, inherit));
+    font-size: var(--s-font-size-md, var(--s-font-size, inherit));
+    font-weight: var(--s-font-weight-md, var(--s-font-weight, inherit));
+    line-height: var(--s-line-height-md, var(--s-line-height, inherit));
+    letter-spacing: var(--s-letter-spacing-md, var(--s-letter-spacing, inherit));
+    color: var(--s-text-color-md, var(--s-text-color, inherit));
+    text-transform: var(--s-text-transform-md, var(--s-text-transform, none));
+    font-style: var(--s-font-style-md, var(--s-font-style, normal));
+    text-decoration: var(--s-text-decoration-md, var(--s-text-decoration, none));
   }
 
   .b-styled:not(:has(.b-styled-media)) {
@@ -232,6 +241,21 @@
     overflow: var(--s-overflow-lg, var(--s-overflow-md, var(--s-overflow, visible)));
     z-index: var(--s-z-index-lg, var(--s-z-index-md, var(--s-z-index, auto)));
     text-align: var(--s-align-lg, var(--s-align-md, var(--s-align, start)));
+    font-family: var(--s-font-family-lg, var(--s-font-family-md, var(--s-font-family, inherit)));
+    font-size: var(--s-font-size-lg, var(--s-font-size-md, var(--s-font-size, inherit)));
+    font-weight: var(--s-font-weight-lg, var(--s-font-weight-md, var(--s-font-weight, inherit)));
+    line-height: var(--s-line-height-lg, var(--s-line-height-md, var(--s-line-height, inherit)));
+    letter-spacing: var(
+      --s-letter-spacing-lg,
+      var(--s-letter-spacing-md, var(--s-letter-spacing, inherit))
+    );
+    color: var(--s-text-color-lg, var(--s-text-color-md, var(--s-text-color, inherit)));
+    text-transform: var(--s-text-transform-lg, var(--s-text-transform-md, var(--s-text-transform, none)));
+    font-style: var(--s-font-style-lg, var(--s-font-style-md, var(--s-font-style, normal)));
+    text-decoration: var(
+      --s-text-decoration-lg,
+      var(--s-text-decoration-md, var(--s-text-decoration, none))
+    );
   }
 
   .b-styled:not(:has(.b-styled-media)) {

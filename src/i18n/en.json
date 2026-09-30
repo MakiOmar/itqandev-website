@@ -1281,7 +1281,13 @@
       "filterBrightness": "Brightness",
       "filterContrast": "Contrast",
       "filterSaturate": "Saturate",
-      "filterHue": "Hue"
+      "filterHue": "Hue",
+      "groupTypography": "Typography",
+      "typeRole": "Font role",
+      "textColor": "Text colour",
+      "roleHeading": "Heading font",
+      "roleBody": "Body font",
+      "roleAccent": "Accent font"
     },
     "background": {
       "type": "Background type",
