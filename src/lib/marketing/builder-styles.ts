@@ -47,6 +47,8 @@ export const STYLE_GROUP_ORDER = [
   'caption',
   'title',
   'subtitle',
+  'btn_primary',
+  'btn_secondary',
   'tabs',
   'nav_buttons',
   'link',
@@ -74,6 +76,7 @@ export const WIDGET_STYLE_GROUPS: Record<string, readonly StyleGroupId[]> = {
   image_text: ['typography', 'layout', 'spacing', 'image', 'border', 'hover', 'caption', 'custom'],
   gallery: ['layout', 'spacing', 'image', 'border', 'hover', 'caption', 'custom'],
   lottie: ['layout', 'spacing', 'border', 'custom'],
+  hero: ['typography', 'btn_primary', 'btn_secondary', 'layout', 'spacing', 'border', 'hover', 'custom'],
   flip_box: ['typography', 'layout', 'spacing', 'border', 'hover', 'custom'],
   trust_badges: ['typography', 'spacing', 'border', 'custom'],
   button: ['typography', 'layout', 'spacing', 'border', 'hover', 'custom'],
@@ -193,6 +196,16 @@ const WIDGET_PART_LENGTH_KEYS = [
   'subtitle_font_size', 'subtitle_line_height', 'subtitle_letter_spacing',
 ] as const;
 
+/** Button parts (`btn_primary_*`, `btn_secondary_*`), e.g. the hero call-to-action buttons. */
+export const BUTTON_PARTS = ['btn_primary', 'btn_secondary'] as const;
+export const BUTTON_STRING_SUFFIXES = [
+  'color', 'bg', 'border_color', 'hover_color', 'hover_bg', 'hover_border_color', 'font_weight', 'transform',
+] as const;
+export const BUTTON_LENGTH_SUFFIXES = [
+  'font_size', 'letter_spacing', 'border_width', 'radius', 'min_width', 'padding_x', 'padding_y',
+] as const;
+export const BUTTON_SHADOW_SUFFIXES = ['shadow', 'hover_shadow'] as const;
+
 function varName(key: string, suffix: '' | '-md' | '-lg'): string {
   return `--s-${key.replace(/_/g, '-')}${suffix}`;
 }
@@ -259,6 +272,14 @@ function emitBagVars(bag: StyleBag, suffix: '' | '-md' | '-lg', out: Record<stri
   set('text-decoration', typeof bag.text_decoration === 'string' ? bag.text_decoration : null);
   for (const key of WIDGET_PART_STRING_KEYS) set(key, typeof bag[key] === 'string' ? (bag[key] as string) : null);
   for (const key of WIDGET_PART_LENGTH_KEYS) set(key, lengthToCss(bag[key]));
+  for (const part of BUTTON_PARTS) {
+    for (const s of BUTTON_STRING_SUFFIXES) {
+      const v = bag[`${part}_${s}`];
+      set(`${part}_${s}`, typeof v === 'string' ? v : null);
+    }
+    for (const s of BUTTON_LENGTH_SUFFIXES) set(`${part}_${s}`, lengthToCss(bag[`${part}_${s}`]));
+    for (const s of BUTTON_SHADOW_SUFFIXES) set(`${part}_${s}`, shadowToCss(bag[`${part}_${s}`]));
+  }
 
   if (isDims(bag.margin)) {
     const u = bag.margin.unit === 'auto' ? 'px' : bag.margin.unit;

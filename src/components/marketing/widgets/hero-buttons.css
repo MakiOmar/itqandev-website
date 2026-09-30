@@ -1,0 +1,171 @@
+/*
+ * Hero call-to-action buttons. `--s-btn-primary-*` / `--s-btn-secondary-*` come from the hero
+ * widget's Style tab (Primary / Secondary button groups), resolved per breakpoint
+ * (base = mobile, -md = tablet, -lg = desktop). `--hb-d-*` are theme defaults (light / dark)
+ * matching the former Button `primary` / `outline` variants.
+ */
+.hb-primary {
+  --hb-d-color: #0c4a6e;
+  --hb-d-bg: #e0f2fe;
+  --hb-d-border: #7dd3fc;
+  --hb-d-hover-bg: #bae6fd;
+  --hb-d-bw: 1px;
+}
+.hb-secondary {
+  --hb-d-color: #075985;
+  --hb-d-bg: transparent;
+  --hb-d-border: #0284c7;
+  --hb-d-hover-bg: #f0f9ff;
+  --hb-d-bw: 2px;
+}
+:where(.dark, .dark *) .hb-primary {
+  --hb-d-border: #38bdf8;
+}
+:where(.dark, .dark *) .hb-secondary {
+  --hb-d-color: #e0f2fe;
+  --hb-d-border: #7dd3fc;
+  --hb-d-hover-bg: rgb(8 47 73 / 0.4);
+}
+
+.hb-primary {
+  --hb-color: var(--s-btn-primary-color, var(--hb-d-color));
+  --hb-bg: var(--s-btn-primary-bg, var(--hb-d-bg));
+  --hb-border: var(--s-btn-primary-border-color, var(--hb-d-border));
+  --hb-hover-color: var(--s-btn-primary-hover-color, var(--hb-color));
+  --hb-hover-bg: var(--s-btn-primary-hover-bg, var(--hb-d-hover-bg));
+  --hb-hover-border: var(--s-btn-primary-hover-border-color, var(--hb-border));
+  --hb-bw: var(--s-btn-primary-border-width, var(--hb-d-bw));
+  --hb-radius: var(--s-btn-primary-radius, 0.5rem);
+  --hb-py: var(--s-btn-primary-padding-y, 0.625rem);
+  --hb-px: var(--s-btn-primary-padding-x, 1.25rem);
+  --hb-min-width: var(--s-btn-primary-min-width, 180px);
+  --hb-size: var(--s-btn-primary-font-size, 0.875rem);
+  --hb-weight: var(--s-btn-primary-font-weight, 500);
+  --hb-transform: var(--s-btn-primary-transform, none);
+  --hb-spacing: var(--s-btn-primary-letter-spacing, normal);
+  --hb-shadow: var(--s-btn-primary-shadow, none);
+  --hb-hover-shadow: var(--s-btn-primary-hover-shadow, var(--hb-shadow));
+}
+.hb-secondary {
+  --hb-color: var(--s-btn-secondary-color, var(--hb-d-color));
+  --hb-bg: var(--s-btn-secondary-bg, var(--hb-d-bg));
+  --hb-border: var(--s-btn-secondary-border-color, var(--hb-d-border));
+  --hb-hover-color: var(--s-btn-secondary-hover-color, var(--hb-color));
+  --hb-hover-bg: var(--s-btn-secondary-hover-bg, var(--hb-d-hover-bg));
+  --hb-hover-border: var(--s-btn-secondary-hover-border-color, var(--hb-border));
+  --hb-bw: var(--s-btn-secondary-border-width, var(--hb-d-bw));
+  --hb-radius: var(--s-btn-secondary-radius, 0.5rem);
+  --hb-py: var(--s-btn-secondary-padding-y, 0.625rem);
+  --hb-px: var(--s-btn-secondary-padding-x, 1.25rem);
+  --hb-min-width: var(--s-btn-secondary-min-width, 180px);
+  --hb-size: var(--s-btn-secondary-font-size, 0.875rem);
+  --hb-weight: var(--s-btn-secondary-font-weight, 500);
+  --hb-transform: var(--s-btn-secondary-transform, none);
+  --hb-spacing: var(--s-btn-secondary-letter-spacing, normal);
+  --hb-shadow: var(--s-btn-secondary-shadow, none);
+  --hb-hover-shadow: var(--s-btn-secondary-hover-shadow, var(--hb-shadow));
+}
+
+.hb-btn {
+  color: var(--hb-color);
+  background-color: var(--hb-bg);
+  border: var(--hb-bw) solid var(--hb-border);
+  border-radius: var(--hb-radius);
+  padding: var(--hb-py) var(--hb-px);
+  min-width: var(--hb-min-width);
+  font-size: var(--hb-size);
+  font-weight: var(--hb-weight);
+  line-height: 1.43;
+  letter-spacing: var(--hb-spacing);
+  text-transform: var(--hb-transform);
+  box-shadow: var(--hb-shadow);
+  transition: color 150ms, background-color 150ms, border-color 150ms, box-shadow 150ms;
+}
+.hb-btn:hover {
+  color: var(--hb-hover-color);
+  background-color: var(--hb-hover-bg);
+  border-color: var(--hb-hover-border);
+  box-shadow: var(--hb-hover-shadow);
+}
+
+@media (min-width: 768px) {
+  .hb-primary {
+    --hb-color: var(--s-btn-primary-color-md, var(--hb-d-color));
+    --hb-bg: var(--s-btn-primary-bg-md, var(--hb-d-bg));
+    --hb-border: var(--s-btn-primary-border-color-md, var(--hb-d-border));
+    --hb-hover-color: var(--s-btn-primary-hover-color-md, var(--hb-color));
+    --hb-hover-bg: var(--s-btn-primary-hover-bg-md, var(--hb-d-hover-bg));
+    --hb-hover-border: var(--s-btn-primary-hover-border-color-md, var(--hb-border));
+    --hb-bw: var(--s-btn-primary-border-width-md, var(--hb-d-bw));
+    --hb-radius: var(--s-btn-primary-radius-md, 0.5rem);
+    --hb-py: var(--s-btn-primary-padding-y-md, 0.625rem);
+    --hb-px: var(--s-btn-primary-padding-x-md, 1.25rem);
+    --hb-min-width: var(--s-btn-primary-min-width-md, 180px);
+    --hb-size: var(--s-btn-primary-font-size-md, 0.875rem);
+    --hb-weight: var(--s-btn-primary-font-weight-md, 500);
+    --hb-transform: var(--s-btn-primary-transform-md, none);
+    --hb-spacing: var(--s-btn-primary-letter-spacing-md, normal);
+    --hb-shadow: var(--s-btn-primary-shadow-md, none);
+    --hb-hover-shadow: var(--s-btn-primary-hover-shadow-md, var(--hb-shadow));
+  }
+  .hb-secondary {
+    --hb-color: var(--s-btn-secondary-color-md, var(--hb-d-color));
+    --hb-bg: var(--s-btn-secondary-bg-md, var(--hb-d-bg));
+    --hb-border: var(--s-btn-secondary-border-color-md, var(--hb-d-border));
+    --hb-hover-color: var(--s-btn-secondary-hover-color-md, var(--hb-color));
+    --hb-hover-bg: var(--s-btn-secondary-hover-bg-md, var(--hb-d-hover-bg));
+    --hb-hover-border: var(--s-btn-secondary-hover-border-color-md, var(--hb-border));
+    --hb-bw: var(--s-btn-secondary-border-width-md, var(--hb-d-bw));
+    --hb-radius: var(--s-btn-secondary-radius-md, 0.5rem);
+    --hb-py: var(--s-btn-secondary-padding-y-md, 0.625rem);
+    --hb-px: var(--s-btn-secondary-padding-x-md, 1.25rem);
+    --hb-min-width: var(--s-btn-secondary-min-width-md, 180px);
+    --hb-size: var(--s-btn-secondary-font-size-md, 0.875rem);
+    --hb-weight: var(--s-btn-secondary-font-weight-md, 500);
+    --hb-transform: var(--s-btn-secondary-transform-md, none);
+    --hb-spacing: var(--s-btn-secondary-letter-spacing-md, normal);
+    --hb-shadow: var(--s-btn-secondary-shadow-md, none);
+    --hb-hover-shadow: var(--s-btn-secondary-hover-shadow-md, var(--hb-shadow));
+  }
+}
+
+@media (min-width: 1024px) {
+  .hb-primary {
+    --hb-color: var(--s-btn-primary-color-lg, var(--hb-d-color));
+    --hb-bg: var(--s-btn-primary-bg-lg, var(--hb-d-bg));
+    --hb-border: var(--s-btn-primary-border-color-lg, var(--hb-d-border));
+    --hb-hover-color: var(--s-btn-primary-hover-color-lg, var(--hb-color));
+    --hb-hover-bg: var(--s-btn-primary-hover-bg-lg, var(--hb-d-hover-bg));
+    --hb-hover-border: var(--s-btn-primary-hover-border-color-lg, var(--hb-border));
+    --hb-bw: var(--s-btn-primary-border-width-lg, var(--hb-d-bw));
+    --hb-radius: var(--s-btn-primary-radius-lg, 0.5rem);
+    --hb-py: var(--s-btn-primary-padding-y-lg, 0.625rem);
+    --hb-px: var(--s-btn-primary-padding-x-lg, 1.25rem);
+    --hb-min-width: var(--s-btn-primary-min-width-lg, 180px);
+    --hb-size: var(--s-btn-primary-font-size-lg, 0.875rem);
+    --hb-weight: var(--s-btn-primary-font-weight-lg, 500);
+    --hb-transform: var(--s-btn-primary-transform-lg, none);
+    --hb-spacing: var(--s-btn-primary-letter-spacing-lg, normal);
+    --hb-shadow: var(--s-btn-primary-shadow-lg, none);
+    --hb-hover-shadow: var(--s-btn-primary-hover-shadow-lg, var(--hb-shadow));
+  }
+  .hb-secondary {
+    --hb-color: var(--s-btn-secondary-color-lg, var(--hb-d-color));
+    --hb-bg: var(--s-btn-secondary-bg-lg, var(--hb-d-bg));
+    --hb-border: var(--s-btn-secondary-border-color-lg, var(--hb-d-border));
+    --hb-hover-color: var(--s-btn-secondary-hover-color-lg, var(--hb-color));
+    --hb-hover-bg: var(--s-btn-secondary-hover-bg-lg, var(--hb-d-hover-bg));
+    --hb-hover-border: var(--s-btn-secondary-hover-border-color-lg, var(--hb-border));
+    --hb-bw: var(--s-btn-secondary-border-width-lg, var(--hb-d-bw));
+    --hb-radius: var(--s-btn-secondary-radius-lg, 0.5rem);
+    --hb-py: var(--s-btn-secondary-padding-y-lg, 0.625rem);
+    --hb-px: var(--s-btn-secondary-padding-x-lg, 1.25rem);
+    --hb-min-width: var(--s-btn-secondary-min-width-lg, 180px);
+    --hb-size: var(--s-btn-secondary-font-size-lg, 0.875rem);
+    --hb-weight: var(--s-btn-secondary-font-weight-lg, 500);
+    --hb-transform: var(--s-btn-secondary-transform-lg, none);
+    --hb-spacing: var(--s-btn-secondary-letter-spacing-lg, normal);
+    --hb-shadow: var(--s-btn-secondary-shadow-lg, none);
+    --hb-hover-shadow: var(--s-btn-secondary-hover-shadow-lg, var(--hb-shadow));
+  }
+}

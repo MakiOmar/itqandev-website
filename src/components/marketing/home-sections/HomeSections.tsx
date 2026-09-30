@@ -22,6 +22,7 @@ import { gridColumnClassNames, normalizeResponsiveColumns } from '~/lib/marketin
 import { translateApp } from '~/lib/i18n/useTranslate';
 import './hero-floating-icons.css';
 import caseStudiesStyles from '~/components/marketing/widgets/case-studies.css?inline';
+import heroButtonStyles from '~/components/marketing/widgets/hero-buttons.css?inline';
 
 function settingString(settings: Record<string, unknown> | undefined, key: string, fallback: string): string {
   const v = settings?.[key];
@@ -95,7 +96,12 @@ function sectionFillSuppressed(
   return type !== 'none' && type !== '';
 }
 
+/** Layout + focus ring only; colours, sizes and borders come from hero-buttons.css (Style tab). */
+const HERO_BTN_BASE =
+  'hb-btn inline-flex items-center justify-center focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2';
+
 export const HeroHomeSection = component$<HomeSectionSharedProps>(({ settings, uiLocale, embedded }) => {
+  useStyles$(heroButtonStyles);
   const routes = marketingRoutes(uiLocale);
   const headline = settingString(settings, 'headline', 'We build web, Android & iOS apps that scale');
   const subheadline = settingString(
@@ -191,12 +197,12 @@ export const HeroHomeSection = component$<HomeSectionSharedProps>(({ settings, u
               </h1>
               <p class="mt-6 text-lg text-slate-600 dark:text-slate-300 sm:text-xl">{subheadline}</p>
               <div class="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row lg:justify-start">
-                <Button href={routes.contact} variant="primary" class="min-w-[180px]">
+                <a href={routes.contact} class={`${HERO_BTN_BASE} hb-primary`}>
                   {primaryCta}
-                </Button>
-                <Button href={routes.portfolio} variant="outline" class="min-w-[180px]">
+                </a>
+                <a href={routes.portfolio} class={`${HERO_BTN_BASE} hb-secondary`}>
                   {secondaryCta}
-                </Button>
+                </a>
               </div>
             </div>
           </AnimatedReveal>

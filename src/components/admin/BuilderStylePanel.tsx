@@ -52,6 +52,8 @@ const GROUP_LABEL: Record<string, string> = {
   caption: 'builder.style.groupCaption',
   title: 'builder.style.groupTitle',
   subtitle: 'builder.style.groupSubtitle',
+  btn_primary: 'builder.style.groupBtnPrimary',
+  btn_secondary: 'builder.style.groupBtnSecondary',
   tabs: 'builder.style.groupTabs',
   nav_buttons: 'builder.style.groupNavButtons',
   link: 'builder.style.groupLink',
@@ -125,7 +127,31 @@ const KEY_LABEL: Record<string, string> = {
   link_hover_color: 'builder.style.hoverTextColor',
   ...sectionTextLabels('title'),
   ...sectionTextLabels('subtitle'),
+  ...buttonLabels('btn_primary'),
+  ...buttonLabels('btn_secondary'),
 };
+
+function buttonLabels(part: 'btn_primary' | 'btn_secondary'): Record<string, string> {
+  return {
+    [`${part}_font_size`]: 'builder.style.fontSize',
+    [`${part}_font_weight`]: 'builder.style.fontWeight',
+    [`${part}_transform`]: 'builder.style.transform',
+    [`${part}_letter_spacing`]: 'builder.style.letterSpacing',
+    [`${part}_color`]: 'builder.style.textColor',
+    [`${part}_bg`]: 'builder.style.background',
+    [`${part}_border_color`]: 'builder.style.borderColor',
+    [`${part}_hover_color`]: 'builder.style.hoverTextColor',
+    [`${part}_hover_bg`]: 'builder.style.hoverBackground',
+    [`${part}_hover_border_color`]: 'builder.style.hoverBorderColor',
+    [`${part}_border_width`]: 'builder.style.borderWidth',
+    [`${part}_radius`]: 'builder.style.radius',
+    [`${part}_padding_y`]: 'builder.style.paddingY',
+    [`${part}_padding_x`]: 'builder.style.paddingX',
+    [`${part}_min_width`]: 'builder.style.minWidth',
+    [`${part}_shadow`]: 'builder.style.boxShadow',
+    [`${part}_hover_shadow`]: 'builder.style.hoverShadow',
+  };
+}
 
 function sectionTextLabels(part: 'title' | 'subtitle'): Record<string, string> {
   return {
