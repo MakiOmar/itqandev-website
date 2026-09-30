@@ -114,6 +114,10 @@ function manualVendorChunk(id: string): string | undefined {
   if (id.includes("@builder.io/qwik")) {
     return "qwik-core";
   }
+  // Admin icon picker `?url` stubs: keep with the picker chunk, not the shared public vendor chunk.
+  if (id.includes("@iconify-json")) {
+    return undefined;
+  }
   return "vendor";
 }
 

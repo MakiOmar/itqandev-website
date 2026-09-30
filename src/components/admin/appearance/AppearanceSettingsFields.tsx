@@ -4,6 +4,7 @@ import { FormSlugSelectField } from './FormSlugSelectField';
 import { CategoryMultiSelectField } from './CategoryMultiSelectField';
 import { ResponsiveColumnsField } from './ResponsiveColumnsField';
 import { HeroFloatingIconsEditor } from './HeroFloatingIconsEditor';
+import { IconPickerField } from './IconPickerField';
 import {
   isAppearanceFieldTranslatable,
   readAppearanceSettingValue,
@@ -265,33 +266,24 @@ const AppearanceSettingFieldControl = component$<FieldControlProps>((props) => {
   }
 
   if (field.type === 'icon') {
-    const ICONS = ['star', 'check', 'heart', 'arrow', 'play', 'mail', 'phone', 'quote'];
     return (
-      <div>
-        <label class="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-300">{label}</label>
-        <select
-          class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm dark:border-gray-600 dark:bg-slate-900"
-          value={asString(raw) || 'star'}
-          onChange$={async (e) => {
-            await props.onSettingsChange$(
-              writeAppearanceSettingValue(
-                props.values,
-                field.key,
-                (e.target as HTMLSelectElement).value,
-                props.activeLocale,
-                props.defaultLocale,
-                translatable,
-              ),
-            );
-          }}
-        >
-          {ICONS.map((name) => (
-            <option key={name} value={name}>
-              {name}
-            </option>
-          ))}
-        </select>
-      </div>
+      <IconPickerField
+        label={label}
+        value={raw}
+        lang={props.lang}
+        onChange$={async (next) => {
+          await props.onSettingsChange$(
+            writeAppearanceSettingValue(
+              props.values,
+              field.key,
+              next,
+              props.activeLocale,
+              props.defaultLocale,
+              translatable,
+            ),
+          );
+        }}
+      />
     );
   }
 

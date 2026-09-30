@@ -1028,6 +1028,20 @@
     "orPasteUrl": "Or paste URL",
     "language": "Language",
     "sharedSettings": "Shared settings",
+    "iconPicker": {
+      "title": "Icon library",
+      "choose": "Icon library",
+      "upload": "Upload SVG",
+      "remove": "Remove",
+      "none": "No icon",
+      "search": "Search icons…",
+      "loading": "Loading icons…",
+      "loadError": "Could not load the icon library.",
+      "retry": "Try again",
+      "empty": "No icons match your search.",
+      "showingFirst": "Showing {count} of {total} icons, refine your search to see more.",
+      "close": "Close"
+    },
     "editingLocaleCopy": "Editing {{locale}} copy. Empty fields fall back to the default language.",
     "singleLanguageHint": "Only one content language is configured.",
     "addLanguageLink": "Add another in Settings → Languages"

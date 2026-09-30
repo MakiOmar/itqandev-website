@@ -2,6 +2,7 @@ import { component$ } from '@builder.io/qwik';
 import { Button } from '~/components/marketing/Button';
 import { MarketingImageLightbox } from '~/components/marketing/MarketingImageLightbox';
 import { LottiePlayer } from '~/components/marketing/widgets/LottiePlayer';
+import { SvgIcon } from '~/components/marketing/SvgIcon';
 
 export type AtomicWidgetProps = {
   type: string;
@@ -203,15 +204,12 @@ export const AtomicWidgetView = component$<AtomicWidgetProps>((props) => {
         </div>
       );
     }
-    case 'icon': {
-      const name = str(s, 'icon', '★');
-      const size = num(s, 'size', 32);
+    case 'icon':
       return (
-        <span class="inline-flex text-primary-600 dark:text-primary-400" style={{ fontSize: `${size}px` }} aria-hidden="true">
-          {name === 'star' ? '★' : name === 'check' ? '✓' : name === 'heart' ? '♥' : name}
+        <span class="inline-flex text-primary-600 dark:text-primary-400">
+          <SvgIcon value={s.icon} size={num(s, 'size', 32)} />
         </span>
       );
-    }
     case 'embed': {
       const html = str(s, 'html');
       if (!html || !/<iframe\b/i.test(html)) return null;
@@ -359,6 +357,7 @@ export const AtomicWidgetView = component$<AtomicWidgetProps>((props) => {
         <div class="b-flip group relative h-56 w-full" tabIndex={0}>
           <div class="b-flip-inner relative h-full w-full rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-900">
             <div class="absolute inset-0 flex flex-col items-center justify-center gap-2 p-6 backface-hidden">
+              <SvgIcon value={s.front_icon} size={36} class="text-primary-600 dark:text-primary-400" />
               <p class="text-lg font-semibold text-slate-900 dark:text-white">{str(s, 'front_heading', 'Front')}</p>
               <p class="text-sm text-slate-600 dark:text-slate-300">{str(s, 'front_text')}</p>
             </div>
