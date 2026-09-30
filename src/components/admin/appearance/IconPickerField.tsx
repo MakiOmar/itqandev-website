@@ -1,4 +1,5 @@
 import { component$, useSignal, $, noSerialize, type NoSerialize, type QRL } from '@builder.io/qwik';
+import { ColorPickerField } from '~/components/admin/ColorPickerField';
 import { MediaSelector } from '~/components/common/MediaSelector';
 import { SvgIcon } from '~/components/marketing/SvgIcon';
 import { loadIconSet, type LoadedIconSet } from '~/lib/admin/icon-sets';
@@ -49,7 +50,14 @@ export const IconPickerField = component$<IconPickerFieldProps>((props) => {
     const icon = iconSet.value?.icon(name);
     if (!icon) return;
     libraryOpen.value = false;
-    await props.onChange$(icon);
+    const color = current?.library === 'lucide' ? current.color : undefined;
+    await props.onChange$(color ? { ...icon, color } : icon);
+  });
+
+  const setColor$ = $(async (next: string) => {
+    if (current?.library !== 'lucide') return;
+    const { color: _previous, ...rest } = current;
+    await props.onChange$(next ? { ...rest, color: next } : rest);
   });
 
   const q = query.value.trim().toLowerCase();
@@ -83,6 +91,34 @@ export const IconPickerField = component$<IconPickerFieldProps>((props) => {
           </button>
         ) : null}
       </div>
+
+      {/* Icon colour: library icons draw with currentColor; uploaded images keep their own colours */}
+      {current?.library === 'lucide' ? (
+        <div class="mt-2 flex items-center gap-2">
+          <ColorPickerField
+            value={current.color || ''}
+            onChange$={setColor$}
+            lang={props.lang}
+            clearable
+            fallback="#0389a1"
+            label={t('color')}
+            class="h-8 w-10"
+          />
+          <span class="text-xs text-gray-600 dark:text-gray-300">{t('color')}</span>
+          <span class="text-[11px] text-gray-400">{current.color || t('colorInherit')}</span>
+          {current.color ? (
+            <button
+              type="button"
+              class="text-[11px] font-medium text-primary-600 hover:underline dark:text-primary-400"
+              onClick$={() => setColor$('')}
+            >
+              {t('colorReset')}
+            </button>
+          ) : null}
+        </div>
+      ) : current?.library === 'svg' ? (
+        <p class="mt-2 text-[11px] text-gray-500 dark:text-gray-400">{t('uploadColorHint')}</p>
+      ) : null}
 
       {/* Icon library dialog */}
       {libraryOpen.value ? (

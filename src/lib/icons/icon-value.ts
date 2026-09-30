@@ -11,6 +11,8 @@ export type SetIconValue = {
   name: string;
   body: string;
   view_box: string;
+  /** Hex colour applied through `currentColor`; unset inherits the surrounding text colour. */
+  color?: string;
 };
 
 export type UploadedIconValue = {
@@ -46,6 +48,12 @@ const ALLOWED_ATTRIBUTES = new Set([
 const TAG_RE = /<\/?([a-zA-Z][\w-]*)((?:\s+[a-zA-Z][\w:-]*\s*=\s*"[^"<>]*")*)\s*\/?>/g;
 const ATTR_RE = /([a-zA-Z][\w:-]*)\s*=\s*"([^"<>]*)"/g;
 const UNSAFE_VALUE_RE = /url\s*\(|javascript\s*:|expression\s*\(/i;
+const ICON_COLOR_RE = /^#(?:[0-9a-f]{3,4}|[0-9a-f]{6}|[0-9a-f]{8})$/i;
+
+/** Only hex colours reach the SVG style attribute. */
+export function isSafeIconColor(color: unknown): color is string {
+  return typeof color === 'string' && ICON_COLOR_RE.test(color.trim());
+}
 
 /** Strict allowlist check before a body is injected as inline SVG. */
 export function isSafeIconBody(body: string): boolean {
@@ -85,7 +93,9 @@ export function parseIconValue(raw: unknown): IconValue | null {
     const body = typeof v.body === 'string' ? v.body.trim() : '';
     if (!isSafeIconBody(body)) return null;
     const viewBox = typeof v.view_box === 'string' && /^-?[\d.]+( -?[\d.]+){3}$/.test(v.view_box) ? v.view_box : DEFAULT_VIEW_BOX;
-    return { library: 'lucide', name: String(v.name ?? ''), body, view_box: viewBox };
+    const icon: SetIconValue = { library: 'lucide', name: String(v.name ?? ''), body, view_box: viewBox };
+    if (isSafeIconColor(v.color)) icon.color = v.color.trim().toLowerCase();
+    return icon;
   }
   return null;
 }

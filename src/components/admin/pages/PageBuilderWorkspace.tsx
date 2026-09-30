@@ -59,7 +59,8 @@ import {
   BuilderInspectorTabs,
   BuilderResponsiveVisibilityFields,
 } from '~/components/admin/BuilderResponsiveVisibilityFields';
-import { BuilderStylePanel } from '~/components/admin/BuilderStylePanel';
+import { BuilderStylePanel, STYLE_ACCORDION_GROUP } from '~/components/admin/BuilderStylePanel';
+import { InspectorAccordion } from '~/components/admin/InspectorAccordion';
 import { BuilderBackgroundFields } from '~/components/admin/BuilderBackgroundFields';
 import { BuilderShapeDividerFields } from '~/components/admin/BuilderShapeDividerFields';
 import {
@@ -972,27 +973,32 @@ export const PageBuilderWorkspace = component$<PageBuilderWorkspaceProps>((props
                   ) : null}
                   {inspectorTab.value === 'style' ? (
                     <div class="space-y-4">
-                      <BuilderBackgroundFields
-                        lang={props.lang}
-                        settings={bands[selection.value.bandIndex]?.settings}
-                        onChange$={$(async (next) => {
-                          const bi = selection.value!.bandIndex;
-                          await commit$(
-                            bands.map((b, i) => (i === bi ? { ...b, settings: next } : b)),
-                          );
-                        })}
-                      />
-                      <BuilderShapeDividerFields
-                        lang={props.lang}
-                        settings={bands[selection.value.bandIndex]?.settings}
-                        onChange$={$(async (next) => {
-                          const bi = selection.value!.bandIndex;
-                          await commit$(
-                            bands.map((b, i) => (i === bi ? { ...b, settings: next } : b)),
-                          );
-                        })}
-                      />
+                      <InspectorAccordion title={translateApp(props.lang, 'builder.background.title')} group={STYLE_ACCORDION_GROUP} open>
+                        <BuilderBackgroundFields
+                          lang={props.lang}
+                          settings={bands[selection.value.bandIndex]?.settings}
+                          onChange$={$(async (next) => {
+                            const bi = selection.value!.bandIndex;
+                            await commit$(
+                              bands.map((b, i) => (i === bi ? { ...b, settings: next } : b)),
+                            );
+                          })}
+                        />
+                      </InspectorAccordion>
+                      <InspectorAccordion title={translateApp(props.lang, 'builder.shapeDividers')} group={STYLE_ACCORDION_GROUP}>
+                        <BuilderShapeDividerFields
+                          lang={props.lang}
+                          settings={bands[selection.value.bandIndex]?.settings}
+                          onChange$={$(async (next) => {
+                            const bi = selection.value!.bandIndex;
+                            await commit$(
+                              bands.map((b, i) => (i === bi ? { ...b, settings: next } : b)),
+                            );
+                          })}
+                        />
+                      </InspectorAccordion>
                       <BuilderStylePanel
+                        openFirst={false}
                         lang={props.lang}
                         widgetType={CONTAINER_STYLE_TYPE}
                         styles={bands[selection.value.bandIndex]?.styles}
@@ -1132,27 +1138,30 @@ export const PageBuilderWorkspace = component$<PageBuilderWorkspaceProps>((props
                   ) : null}
                   {inspectorTab.value === 'style' ? (
                     <div class="space-y-4">
-                      <BuilderBackgroundFields
-                        lang={props.lang}
-                        settings={selectedRow?.settings}
-                        onChange$={$(async (next) => {
-                          const path = rowPathOf(selection.value);
-                          if (!path) return;
-                          const { bandIndex, rowIndex } = path;
-                          await commit$(
-                            bands.map((b, bi) => {
-                              if (bi !== bandIndex) return b;
-                              return {
-                                ...b,
-                                rows: b.rows.map((r, ri) =>
-                                  ri === rowIndex ? { ...r, settings: next } : r,
-                                ),
-                              };
-                            }),
-                          );
-                        })}
-                      />
+                      <InspectorAccordion title={translateApp(props.lang, 'builder.background.title')} group={STYLE_ACCORDION_GROUP} open>
+                        <BuilderBackgroundFields
+                          lang={props.lang}
+                          settings={selectedRow?.settings}
+                          onChange$={$(async (next) => {
+                            const path = rowPathOf(selection.value);
+                            if (!path) return;
+                            const { bandIndex, rowIndex } = path;
+                            await commit$(
+                              bands.map((b, bi) => {
+                                if (bi !== bandIndex) return b;
+                                return {
+                                  ...b,
+                                  rows: b.rows.map((r, ri) =>
+                                    ri === rowIndex ? { ...r, settings: next } : r,
+                                  ),
+                                };
+                              }),
+                            );
+                          })}
+                        />
+                      </InspectorAccordion>
                       <BuilderStylePanel
+                        openFirst={false}
                         lang={props.lang}
                         widgetType={CONTAINER_STYLE_TYPE}
                         styles={selectedRow?.styles}
@@ -1315,33 +1324,36 @@ export const PageBuilderWorkspace = component$<PageBuilderWorkspaceProps>((props
                   ) : null}
                   {inspectorTab.value === 'style' ? (
                     <div class="space-y-4">
-                      <BuilderBackgroundFields
-                        lang={props.lang}
-                        settings={selectedCol?.settings}
-                        onChange$={$(async (next) => {
-                          const path = colPathOf(selection.value);
-                          if (!path) return;
-                          const { bandIndex, rowIndex, colIndex } = path;
-                          await commit$(
-                            bands.map((b, bi) => {
-                              if (bi !== bandIndex) return b;
-                              return {
-                                ...b,
-                                rows: b.rows.map((r, ri) => {
-                                  if (ri !== rowIndex) return r;
-                                  return {
-                                    ...r,
-                                    columns: r.columns.map((c, ci) =>
-                                      ci === colIndex ? { ...c, settings: next } : c,
-                                    ),
-                                  };
-                                }),
-                              };
-                            }),
-                          );
-                        })}
-                      />
+                      <InspectorAccordion title={translateApp(props.lang, 'builder.background.title')} group={STYLE_ACCORDION_GROUP} open>
+                        <BuilderBackgroundFields
+                          lang={props.lang}
+                          settings={selectedCol?.settings}
+                          onChange$={$(async (next) => {
+                            const path = colPathOf(selection.value);
+                            if (!path) return;
+                            const { bandIndex, rowIndex, colIndex } = path;
+                            await commit$(
+                              bands.map((b, bi) => {
+                                if (bi !== bandIndex) return b;
+                                return {
+                                  ...b,
+                                  rows: b.rows.map((r, ri) => {
+                                    if (ri !== rowIndex) return r;
+                                    return {
+                                      ...r,
+                                      columns: r.columns.map((c, ci) =>
+                                        ci === colIndex ? { ...c, settings: next } : c,
+                                      ),
+                                    };
+                                  }),
+                                };
+                              }),
+                            );
+                          })}
+                        />
+                      </InspectorAccordion>
                       <BuilderStylePanel
+                        openFirst={false}
                         lang={props.lang}
                         widgetType={CONTAINER_STYLE_TYPE}
                         styles={selectedCol?.styles}
@@ -1521,19 +1533,22 @@ export const PageBuilderWorkspace = component$<PageBuilderWorkspaceProps>((props
                   ) : null}
                   {inspectorTab.value === 'style' ? (
                     <div class="space-y-4">
-                      <BuilderBackgroundFields
-                        lang={props.lang}
-                        settings={selectedBlock.settings}
-                        onChange$={$(async (next) => {
-                          await commit$(
-                            updateBlockInBands(bands, selectedBlock.id, (blk) => ({
-                              ...blk,
-                              settings: next,
-                            })),
-                          );
-                        })}
-                      />
+                      <InspectorAccordion title={translateApp(props.lang, 'builder.background.title')} group={STYLE_ACCORDION_GROUP} open>
+                        <BuilderBackgroundFields
+                          lang={props.lang}
+                          settings={selectedBlock.settings}
+                          onChange$={$(async (next) => {
+                            await commit$(
+                              updateBlockInBands(bands, selectedBlock.id, (blk) => ({
+                                ...blk,
+                                settings: next,
+                              })),
+                            );
+                          })}
+                        />
+                      </InspectorAccordion>
                       <BuilderStylePanel
+                        openFirst={false}
                         lang={props.lang}
                         widgetType={selectedBlock.type}
                         styles={selectedBlock.styles}

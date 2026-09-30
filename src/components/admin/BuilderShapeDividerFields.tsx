@@ -42,9 +42,6 @@ export const BuilderShapeDividerFields = component$<{
 
   return (
     <div class="space-y-3">
-      <p class="text-xs font-semibold uppercase tracking-wide text-gray-500">
-        {translateApp(props.lang, 'builder.shapeDividers')}
-      </p>
       {(['top', 'bottom'] as const).map((edge) => {
         const val = raw[edge] || { preset: 'none' };
         return (

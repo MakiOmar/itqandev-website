@@ -4,6 +4,7 @@
 import { component$, $, type QRL } from '@builder.io/qwik';
 import { translateApp } from '~/lib/i18n/useTranslate';
 import { ColorPickerField } from '~/components/admin/ColorPickerField';
+import { InspectorAccordion } from '~/components/admin/InspectorAccordion';
 import {
   ADMIN_CHECKBOX_CLASS,
   ADMIN_CHECKBOX_LABEL_CLASS,
@@ -37,6 +38,9 @@ import {
 } from '~/lib/admin/builder-style-controls';
 
 const LENGTH_UNITS = STYLE_UNITS.filter((u) => u !== 'auto');
+
+/** Shared `<details name>` so one Style section is open at a time, including Background/Shape dividers. */
+export const STYLE_ACCORDION_GROUP = 'builder-style';
 
 const GROUP_LABEL: Record<string, string> = {
   layout: 'builder.style.groupLayout',
@@ -822,6 +826,8 @@ export const BuilderStylePanel = component$<{
   device: StyleBreakpoint;
   onDevice$: QRL<(device: StyleBreakpoint) => void>;
   onChange$: QRL<(next: BuilderStyles) => void | Promise<void>>;
+  /** Open the first group; off when sections above it (e.g. Background) already open one. */
+  openFirst?: boolean;
 }>((props) => {
   const groups = widgetStyleGroups(props.widgetType);
   if (groups.length === 0) {
@@ -846,25 +852,29 @@ export const BuilderStylePanel = component$<{
       <p class="text-[11px] leading-snug text-gray-500 dark:text-gray-400">
         {translateApp(props.lang, 'builder.style.inheritHint')}
       </p>
-      {groups.map((group) => (
-        <div key={group} class="space-y-3 rounded-lg border border-gray-200 p-2.5 dark:border-gray-700">
-          <p class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
-            {translateApp(props.lang, GROUP_LABEL[group] || group)}
-          </p>
-          {controls
-            .filter((c) => c.group === group)
-            .map((control) => (
-              <StyleControlRow
-                key={control.key}
-                lang={props.lang}
-                control={control}
-                styles={props.styles}
-                device={group === 'custom' ? 'desktop' : props.device}
-                onPatch$={onPatch$}
-              />
-            ))}
-        </div>
-      ))}
+      <div>
+        {groups.map((group, index) => (
+          <InspectorAccordion
+            key={group}
+            title={translateApp(props.lang, GROUP_LABEL[group] || group)}
+            group={STYLE_ACCORDION_GROUP}
+            open={index === 0 && props.openFirst !== false}
+          >
+            {controls
+              .filter((c) => c.group === group)
+              .map((control) => (
+                <StyleControlRow
+                  key={control.key}
+                  lang={props.lang}
+                  control={control}
+                  styles={props.styles}
+                  device={group === 'custom' ? 'desktop' : props.device}
+                  onPatch$={onPatch$}
+                />
+              ))}
+          </InspectorAccordion>
+        ))}
+      </div>
     </div>
   );
 });

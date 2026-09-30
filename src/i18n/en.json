@@ -1053,7 +1053,11 @@
       "retry": "Try again",
       "empty": "No icons match your search.",
       "showingFirst": "Showing {count} of {total} icons, refine your search to see more.",
-      "close": "Close"
+      "close": "Close",
+      "color": "Icon colour",
+      "colorInherit": "Inherits text colour",
+      "colorReset": "Reset",
+      "uploadColorHint": "Uploaded icons keep their own colours. Use an icon from the library to change the colour."
     },
     "editingLocaleCopy": "Editing {{locale}} copy. Empty fields fall back to the default language.",
     "singleLanguageHint": "Only one content language is configured.",
@@ -1303,7 +1307,8 @@
       "rainDirection": "Rain direction",
       "rainDown": "Top to bottom",
       "rainUp": "Bottom to top",
-      "rainBoth": "Both directions"
+      "rainBoth": "Both directions",
+      "title": "Background"
     },
     "colorPicker": {
       "open": "Choose colour",

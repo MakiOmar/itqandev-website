@@ -1,4 +1,3 @@
-import { component$ } from '@builder.io/qwik';
 import { parseIconValue } from '~/lib/icons/icon-value';
 import { resolveLaravelMediaUrl } from '~/lib/marketing/resolve-laravel-media-url';
 
@@ -9,8 +8,12 @@ export type SvgIconProps = {
   class?: string;
 };
 
-/** Inline, self-hosted icon: no icon font, script or external request on the public site. */
-export const SvgIcon = component$<SvgIconProps>((props) => {
+/**
+ * Inline, self-hosted icon: no icon font, script or external request on the public site.
+ * Inline component (not `component$`) so builder edits to icon/colour re-render with the parent;
+ * callers often pass loop items, whose member props Qwik would otherwise freeze.
+ */
+export const SvgIcon = (props: SvgIconProps) => {
   const icon = parseIconValue(props.value);
   if (!icon) return null;
   const size = props.size ?? 24;
@@ -38,7 +41,8 @@ export const SvgIcon = component$<SvgIconProps>((props) => {
       aria-hidden="true"
       focusable="false"
       class={['inline-block shrink-0', props.class].filter(Boolean).join(' ')}
+      style={icon.color ? { color: icon.color } : undefined}
       dangerouslySetInnerHTML={icon.body}
     />
   );
-});
+};
