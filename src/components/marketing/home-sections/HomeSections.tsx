@@ -5,6 +5,7 @@ import { Section } from '~/components/marketing/Section';
 import { Button } from '~/components/marketing/Button';
 import { AnimatedReveal } from '~/components/marketing/AnimatedReveal';
 import { CaseStudyCard } from '~/components/marketing/CaseStudyCard';
+import { CaseStudyDetailedCard } from '~/components/marketing/CaseStudyDetailedCard';
 import { CategoryTabsCarousel } from '~/components/marketing/CategoryTabsCarousel';
 import { TestimonialGrid } from '~/components/marketing/TestimonialGrid';
 import { testimonialListOptions } from '~/components/marketing/widgets/testimonial-list-options';
@@ -393,6 +394,7 @@ export const CaseStudiesHomeSection = component$<
   const title = settingString(settings, 'title', 'Selected portfolio');
   const subtitle = settingString(settings, 'subtitle', 'Recent projects we are proud of.');
   const allLabel = translateApp(uiLocale, 'homePage.worksAll');
+  const detailedCards = settingString(settings, 'card_style', 'overlay') === 'detailed';
 
   const tabCategories = (() => {
     if (selectedCategoryIds.length > 0) {
@@ -460,7 +462,7 @@ export const CaseStudiesHomeSection = component$<
             {filteredItems.map((cs, i) => (
               <li key={cs.id}>
                 <AnimatedReveal delay={i * 80}>
-                  <CaseStudyCard caseStudy={cs} />
+                  {detailedCards ? <CaseStudyDetailedCard caseStudy={cs} /> : <CaseStudyCard caseStudy={cs} />}
                 </AnimatedReveal>
               </li>
             ))}

@@ -96,6 +96,7 @@
   "homePage": {
     "worksAll": "All",
     "viewPortfolio": "View portfolio",
+    "viewCaseStudy": "View case study",
     "worksEmptyTab": "No projects in this category yet.",
     "tabsPrev": "Previous categories",
     "tabsNext": "Next categories"
