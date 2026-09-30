@@ -104,6 +104,18 @@ export type PageBuilderSelection =
   | { kind: 'block'; bandIndex: number; rowIndex: number; colIndex: number; blockIndex: number }
   | null;
 
+/** Keeps the selection on the same node after a row is inserted at `rowIndex` of `bandIndex`. */
+function shiftSelectionForRowInsert(
+  sel: PageBuilderSelection,
+  bandIndex: number,
+  rowIndex: number,
+): PageBuilderSelection {
+  if (!sel || sel.kind === 'band' || sel.bandIndex !== bandIndex || sel.rowIndex < rowIndex) {
+    return sel;
+  }
+  return { ...sel, rowIndex: sel.rowIndex + 1 };
+}
+
 function groupRegistryByCategory(
   entries: AppearanceRegistryEntry[],
 ): Array<[string, AppearanceRegistryEntry[]]> {
@@ -581,10 +593,16 @@ export const PageBuilderWorkspace = component$<PageBuilderWorkspaceProps>((props
   const inspectorTab = useSignal<InspectorTab>('content');
   /** Back keeps the selection so palette inserts still target the selected column. */
   const sidebarView = useSignal<'palette' | 'controls'>('palette');
+  /** Set when only the selection's indices shift (same node), so the sidebar view and tab stay put. */
+  const selectionReindexed = useSignal(false);
   const previewIsDark = useSignal(false);
 
   useTask$(({ track }) => {
     track(() => selection.value);
+    if (selectionReindexed.value) {
+      selectionReindexed.value = false;
+      return;
+    }
     inspectorTab.value = 'content';
     sidebarView.value = selection.value ? 'controls' : 'palette';
   });
@@ -2093,6 +2111,34 @@ export const PageBuilderWorkspace = component$<PageBuilderWorkspaceProps>((props
                                   }}
                                 >
                                   {translateApp(props.lang, 'pages.row')} {rowIndex + 1} · {usedSpan}/12
+                                </button>
+                                {/* Insert an empty row before this one */}
+                                <button
+                                  type="button"
+                                  class="rounded px-1.5 py-0.5 hover:bg-sky-700"
+                                  title={translateApp(props.lang, 'pages.addRowAbove')}
+                                  onClick$={async () => {
+                                    const next = bands.map((b, bi) =>
+                                      bi === bandIndex
+                                        ? {
+                                            ...b,
+                                            rows: [
+                                              ...b.rows.slice(0, rowIndex),
+                                              createEmptyRow(2),
+                                              ...b.rows.slice(rowIndex),
+                                            ],
+                                          }
+                                        : b,
+                                    );
+                                    const shifted = shiftSelectionForRowInsert(selection.value, bandIndex, rowIndex);
+                                    await commit$(next);
+                                    if (shifted !== selection.value) {
+                                      selectionReindexed.value = true;
+                                      selection.value = shifted;
+                                    }
+                                  }}
+                                >
+                                  + {translateApp(props.lang, 'pages.addRowAbove')}
                                 </button>
                                 <button
                                   type="button"

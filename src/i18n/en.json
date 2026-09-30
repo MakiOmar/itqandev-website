@@ -390,7 +390,8 @@
     "parentHint": "Nested pages use /pages/parent/child/ and still open from a direct URL.",
     "excludeFromSearchHint": "Search engines get noindex on this page, and it is omitted from listings and the sitemap. Anyone with the URL can still open it. Use this when site-wide indexing is on and you want to hide one page.",
     "excludeFromSearchBadge": "Hidden from search",
-    "backToWidgets": "Widgets"
+    "backToWidgets": "Widgets",
+    "addRowAbove": "Row above"
   },
   "forms": {
     "title": "Forms",
