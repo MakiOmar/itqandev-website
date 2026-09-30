@@ -1,4 +1,4 @@
-import { component$, type QRL } from '@builder.io/qwik';
+import { $, component$, useSignal, type QRL } from '@builder.io/qwik';
 import { AdminSwitch } from './AdminSwitch';
 import { FormSlugSelectField } from './FormSlugSelectField';
 import { CategoryMultiSelectField } from './CategoryMultiSelectField';
@@ -12,6 +12,12 @@ import {
   readAppearanceSettingValue,
   writeAppearanceSettingValue,
 } from '~/lib/admin/appearance-locale-settings';
+import {
+  groupAppearanceFields,
+  hasAppearanceFieldGroups,
+  isAppearanceFieldVisible,
+  isAppearanceSettingOn,
+} from '~/lib/admin/appearance-field-groups';
 import { SharedRepeaterTranslationsEditor } from './SharedRepeaterTranslationsEditor';
 import { ColorPickerField } from '~/components/admin/ColorPickerField';
 import {
@@ -616,55 +622,59 @@ const AppearanceSettingFieldControl = component$<FieldControlProps>((props) => {
         <label class="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-300">
           {label}
         </label>
-        <div class="flex flex-wrap items-start gap-3">
-          {previewSrc ? (
-            <img
-              src={previewSrc}
-              alt=""
-              class="h-20 w-auto max-w-[12rem] rounded border border-gray-200 object-cover dark:border-gray-600"
-            />
-          ) : mediaId !== null ? (
-            <div class="flex h-20 w-32 items-center justify-center rounded border border-dashed border-gray-300 text-xs text-gray-400 dark:border-gray-600">
-              #{mediaId}
-            </div>
-          ) : (
-            <div class="flex h-20 w-32 items-center justify-center rounded border border-dashed border-gray-300 text-xs text-gray-400 dark:border-gray-600">
-              {translateApp(props.lang, 'appearance.noImage')}
-            </div>
-          )}
-          <div class="flex flex-col gap-2">
-            <button
-              type="button"
-              class="rounded-lg bg-primary-600 px-3 py-2 text-xs font-medium text-white hover:bg-primary-700"
-              onClick$={async () => {
-                await props.onPickMedia$(field.key, field.accept);
-              }}
-            >
-              {translateApp(props.lang, 'appearance.selectFromLibrary')}
-            </button>
-            {raw !== undefined && raw !== null && raw !== '' ? (
+        <div class="flex items-start gap-3">
+          {/* Thumbnail doubles as the library picker trigger. */}
+          <button
+            type="button"
+            class="flex h-16 w-24 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-dashed border-gray-300 bg-white text-xs text-gray-400 hover:border-primary-500 dark:border-gray-600 dark:bg-gray-950"
+            aria-label={translateApp(props.lang, 'appearance.selectFromLibrary')}
+            onClick$={async () => {
+              await props.onPickMedia$(field.key, field.accept);
+            }}
+          >
+            {previewSrc ? (
+              <img src={previewSrc} alt="" class="h-full w-full object-cover" />
+            ) : mediaId !== null ? (
+              <span>#{mediaId}</span>
+            ) : (
+              <span>{translateApp(props.lang, 'appearance.noImage')}</span>
+            )}
+          </button>
+          <div class="flex min-w-0 flex-1 flex-col gap-2">
+            <div class="flex flex-wrap gap-2">
               <button
                 type="button"
-                class="rounded-lg border border-gray-300 px-3 py-2 text-xs dark:border-gray-600"
+                class="rounded-lg bg-primary-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-primary-700"
                 onClick$={async () => {
-                  await props.onSettingsChange$(
-                    writeAppearanceSettingValue(
-                      props.values,
-                      field.key,
-                      '',
-                      props.activeLocale,
-                      props.defaultLocale,
-                      translatable,
-                    ),
-                  );
+                  await props.onPickMedia$(field.key, field.accept);
                 }}
               >
-                {translateApp(props.lang, 'appearance.clear')}
+                {translateApp(props.lang, 'appearance.selectFromLibrary')}
               </button>
-            ) : null}
+              {raw !== undefined && raw !== null && raw !== '' ? (
+                <button
+                  type="button"
+                  class="rounded-lg border border-gray-300 px-3 py-1.5 text-xs dark:border-gray-600"
+                  onClick$={async () => {
+                    await props.onSettingsChange$(
+                      writeAppearanceSettingValue(
+                        props.values,
+                        field.key,
+                        '',
+                        props.activeLocale,
+                        props.defaultLocale,
+                        translatable,
+                      ),
+                    );
+                  }}
+                >
+                  {translateApp(props.lang, 'appearance.clear')}
+                </button>
+              ) : null}
+            </div>
             <input
               type="url"
-              class="w-full min-w-[14rem] rounded border px-2 py-1 text-xs dark:bg-gray-900"
+              class="w-full min-w-0 rounded border px-2 py-1 text-xs dark:bg-gray-900"
               placeholder={translateApp(props.lang, 'appearance.orPasteUrl')}
               value={urlInput}
               onInput$={async (e) => {
@@ -735,6 +745,57 @@ const AppearanceSettingFieldControl = component$<FieldControlProps>((props) => {
             }}
           />
         ) : null}
+      </div>
+    );
+  }
+
+  if (field.type === 'number' && field.slider) {
+    const min = field.min ?? 0;
+    const max = field.max ?? 100;
+    const value = Number(raw ?? field.default ?? min);
+    const inputId = `setting-${field.key}`;
+    const write = $(async (next: number) => {
+      await props.onSettingsChange$(
+        writeAppearanceSettingValue(
+          props.values,
+          field.key,
+          next,
+          props.activeLocale,
+          props.defaultLocale,
+          translatable,
+        ),
+      );
+    });
+    return (
+      <div class="md:col-span-2">
+        <div class="mb-1 flex items-center justify-between gap-2">
+          <label for={inputId} class="text-xs font-medium text-gray-600 dark:text-gray-300">
+            {label}
+          </label>
+          <input
+            type="number"
+            min={min}
+            max={max}
+            aria-label={label}
+            class="w-16 rounded border px-1.5 py-0.5 text-end text-xs dark:bg-gray-900"
+            value={value}
+            onInput$={async (e) => {
+              await write(Number((e.target as HTMLInputElement).value));
+            }}
+          />
+        </div>
+        <input
+          id={inputId}
+          type="range"
+          min={min}
+          max={max}
+          step={1}
+          class="w-full accent-primary-600"
+          value={value}
+          onInput$={async (e) => {
+            await write(Number((e.target as HTMLInputElement).value));
+          }}
+        />
       </div>
     );
   }
@@ -946,6 +1007,37 @@ export const AppearanceSettingsFields = component$<AppearanceSettingsFieldsProps
       return rank(a) - rank(b);
     });
   const localizedFields = props.fields.filter((f) => isAppearanceFieldTranslatable(f));
+  const grouped = hasAppearanceFieldGroups(props.fields);
+  const groups = grouped ? groupAppearanceFields(props.fields) : [];
+  const groupIds = groups.map((g) => g.id);
+  const openGroupId = useSignal<string | null>(null);
+  // '' means the user collapsed every section; an unknown id (another block selected) falls back to the first.
+  const activeGroupId =
+    openGroupId.value === ''
+      ? null
+      : groups.some((g) => g.id === openGroupId.value)
+        ? openGroupId.value
+        : (groups[0]?.id ?? null);
+
+  const renderControl = (field: AppearanceSettingField) => {
+    const translatable = isAppearanceFieldTranslatable(field);
+    return (
+      <AppearanceSettingFieldControl
+        key={translatable ? `loc-${field.key}-${activeLocale}` : `shared-${field.key}`}
+        field={field}
+        values={props.values}
+        activeLocale={activeLocale}
+        defaultLocale={defaultLocale}
+        lang={lang}
+        categoryOptions={translatable ? undefined : props.categoryOptions}
+        onSettingsChange$={props.onSettingsChange$}
+        onPickMedia$={props.onPickMedia$}
+        mediaPreviewById={props.mediaPreviewById}
+        onMediaPreview$={props.onMediaPreview$}
+        dynamicTags={props.dynamicTags}
+      />
+    );
+  };
 
   return (
     <div class="space-y-4">
@@ -1013,7 +1105,82 @@ export const AppearanceSettingsFields = component$<AppearanceSettingsFieldsProps
         </p>
       )}
 
-      {localizedFields.length > 0 ? (
+      {grouped ? (
+        <div class="space-y-2">
+          {groups.map((group) => {
+            const groupId = group.id;
+            const open = groupId === activeGroupId;
+            const toggle = group.fields.find(
+              (f) => f.type === 'boolean' && group.fields.some((dep) => dep.show_if === f.key),
+            );
+            const toggleOff = toggle ? !isAppearanceSettingOn(props.values, toggle.key) : false;
+            const visibleFields = group.fields.filter((f) =>
+              isAppearanceFieldVisible(f, props.fields, props.values),
+            );
+            const titleKey = `appearance.groups.${group.id}`;
+            const translatedTitle = translateApp(lang, titleKey);
+            const fallbackTitle = group.id.replace(/_/g, ' ');
+            const title =
+              translatedTitle !== titleKey
+                ? translatedTitle
+                : fallbackTitle.charAt(0).toUpperCase() + fallbackTitle.slice(1);
+            const panelId = `settings-group-${group.id}`;
+            return (
+              /* Single-open accordion section per field group. */
+              <section
+                key={group.id}
+                class="overflow-hidden rounded-lg border border-gray-200 dark:border-gray-700"
+              >
+                <button
+                  type="button"
+                  class={[
+                    'flex w-full items-center justify-between gap-2 px-3 py-2.5 text-start text-sm font-medium',
+                    open
+                      ? 'bg-gray-50 text-gray-900 dark:bg-gray-800/70 dark:text-gray-100'
+                      : 'text-gray-700 hover:bg-gray-50 dark:text-gray-200 dark:hover:bg-gray-800/50',
+                  ].join(' ')}
+                  aria-expanded={open ? 'true' : 'false'}
+                  aria-controls={panelId}
+                  onClick$={() => {
+                    const current = openGroupId.value;
+                    const currentOpen =
+                      current === '' ? null : current && groupIds.includes(current) ? current : groupIds[0];
+                    openGroupId.value = currentOpen === groupId ? '' : groupId;
+                  }}
+                >
+                  <span>{title}</span>
+                  <span class="flex items-center gap-2">
+                    {toggleOff ? (
+                      <span class="rounded bg-gray-200 px-1.5 py-0.5 text-[10px] font-medium uppercase text-gray-500 dark:bg-gray-700 dark:text-gray-400">
+                        {translateApp(lang, 'appearance.off')}
+                      </span>
+                    ) : null}
+                    <svg
+                      viewBox="0 0 20 20"
+                      fill="currentColor"
+                      aria-hidden="true"
+                      class={['h-4 w-4 text-gray-400 transition-transform', open ? 'rotate-180' : ''].join(' ')}
+                    >
+                      <path
+                        fill-rule="evenodd"
+                        d="M5.23 7.21a.75.75 0 0 1 1.06.02L10 11.17l3.71-3.94a.75.75 0 1 1 1.08 1.04l-4.25 4.5a.75.75 0 0 1-1.08 0l-4.25-4.5a.75.75 0 0 1 .02-1.06Z"
+                        clip-rule="evenodd"
+                      />
+                    </svg>
+                  </span>
+                </button>
+                {open ? (
+                  <div id={panelId} class="flex flex-col gap-3 border-t border-gray-200 p-3 dark:border-gray-700">
+                    {visibleFields.map((field) => renderControl(field))}
+                  </div>
+                ) : null}
+              </section>
+            );
+          })}
+        </div>
+      ) : null}
+
+      {!grouped && localizedFields.length > 0 ? (
         <div class="grid gap-3 md:grid-cols-2">
           {localizedFields.map((field) => (
             <AppearanceSettingFieldControl
@@ -1033,7 +1200,7 @@ export const AppearanceSettingsFields = component$<AppearanceSettingsFieldsProps
         </div>
       ) : null}
 
-      {sharedFields.length > 0 ? (
+      {!grouped && sharedFields.length > 0 ? (
         <div class="space-y-2">
           {showTabs && localizedFields.length > 0 ? (
             <p class="text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400 text-start">

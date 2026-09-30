@@ -141,6 +141,12 @@ export type AppearanceSettingField = {
   max?: number;
   /** Number fields: value shown when the setting is unset (instances saved before the field existed). */
   default?: number;
+  /** Number fields: render a range slider with the value beside it. */
+  slider?: boolean;
+  /** Inspector section id; when any field has one, the Content tab renders collapsible sections. */
+  group?: string;
+  /** Key of a boolean setting that must be on for this field to be shown. */
+  show_if?: string;
   /** When true, edited per language tab into settings.translations.{locale}. */
   translatable?: boolean;
   options?: Array<{ value: string; label: string }>;
