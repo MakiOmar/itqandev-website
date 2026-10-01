@@ -72,6 +72,7 @@ import {
   navigatorPathToSelection,
 } from '~/components/admin/pages/PageBuilderNavigator';
 import { moveLayoutTreeNode } from '~/lib/admin/page-layout-tree';
+import { useBuilderCanvasGuard } from '~/lib/admin/builder-canvas-guard';
 import { LayoutDeviceProvider } from '~/lib/marketing/layout-device-context';
 import { normalizeHideOn, type DeviceHideOn } from '~/lib/marketing/device-visibility';
 import type { BuilderStyles, StyleBreakpoint } from '~/lib/marketing/builder-styles';
@@ -296,7 +297,6 @@ type GlobalWidgetCreated = { id?: number };
 type BandLayoutWidth = 'boxed' | 'full';
 
 type RowJustify = 'start' | 'center' | 'end' | 'between';
-
 type RowAlign = 'start' | 'center' | 'end' | 'stretch';
 
 const ROW_ALIGN_OPTIONS: Array<{ value: RowAlign; labelKey: string }> = [
@@ -305,6 +305,7 @@ const ROW_ALIGN_OPTIONS: Array<{ value: RowAlign; labelKey: string }> = [
   { value: 'center', labelKey: 'pages.rowAlignMiddle' },
   { value: 'end', labelKey: 'pages.rowAlignBottom' },
 ];
+
 /** Module-level so `$` handlers do not capture non-serializable closures. */
 function usedSpanInRow(
   row: {
@@ -602,6 +603,7 @@ function hiddenOnDeviceClass(node: { hide_on?: unknown }, device: LayoutBreakpoi
 
 export const PageBuilderWorkspace = component$<PageBuilderWorkspaceProps>((props) => {
   const bands = ensurePageLayoutBands(props.sections.value);
+  useBuilderCanvasGuard();
   const previewDevice = useSignal<LayoutBreakpoint>('desktop');
   const selection = useSignal<PageBuilderSelection>(null);
   const mediaPreviewById = useSignal<MediaUrlMap>({});
@@ -1209,8 +1211,6 @@ export const PageBuilderWorkspace = component$<PageBuilderWorkspaceProps>((props
                       </option>
                     </select>
                   </label>
-                  </>
-                  ) : null}
                   <label class="block text-xs font-medium text-gray-600 dark:text-gray-300">
                     {translateApp(props.lang, 'pages.rowAlign')}
                     <select
@@ -1240,6 +1240,8 @@ export const PageBuilderWorkspace = component$<PageBuilderWorkspaceProps>((props
                       ))}
                     </select>
                   </label>
+                  </>
+                  ) : null}
                   {inspectorTab.value === 'style' ? (
                     <div class="space-y-4">
                       <StyleModeSwitcher lang={props.lang} mode={previewTheme.value} onMode$={setPreviewTheme$} />
