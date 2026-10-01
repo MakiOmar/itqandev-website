@@ -14,7 +14,7 @@ import { resolveServiceIconUrl } from '~/lib/marketing/service-icons';
 import { resolveLaravelMediaUrl } from '~/lib/marketing/resolve-laravel-media-url';
 import { marketingRoutes } from '~/lib/marketing/constants';
 import { normalizeHeroFloatingIcons } from '~/lib/admin/hero-floating-icons';
-import { resolveHeroParticlesConfig } from '~/lib/marketing/hero-particles';
+import { particlesConfigKey, resolveHeroParticlesConfig } from '~/lib/marketing/hero-particles';
 import { LazyParticlesBackground } from '~/components/marketing/LazyParticlesBackground';
 import { isUiLocaleRtl } from '~/lib/i18n/ui-locale-segments';
 import { HeroWatermark } from './HeroWatermark';
@@ -166,6 +166,7 @@ export const HeroHomeSection = component$<HomeSectionSharedProps>(({ settings, u
     >
       {particlesEnabled ? (
         <LazyParticlesBackground
+          key={particlesConfigKey(particles)}
           layout="contained"
           density={particles.density}
           speed={particles.speed}

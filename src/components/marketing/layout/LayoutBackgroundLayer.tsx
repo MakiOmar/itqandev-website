@@ -10,6 +10,7 @@ import {
 } from '~/lib/marketing/builder-background';
 import { LazyBackgroundImage } from './LazyBackgroundImage';
 import { LazyParticlesBackground } from '~/components/marketing/LazyParticlesBackground';
+import { particlesConfigKey } from '~/lib/marketing/hero-particles';
 import { RainLinesBackground } from './RainLinesBackground';
 
 export type LayoutBackgroundLayerProps = {
@@ -41,6 +42,13 @@ export const LayoutBackgroundLayer = component$<LayoutBackgroundLayerProps>((pro
       {overlay ? <div class="absolute inset-0" style={overlay} /> : null}
       {bg.type === 'particles' ? (
         <LazyParticlesBackground
+          key={particlesConfigKey({
+            density: bg.particles_density,
+            speed: bg.particles_speed,
+            opacity: bg.particles_opacity,
+            size: bg.particles_size,
+            color: bg.particles_color,
+          })}
           density={bg.particles_density}
           speed={bg.particles_speed}
           opacity={bg.particles_opacity}
