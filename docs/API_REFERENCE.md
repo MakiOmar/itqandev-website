@@ -620,7 +620,7 @@ Require `Authorization: Bearer` and the `manageSettings` gate (`admin` / `super_
 | `GET/POST/…` | `/api/appearance/singles…` `/archives…` `/loop-items…` `/overlays…` | Theme document kinds on `chrome_layouts` |
 | `GET/POST` | `/api/appearance/globals` | Global widgets (`manageSettings`) |
 | `GET/PUT/DELETE` | `/api/appearance/globals/{id}` | Show / update / delete a global leaf |
-| `GET/PUT` | `/api/appearance/design-kit` | Branding tokens (colors / type roles) |
+| `GET/PUT` | `/api/appearance/design-kit` | Branding tokens: `colors`, optional `colors_dark`, `type_roles` (shape below) |
 | `GET` | `/api/appearance/{kind}/{id}/revisions` | Last-N JSON snapshots |
 | `GET` | `/api/appearance/theme-templates` | Paginated Theme Builder page templates |
 | `POST` | `/api/appearance/theme-templates` | Create (`name`, `status`, `document_type`, `conditions`, slot ids) |
@@ -629,6 +629,21 @@ Require `Authorization: Bearer` and the `manageSettings` gate (`admin` / `super_
 | `GET/PUT` | `/api/appearance/chrome-type-defaults` | Per content-type header/footer ids |
 | `GET` | `/api/appearance/{kind}/{id}/preview-as` | Resolve dynamic tags as a published record (`content_type`, `record_id`) |
 | `GET` | `/api/public/overlays/{id}` | Published overlay document (`overlays` module) |
+
+**Design kit shape** (`GET`/`PUT /api/appearance/design-kit`, also `design_kit` in `GET /api/public/site-meta`):
+
+```json
+{
+  "colors": {
+    "primary": "#0389a1", "secondary": "#0ea5e9", "text": "#0f172a", "accent": "#0ea5e9", "muted": "#64748b",
+    "custom": [{ "id": "brand_blue", "name": "Brand blue", "value": "#1d4ed8" }]
+  },
+  "colors_dark": { "text": "#f1f5f9", "brand_blue": "#60a5fa" },
+  "type_roles": { "heading": { "weight": "700", "size": "2rem", "line_height": "1.2" } }
+}
+```
+
+Colours are `#rgb` / `#rrggbb` (422 otherwise). `colors_dark` keys are base or custom colour ids; unknown ids are dropped and a missing id means "same as light". `design_kit_css` in site-meta emits `:root,.light{--kit-color-*}` plus `.dark{…}` for the dark values. Builder style and background colours may reference a token as `var(--kit-color-{id})`.
 
 Named layouts live in `chrome_layouts`. Theme templates live in `theme_templates` (conditions + Header/Body/Footer slot FKs). Homepage remains `homepage_builder` in project settings (`project_settings.payload`). See `docs/CONFIGURATION.md` (Appearance builders).
 
