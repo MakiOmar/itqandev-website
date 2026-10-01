@@ -12,10 +12,14 @@ import type { PublicNavItem } from '~/lib/marketing/public-menu';
 import type { AuthSession } from '~/lib/auth/types';
 import type { SiteLanguageRow } from '~/types/site-language';
 import { getLocalizedRoutes } from '~/lib/constants/routes';
+import type { PageLayoutBlock } from '~/lib/marketing/appearance-types';
+import { ChromePageBlock } from './ChromePageBlock';
 
 export type ChromeKitViewProps = {
   type: string;
   settings: Record<string, unknown>;
+  /** Full leaf (id, kind, styles) for page widgets/kits, which keep their Style tab output. */
+  block?: PageLayoutBlock;
   uiLocale: string;
   branding?: {
     name: string;
@@ -73,7 +77,7 @@ function localeHref(uiLocale: string, url: string): string {
 }
 
 /**
- * Renders one header/footer chrome kit leaf.
+ * Renders one header/footer leaf: chrome kits here, page widgets/kits via `ChromePageBlock`.
  */
 export const ChromeKitView = component$<ChromeKitViewProps>((props) => {
   const s = props.settings || {};
@@ -322,6 +326,15 @@ export const ChromeKitView = component$<ChromeKitViewProps>((props) => {
       return <p class="text-sm text-slate-500 dark:text-slate-400">{text}</p>;
     }
     default:
-      return null;
+      // Page builder widgets and kits placed in a header/footer.
+      return (
+        <ChromePageBlock
+          block={props.block ?? { id: props.type, type: props.type, settings: s }}
+          uiLocale={props.uiLocale}
+          branding={props.branding}
+          features={props.features}
+          contact={props.contact}
+        />
+      );
   }
 });

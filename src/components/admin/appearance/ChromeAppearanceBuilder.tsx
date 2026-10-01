@@ -26,6 +26,11 @@ import type { AppearanceRegistryEntry, PageSectionNode } from '~/lib/marketing/a
 import type { ChromeLayoutKind } from '~/types/chrome-layout';
 import type { BuilderDynamicTag } from '~/components/admin/appearance/BuilderDynamicTagChips';
 import { ADMIN_NATIVE_SELECT_COMPACT_CLASS } from '~/lib/admin/native-select-classes';
+import {
+  CHROME_EXCLUDED_BLOCK_TYPES,
+  chromeCategoryExcludedFrom,
+} from '~/lib/marketing/chrome-blocks';
+import type { BuilderPreviewSupport } from '~/components/admin/pages/PageBuilderCanvasBlock';
 
 function chromeKindSlug(kind: ChromeLayoutKind): string {
   if (kind === 'header') return 'headers';
@@ -44,6 +49,8 @@ const FOOTER_CATEGORIES = new Set(['Footer']);
 type ChromeAppearanceBuilderProps = {
   kind: ChromeLayoutKind;
   layoutId: number;
+  /** Live preview data for page kits (projects, testimonials, blog), as in the page builder. */
+  previewSupport?: BuilderPreviewSupport;
 };
 
 type PreviewRecordOption = { id: number; title: string };
@@ -55,7 +62,7 @@ type PreviewBrandingState = {
   logoLight: string;
 };
 
-export const ChromeAppearanceBuilder = component$<ChromeAppearanceBuilderProps>(({ kind, layoutId }) => {
+export const ChromeAppearanceBuilder = component$<ChromeAppearanceBuilderProps>(({ kind, layoutId, previewSupport }) => {
   const { lang } = useTranslate();
   const R = getLocalizedRoutes(lang);
   const langConfig = usePublicSiteMeta();
@@ -125,10 +132,12 @@ export const ChromeAppearanceBuilder = component$<ChromeAppearanceBuilderProps>(
           .get(API_ENDPOINTS.SETTINGS.GET)
           .catch(() => null),
       ]);
-      if (kind === 'header') {
-        registry.value = (regs.kits ?? []).filter((k) => HEADER_CATEGORIES.has(String(k.category || '')));
-      } else if (kind === 'footer') {
-        registry.value = (regs.kits ?? []).filter((k) => FOOTER_CATEGORIES.has(String(k.category || '')));
+      if (kind === 'header' || kind === 'footer') {
+        // Same widgets and kits as the page builder, minus the other surface's chrome kits.
+        const otherChrome = chromeCategoryExcludedFrom(kind);
+        registry.value = [...(regs.widgets ?? []), ...(regs.kits ?? [])].filter(
+          (k) => String(k.category || '') !== otherChrome && !CHROME_EXCLUDED_BLOCK_TYPES.has(k.type),
+        );
       } else {
         registry.value = [...(regs.widgets ?? []), ...(regs.kits ?? [])].filter(
           (k) => !HEADER_CATEGORIES.has(String(k.category || '')) && !FOOTER_CATEGORIES.has(String(k.category || '')),
@@ -317,6 +326,7 @@ export const ChromeAppearanceBuilder = component$<ChromeAppearanceBuilderProps>(
       previewSurface={kind === 'header' || kind === 'footer' ? 'chrome' : 'page'}
       exportBuilderKind={kind}
       previewBranding={previewBranding.value}
+      previewSupport={previewSupport}
       dynamicTags={dynamicTags.value}
       livePreviewOverride={previewOverride}
     />

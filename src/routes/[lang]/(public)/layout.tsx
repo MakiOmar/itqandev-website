@@ -154,6 +154,7 @@ export default component$(() => {
           <Footer
             contact={contact}
             branding={branding.value}
+            features={branding.value?.features}
             footer={shellLoader.value.footer}
           />
           <PublicOverlayHost

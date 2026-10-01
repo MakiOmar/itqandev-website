@@ -6,6 +6,7 @@ import type { PageLayoutBand, PageLayoutBlock } from '~/lib/marketing/appearance
 import type { CaseStudy, Testimonial, BlogPost, Service } from '~/lib/marketing/types';
 import type { PortfolioCategory } from '~/lib/marketing/content-layer';
 import type { SiteLanguageRow } from '~/types/site-language';
+import { isChromeKitType } from '~/lib/marketing/chrome-blocks';
 
 export type BuilderPreviewSupport = {
   caseStudies: CaseStudy[];
@@ -105,7 +106,8 @@ export function builderPageRendererProps(ctx: BuilderPreviewContext) {
  */
 export const PageBuilderCanvasBlock = component$<PageBuilderCanvasBlockProps>(
   (props) => {
-    if (props.ctx.surface === 'chrome') {
+    // Page widgets/kits in a header/footer preview through the page renderer below.
+    if (props.ctx.surface === 'chrome' && isChromeKitType(props.block.type)) {
       const block = withChromeMenuSample(props.block);
       return (
         <LocaleTransitionProvider>

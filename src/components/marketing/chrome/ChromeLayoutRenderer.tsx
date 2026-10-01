@@ -93,6 +93,7 @@ export const ChromeLayoutRenderer = component$<ChromeLayoutRendererProps>((props
                                 key={block.id || block.type}
                                 type={block.type}
                                 settings={(block.settings || {}) as Record<string, unknown>}
+                                block={block}
                                 uiLocale={props.uiLocale}
                                 branding={props.branding}
                                 session={props.session}

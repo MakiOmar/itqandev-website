@@ -8,6 +8,8 @@ import { defaultFooterSections } from '~/lib/marketing/chrome-defaults';
 export interface FooterProps {
   contact?: { email?: string; socials?: { name: string; url: string }[] };
   branding?: { name: string; logo?: string; logoDark?: string; logoLight?: string } | null;
+  /** Module flags, so page kits in the footer hide with their module. */
+  features?: Record<string, boolean>;
   footer?: FooterPublicPayload | null;
 }
 
@@ -24,6 +26,7 @@ export const Footer = component$<FooterProps>((props) => {
         uiLocale={uiLocale}
         branding={props.branding}
         contact={props.contact}
+        features={props.features}
         bandClass="py-4"
       />
     </footer>
