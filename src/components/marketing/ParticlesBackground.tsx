@@ -7,6 +7,7 @@ import {
   speedToVelocity,
   type HeroParticlesConfig,
 } from '~/lib/marketing/hero-particles';
+import { isDarkScope } from '~/lib/theme/theme-scope';
 
 type Particle = {
   x: number;
@@ -20,6 +21,8 @@ type Particle = {
 export type ParticlesBackgroundProps = Partial<HeroParticlesConfig> & {
   /** `contained` fills the hero section; `fixed` covers the viewport (legacy). */
   layout?: 'contained' | 'fixed';
+  /** Hex used while the nearest theme scope is dark; falls back to `color`. */
+  colorDark?: string;
 };
 
 /**
@@ -36,6 +39,7 @@ export const ParticlesBackground = component$<ParticlesBackgroundProps>((props) 
     const opacity = track(() => props.opacity ?? 55);
     const size = track(() => props.size ?? 40);
     const color = track(() => props.color ?? '');
+    const colorDark = track(() => props.colorDark ?? '');
     const layout = track(() => props.layout ?? 'contained');
 
     const canvas = canvasRef.value;
@@ -50,12 +54,13 @@ export const ParticlesBackground = component$<ParticlesBackgroundProps>((props) 
     let viewW = 0;
     let viewH = 0;
 
-    const isDark = () => document.documentElement.classList.contains('dark');
+    const isDark = () => isDarkScope(canvas);
     const velocity = speedToVelocity(speed);
     const divisor = densityToDivisor(density);
     const radiusScale = sizeToRadiusScale(size);
     const alphaScale = opacityToAlphaScale(opacity);
-    const customRgb = hexToRgb(color);
+    const lightRgb = hexToRgb(color);
+    const darkRgb = hexToRgb(colorDark) ?? lightRgb;
 
     const initParticles = (w: number, h: number) => {
       const count = Math.max(16, Math.min(120, Math.floor((w * h) / divisor)));
@@ -121,6 +126,7 @@ export const ParticlesBackground = component$<ParticlesBackgroundProps>((props) 
         return;
       }
       const dark = isDark();
+      const customRgb = dark ? darkRgb : lightRgb;
       const lineRgb = customRgb
         ? `${customRgb.r}, ${customRgb.g}, ${customRgb.b}`
         : dark

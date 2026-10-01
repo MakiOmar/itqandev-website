@@ -51,8 +51,10 @@ export function resolveHeroParticlesConfig(
  * Remount key for the particles canvas: prop updates don't reliably reach its tracked
  * visible task through the lazy wrapper, so settings edits (builder preview) remount it.
  */
-export function particlesConfigKey(config: Partial<HeroParticlesConfig>): string {
-  return [config.density, config.speed, config.opacity, config.size, config.color].map((v) => v ?? '').join('|');
+export function particlesConfigKey(config: Partial<HeroParticlesConfig> & { colorDark?: string }): string {
+  return [config.density, config.speed, config.opacity, config.size, config.color, config.colorDark]
+    .map((v) => v ?? '')
+    .join('|');
 }
 
 /** Map 1–100 density to pixel-area divisor (higher density → more particles). */

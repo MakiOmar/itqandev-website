@@ -10,8 +10,11 @@ import {
 import {
   readBuilderBackground,
   type BuilderBackground,
+  type BuilderBackgroundDark,
   type BuilderBackgroundType,
 } from '~/lib/marketing/builder-background';
+import type { ThemeMode } from '~/lib/theme/theme-scope';
+import { BuilderBackgroundDarkFields } from '~/components/admin/BuilderBackgroundDarkFields';
 import { translateApp } from '~/lib/i18n/useTranslate';
 import { ColorPickerField } from '~/components/admin/ColorPickerField';
 import { MediaSelector } from '~/components/common/MediaSelector';
@@ -22,6 +25,8 @@ export type BuilderBackgroundFieldsProps = {
   lang: string;
   settings: Record<string, unknown> | undefined;
   onChange$: QRL<(next: Record<string, unknown>) => void>;
+  /** Dark edits write `background.dark` (colours and image only). */
+  mode?: ThemeMode;
 };
 
 const BACKGROUND_TYPES: BuilderBackgroundType[] = [
@@ -45,6 +50,26 @@ export const BuilderBackgroundFields = component$<BuilderBackgroundFieldsProps>(
       background: next,
     });
   };
+
+  if (props.mode === 'dark') {
+    return (
+      <BuilderBackgroundDarkFields
+        lang={props.lang}
+        bg={bg}
+        onPatch$={$(async (partial: Partial<BuilderBackgroundDark>) => {
+          const current = readBuilderBackground(props.settings);
+          const dark: Record<string, unknown> = { ...(current.dark ?? {}), ...partial };
+          for (const key of Object.keys(dark)) {
+            if (dark[key] === undefined || dark[key] === '') delete dark[key];
+          }
+          const next: BuilderBackground = { ...current };
+          if (Object.keys(dark).length > 0) next.dark = dark as BuilderBackgroundDark;
+          else delete next.dark;
+          await props.onChange$({ ...(props.settings ?? {}), background: next });
+        })}
+      />
+    );
+  }
 
   return (
     <div class="space-y-3">

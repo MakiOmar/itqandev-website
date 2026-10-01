@@ -61,7 +61,7 @@ import {
   BuilderInspectorTabs,
   BuilderResponsiveVisibilityFields,
 } from '~/components/admin/BuilderResponsiveVisibilityFields';
-import { BuilderStylePanel, STYLE_ACCORDION_GROUP } from '~/components/admin/BuilderStylePanel';
+import { BuilderStylePanel, STYLE_ACCORDION_GROUP, StyleModeSwitcher } from '~/components/admin/BuilderStylePanel';
 import { InspectorAccordion } from '~/components/admin/InspectorAccordion';
 import { BuilderBackgroundFields } from '~/components/admin/BuilderBackgroundFields';
 import { BuilderShapeDividerFields } from '~/components/admin/BuilderShapeDividerFields';
@@ -1031,8 +1031,10 @@ export const PageBuilderWorkspace = component$<PageBuilderWorkspaceProps>((props
                   ) : null}
                   {inspectorTab.value === 'style' ? (
                     <div class="space-y-4">
+                      <StyleModeSwitcher lang={props.lang} mode={previewTheme.value} onMode$={setPreviewTheme$} />
                       <InspectorAccordion title={translateApp(props.lang, 'builder.background.title')} group={STYLE_ACCORDION_GROUP} open>
                         <BuilderBackgroundFields
+                          mode={previewTheme.value}
                           lang={props.lang}
                           settings={bands[selection.value.bandIndex]?.settings}
                           onChange$={$(async (next) => {
@@ -1057,6 +1059,7 @@ export const PageBuilderWorkspace = component$<PageBuilderWorkspaceProps>((props
                       </InspectorAccordion>
                       <BuilderStylePanel
                         openFirst={false}
+                        showModeSwitcher={false}
                         mode={previewTheme.value}
                         onMode$={setPreviewTheme$}
                         lang={props.lang}
@@ -1198,8 +1201,10 @@ export const PageBuilderWorkspace = component$<PageBuilderWorkspaceProps>((props
                   ) : null}
                   {inspectorTab.value === 'style' ? (
                     <div class="space-y-4">
+                      <StyleModeSwitcher lang={props.lang} mode={previewTheme.value} onMode$={setPreviewTheme$} />
                       <InspectorAccordion title={translateApp(props.lang, 'builder.background.title')} group={STYLE_ACCORDION_GROUP} open>
                         <BuilderBackgroundFields
+                          mode={previewTheme.value}
                           lang={props.lang}
                           settings={selectedRow?.settings}
                           onChange$={$(async (next) => {
@@ -1222,6 +1227,7 @@ export const PageBuilderWorkspace = component$<PageBuilderWorkspaceProps>((props
                       </InspectorAccordion>
                       <BuilderStylePanel
                         openFirst={false}
+                        showModeSwitcher={false}
                         mode={previewTheme.value}
                         onMode$={setPreviewTheme$}
                         lang={props.lang}
@@ -1386,8 +1392,10 @@ export const PageBuilderWorkspace = component$<PageBuilderWorkspaceProps>((props
                   ) : null}
                   {inspectorTab.value === 'style' ? (
                     <div class="space-y-4">
+                      <StyleModeSwitcher lang={props.lang} mode={previewTheme.value} onMode$={setPreviewTheme$} />
                       <InspectorAccordion title={translateApp(props.lang, 'builder.background.title')} group={STYLE_ACCORDION_GROUP} open>
                         <BuilderBackgroundFields
+                          mode={previewTheme.value}
                           lang={props.lang}
                           settings={selectedCol?.settings}
                           onChange$={$(async (next) => {
@@ -1416,6 +1424,7 @@ export const PageBuilderWorkspace = component$<PageBuilderWorkspaceProps>((props
                       </InspectorAccordion>
                       <BuilderStylePanel
                         openFirst={false}
+                        showModeSwitcher={false}
                         mode={previewTheme.value}
                         onMode$={setPreviewTheme$}
                         lang={props.lang}
@@ -1597,8 +1606,10 @@ export const PageBuilderWorkspace = component$<PageBuilderWorkspaceProps>((props
                   ) : null}
                   {inspectorTab.value === 'style' ? (
                     <div class="space-y-4">
+                      <StyleModeSwitcher lang={props.lang} mode={previewTheme.value} onMode$={setPreviewTheme$} />
                       <InspectorAccordion title={translateApp(props.lang, 'builder.background.title')} group={STYLE_ACCORDION_GROUP} open>
                         <BuilderBackgroundFields
+                          mode={previewTheme.value}
                           lang={props.lang}
                           settings={selectedBlockSettings}
                           onChange$={$(async (next) => {
@@ -1613,6 +1624,7 @@ export const PageBuilderWorkspace = component$<PageBuilderWorkspaceProps>((props
                       </InspectorAccordion>
                       <BuilderStylePanel
                         openFirst={false}
+                        showModeSwitcher={false}
                         mode={previewTheme.value}
                         onMode$={setPreviewTheme$}
                         lang={props.lang}

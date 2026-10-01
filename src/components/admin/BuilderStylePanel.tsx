@@ -309,7 +309,7 @@ const StyleDeviceSwitcher = component$<{
 const STYLE_MODES: ThemeMode[] = ['light', 'dark'];
 
 /** Light/Dark editing mode; dark edits write the colours-only `styles.dark` bag. */
-const StyleModeSwitcher = component$<{
+export const StyleModeSwitcher = component$<{
   lang: string;
   mode: ThemeMode;
   onMode$: QRL<(mode: ThemeMode) => void>;
@@ -1154,6 +1154,8 @@ export const BuilderStylePanel = component$<{
   /** Editing mode; matches the canvas preview theme. Omit `onMode$` to hide the switcher. */
   mode?: ThemeMode;
   onMode$?: QRL<(mode: ThemeMode) => void>;
+  /** Off when the parent renders `StyleModeSwitcher` above sections it also governs (e.g. Background). */
+  showModeSwitcher?: boolean;
   /** Open the first group; off when sections above it (e.g. Background) already open one. */
   openFirst?: boolean;
 }>((props) => {
@@ -1182,7 +1184,7 @@ export const BuilderStylePanel = component$<{
 
   return (
     <div class="space-y-4">
-      {props.onMode$ ? (
+      {props.onMode$ && props.showModeSwitcher !== false ? (
         <StyleModeSwitcher lang={props.lang} mode={darkMode ? 'dark' : 'light'} onMode$={props.onMode$} />
       ) : null}
       {/* Device matches the canvas preview so WYSIWYG stays in sync; dark colours apply on every device. */}

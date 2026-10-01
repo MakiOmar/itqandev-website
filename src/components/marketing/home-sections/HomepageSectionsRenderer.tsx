@@ -172,13 +172,15 @@ function renderBlock(
   const blockStyles = block.styles;
   const wrap = (inner: JSXOutput) => {
     // Background sits inside the sized leaf so width/padding Style controls frame the fill.
-    const withBg = <LayoutNodeShell settings={settings}>{inner}</LayoutNodeShell>;
+    // No `styles` on the shell: the leaf's styles live on StyledBuilderLeaf; the id scopes background overrides.
+    const leafId = String(block.id || key);
+    const withBg = <LayoutNodeShell id={leafId} settings={settings}>{inner}</LayoutNodeShell>;
     return wrapStyles ? (
-      <StyledBuilderLeaf key={key} id={String(block.id || key)} styles={blockStyles} settings={settings}>
+      <StyledBuilderLeaf key={key} id={leafId} styles={blockStyles} settings={settings}>
         {withBg}
       </StyledBuilderLeaf>
     ) : (
-      <LayoutNodeShell key={key} settings={settings}>
+      <LayoutNodeShell key={key} id={leafId} settings={settings}>
         {inner}
       </LayoutNodeShell>
     );

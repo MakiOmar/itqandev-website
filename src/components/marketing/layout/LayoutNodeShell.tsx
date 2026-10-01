@@ -60,7 +60,7 @@ export const LayoutNodeShell = component$<LayoutNodeShellProps>((props) => {
     >
       {dark ? <style dangerouslySetInnerHTML={dark} /> : null}
       {custom ? <style dangerouslySetInnerHTML={custom} /> : null}
-      {hasBg ? <LayoutBackgroundLayer settings={props.settings} /> : null}
+      {hasBg ? <LayoutBackgroundLayer settings={props.settings} nodeId={props.id} /> : null}
       {dividers?.top ? <ShapeDividerLayer edge="top" divider={dividers.top} /> : null}
       <div class={hasBg ? 'relative z-[1] h-full min-h-0 w-full' : 'h-full w-full min-w-0'}>
         <Slot />

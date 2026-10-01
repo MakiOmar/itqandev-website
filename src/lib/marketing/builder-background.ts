@@ -2,6 +2,8 @@
  * Page builder band / row / column backgrounds (Elementor-style + particles + animated rain).
  */
 import { resolveLaravelMediaUrl } from './resolve-laravel-media-url';
+import { safeCssColor } from './builder-dark-styles';
+import { DARK_SCOPE_SELECTOR } from '~/lib/theme/theme-scope';
 
 export type BuilderBackgroundType =
   | 'none'
@@ -38,14 +40,32 @@ export type BuilderBackground = {
   rain_speed?: number;
   rain_density?: number;
   rain_direction?: 'down' | 'up' | 'both';
+  /** Dark-mode colour (and image) overrides; unset keys keep the light value. */
+  dark?: BuilderBackgroundDark;
 };
+
+export type BuilderBackgroundDark = {
+  color?: string;
+  gradient_from?: string;
+  gradient_to?: string;
+  image_url?: string;
+  image_id?: number;
+  overlay_color?: string;
+  overlay_opacity?: number;
+  particles_color?: string;
+  rain_color?: string;
+};
+
+const DARK_STRING_KEYS = [
+  'color', 'gradient_from', 'gradient_to', 'image_url', 'overlay_color', 'particles_color', 'rain_color',
+] as const;
 
 export const DEFAULT_BUILDER_BACKGROUND: BuilderBackground = { type: 'none' };
 
 export const LAZY_BACKGROUND_VAR = '--bg-lazy-image';
 
 export function isLazyImageBackground(bg: BuilderBackground): boolean {
-  return bg.type === 'image' && Boolean(bg.image_url) && bg.image_lazy !== false;
+  return bg.type === 'image' && Boolean(bg.image_url || bg.dark?.image_url) && bg.image_lazy !== false;
 }
 
 function clampNum(v: unknown, min: number, max: number, fallback: number): number {
@@ -104,44 +124,108 @@ export function readBuilderBackground(settings: Record<string, unknown> | undefi
     rain_density: clampNum(row.rain_density, 10, 100, 50),
     rain_direction:
       row.rain_direction === 'up' || row.rain_direction === 'both' ? row.rain_direction : 'down',
+    dark: readBackgroundDark(row.dark),
   };
 }
 
-export function builderBackgroundInlineStyle(bg: BuilderBackground): Record<string, string> | null {
-  if (bg.type === 'color' && bg.color) {
-    return { backgroundColor: bg.color };
+function readBackgroundDark(raw: unknown): BuilderBackgroundDark | undefined {
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return undefined;
+  const row = raw as Record<string, unknown>;
+  const out: BuilderBackgroundDark = {};
+  for (const key of DARK_STRING_KEYS) {
+    const v = row[key];
+    if (typeof v === 'string' && v.trim() !== '') out[key] = v.trim();
   }
+  if (typeof row.image_id === 'number' && row.image_id > 0) out.image_id = row.image_id;
+  if (typeof row.overlay_opacity === 'number') out.overlay_opacity = clampNum(row.overlay_opacity, 0, 100, 50);
+  return Object.keys(out).length > 0 ? out : undefined;
+}
+
+/** `url("…")` for a stored image path, or null when it could break out of a CSS string. */
+function cssImageUrl(raw: string | undefined): string | null {
+  if (!raw) return null;
+  const url = resolveLaravelMediaUrl(raw) || raw;
+  if (/[<>"'\\\n\r\u0000-\u001f]/.test(url)) return null;
+  return `url("${url}")`;
+}
+
+function gradientCss(angle: number, from: string, to: string): string {
+  return `linear-gradient(${angle}deg, ${from}, ${to})`;
+}
+
+/**
+ * Custom properties for the background layer root. Paint and overlay children read them via
+ * `var()`, so `builderDarkBackgroundCss` can swap values for the dark theme scope.
+ * Lazy images keep their URL in `LAZY_BACKGROUND_VAR` until LazyBackgroundImage applies it.
+ */
+export function builderBackgroundVars(bg: BuilderBackground): Record<string, string> {
+  if (bg.type === 'color' && bg.color) return { '--bg-color': bg.color };
   if (bg.type === 'gradient') {
-    const from = bg.gradient_from || '#0389a1';
-    const to = bg.gradient_to || '#0ea5e9';
-    const angle = bg.gradient_angle ?? 135;
     return {
-      backgroundImage: `linear-gradient(${angle}deg, ${from}, ${to})`,
+      '--bg-image': gradientCss(bg.gradient_angle ?? 135, bg.gradient_from || '#0389a1', bg.gradient_to || '#0ea5e9'),
     };
   }
-  if (bg.type === 'image' && bg.image_url) {
-    const url = resolveLaravelMediaUrl(bg.image_url) || bg.image_url;
-    const image = `url("${url.replace(/"/g, '\\"')}")`;
-    return {
-      // Lazy: the URL waits in a custom property (not fetched) until LazyBackgroundImage applies it.
-      ...(bg.image_lazy === false ? { backgroundImage: image } : { [LAZY_BACKGROUND_VAR]: image }),
-      backgroundSize: bg.image_size || 'cover',
-      backgroundPosition: bg.image_position || 'center',
-      backgroundRepeat: bg.image_repeat || 'no-repeat',
-    };
+  if (bg.type !== 'image') return {};
+  const vars: Record<string, string> = {};
+  const image = cssImageUrl(bg.image_url);
+  if (image) vars[bg.image_lazy === false ? '--bg-image' : LAZY_BACKGROUND_VAR] = image;
+  if (bg.overlay) {
+    vars['--bg-overlay'] = bg.overlay_color || '#000000';
+    vars['--bg-overlay-opacity'] = String((bg.overlay_opacity ?? 50) / 100);
   }
-  return null;
+  return vars;
 }
 
-/** Overlay layer over an image background, or null when it is off / fully transparent. */
-export function builderBackgroundOverlayStyle(bg: BuilderBackground): Record<string, string> | null {
-  if (bg.type !== 'image' || !bg.image_url || !bg.overlay) return null;
-  const opacity = bg.overlay_opacity ?? 50;
-  if (opacity <= 0) return null;
+/** Paint layer style (reads the layer vars), or null when the type has no CSS paint. */
+export function builderBackgroundPaintStyle(bg: BuilderBackground): Record<string, string> | null {
+  if (bg.type === 'color') return { backgroundColor: 'var(--bg-color)' };
+  if (bg.type === 'gradient') return { backgroundImage: 'var(--bg-image)' };
+  if (bg.type !== 'image') return null;
   return {
-    backgroundColor: bg.overlay_color || '#000000',
-    opacity: String(opacity / 100),
+    // Lazy layers get `background-image: var(LAZY_BACKGROUND_VAR)` from LazyBackgroundImage once in view.
+    ...(bg.image_lazy === false ? { backgroundImage: 'var(--bg-image)' } : {}),
+    backgroundSize: bg.image_size || 'cover',
+    backgroundPosition: bg.image_position || 'center',
+    backgroundRepeat: bg.image_repeat || 'no-repeat',
   };
+}
+
+/** Overlay layer over an image background, or null when it is off / transparent in both modes. */
+export function builderBackgroundOverlayStyle(bg: BuilderBackground): Record<string, string> | null {
+  if (bg.type !== 'image' || !bg.overlay) return null;
+  if (!bg.image_url && !bg.dark?.image_url) return null;
+  if ((bg.overlay_opacity ?? 50) <= 0 && (bg.dark?.overlay_opacity ?? 0) <= 0) return null;
+  return { backgroundColor: 'var(--bg-overlay)', opacity: 'var(--bg-overlay-opacity)' };
+}
+
+export function builderBackgroundLayerId(nodeId: string): string {
+  return `bg-${String(nodeId || 'x').replace(/[^a-zA-Z0-9_-]/g, '')}`;
+}
+
+/** Scoped `<style>` body swapping the layer vars in dark mode, or null without valid overrides. */
+export function builderDarkBackgroundCss(layerId: string, bg: BuilderBackground): string | null {
+  const dark = bg.dark;
+  if (!dark) return null;
+  const vars: Record<string, string> = {};
+  if (bg.type === 'color') {
+    const color = safeCssColor(dark.color);
+    if (color) vars['--bg-color'] = color;
+  } else if (bg.type === 'gradient' && (dark.gradient_from || dark.gradient_to)) {
+    const from = safeCssColor(dark.gradient_from ?? bg.gradient_from);
+    const to = safeCssColor(dark.gradient_to ?? bg.gradient_to);
+    if (from && to) vars['--bg-image'] = gradientCss(bg.gradient_angle ?? 135, from, to);
+  } else if (bg.type === 'image') {
+    const image = cssImageUrl(dark.image_url);
+    if (image) vars[bg.image_lazy === false ? '--bg-image' : LAZY_BACKGROUND_VAR] = image;
+    const overlay = safeCssColor(dark.overlay_color);
+    if (bg.overlay && overlay) vars['--bg-overlay'] = overlay;
+    if (bg.overlay && typeof dark.overlay_opacity === 'number') {
+      vars['--bg-overlay-opacity'] = String(dark.overlay_opacity / 100);
+    }
+  }
+  const decls = Object.entries(vars).map(([name, value]) => `${name}:${value}!important`);
+  if (decls.length === 0) return null;
+  return `#${layerId}${DARK_SCOPE_SELECTOR}{${decls.join(';')}}`;
 }
 
 export function hasInteractiveBackground(bg: BuilderBackground): boolean {
@@ -150,7 +234,7 @@ export function hasInteractiveBackground(bg: BuilderBackground): boolean {
 
 export function hasVisibleBackground(bg: BuilderBackground): boolean {
   if (bg.type === 'none') return false;
-  if (bg.type === 'color') return Boolean(bg.color);
-  if (bg.type === 'image') return Boolean(bg.image_url);
+  if (bg.type === 'color') return Boolean(bg.color || bg.dark?.color);
+  if (bg.type === 'image') return Boolean(bg.image_url || bg.dark?.image_url);
   return true;
 }

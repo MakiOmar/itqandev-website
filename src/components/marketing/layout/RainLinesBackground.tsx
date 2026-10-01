@@ -1,7 +1,10 @@
 import { component$, useSignal, useVisibleTask$ } from '@builder.io/qwik';
+import { isDarkScope } from '~/lib/theme/theme-scope';
 
 export type RainLinesBackgroundProps = {
   color?: string;
+  /** Hex used while the nearest theme scope is dark; falls back to `color`. */
+  colorDark?: string;
   speed?: number;
   density?: number;
   direction?: 'down' | 'up' | 'both';
@@ -27,6 +30,7 @@ export const RainLinesBackground = component$<RainLinesBackgroundProps>((props) 
     const speedSetting = track(() => props.speed ?? 45);
     const densitySetting = track(() => props.density ?? 50);
     const colorSetting = track(() => props.color ?? '');
+    const colorDarkSetting = track(() => props.colorDark ?? '');
     const directionSetting = track(() => props.direction ?? 'down');
 
     const canvas = canvasRef.value;
@@ -41,15 +45,17 @@ export const RainLinesBackground = component$<RainLinesBackgroundProps>((props) 
     let viewW = 0;
     let viewH = 0;
 
-    const isDark = () => document.documentElement.classList.contains('dark');
     const baseSpeed = 0.6 + (speedSetting / 100) * 2.4;
     const countFactor = 0.4 + densitySetting / 100;
+    const hexRe = /^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$/;
+    const lightColor = hexRe.test(colorSetting) ? colorSetting : '';
+    const darkColor = hexRe.test(colorDarkSetting) ? colorDarkSetting : lightColor;
 
     const strokeColor = () => {
-      if (colorSetting && /^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/.test(colorSetting)) {
-        return colorSetting;
-      }
-      return isDark() ? 'rgba(148, 163, 184, 0.55)' : 'rgba(100, 116, 139, 0.45)';
+      const dark = isDarkScope(canvas);
+      const custom = dark ? darkColor : lightColor;
+      if (custom) return custom;
+      return dark ? 'rgba(148, 163, 184, 0.55)' : 'rgba(100, 116, 139, 0.45)';
     };
 
     const initStreaks = (w: number, h: number) => {

@@ -18,6 +18,7 @@ export const LazyParticlesBackground = component$<ParticlesBackgroundProps>((pro
       opacity={props.opacity}
       size={props.size}
       color={props.color}
+      colorDark={props.colorDark}
     />
   ) : null;
 });
