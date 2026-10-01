@@ -1,0 +1,142 @@
+/*
+ * Call to action widget. Box (`--s-card-*`, Card group), title (`--s-title-*`), subtitle
+ * (`--s-subtitle-*`) and button (`--s-btn-primary-*`, via hero-buttons.css) come from the Style tab,
+ * resolved per breakpoint (base = mobile, -md = tablet, -lg = desktop). Title/subtitle colours fall
+ * back to the Typography text colour saved before these groups existed. `--cta-d-*` are theme
+ * defaults matching the former primary-600 / primary-700 box with white text and button.
+ */
+.cta-box {
+  --cta-d-bg: #0284c7;
+  --cta-d-title: #ffffff;
+  --cta-d-subtitle: #e0f2fe;
+  margin-inline: auto;
+  max-width: 42rem;
+  text-align: center;
+  background-color: var(--s-card-bg, var(--cta-d-bg));
+  border: var(--s-card-border-width, 0px) solid var(--s-card-border-color, transparent);
+  border-radius: var(--s-card-radius, 1rem);
+  padding: var(--s-card-padding, 3rem 1.5rem);
+  box-shadow: var(--s-card-shadow, none);
+  transition: border-color 150ms, box-shadow 150ms;
+}
+.cta-box:hover {
+  border-color: var(--s-card-hover-border-color, var(--s-card-border-color, transparent));
+  box-shadow: var(--s-card-hover-shadow, var(--s-card-shadow, none));
+}
+.cta-box:where(.dark, .dark *):not(:where(.dark .light, .dark .light *)) {
+  --cta-d-bg: #0369a1;
+}
+
+.cta-title {
+  color: var(--s-title-color, var(--s-text-color, var(--cta-d-title)));
+  font-size: var(--s-title-font-size, 1.5rem);
+  font-weight: var(--s-title-font-weight, 700);
+  line-height: var(--s-title-line-height, 2rem);
+  letter-spacing: var(--s-title-letter-spacing, normal);
+  text-transform: var(--s-title-transform, none);
+}
+.cta-subtitle {
+  margin-top: 1rem;
+  color: var(--s-subtitle-color, var(--s-text-color, var(--cta-d-subtitle)));
+  font-size: var(--s-subtitle-font-size, 1rem);
+  font-weight: var(--s-subtitle-font-weight, 400);
+  line-height: var(--s-subtitle-line-height, 1.5rem);
+  letter-spacing: var(--s-subtitle-letter-spacing, normal);
+  text-transform: var(--s-subtitle-transform, none);
+}
+
+/* Button defaults: white with primary text, no border, natural width. */
+.hb-primary.cta-btn {
+  --hb-d-color: #0284c7;
+  --hb-d-bg: #ffffff;
+  --hb-d-border: transparent;
+  --hb-d-hover-bg: #f0f9ff;
+  --hb-d-bw: 0px;
+  --hb-min-width: var(--s-btn-primary-min-width, 0px);
+}
+.hb-primary.cta-btn:where(.dark, .dark *):not(:where(.dark .light, .dark .light *)) {
+  --hb-d-color: #0369a1;
+  --hb-d-hover-bg: #e0f2fe;
+}
+
+@media (min-width: 640px) {
+  .cta-box {
+    padding: var(--s-card-padding, 4rem 3rem);
+  }
+  .cta-title {
+    font-size: var(--s-title-font-size, 1.875rem);
+    line-height: var(--s-title-line-height, 2.25rem);
+  }
+}
+
+@media (min-width: 768px) {
+  .cta-box {
+    background-color: var(--s-card-bg-md, var(--s-card-bg, var(--cta-d-bg)));
+    border-width: var(--s-card-border-width-md, var(--s-card-border-width, 0px));
+    border-color: var(--s-card-border-color-md, var(--s-card-border-color, transparent));
+    border-radius: var(--s-card-radius-md, var(--s-card-radius, 1rem));
+    padding: var(--s-card-padding-md, var(--s-card-padding, 4rem 3rem));
+    box-shadow: var(--s-card-shadow-md, var(--s-card-shadow, none));
+  }
+  .cta-title {
+    color: var(--s-title-color-md, var(--s-title-color, var(--s-text-color-md, var(--s-text-color, var(--cta-d-title)))));
+    font-size: var(--s-title-font-size-md, var(--s-title-font-size, 1.875rem));
+    font-weight: var(--s-title-font-weight-md, var(--s-title-font-weight, 700));
+    line-height: var(--s-title-line-height-md, var(--s-title-line-height, 2.25rem));
+    letter-spacing: var(--s-title-letter-spacing-md, var(--s-title-letter-spacing, normal));
+    text-transform: var(--s-title-transform-md, var(--s-title-transform, none));
+  }
+  .cta-subtitle {
+    color: var(
+      --s-subtitle-color-md,
+      var(--s-subtitle-color, var(--s-text-color-md, var(--s-text-color, var(--cta-d-subtitle))))
+    );
+    font-size: var(--s-subtitle-font-size-md, var(--s-subtitle-font-size, 1rem));
+    font-weight: var(--s-subtitle-font-weight-md, var(--s-subtitle-font-weight, 400));
+    line-height: var(--s-subtitle-line-height-md, var(--s-subtitle-line-height, 1.5rem));
+    letter-spacing: var(--s-subtitle-letter-spacing-md, var(--s-subtitle-letter-spacing, normal));
+    text-transform: var(--s-subtitle-transform-md, var(--s-subtitle-transform, none));
+  }
+  .hb-primary.cta-btn {
+    --hb-min-width: var(--s-btn-primary-min-width-md, var(--s-btn-primary-min-width, 0px));
+  }
+}
+
+@media (min-width: 1024px) {
+  .cta-box {
+    background-color: var(--s-card-bg-lg, var(--s-card-bg-md, var(--s-card-bg, var(--cta-d-bg))));
+    border-width: var(--s-card-border-width-lg, var(--s-card-border-width-md, var(--s-card-border-width, 0px)));
+    border-color: var(--s-card-border-color-lg, var(--s-card-border-color-md, var(--s-card-border-color, transparent)));
+    border-radius: var(--s-card-radius-lg, var(--s-card-radius-md, var(--s-card-radius, 1rem)));
+    padding: var(--s-card-padding-lg, var(--s-card-padding-md, var(--s-card-padding, 4rem 3rem)));
+    box-shadow: var(--s-card-shadow-lg, var(--s-card-shadow-md, var(--s-card-shadow, none)));
+  }
+  .cta-title {
+    color: var(
+      --s-title-color-lg,
+      var(--s-title-color-md, var(--s-title-color, var(--s-text-color-lg, var(--s-text-color, var(--cta-d-title)))))
+    );
+    font-size: var(--s-title-font-size-lg, var(--s-title-font-size-md, var(--s-title-font-size, 1.875rem)));
+    font-weight: var(--s-title-font-weight-lg, var(--s-title-font-weight-md, var(--s-title-font-weight, 700)));
+    line-height: var(--s-title-line-height-lg, var(--s-title-line-height-md, var(--s-title-line-height, 2.25rem)));
+    letter-spacing: var(--s-title-letter-spacing-lg, var(--s-title-letter-spacing-md, var(--s-title-letter-spacing, normal)));
+    text-transform: var(--s-title-transform-lg, var(--s-title-transform-md, var(--s-title-transform, none)));
+  }
+  .cta-subtitle {
+    color: var(
+      --s-subtitle-color-lg,
+      var(--s-subtitle-color-md, var(--s-subtitle-color, var(--s-text-color-lg, var(--s-text-color, var(--cta-d-subtitle)))))
+    );
+    font-size: var(--s-subtitle-font-size-lg, var(--s-subtitle-font-size-md, var(--s-subtitle-font-size, 1rem)));
+    font-weight: var(--s-subtitle-font-weight-lg, var(--s-subtitle-font-weight-md, var(--s-subtitle-font-weight, 400)));
+    line-height: var(--s-subtitle-line-height-lg, var(--s-subtitle-line-height-md, var(--s-subtitle-line-height, 1.5rem)));
+    letter-spacing: var(
+      --s-subtitle-letter-spacing-lg,
+      var(--s-subtitle-letter-spacing-md, var(--s-subtitle-letter-spacing, normal))
+    );
+    text-transform: var(--s-subtitle-transform-lg, var(--s-subtitle-transform-md, var(--s-subtitle-transform, none)));
+  }
+  .hb-primary.cta-btn {
+    --hb-min-width: var(--s-btn-primary-min-width-lg, var(--s-btn-primary-min-width-md, var(--s-btn-primary-min-width, 0px)));
+  }
+}

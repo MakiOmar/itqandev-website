@@ -38,14 +38,6 @@
 .aw-crumb-current {
   --aw-d: #1e293b;
 }
-/* Text on a primary-filled panel (CTA): same in both modes. */
-.aw-on-primary {
-  --aw-d: #ffffff;
-}
-.aw-on-primary-muted {
-  --aw-d: #e0f2fe;
-}
-
 /* Nearest theme scope wins (same selector as DARK_SCOPE_SELECTOR in theme-scope.ts). */
 .aw-heading:where(.dark, .dark *):not(:where(.dark .light, .dark .light *)) {
   --aw-d: #ffffff;

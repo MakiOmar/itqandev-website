@@ -28,6 +28,7 @@ import caseStudiesStyles from '~/components/marketing/widgets/case-studies.css?i
 import sectionHeadingStyles from '~/components/marketing/widgets/section-heading.css?inline';
 import heroButtonStyles from '~/components/marketing/widgets/hero-buttons.css?inline';
 import heroGlowStyles from '~/components/marketing/widgets/hero-glow.css?inline';
+import ctaWidgetStyles from '~/components/marketing/widgets/cta-widget.css?inline';
 import atomicWidgetStyles from '~/components/marketing/widgets/atomic-widgets.css?inline';
 
 function settingString(settings: Record<string, unknown> | undefined, key: string, fallback: string): string {
@@ -592,7 +593,8 @@ export const BlogPreviewHomeSection = component$<
 });
 
 export const CtaHomeSection = component$<HomeSectionSharedProps>(({ settings, uiLocale, embedded }) => {
-  useStyles$(atomicWidgetStyles);
+  useStyles$(heroButtonStyles);
+  useStyles$(ctaWidgetStyles);
   const routes = marketingRoutes(uiLocale);
   const title = settingString(settings, 'title', 'Ready to start your project?');
   const subtitle = settingString(
@@ -607,17 +609,13 @@ export const CtaHomeSection = component$<HomeSectionSharedProps>(({ settings, ui
     <Section flush={Boolean(embedded)}>
       <Container>
         <AnimatedReveal>
-          <div class="mx-auto max-w-2xl rounded-2xl bg-primary-600 px-6 py-12 text-center dark:bg-primary-700 sm:px-12 sm:py-16">
-            <h2 class="aw-c aw-on-primary text-2xl font-bold sm:text-3xl">{title}</h2>
-            <p class="aw-c aw-on-primary-muted mt-4">{subtitle}</p>
+          <div class="cta-box">
+            <h2 class="cta-title">{title}</h2>
+            <p class="cta-subtitle">{subtitle}</p>
             <div class="mt-8">
-              <Button
-                href={buttonUrl}
-                variant="secondary"
-                class="bg-white text-primary-600 hover:bg-primary-50 dark:bg-white dark:text-primary-700 dark:hover:bg-primary-100"
-              >
+              <a href={buttonUrl} class={`${HERO_BTN_BASE} hb-primary cta-btn`}>
                 {buttonLabel}
-              </Button>
+              </a>
             </div>
           </div>
         </AnimatedReveal>
