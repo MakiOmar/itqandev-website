@@ -12,6 +12,7 @@ import {
   normalizeColumnSpans,
 } from '~/lib/admin/page-layout';
 import { appearanceSectionLabel } from '~/lib/i18n/appearance-labels';
+import { isChromeKitType } from '~/lib/marketing/chrome-blocks';
 import { translateApp } from '~/lib/i18n/useTranslate';
 import {
   ADMIN_NATIVE_OPTION_CLASS,
@@ -52,8 +53,8 @@ export const PageSectionsEditor = component$<PageSectionsEditorProps>((props) =>
   const previewDevice = useSignal<LayoutBreakpoint>('desktop');
   const expandedBlockId = useSignal<string | null>(null);
 
-  const insertable = props.registry.filter((entry) =>
-    canInsertBlockType(bands, props.registry, entry.type),
+  const insertable = props.registry.filter(
+    (entry) => !isChromeKitType(entry.type) && canInsertBlockType(bands, props.registry, entry.type),
   );
 
   return (

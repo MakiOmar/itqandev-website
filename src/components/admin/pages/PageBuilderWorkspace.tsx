@@ -33,6 +33,7 @@ import {
   rowGapClass,
 } from '~/lib/marketing/page-layout-utils';
 import { isHiddenOnDevice } from '~/lib/marketing/device-visibility';
+import { isChromeKitType } from '~/lib/marketing/chrome-blocks';
 import {
   isAppearanceFieldTranslatable,
   readAppearanceSettingValue,
@@ -752,6 +753,8 @@ export const PageBuilderWorkspace = component$<PageBuilderWorkspaceProps>((props
       if (paletteTab.value === 'widgets' && kind !== 'widget') return false;
       if (paletteTab.value === 'kits' && kind !== 'kit') return false;
       if (paletteTab.value === 'globals') return false;
+      // Header/footer kits render nothing on a page; blocks already placed keep their registry entry.
+      if (props.previewSurface !== 'chrome' && isChromeKitType(entry.type)) return false;
       if (searchQ) {
         const hay = `${entry.label} ${entry.type} ${entry.category || ''}`.toLowerCase();
         if (!hay.includes(searchQ)) return false;
