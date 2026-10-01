@@ -78,7 +78,6 @@ export const Header = component$<HeaderProps>((props) => {
               session={props.session}
               features={props.features}
               isDarkMode={isDarkMode.value}
-              bandClass="flex items-center"
               embedInParent={true}
             />
           </div>

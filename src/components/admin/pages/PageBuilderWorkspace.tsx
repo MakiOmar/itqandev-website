@@ -29,6 +29,7 @@ import {
   effectiveSpanForDevice,
   previewColSpanClass,
   rowFlexStyle,
+  columnContentAlignClass,
   rowGapClass,
 } from '~/lib/marketing/page-layout-utils';
 import { isHiddenOnDevice } from '~/lib/marketing/device-visibility';
@@ -296,6 +297,14 @@ type BandLayoutWidth = 'boxed' | 'full';
 
 type RowJustify = 'start' | 'center' | 'end' | 'between';
 
+type RowAlign = 'start' | 'center' | 'end' | 'stretch';
+
+const ROW_ALIGN_OPTIONS: Array<{ value: RowAlign; labelKey: string }> = [
+  { value: 'stretch', labelKey: 'pages.rowAlignStretch' },
+  { value: 'start', labelKey: 'pages.rowAlignTop' },
+  { value: 'center', labelKey: 'pages.rowAlignMiddle' },
+  { value: 'end', labelKey: 'pages.rowAlignBottom' },
+];
 /** Module-level so `$` handlers do not capture non-serializable closures. */
 function usedSpanInRow(
   row: {
@@ -1202,6 +1211,35 @@ export const PageBuilderWorkspace = component$<PageBuilderWorkspaceProps>((props
                   </label>
                   </>
                   ) : null}
+                  <label class="block text-xs font-medium text-gray-600 dark:text-gray-300">
+                    {translateApp(props.lang, 'pages.rowAlign')}
+                    <select
+                      class={`${ADMIN_NATIVE_SELECT_COMPACT_CLASS} mt-1 w-full`}
+                      value={selectedRow?.align || 'stretch'}
+                      onChange$={async (e) => {
+                        const nextAlign = (e.target as HTMLSelectElement).value as RowAlign;
+                        const path = rowPathOf(selection.value);
+                        if (!path) return;
+                        await commit$(
+                          bands.map((b, bi) => {
+                            if (bi !== path.bandIndex) return b;
+                            return {
+                              ...b,
+                              rows: b.rows.map((r, ri) =>
+                                ri === path.rowIndex ? { ...r, align: nextAlign } : r,
+                              ),
+                            };
+                          }),
+                        );
+                      }}
+                    >
+                      {ROW_ALIGN_OPTIONS.map((opt) => (
+                        <option key={opt.value} class={ADMIN_NATIVE_OPTION_CLASS} value={opt.value}>
+                          {translateApp(props.lang, opt.labelKey)}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
                   {inspectorTab.value === 'style' ? (
                     <div class="space-y-4">
                       <StyleModeSwitcher lang={props.lang} mode={previewTheme.value} onMode$={setPreviewTheme$} />
@@ -1979,8 +2017,9 @@ export const PageBuilderWorkspace = component$<PageBuilderWorkspaceProps>((props
               previewTheme.value,
               previewFrameClass(previewDevice.value),
               // Opaque gradients matching the public `body` in site.css, so the admin backdrop never shows through.
-              'relative isolate min-h-[60vh] bg-[linear-gradient(135deg,#fafbfc_0%,#f5f7fa_100%)] text-slate-900 shadow-lg transition-[max-width] duration-300 dark:bg-[linear-gradient(135deg,#0f172a_0%,#1e293b_100%)] dark:text-slate-100',
-              previewCtx.surface === 'chrome' ? 'py-3' : '',
+              'relative isolate bg-[linear-gradient(135deg,#fafbfc_0%,#f5f7fa_100%)] text-slate-900 shadow-lg transition-[max-width] duration-300 dark:bg-[linear-gradient(135deg,#0f172a_0%,#1e293b_100%)] dark:text-slate-100',
+              // Header/footer strips size to their content; pages keep a tall drop area.
+              previewCtx.surface === 'chrome' ? 'py-3' : 'min-h-[60vh]',
             ].join(' ')}
           >
             <LayoutDeviceProvider device={previewDevice.value}>
@@ -2533,7 +2572,7 @@ export const PageBuilderWorkspace = component$<PageBuilderWorkspaceProps>((props
                                           styles={colStyles}
                                           class="h-full"
                                         >
-                                          <div class="h-full space-y-6">
+                                          <div class={`h-full space-y-6 ${columnContentAlignClass(row)}`}>
                                             {col.blocks.length === 0 ? (
                                               <div class="flex min-h-16 items-center justify-center rounded border border-dashed border-gray-300 px-2 text-center text-[11px] text-gray-400 dark:border-gray-600">
                                                 {translateApp(props.lang, 'pages.dropWidgetHere')}

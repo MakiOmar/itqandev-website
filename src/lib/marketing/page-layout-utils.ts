@@ -171,6 +171,16 @@ export function rowFlexStyle(row: Pick<PageLayoutRow, 'justify' | 'align' | 'wra
   };
 }
 
+/**
+ * Vertical position of a column's blocks for the row's `align`. Columns stay full height so their
+ * backgrounds fill the row; the blocks inside move instead.
+ */
+export function columnContentAlignClass(row: Pick<PageLayoutRow, 'align'>): string {
+  if (row.align === 'center') return 'flex flex-col justify-center';
+  if (row.align === 'end') return 'flex flex-col justify-end';
+  return '';
+}
+
 /** Kit `limit` fields are stored as 1–24 in Appearance / Theme Builder. */
 export const KIT_ITEM_LIMIT_MAX = 24;
 

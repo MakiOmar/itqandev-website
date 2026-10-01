@@ -21,6 +21,7 @@ import {
   isPageLayoutBand,
   normalizeColumnSpans,
   rowFlexStyle,
+  columnContentAlignClass,
   rowGapClass,
 } from '~/lib/marketing/page-layout-utils';
 import { filterPageSectionsForDevice } from '~/lib/marketing/device-visibility';
@@ -430,7 +431,7 @@ function renderLayoutBand(band: PageLayoutBand, props: HomepageSectionsRendererP
                     styles={colStyles}
                     class={`${spanClass} h-full`}
                   >
-                    <div class="h-full space-y-6">
+                    <div class={`h-full space-y-6 ${columnContentAlignClass(row)}`}>
                       {(col.blocks ?? [])
                         .filter((b) => b.enabled !== false)
                         .map((block) => renderBlock(block, bandProps))}
