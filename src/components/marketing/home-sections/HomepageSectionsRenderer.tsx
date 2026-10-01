@@ -21,7 +21,7 @@ import {
   isPageLayoutBand,
   normalizeColumnSpans,
   rowFlexStyle,
-  columnContentAlignClass,
+  columnContentLayout,
   rowGapClass,
 } from '~/lib/marketing/page-layout-utils';
 import { filterPageSectionsForDevice } from '~/lib/marketing/device-visibility';
@@ -423,6 +423,7 @@ function renderLayoutBand(band: PageLayoutBand, props: HomepageSectionsRendererP
                 const spanClass = columnSpanClassNames(span, stackBelow);
                 const colSettings = col.settings;
                 const colStyles = col.styles;
+                const content = columnContentLayout(row, col);
                 return (
                   <LayoutNodeShell
                     key={col.id}
@@ -431,7 +432,7 @@ function renderLayoutBand(band: PageLayoutBand, props: HomepageSectionsRendererP
                     styles={colStyles}
                     class={`${spanClass} h-full`}
                   >
-                    <div class={`h-full space-y-6 ${columnContentAlignClass(row)}`}>
+                    <div class={content.class} style={content.style}>
                       {(col.blocks ?? [])
                         .filter((b) => b.enabled !== false)
                         .map((block) => renderBlock(block, bandProps))}

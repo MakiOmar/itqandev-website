@@ -57,9 +57,24 @@ export type PageLayoutBlock = {
   rows?: PageLayoutRow[];
 };
 
+export type ColumnFlexJustify = 'start' | 'center' | 'end' | 'between' | 'around' | 'evenly';
+
+export type ColumnFlexAlign = 'start' | 'center' | 'end' | 'stretch';
+
+/** Flexbox layout for a column's blocks; absent = legacy vertical stack. */
+export type ColumnFlex = {
+  direction: 'row' | 'column';
+  justify: ColumnFlexJustify;
+  align: ColumnFlexAlign;
+  wrap: boolean;
+  /** Tailwind spacing scale (0–16), 1 = 0.25rem. */
+  gap: number;
+};
+
 export type PageLayoutColumn = {
   id: string;
   span: ColumnSpans;
+  flex?: ColumnFlex;
   hide_on?: DeviceHideOn;
   /** Container chrome (width, padding, border, …). */
   styles?: BuilderStyles;

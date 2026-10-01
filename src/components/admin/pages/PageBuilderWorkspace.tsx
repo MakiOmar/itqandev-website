@@ -29,7 +29,7 @@ import {
   effectiveSpanForDevice,
   previewColSpanClass,
   rowFlexStyle,
-  columnContentAlignClass,
+  columnContentLayout,
   rowGapClass,
 } from '~/lib/marketing/page-layout-utils';
 import { isHiddenOnDevice } from '~/lib/marketing/device-visibility';
@@ -54,6 +54,7 @@ import {
   ADMIN_NATIVE_SELECT_COMPACT_CLASS,
 } from '~/lib/admin/native-select-classes';
 import { BuilderImportExportButtons } from '~/components/admin/BuilderImportExportButtons';
+import { ColumnFlexFields } from '~/components/admin/pages/ColumnFlexFields';
 import {
   BUILDER_TOOLBAR_ICON_BTN,
   BuilderToolbarIcon,
@@ -91,6 +92,7 @@ import type { PageBuilderDocument } from '~/lib/admin/builder-import-export';
 import type {
   AppearanceRegistryEntry,
   LayoutBreakpoint,
+  ColumnFlex,
   PageLayoutBand,
   PageLayoutBlock,
   PageLayoutColumn,
@@ -1434,6 +1436,34 @@ export const PageBuilderWorkspace = component$<PageBuilderWorkspaceProps>((props
                       />
                     </label>
                   ))}
+                  <ColumnFlexFields
+                    lang={props.lang}
+                    flex={selectedCol?.flex}
+                    onChange$={$(async (next: ColumnFlex | undefined) => {
+                      const path = colPathOf(selection.value);
+                      if (!path) return;
+                      const { bandIndex, rowIndex, colIndex } = path;
+                      await commit$(
+                        bands.map((b, bi) => {
+                          if (bi !== bandIndex) return b;
+                          return {
+                            ...b,
+                            rows: b.rows.map((r, ri) => {
+                              if (ri !== rowIndex) return r;
+                              return {
+                                ...r,
+                                columns: r.columns.map((c, ci) => {
+                                  if (ci !== colIndex) return c;
+                                  const { flex: _omit, ...rest } = c;
+                                  return next ? { ...rest, flex: next } : rest;
+                                }),
+                              };
+                            }),
+                          };
+                        }),
+                      );
+                    })}
+                  />
                   </>
                   ) : null}
                   {inspectorTab.value === 'style' ? (
@@ -2577,7 +2607,10 @@ export const PageBuilderWorkspace = component$<PageBuilderWorkspaceProps>((props
                                           styles={colStyles}
                                           class="h-full"
                                         >
-                                          <div class={`h-full space-y-6 ${columnContentAlignClass(row)}`}>
+                                          <div
+                                            class={columnContentLayout(row, col).class}
+                                            style={columnContentLayout(row, col).style}
+                                          >
                                             {col.blocks.length === 0 ? (
                                               <div class="flex min-h-16 items-center justify-center rounded border border-dashed border-gray-300 px-2 text-center text-[11px] text-gray-400 dark:border-gray-600">
                                                 {translateApp(props.lang, 'pages.dropWidgetHere')}

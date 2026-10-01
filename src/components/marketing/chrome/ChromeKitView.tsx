@@ -201,7 +201,7 @@ export const ChromeKitView = component$<ChromeKitViewProps>((props) => {
       const loginHref = getLocalizedRoutes(props.uiLocale).ADMIN.LOGIN;
       const user = props.session?.user;
       return (
-        <div class="flex items-center gap-2">
+        <div class="flex flex-wrap items-center gap-2">
           {showTheme ? <ThemeToggle /> : null}
           {showLanguage && langs.length > 1 ? (
             <SiteLanguageSwitcher languages={langs} />

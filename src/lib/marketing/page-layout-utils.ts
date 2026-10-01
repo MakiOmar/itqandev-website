@@ -3,9 +3,13 @@
  */
 
 import type {
+  ColumnFlex,
+  ColumnFlexAlign,
+  ColumnFlexJustify,
   ColumnSpans,
   LayoutBreakpoint,
   PageLayoutBand,
+  PageLayoutColumn,
   PageLayoutRow,
   PageLayoutStackBelow,
   PageSectionNode,
@@ -179,6 +183,55 @@ export function columnContentAlignClass(row: Pick<PageLayoutRow, 'align'>): stri
   if (row.align === 'center') return 'flex flex-col justify-center';
   if (row.align === 'end') return 'flex flex-col justify-end';
   return '';
+}
+
+export const DEFAULT_COLUMN_FLEX: ColumnFlex = {
+  direction: 'column',
+  justify: 'start',
+  align: 'stretch',
+  wrap: true,
+  gap: 6,
+};
+
+const FLEX_JUSTIFY_CSS: Record<ColumnFlexJustify, string> = {
+  start: 'flex-start',
+  center: 'center',
+  end: 'flex-end',
+  between: 'space-between',
+  around: 'space-around',
+  evenly: 'space-evenly',
+};
+
+const FLEX_ALIGN_CSS: Record<ColumnFlexAlign, string> = {
+  start: 'flex-start',
+  center: 'center',
+  end: 'flex-end',
+  stretch: 'stretch',
+};
+
+/**
+ * Class + inline style for the element wrapping a column's blocks. Columns with `flex` use it;
+ * older columns keep the vertical stack (`stackClass`) positioned by the row's `align`.
+ */
+export function columnContentLayout(
+  row: Pick<PageLayoutRow, 'align'>,
+  col: Pick<PageLayoutColumn, 'flex'>,
+  stackClass = 'space-y-6',
+): { class: string; style?: Record<string, string> } {
+  const flex = col.flex;
+  if (!flex) {
+    return { class: ['h-full', stackClass, columnContentAlignClass(row)].filter(Boolean).join(' ') };
+  }
+  return {
+    class: 'flex h-full min-w-0',
+    style: {
+      flexDirection: flex.direction === 'row' ? 'row' : 'column',
+      justifyContent: FLEX_JUSTIFY_CSS[flex.justify] ?? 'flex-start',
+      alignItems: FLEX_ALIGN_CSS[flex.align] ?? 'stretch',
+      flexWrap: flex.wrap === false ? 'nowrap' : 'wrap',
+      gap: `${Math.min(16, Math.max(0, Number(flex.gap) || 0)) * 0.25}rem`,
+    },
+  };
 }
 
 /** Kit `limit` fields are stored as 1–24 in Appearance / Theme Builder. */

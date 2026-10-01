@@ -1,6 +1,6 @@
 import { component$ } from '@builder.io/qwik';
 import {
-  columnContentAlignClass,
+  columnContentLayout,
   columnSpanClassNames,
   isPageLayoutBand,
   normalizeColumnSpans,
@@ -79,6 +79,7 @@ export const ChromeLayoutRenderer = component$<ChromeLayoutRendererProps>((props
                         const spans = normalizeColumnSpans(col.span);
                         const colSettings = col.settings;
                         const colStyles = col.styles;
+                        const content = columnContentLayout(row, col, '');
                         return (
                           <LayoutNodeShell
                             key={col.id}
@@ -87,7 +88,7 @@ export const ChromeLayoutRenderer = component$<ChromeLayoutRendererProps>((props
                             styles={colStyles}
                             class={`${columnSpanClassNames(spans)} h-full`}
                           >
-                            <div class={`h-full ${columnContentAlignClass(row)}`}>
+                            <div class={content.class} style={content.style}>
                             {(col.blocks || []).map((block) => (
                               <ChromeKitView
                                 key={block.id || block.type}
