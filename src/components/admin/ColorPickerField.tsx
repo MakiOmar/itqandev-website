@@ -91,7 +91,11 @@ const GlobalColorsMenu = component$<{
 }>((props) => {
   const open = useSignal(false);
   const rootRef = useSignal<HTMLSpanElement>();
-  const pos = useSignal<{ top: number; left: number }>({ top: 0, left: 0 });
+  const pos = useSignal<{ left: number; top?: number; bottom?: number; maxHeight: number }>({
+    left: 0,
+    top: 0,
+    maxHeight: GLOBAL_MENU_MAX_HEIGHT,
+  });
   const title = translateApp(props.lang, 'builder.colorPicker.globalColors');
   // eslint-disable-next-line qwik/no-use-visible-task
   useVisibleTask$(({ track, cleanup }) => {
@@ -139,11 +143,18 @@ const GlobalColorsMenu = component$<{
             Math.max(margin, rect.left),
             window.innerWidth - GLOBAL_MENU_WIDTH - margin,
           );
-          const below = rect.bottom + 4;
-          const top = below + GLOBAL_MENU_MAX_HEIGHT > window.innerHeight
-            ? Math.max(margin, rect.top - 4 - GLOBAL_MENU_MAX_HEIGHT)
-            : below;
-          pos.value = { top, left };
+          const gap = 4;
+          const spaceBelow = window.innerHeight - rect.bottom - gap - margin;
+          const spaceAbove = rect.top - gap - margin;
+          const estimated = Math.min(GLOBAL_MENU_MAX_HEIGHT, 40 + props.colors.length * 30);
+          pos.value =
+            estimated <= spaceBelow || spaceBelow >= spaceAbove
+              ? { left, top: rect.bottom + gap, maxHeight: Math.min(GLOBAL_MENU_MAX_HEIGHT, spaceBelow) }
+              : {
+                  left,
+                  bottom: window.innerHeight - rect.top + gap,
+                  maxHeight: Math.min(GLOBAL_MENU_MAX_HEIGHT, spaceAbove),
+                };
           open.value = true;
         }}
       >
@@ -159,10 +170,11 @@ const GlobalColorsMenu = component$<{
           aria-label={title}
           class="fixed z-[100] block overflow-y-auto rounded-lg border border-gray-200 bg-white p-2 shadow-lg dark:border-gray-700 dark:bg-slate-800"
           style={{
-            top: `${pos.value.top}px`,
+            top: pos.value.top !== undefined ? `${pos.value.top}px` : undefined,
+            bottom: pos.value.bottom !== undefined ? `${pos.value.bottom}px` : undefined,
             left: `${pos.value.left}px`,
             width: `${GLOBAL_MENU_WIDTH}px`,
-            maxHeight: `${GLOBAL_MENU_MAX_HEIGHT}px`,
+            maxHeight: `${pos.value.maxHeight}px`,
           }}
         >
           <span class="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
