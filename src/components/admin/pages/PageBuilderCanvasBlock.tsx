@@ -7,6 +7,12 @@ import type { CaseStudy, Testimonial, BlogPost, Service } from '~/lib/marketing/
 import type { PortfolioCategory } from '~/lib/marketing/content-layer';
 import type { SiteLanguageRow } from '~/types/site-language';
 import { isChromeKitType } from '~/lib/marketing/chrome-blocks';
+import type { AuthSession } from '~/lib/auth/types';
+import {
+  CHROME_MENU_KIT_TYPES,
+  chromeMenuSlug,
+  type ChromeMenuMap,
+} from '~/lib/admin/builder-chrome-menus';
 
 export type BuilderPreviewSupport = {
   caseStudies: CaseStudy[];
@@ -32,6 +38,10 @@ export type BuilderPreviewContext = {
   branding?: BuilderPreviewBranding;
   support?: BuilderPreviewSupport;
   isDarkMode: boolean;
+  /** Signed-in editor, so header actions preview the logged-in state like the frontend. */
+  session?: Pick<AuthSession, 'user'> | null;
+  /** Published menu trees by slug (see `useBuilderChromeMenus`). */
+  menus?: ChromeMenuMap;
 };
 
 export type PageBuilderCanvasBlockProps = {
@@ -47,22 +57,27 @@ const SAMPLE_MENU_ITEMS = [
   { label: 'Contact', href: '/contact/', open_in_new_tab: false, children: [] },
 ];
 
-/** Admin has no PublicMenuResolver inject — seed sample links into empty menu kits. */
-export function withChromeMenuSample(block: PageLayoutBlock): PageLayoutBlock {
+/**
+ * Admin documents carry no injected menu items: use the published menu for the kit's slug, then
+ * any stored items, then sample links (menu not fetched yet or fetch failed).
+ */
+export function withChromeMenuSample(block: PageLayoutBlock, menus?: ChromeMenuMap): PageLayoutBlock {
   if (!MENU_BLOCK_TYPES.has(block.type)) return block;
   const settings = { ...(block.settings || {}) } as Record<string, unknown>;
+  const published = CHROME_MENU_KIT_TYPES.has(block.type) ? menus?.[chromeMenuSlug(settings)] : undefined;
+  if (published) return { ...block, settings: { ...settings, items: published } };
   if (Array.isArray(settings.items) && settings.items.length > 0) return block;
   return { ...block, settings: { ...settings, items: SAMPLE_MENU_ITEMS } };
 }
 
-export function withChromeMenuSamples(bands: PageLayoutBand[]): PageLayoutBand[] {
+export function withChromeMenuSamples(bands: PageLayoutBand[], menus?: ChromeMenuMap): PageLayoutBand[] {
   return bands.map((band) => ({
     ...band,
     rows: (band.rows || []).map((row) => ({
       ...row,
       columns: (row.columns || []).map((col) => ({
         ...col,
-        blocks: (col.blocks || []).map(withChromeMenuSample),
+        blocks: (col.blocks || []).map((block) => withChromeMenuSample(block, menus)),
       })),
     })),
   }));
@@ -108,17 +123,21 @@ export const PageBuilderCanvasBlock = component$<PageBuilderCanvasBlockProps>(
   (props) => {
     // Page widgets/kits in a header/footer preview through the page renderer below.
     if (props.ctx.surface === 'chrome' && isChromeKitType(props.block.type)) {
-      const block = withChromeMenuSample(props.block);
+      const block = withChromeMenuSample(props.block, props.ctx.menus);
       return (
         <LocaleTransitionProvider>
-          <ChromeKitView
-            type={block.type}
-            settings={(block.settings || {}) as Record<string, unknown>}
-            uiLocale={props.ctx.uiLocale}
-            branding={builderPreviewBranding(props.ctx)}
-            features={{}}
-            isDarkMode={props.ctx.isDarkMode}
-          />
+          {/* Inert in the editor: clicks select the block and can't open dropdowns or log out */}
+          <div class="pointer-events-none">
+            <ChromeKitView
+              type={block.type}
+              settings={(block.settings || {}) as Record<string, unknown>}
+              uiLocale={props.ctx.uiLocale}
+              branding={builderPreviewBranding(props.ctx)}
+              session={props.ctx.session}
+              features={{}}
+              isDarkMode={props.ctx.isDarkMode}
+            />
+          </div>
         </LocaleTransitionProvider>
       );
     }

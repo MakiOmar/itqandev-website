@@ -1,6 +1,7 @@
 import {
   component$,
   useComputed$,
+  useContext,
   useSignal,
   useTask$,
   useVisibleTask$,
@@ -75,6 +76,8 @@ import {
 } from '~/components/admin/pages/PageBuilderNavigator';
 import { moveLayoutTreeNode } from '~/lib/admin/page-layout-tree';
 import { useBuilderCanvasGuard } from '~/lib/admin/builder-canvas-guard';
+import { useBuilderChromeMenus } from '~/lib/admin/builder-chrome-menus';
+import { AdminSessionContext } from '~/stores/admin-session-context';
 import { LayoutDeviceProvider } from '~/lib/marketing/layout-device-context';
 import { normalizeHideOn, type DeviceHideOn } from '~/lib/marketing/device-visibility';
 import type { BuilderStyles, StyleBreakpoint } from '~/lib/marketing/builder-styles';
@@ -607,6 +610,12 @@ function hiddenOnDeviceClass(node: { hide_on?: unknown }, device: LayoutBreakpoi
 export const PageBuilderWorkspace = component$<PageBuilderWorkspaceProps>((props) => {
   const bands = ensurePageLayoutBands(props.sections.value);
   useBuilderCanvasGuard();
+  const adminSession = useContext(AdminSessionContext, null);
+  const chromeMenus = useBuilderChromeMenus(
+    props.sections,
+    props.activeLocale,
+    props.previewSurface === 'chrome',
+  );
   const previewDevice = useSignal<LayoutBreakpoint>('desktop');
   const selection = useSignal<PageBuilderSelection>(null);
   const mediaPreviewById = useSignal<MediaUrlMap>({});
@@ -782,6 +791,8 @@ export const PageBuilderWorkspace = component$<PageBuilderWorkspaceProps>((props
     branding: props.previewBranding,
     support: props.previewSupport,
     isDarkMode: previewTheme.value === 'dark',
+    session: adminSession?.value?.user ? { user: adminSession.value.user } : null,
+    menus: chromeMenus.value,
   };
   const resolvedBands =
     props.livePreviewOverride?.value && props.livePreviewOverride.value.length > 0

@@ -28,7 +28,8 @@ export type ChromeKitViewProps = {
     logoLight?: string;
     site_languages?: SiteLanguageRow[];
   } | null;
-  session?: AuthSession | null;
+  /** Only `user` is read; callers may pass a token-free subset. */
+  session?: Pick<AuthSession, 'user'> | null;
   features?: Partial<Record<FeatureModuleKey, boolean>> & Record<string, boolean>;
   contact?: { email?: string; socials?: { name: string; url: string }[] };
   isDarkMode?: boolean;

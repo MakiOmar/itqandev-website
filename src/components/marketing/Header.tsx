@@ -21,7 +21,7 @@ interface HeaderBranding {
 }
 
 interface HeaderProps {
-  session?: AuthSession | null;
+  session?: Pick<AuthSession, 'user'> | null;
   branding?: HeaderBranding | null;
   navItems?: PublicNavItem[] | null;
   features?: Partial<Record<FeatureModuleKey, boolean>> & Record<string, boolean>;

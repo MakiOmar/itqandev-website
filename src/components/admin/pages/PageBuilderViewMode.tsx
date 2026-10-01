@@ -57,6 +57,7 @@ export const PageBuilderViewMode = component$<PageBuilderViewModeProps>((props) 
           theme: props.theme,
           uiLocale: props.ctx.uiLocale,
           pageTitle: props.ctx.pageTitle,
+          menus: props.ctx.menus,
           support: props.ctx.support,
         }),
       },

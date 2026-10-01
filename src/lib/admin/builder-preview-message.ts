@@ -2,6 +2,7 @@ import type { LayoutBreakpoint, PageLayoutBand } from '~/lib/marketing/appearanc
 import type { CaseStudy, Testimonial, BlogPost, Service } from '~/lib/marketing/types';
 import type { PortfolioCategory } from '~/lib/marketing/content-layer';
 import type { ThemeMode } from '~/lib/theme/theme-scope';
+import type { PublicNavItem } from '~/lib/marketing/public-menu';
 
 /**
  * postMessage contract between the builder "view page" frame (parent) and the
@@ -20,6 +21,8 @@ export type BuilderPreviewPayload = {
   theme?: ThemeMode;
   uiLocale: string;
   pageTitle: string;
+  /** Published menu trees by slug for header/footer menu kits. */
+  menus?: Record<string, PublicNavItem[]>;
   support?: {
     caseStudies: CaseStudy[];
     portfolioCategories: PortfolioCategory[];

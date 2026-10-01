@@ -1,5 +1,6 @@
 import '~/styles/site.css';
-import { component$, useSignal, useVisibleTask$ } from '@builder.io/qwik';
+import { component$, useContext, useSignal, useVisibleTask$ } from '@builder.io/qwik';
+import { AdminSessionContext } from '~/stores/admin-session-context';
 import type { DocumentHead, RequestHandler } from '@builder.io/qwik-city';
 import { routeLoader$ } from '@builder.io/qwik-city';
 import { HomepageSectionsRenderer } from '~/components/marketing/home-sections/HomepageSectionsRenderer';
@@ -41,6 +42,7 @@ export const head: DocumentHead = {
 
 export default component$(() => {
   const shell = useBuilderPreviewShell();
+  const adminSession = useContext(AdminSessionContext, null);
   const payload = useSignal<BuilderPreviewPayload | null>(null);
 
   // eslint-disable-next-line qwik/no-use-visible-task
@@ -77,7 +79,9 @@ export default component$(() => {
   }
 
   const chrome = doc.surface === 'chrome';
-  const editedChrome = chrome ? withChromeMenuSamples(doc.bands) : [];
+  const editedChrome = chrome
+    ? withChromeMenuSamples(doc.bands, { primary: s.primaryMenu ?? [], ...doc.menus })
+    : [];
   const headerSections =
     chrome && doc.chromeKind === 'header' ? editedChrome : (s.header?.sections ?? []);
   const footerPayload =
@@ -93,6 +97,7 @@ export default component$(() => {
         <LayoutDeviceProvider device={doc.device}>
           <div class="relative z-10 flex min-h-screen flex-1 flex-col">
             <Header
+              session={adminSession?.value?.user ? { user: adminSession.value.user } : null}
               branding={s.branding}
               navItems={s.primaryMenu}
               features={s.branding?.features}
