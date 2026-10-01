@@ -107,7 +107,8 @@ export const BuilderBackgroundFields = component$<BuilderBackgroundFieldsProps>(
         <label class={ADMIN_FORM_LABEL_CLASS}>
           {translateApp(props.lang, 'builder.background.color')}
           <ColorPickerField
-            value={/^#/.test(bg.color || '') ? bg.color! : '#0389a1'}
+            allowGlobal
+            value={bg.color || '#0389a1'}
             lang={props.lang}
             class="mt-1 block h-9 w-full"
             label={translateApp(props.lang, 'builder.background.color')}
@@ -123,6 +124,7 @@ export const BuilderBackgroundFields = component$<BuilderBackgroundFieldsProps>(
           <label class={ADMIN_FORM_LABEL_CLASS}>
             {translateApp(props.lang, 'builder.background.gradientFrom')}
             <ColorPickerField
+              allowGlobal
               value={bg.gradient_from || '#0389a1'}
               lang={props.lang}
               class="mt-1 block h-9 w-full"
@@ -135,6 +137,7 @@ export const BuilderBackgroundFields = component$<BuilderBackgroundFieldsProps>(
           <label class={ADMIN_FORM_LABEL_CLASS}>
             {translateApp(props.lang, 'builder.background.gradientTo')}
             <ColorPickerField
+              allowGlobal
               value={bg.gradient_to || '#0ea5e9'}
               lang={props.lang}
               class="mt-1 block h-9 w-full"
@@ -274,6 +277,7 @@ export const BuilderBackgroundFields = component$<BuilderBackgroundFieldsProps>(
               <label class={ADMIN_FORM_LABEL_CLASS}>
                 {translateApp(props.lang, 'builder.background.overlayColor')}
                 <ColorPickerField
+                  allowGlobal
                   value={bg.overlay_color || '#000000'}
                   lang={props.lang}
                   class="mt-1 block h-9 w-full"

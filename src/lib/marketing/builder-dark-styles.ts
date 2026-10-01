@@ -51,7 +51,7 @@ export function colorStyleKind(key: string): ColorStyleKind | null {
 
 const HEX_RE = /^#(?:[0-9a-f]{3}|[0-9a-f]{6}|[0-9a-f]{8})$/i;
 const RGB_RE = /^rgba?\(\s*[\d.]+(?:\s*,\s*[\d.]+){2,3}\s*\)$/i;
-export const KIT_COLOR_VAR_RE = /^var\(--kit-color-[a-z0-9-]{1,40}\)$/;
+export const KIT_COLOR_VAR_RE = /^var\(--kit-color-[a-z0-9_-]{1,40}\)$/;
 
 /** Strict colour check before a value reaches a `<style>` element (backend validates too). */
 export function safeCssColor(value: unknown): string | null {

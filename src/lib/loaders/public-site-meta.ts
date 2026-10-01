@@ -9,6 +9,7 @@ import { readPreferredLocaleFromCookieHeader } from '../i18n/dashboard-locale';
 import { resolvePublicSiteLanguages } from '../i18n/public-site-languages';
 import { defaultSystemTypography, parseSiteTypography } from '../perf/typography';
 import type { SiteTypography } from '~/types/typography';
+import { parseKitColors, type KitColorToken } from '../marketing/design-kit';
 
 export interface PublicSiteMetaState {
   typography: SiteTypography;
@@ -16,6 +17,9 @@ export interface PublicSiteMetaState {
   default_locale: string;
   secondary: SiteLanguageRow[];
   content_editing_locale: string;
+  /** Kit custom properties (`:root,.light` / `.dark`); injected into builder canvases. */
+  design_kit_css?: string;
+  kit_colors?: KitColorToken[];
 }
 
 function pickContentEditingLocale(
@@ -70,6 +74,8 @@ export async function loadPublicSiteMeta(
       default_locale,
       secondary: secondaryLocales(site_languages, default_locale),
       content_editing_locale: pickContentEditingLocale(site_languages, default_locale, cookieHeader),
+      design_kit_css: typeof settings?.design_kit_css === 'string' ? settings.design_kit_css : undefined,
+      kit_colors: parseKitColors(settings?.design_kit),
     };
   } catch (e) {
     if (import.meta.env.DEV && !isDevSsrMarketingFetchFailure(e)) {

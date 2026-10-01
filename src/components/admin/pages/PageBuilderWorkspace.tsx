@@ -64,6 +64,7 @@ import {
 import { BuilderStylePanel, STYLE_ACCORDION_GROUP, StyleModeSwitcher } from '~/components/admin/BuilderStylePanel';
 import { InspectorAccordion } from '~/components/admin/InspectorAccordion';
 import { BuilderBackgroundFields } from '~/components/admin/BuilderBackgroundFields';
+import { BuilderKitStyle, useBuilderDesignKit } from '~/components/admin/builder-kit-context';
 import { BuilderShapeDividerFields } from '~/components/admin/BuilderShapeDividerFields';
 import {
   PageBuilderNavigator,
@@ -616,6 +617,7 @@ export const PageBuilderWorkspace = component$<PageBuilderWorkspaceProps>((props
   /** Set when only the selection's indices shift (same node), so the sidebar view and tab stay put. */
   const selectionReindexed = useSignal(false);
   const previewTheme = useSignal<ThemeMode>('light');
+  const designKit = useBuilderDesignKit();
   /** Once the editor picks a canvas theme, stop mirroring the admin theme. */
   const previewThemePinned = useSignal(false);
 
@@ -772,6 +774,7 @@ export const PageBuilderWorkspace = component$<PageBuilderWorkspaceProps>((props
 
   return (
     <div class="flex h-full min-h-0 flex-col">
+      <BuilderKitStyle css={designKit.css} />
       <header class="flex flex-shrink-0 flex-wrap items-center gap-3 border-b border-gray-200 bg-white px-4 py-2 dark:border-gray-800 dark:bg-slate-900">
         <Link
           href={props.classicEditHref}

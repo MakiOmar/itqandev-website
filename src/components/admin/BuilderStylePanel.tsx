@@ -715,6 +715,7 @@ const ColorControl = component$<{
       />
       <div class="flex flex-wrap items-center gap-2">
         <ColorPickerField
+          allowGlobal
           value={text}
           fallback={swatchHex(shown) || '#0389a1'}
           lang={props.lang}

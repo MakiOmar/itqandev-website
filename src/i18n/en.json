@@ -1394,7 +1394,12 @@
     },
     "colorPicker": {
       "open": "Choose colour",
-      "loadError": "Could not load the colour picker."
+      "loadError": "Could not load the colour picker.",
+      "globalColors": "Global colours"
     }
+  },
+  "designKit": {
+    "color": "Colour",
+    "darkHint": "Global colours used in the builders. Set a dark value to change a colour in dark mode; empty dark values keep the light colour."
   }
 }

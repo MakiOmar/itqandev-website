@@ -55,6 +55,7 @@ const DarkColor = component$<{
         onClear$={$(() => props.onPatch$(undefined))}
       />
       <ColorPickerField
+        allowGlobal
         value={props.value || ''}
         fallback={props.lightValue || '#0f172a'}
         lang={props.lang}

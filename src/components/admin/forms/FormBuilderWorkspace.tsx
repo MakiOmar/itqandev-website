@@ -32,6 +32,7 @@ import {
   BuilderResponsiveVisibilityFields,
 } from '~/components/admin/BuilderResponsiveVisibilityFields';
 import { BuilderStylePanel } from '~/components/admin/BuilderStylePanel';
+import { BuilderKitStyle, useBuilderDesignKit } from '~/components/admin/builder-kit-context';
 import { normalizeHideOn, type DeviceHideOn } from '~/lib/marketing/device-visibility';
 import { hasAnyStyles, type BuilderStyles, type StyleBreakpoint } from '~/lib/marketing/builder-styles';
 import { StyledBuilderLeaf } from '~/components/marketing/widgets/StyledBuilderLeaf';
@@ -156,6 +157,7 @@ export type FormBuilderWorkspaceProps = {
 export const FormBuilderWorkspace = component$<FormBuilderWorkspaceProps>((props) => {
   const device = useSignal<Device>('desktop');
   const previewTheme = useSignal<ThemeMode>('light');
+  const designKit = useBuilderDesignKit();
   /** Once the editor picks a canvas theme, stop mirroring the admin theme. */
   const previewThemePinned = useSignal(false);
   // eslint-disable-next-line qwik/no-use-visible-task
@@ -238,6 +240,7 @@ export const FormBuilderWorkspace = component$<FormBuilderWorkspaceProps>((props
 
   return (
     <div class="flex h-full min-h-0 flex-col">
+      <BuilderKitStyle css={designKit.css} />
       <header class="flex flex-shrink-0 flex-wrap items-center gap-3 border-b border-gray-200 bg-white px-4 py-2 dark:border-gray-800 dark:bg-slate-900">
         <Link
           href={props.classicEditHref}
