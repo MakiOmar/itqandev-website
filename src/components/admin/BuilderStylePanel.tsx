@@ -28,8 +28,10 @@ import {
   STYLE_DEVICES,
   STYLE_UNITS,
   controlsForWidget,
+  hasDarkOverride,
   inheritedValue,
   isOverride,
+  patchDarkBag,
   patchStyleBag,
   readDimensions,
   readFilters,
@@ -37,6 +39,8 @@ import {
   readShadow,
   type StyleControl,
 } from '~/lib/admin/builder-style-controls';
+import { DARK_THEME_SENTINEL, colorStyleKind } from '~/lib/marketing/builder-dark-styles';
+import type { ThemeMode } from '~/lib/theme/theme-scope';
 
 const LENGTH_UNITS = STYLE_UNITS.filter((u) => u !== 'auto');
 
@@ -278,10 +282,17 @@ const StyleDeviceBtn = component$<{
 const StyleDeviceSwitcher = component$<{
   lang: string;
   device: StyleBreakpoint;
+  disabled?: boolean;
   onDevice$: QRL<(device: StyleBreakpoint) => void>;
 }>((props) => {
   return (
-    <div class="inline-flex w-full rounded-lg border border-gray-300 p-0.5 dark:border-gray-600">
+    <div
+      class={[
+        'inline-flex w-full rounded-lg border border-gray-300 p-0.5 dark:border-gray-600',
+        props.disabled ? 'pointer-events-none opacity-40' : '',
+      ].join(' ')}
+      aria-disabled={props.disabled ? 'true' : undefined}
+    >
       {STYLE_DEVICES.map((device) => (
         <StyleDeviceBtn
           key={device}
@@ -291,6 +302,121 @@ const StyleDeviceSwitcher = component$<{
           onDevice$={props.onDevice$}
         />
       ))}
+    </div>
+  );
+});
+
+const STYLE_MODES: ThemeMode[] = ['light', 'dark'];
+
+/** Light/Dark editing mode; dark edits write the colours-only `styles.dark` bag. */
+const StyleModeSwitcher = component$<{
+  lang: string;
+  mode: ThemeMode;
+  onMode$: QRL<(mode: ThemeMode) => void>;
+}>((props) => {
+  return (
+    <div
+      class="inline-flex w-full rounded-lg border border-gray-300 p-0.5 dark:border-gray-600"
+      role="group"
+      aria-label={translateApp(props.lang, 'builder.style.modeLabel')}
+    >
+      {STYLE_MODES.map((mode) => (
+        <button
+          key={mode}
+          type="button"
+          aria-pressed={props.mode === mode ? 'true' : 'false'}
+          class={[
+            'flex-1 rounded-md px-2 py-1 text-[11px] font-medium',
+            props.mode === mode
+              ? 'bg-slate-800 text-white dark:bg-slate-200 dark:text-slate-900'
+              : 'text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800',
+          ].join(' ')}
+          onClick$={() => props.onMode$(mode)}
+        >
+          {translateApp(props.lang, mode === 'light' ? 'builder.style.modeLight' : 'builder.style.modeDark')}
+        </button>
+      ))}
+    </div>
+  );
+});
+
+/** Dark-mode actions: drop the override (inherit the light value) or force the theme default. */
+const DarkColorActions = component$<{
+  lang: string;
+  controlKey: string;
+  override: boolean;
+  isTheme: boolean;
+  onPatch$: PatchQrl;
+}>((props) => {
+  return (
+    <span class="flex items-center gap-2">
+      {props.override ? (
+        <button
+          type="button"
+          class="text-[10px] font-medium text-primary-600 hover:underline dark:text-primary-400"
+          onClick$={() => props.onPatch$(props.controlKey, undefined)}
+        >
+          {translateApp(props.lang, 'builder.style.sameAsLight')}
+        </button>
+      ) : null}
+      {props.isTheme ? null : (
+        <button
+          type="button"
+          class="text-[10px] font-medium text-gray-500 hover:underline dark:text-gray-400"
+          onClick$={() => props.onPatch$(props.controlKey, DARK_THEME_SENTINEL)}
+        >
+          {translateApp(props.lang, 'builder.style.themeDefault')}
+        </button>
+      )}
+    </span>
+  );
+});
+
+/** Light mode marker for keys that also carry a dark override. */
+const DarkOverrideDot = component$<{ lang: string; show: boolean }>((props) => {
+  if (!props.show) return null;
+  const label = translateApp(props.lang, 'builder.style.hasDarkOverride');
+  return (
+    <span
+      class="ms-1 inline-block h-1.5 w-1.5 rounded-full bg-indigo-500 align-middle dark:bg-indigo-300"
+      title={label}
+      aria-label={label}
+      role="img"
+    />
+  );
+});
+
+/** Shared colour/shadow label row: light reset + dark dot, or the dark-mode actions. */
+const ColorLabelRow = component$<{
+  lang: string;
+  control: StyleControl;
+  override: boolean;
+  darkMode: boolean;
+  isTheme: boolean;
+  hasDark: boolean;
+  onPatch$: PatchQrl;
+}>((props) => {
+  return (
+    <div class="mb-1 flex items-center justify-between gap-2">
+      <span class="text-xs font-medium text-gray-600 dark:text-gray-300">
+        {fieldLabel(props.lang, props.control.key)}
+        {props.darkMode ? null : <DarkOverrideDot lang={props.lang} show={props.hasDark} />}
+      </span>
+      {props.darkMode ? (
+        <DarkColorActions
+          lang={props.lang}
+          controlKey={props.control.key}
+          override={props.override}
+          isTheme={props.isTheme}
+          onPatch$={props.onPatch$}
+        />
+      ) : (
+        <ResetBtn
+          lang={props.lang}
+          show={props.override}
+          onReset$={$(() => props.onPatch$(props.control.key, undefined))}
+        />
+      )}
     </div>
   );
 });
@@ -547,44 +673,59 @@ const DimSide = component$<{
   );
 });
 
+const HEX_COLOR_RE = /^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$/;
+
+/** `#rrggbb` for the native swatch; non-hex values (rgba, kit vars) keep a neutral swatch. */
+function swatchHex(value: string): string {
+  const hex = HEX_COLOR_RE.test(value) ? value.toLowerCase() : '';
+  if (hex.length === 4) return `#${hex[1]}${hex[1]}${hex[2]}${hex[2]}${hex[3]}${hex[3]}`;
+  return hex.slice(0, 7);
+}
+
 const ColorControl = component$<{
   lang: string;
   control: StyleControl;
+  /** Stored value for the active mode (`theme` sentinel in dark mode means theme default). */
   value: string;
   override: boolean;
+  darkMode: boolean;
+  hasDark: boolean;
+  /** Dark mode: the light value shown while no override is set. */
+  lightValue?: string;
   onPatch$: PatchQrl;
 }>((props) => {
-  const hex =
-    typeof props.value === 'string' && /^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$/.test(props.value.trim())
-      ? props.value.trim().toLowerCase()
-      : '';
-  const pickerValue =
-    hex.length === 4 ? `#${hex[1]}${hex[1]}${hex[2]}${hex[2]}${hex[3]}${hex[3]}` : hex.slice(0, 7) || '#0389a1';
+  const isTheme = props.darkMode && props.value === DARK_THEME_SENTINEL;
+  const text = isTheme ? '' : props.value.trim();
+  const shown = text || (props.darkMode && !props.override ? (props.lightValue ?? '').trim() : '');
+  const placeholder = isTheme
+    ? translateApp(props.lang, 'builder.style.themeDefault')
+    : props.darkMode
+      ? translateApp(props.lang, 'builder.style.sameAsLight')
+      : translateApp(props.lang, 'builder.style.inherit');
   return (
     <div>
-      <div class="mb-1 flex items-center justify-between gap-2">
-        <span class="text-xs font-medium text-gray-600 dark:text-gray-300">
-          {fieldLabel(props.lang, props.control.key)}
-        </span>
-        <ResetBtn
-          lang={props.lang}
-          show={props.override}
-          onReset$={$(() => props.onPatch$(props.control.key, undefined))}
-        />
-      </div>
+      <ColorLabelRow
+        lang={props.lang}
+        control={props.control}
+        override={props.override}
+        darkMode={props.darkMode}
+        isTheme={isTheme}
+        hasDark={props.hasDark}
+        onPatch$={props.onPatch$}
+      />
       <div class="flex flex-wrap items-center gap-2">
         <ColorPickerField
-          value={hex}
-          fallback={pickerValue}
+          value={text}
+          fallback={swatchHex(shown) || '#0389a1'}
           lang={props.lang}
           label={fieldLabel(props.lang, props.control.key)}
           onChange$={(next) => props.onPatch$(props.control.key, next === '' ? undefined : next)}
         />
         <input
           type="text"
-          placeholder={translateApp(props.lang, 'builder.style.inherit')}
+          placeholder={shown && !text ? shown : placeholder}
           class="min-w-[7rem] flex-1 rounded border px-2 py-1.5 text-sm dark:bg-gray-900"
-          value={hex}
+          value={text}
           onInput$={(e) => {
             const v = (e.target as HTMLInputElement).value.trim();
             props.onPatch$(props.control.key, v === '' ? undefined : v);
@@ -731,8 +872,12 @@ const FilterSlider = component$<{
 const ShadowControl = component$<{
   lang: string;
   control: StyleControl;
+  /** Shadow being edited; in dark mode without an override this is the light shadow. */
   value: StyleShadow | null;
   override: boolean;
+  darkMode: boolean;
+  isTheme: boolean;
+  hasDark: boolean;
   onPatch$: PatchQrl;
 }>((props) => {
   const s = props.value || DEFAULT_SHADOW;
@@ -741,16 +886,15 @@ const ShadowControl = component$<{
   });
   return (
     <div class="space-y-2">
-      <div class="flex items-center justify-between gap-2">
-        <span class="text-xs font-medium text-gray-600 dark:text-gray-300">
-          {fieldLabel(props.lang, props.control.key)}
-        </span>
-        <ResetBtn
-          lang={props.lang}
-          show={props.override}
-          onReset$={$(() => props.onPatch$(props.control.key, undefined))}
-        />
-      </div>
+      <ColorLabelRow
+        lang={props.lang}
+        control={props.control}
+        override={props.override}
+        darkMode={props.darkMode}
+        isTheme={props.isTheme}
+        hasDark={props.hasDark}
+        onPatch$={props.onPatch$}
+      />
       <div class="flex items-center gap-2">
         <ColorPickerField
           value={s.color}
@@ -846,11 +990,44 @@ const StyleControlRow = component$<{
   control: StyleControl;
   styles: BuilderStyles | null | undefined;
   device: StyleBreakpoint;
+  darkMode: boolean;
   onPatch$: PatchQrl;
 }>((props) => {
-  const raw = inheritedValue(props.styles, props.device, props.control.key);
-  const override = isOverride(props.styles, props.device, props.control.key);
   const c = props.control;
+  const hasDark = hasDarkOverride(props.styles, c.key);
+  if (props.darkMode) {
+    // Dark overrides are breakpoint-free; the light fallback shown is the desktop cascade value.
+    const darkRaw = props.styles?.dark?.[c.key];
+    const lightRaw = inheritedValue(props.styles, 'desktop', c.key);
+    if (c.type === 'color') {
+      return (
+        <ColorControl
+          lang={props.lang}
+          control={c}
+          value={typeof darkRaw === 'string' ? darkRaw : ''}
+          lightValue={typeof lightRaw === 'string' ? lightRaw : ''}
+          override={hasDark}
+          darkMode
+          hasDark={hasDark}
+          onPatch$={props.onPatch$}
+        />
+      );
+    }
+    return (
+      <ShadowControl
+        lang={props.lang}
+        control={c}
+        value={readShadow(darkRaw) ?? readShadow(lightRaw)}
+        override={hasDark}
+        darkMode
+        isTheme={darkRaw === DARK_THEME_SENTINEL}
+        hasDark={hasDark}
+        onPatch$={props.onPatch$}
+      />
+    );
+  }
+  const raw = inheritedValue(props.styles, props.device, c.key);
+  const override = isOverride(props.styles, props.device, c.key);
   if (c.type === 'choose') {
     return (
       <ChooseControl
@@ -903,6 +1080,8 @@ const StyleControlRow = component$<{
         control={c}
         value={typeof raw === 'string' ? raw : ''}
         override={override}
+        darkMode={false}
+        hasDark={hasDark}
         onPatch$={props.onPatch$}
       />
     );
@@ -947,6 +1126,9 @@ const StyleControlRow = component$<{
         control={c}
         value={readShadow(raw)}
         override={override}
+        darkMode={false}
+        isTheme={false}
+        hasDark={hasDark}
         onPatch$={props.onPatch$}
       />
     );
@@ -969,6 +1151,9 @@ export const BuilderStylePanel = component$<{
   device: StyleBreakpoint;
   onDevice$: QRL<(device: StyleBreakpoint) => void>;
   onChange$: QRL<(next: BuilderStyles) => void | Promise<void>>;
+  /** Editing mode; matches the canvas preview theme. Omit `onMode$` to hide the switcher. */
+  mode?: ThemeMode;
+  onMode$?: QRL<(mode: ThemeMode) => void>;
   /** Open the first group; off when sections above it (e.g. Background) already open one. */
   openFirst?: boolean;
 }>((props) => {
@@ -981,22 +1166,42 @@ export const BuilderStylePanel = component$<{
     );
   }
 
+  const darkMode = props.mode === 'dark' && !!props.onMode$;
   const onPatch$ = $(async (key: string, value: unknown) => {
+    if (props.mode === 'dark' && props.onMode$) {
+      await props.onChange$(patchDarkBag(props.styles, key, value));
+      return;
+    }
     const device: StyleBreakpoint = key === 'custom_css' ? 'desktop' : props.device;
     await props.onChange$(patchStyleBag(props.styles, device, key, value));
   });
 
-  const controls = controlsForWidget(props.widgetType);
+  const allControls = controlsForWidget(props.widgetType);
+  const controls = darkMode ? allControls.filter((c) => colorStyleKind(c.key) !== null) : allControls;
+  const visibleGroups = groups.filter((group) => controls.some((c) => c.group === group));
 
   return (
     <div class="space-y-4">
-      {/* Device matches the canvas preview so WYSIWYG stays in sync. */}
-      <StyleDeviceSwitcher lang={props.lang} device={props.device} onDevice$={props.onDevice$} />
+      {props.onMode$ ? (
+        <StyleModeSwitcher lang={props.lang} mode={darkMode ? 'dark' : 'light'} onMode$={props.onMode$} />
+      ) : null}
+      {/* Device matches the canvas preview so WYSIWYG stays in sync; dark colours apply on every device. */}
+      <StyleDeviceSwitcher
+        lang={props.lang}
+        device={props.device}
+        disabled={darkMode}
+        onDevice$={props.onDevice$}
+      />
       <p class="text-[11px] leading-snug text-gray-500 dark:text-gray-400">
-        {translateApp(props.lang, 'builder.style.inheritHint')}
+        {translateApp(props.lang, darkMode ? 'builder.style.darkHint' : 'builder.style.inheritHint')}
       </p>
+      {visibleGroups.length === 0 ? (
+        <p class="text-xs text-gray-500 dark:text-gray-400">
+          {translateApp(props.lang, 'builder.style.darkEmpty')}
+        </p>
+      ) : null}
       <div>
-        {groups.map((group, index) => (
+        {visibleGroups.map((group, index) => (
           <InspectorAccordion
             key={group}
             title={translateApp(props.lang, GROUP_LABEL[group] || group)}
@@ -1012,6 +1217,7 @@ export const BuilderStylePanel = component$<{
                   control={control}
                   styles={props.styles}
                   device={group === 'custom' ? 'desktop' : props.device}
+                  darkMode={darkMode}
                   onPatch$={onPatch$}
                 />
               ))}

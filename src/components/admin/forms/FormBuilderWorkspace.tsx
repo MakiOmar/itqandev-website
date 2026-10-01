@@ -162,6 +162,10 @@ export const FormBuilderWorkspace = component$<FormBuilderWorkspaceProps>((props
   useVisibleTask$(({ cleanup }) => {
     cleanup(followAdminTheme(previewTheme, previewThemePinned));
   });
+  const setPreviewTheme$ = $((mode: ThemeMode) => {
+    previewThemePinned.value = true;
+    previewTheme.value = mode;
+  });
   const selection = useSignal<Selection>(null);
   const inspectorTab = useSignal<FormInspectorTab>('content');
   const tab = useSignal<FormWorkspaceTab>('fields');
@@ -279,10 +283,7 @@ export const FormBuilderWorkspace = component$<FormBuilderWorkspaceProps>((props
         <BuilderThemeToggle
           lang={props.lang}
           mode={previewTheme.value}
-          onChange$={(mode) => {
-            previewThemePinned.value = true;
-            previewTheme.value = mode;
-          }}
+          onChange$={setPreviewTheme$}
         />
         <BuilderImportExportButtons
           lang={props.lang}
@@ -967,6 +968,8 @@ export const FormBuilderWorkspace = component$<FormBuilderWorkspaceProps>((props
                 ) : null}
                 {inspectorTab.value === 'style' ? (
                   <BuilderStylePanel
+                    mode={previewTheme.value}
+                    onMode$={setPreviewTheme$}
                     lang={props.lang}
                     widgetType={selectedField.type}
                     styles={selectedFieldStyles}

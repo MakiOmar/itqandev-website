@@ -8,6 +8,7 @@ import {
   scopedCustomCss,
   type BuilderStyles,
 } from '~/lib/marketing/builder-styles';
+import { builderDarkStyleCss } from '~/lib/marketing/builder-dark-styles';
 import { ShapeDividerLayer, type ShapeDividerEdge } from './ShapeDividerLayer';
 
 export type LayoutNodeShellProps = {
@@ -32,6 +33,7 @@ export const LayoutNodeShell = component$<LayoutNodeShellProps>((props) => {
   const safe = cssSafeBlockId(props.id || 'layout');
   const vars = styled ? builderStyleCssVars(props.styles, props.settings) : undefined;
   const custom = styled ? scopedCustomCss(safe, props.styles) : null;
+  const dark = styled ? builderDarkStyleCss(safe, props.styles) : null;
 
   const sticky = props.settings?.sticky === true;
   const stickyOffset = Number(props.settings?.sticky_offset ?? 0);
@@ -56,6 +58,7 @@ export const LayoutNodeShell = component$<LayoutNodeShellProps>((props) => {
         ...(sticky ? { top: `${Number.isFinite(stickyOffset) ? stickyOffset : 0}px` } : {}),
       }}
     >
+      {dark ? <style dangerouslySetInnerHTML={dark} /> : null}
       {custom ? <style dangerouslySetInnerHTML={custom} /> : null}
       {hasBg ? <LayoutBackgroundLayer settings={props.settings} /> : null}
       {dividers?.top ? <ShapeDividerLayer edge="top" divider={dividers.top} /> : null}

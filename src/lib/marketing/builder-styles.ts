@@ -7,7 +7,8 @@ export type StyleBreakpoint = 'desktop' | 'tablet' | 'mobile';
 
 export type StyleBag = Record<string, unknown>;
 
-export type BuilderStyles = Partial<Record<StyleBreakpoint, StyleBag>>;
+/** `dark` holds colour/shadow overrides for dark mode (see builder-dark-styles.ts). */
+export type BuilderStyles = Partial<Record<StyleBreakpoint, StyleBag>> & { dark?: StyleBag };
 
 export type StyleLength = { value: number; unit: string };
 
@@ -423,7 +424,8 @@ export function hasAnyStyles(styles?: BuilderStyles | null): boolean {
   return !!(
     (styles.desktop && Object.keys(styles.desktop).length) ||
     (styles.tablet && Object.keys(styles.tablet).length) ||
-    (styles.mobile && Object.keys(styles.mobile).length)
+    (styles.mobile && Object.keys(styles.mobile).length) ||
+    (styles.dark && Object.keys(styles.dark).length)
   );
 }
 

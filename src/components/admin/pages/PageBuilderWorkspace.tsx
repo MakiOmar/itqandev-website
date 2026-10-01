@@ -713,6 +713,11 @@ export const PageBuilderWorkspace = component$<PageBuilderWorkspaceProps>((props
     cleanup(followAdminTheme(previewTheme, previewThemePinned));
   });
 
+  const setPreviewTheme$ = $((mode: ThemeMode) => {
+    previewThemePinned.value = true;
+    previewTheme.value = mode;
+  });
+
   const clearDrag$ = $(() => {
     dragBlock.value = null;
     dragWidgetType.value = null;
@@ -844,10 +849,7 @@ export const PageBuilderWorkspace = component$<PageBuilderWorkspaceProps>((props
         <BuilderThemeToggle
           lang={props.lang}
           mode={previewTheme.value}
-          onChange$={(mode) => {
-            previewThemePinned.value = true;
-            previewTheme.value = mode;
-          }}
+          onChange$={setPreviewTheme$}
         />
         <button
           type="button"
@@ -1055,6 +1057,8 @@ export const PageBuilderWorkspace = component$<PageBuilderWorkspaceProps>((props
                       </InspectorAccordion>
                       <BuilderStylePanel
                         openFirst={false}
+                        mode={previewTheme.value}
+                        onMode$={setPreviewTheme$}
                         lang={props.lang}
                         widgetType={CONTAINER_STYLE_TYPE}
                         styles={bands[selection.value.bandIndex]?.styles}
@@ -1218,6 +1222,8 @@ export const PageBuilderWorkspace = component$<PageBuilderWorkspaceProps>((props
                       </InspectorAccordion>
                       <BuilderStylePanel
                         openFirst={false}
+                        mode={previewTheme.value}
+                        onMode$={setPreviewTheme$}
                         lang={props.lang}
                         widgetType={CONTAINER_STYLE_TYPE}
                         styles={selectedRow?.styles}
@@ -1410,6 +1416,8 @@ export const PageBuilderWorkspace = component$<PageBuilderWorkspaceProps>((props
                       </InspectorAccordion>
                       <BuilderStylePanel
                         openFirst={false}
+                        mode={previewTheme.value}
+                        onMode$={setPreviewTheme$}
                         lang={props.lang}
                         widgetType={CONTAINER_STYLE_TYPE}
                         styles={selectedCol?.styles}
@@ -1605,6 +1613,8 @@ export const PageBuilderWorkspace = component$<PageBuilderWorkspaceProps>((props
                       </InspectorAccordion>
                       <BuilderStylePanel
                         openFirst={false}
+                        mode={previewTheme.value}
+                        onMode$={setPreviewTheme$}
                         lang={props.lang}
                         widgetType={selectedBlock.type}
                         styles={selectedBlockStyles}
@@ -1923,10 +1933,7 @@ export const PageBuilderWorkspace = component$<PageBuilderWorkspaceProps>((props
             lang={props.lang}
             ctx={previewCtx}
             theme={previewTheme.value}
-            onTheme$={(mode) => {
-              previewThemePinned.value = true;
-              previewTheme.value = mode;
-            }}
+            onTheme$={setPreviewTheme$}
             bands={bandsWithBuilderMediaPreview(resolvedBands ?? bands, props.registry.value, mediaPreviewById.value)}
             chromeKind={
               props.exportBuilderKind === 'header' || props.exportBuilderKind === 'footer'

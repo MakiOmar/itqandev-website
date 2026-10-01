@@ -445,6 +445,7 @@ export function patchStyleBag(
     tablet: { ...(styles?.tablet ?? {}) },
     mobile: { ...(styles?.mobile ?? {}) },
   };
+  if (styles?.dark && Object.keys(styles.dark).length > 0) next.dark = { ...styles.dark };
   const bag = { ...(next[device] ?? {}) };
   if (value === undefined || value === null || value === '') {
     delete bag[key];
@@ -460,6 +461,31 @@ export function patchStyleBag(
   if (!next.tablet || Object.keys(next.tablet).length === 0) delete next.tablet;
   if (!next.mobile || Object.keys(next.mobile).length === 0) delete next.mobile;
   return next;
+}
+
+/** Set or clear (`undefined`) one dark-mode override; light bags are kept as-is. */
+export function patchDarkBag(
+  styles: BuilderStyles | null | undefined,
+  key: string,
+  value: unknown,
+): BuilderStyles {
+  const next: BuilderStyles = { ...(styles ?? {}) };
+  const dark = { ...(styles?.dark ?? {}) };
+  if (value === undefined || value === null || value === '') {
+    delete dark[key];
+  } else {
+    dark[key] = value;
+  }
+  if (Object.keys(dark).length === 0) {
+    delete next.dark;
+  } else {
+    next.dark = dark;
+  }
+  return next;
+}
+
+export function hasDarkOverride(styles: BuilderStyles | null | undefined, key: string): boolean {
+  return !!styles?.dark && Object.prototype.hasOwnProperty.call(styles.dark, key);
 }
 
 export function inheritedValue(
