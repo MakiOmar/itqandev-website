@@ -1312,6 +1312,7 @@
       "filterHue": "Hue",
       "groupTypography": "Typography",
       "groupIcon": "Icon",
+      "groupGlow": "Glow",
       "typeRole": "Font role",
       "textColor": "Text colour",
       "roleHeading": "Heading font",
@@ -1356,6 +1357,9 @@
       "buttonSize": "Button size",
       "iconSize": "Icon size",
       "iconColor": "Icon colour",
+      "glowPrimaryColor": "Top corner colour",
+      "glowSecondaryColor": "Bottom corner colour",
+      "glowOpacity": "Glow intensity",
       "hoverIconColor": "Hover icon colour"
     },
     "background": {

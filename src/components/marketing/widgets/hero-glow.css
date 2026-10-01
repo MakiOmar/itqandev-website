@@ -1,0 +1,68 @@
+/*
+ * Hero corner glows. Colours come from the hero Style tab Glow group (`--s-glow-*-color*`, with
+ * dark overrides via `styles.dark`); intensity from `--s-glow-opacity*`. `--hg-d-*` are the theme
+ * defaults (primary-400 / sky-300 light, primary-500 / sky-900 dark). Base = mobile, -md / -lg up.
+ */
+.hg-glow {
+  position: absolute;
+  z-index: 0;
+  border-radius: 9999px;
+  pointer-events: none;
+  filter: blur(64px);
+}
+.hg-primary {
+  --hg-d-color: #38bdf8;
+  --hg-d-opacity: 0.25;
+  top: -6rem;
+  right: -6rem;
+  width: 18rem;
+  height: 18rem;
+  background-color: var(--s-glow-primary-color, var(--hg-d-color));
+  opacity: var(--s-glow-opacity, var(--hg-d-opacity));
+}
+.hg-secondary {
+  --hg-d-color: #7dd3fc;
+  --hg-d-opacity: 0.2;
+  bottom: -10rem;
+  left: -6rem;
+  width: 20rem;
+  height: 20rem;
+  background-color: var(--s-glow-secondary-color, var(--hg-d-color));
+  opacity: var(--s-glow-opacity, var(--hg-d-opacity));
+}
+.hg-primary:where(.dark, .dark *):not(:where(.dark .light, .dark .light *)) {
+  --hg-d-color: #0ea5e9;
+  --hg-d-opacity: 0.15;
+}
+.hg-secondary:where(.dark, .dark *):not(:where(.dark .light, .dark .light *)) {
+  --hg-d-color: #0c4a6e;
+  --hg-d-opacity: 0.25;
+}
+
+@media (min-width: 768px) {
+  .hg-primary {
+    background-color: var(--s-glow-primary-color-md, var(--s-glow-primary-color, var(--hg-d-color)));
+    opacity: var(--s-glow-opacity-md, var(--s-glow-opacity, var(--hg-d-opacity)));
+  }
+  .hg-secondary {
+    background-color: var(--s-glow-secondary-color-md, var(--s-glow-secondary-color, var(--hg-d-color)));
+    opacity: var(--s-glow-opacity-md, var(--s-glow-opacity, var(--hg-d-opacity)));
+  }
+}
+
+@media (min-width: 1024px) {
+  .hg-primary {
+    background-color: var(
+      --s-glow-primary-color-lg,
+      var(--s-glow-primary-color-md, var(--s-glow-primary-color, var(--hg-d-color)))
+    );
+    opacity: var(--s-glow-opacity-lg, var(--s-glow-opacity-md, var(--s-glow-opacity, var(--hg-d-opacity))));
+  }
+  .hg-secondary {
+    background-color: var(
+      --s-glow-secondary-color-lg,
+      var(--s-glow-secondary-color-md, var(--s-glow-secondary-color, var(--hg-d-color)))
+    );
+    opacity: var(--s-glow-opacity-lg, var(--s-glow-opacity-md, var(--s-glow-opacity, var(--hg-d-opacity))));
+  }
+}

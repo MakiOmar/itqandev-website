@@ -60,6 +60,7 @@ const GROUP_LABEL: Record<string, string> = {
   subtitle: 'builder.style.groupSubtitle',
   btn_primary: 'builder.style.groupBtnPrimary',
   btn_secondary: 'builder.style.groupBtnSecondary',
+  glow: 'builder.style.groupGlow',
   tabs: 'builder.style.groupTabs',
   nav_buttons: 'builder.style.groupNavButtons',
   link: 'builder.style.groupLink',
@@ -85,6 +86,9 @@ const KEY_LABEL: Record<string, string> = {
   letter_spacing: 'builder.style.letterSpacing',
   text_color: 'builder.style.textColor',
   icon_color: 'builder.style.iconColor',
+  glow_primary_color: 'builder.style.glowPrimaryColor',
+  glow_secondary_color: 'builder.style.glowSecondaryColor',
+  glow_opacity: 'builder.style.glowOpacity',
   text_transform: 'builder.style.transform',
   align: 'builder.style.align',
   width: 'builder.style.width',
@@ -748,7 +752,7 @@ const SliderControl = component$<{
 }>((props) => {
   const min = props.control.min ?? 0;
   const max = props.control.max ?? 1;
-  const shown = props.value == null ? max : props.value;
+  const shown = props.value == null ? (props.control.defaultValue ?? max) : props.value;
   return (
     <div>
       <div class="mb-1 flex items-center justify-between gap-2">

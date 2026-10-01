@@ -1312,6 +1312,7 @@
       "filterHue": "صبغة",
       "groupTypography": "الطباعة",
       "groupIcon": "الأيقونة",
+      "groupGlow": "التوهج",
       "typeRole": "دور الخط",
       "textColor": "لون النص",
       "roleHeading": "خط العناوين",
@@ -1356,6 +1357,9 @@
       "buttonSize": "حجم الزر",
       "iconSize": "حجم الأيقونة",
       "iconColor": "لون الأيقونة",
+      "glowPrimaryColor": "لون الزاوية العلوية",
+      "glowSecondaryColor": "لون الزاوية السفلية",
+      "glowOpacity": "شدة التوهج",
       "hoverIconColor": "لون الأيقونة عند التمرير"
     },
     "background": {

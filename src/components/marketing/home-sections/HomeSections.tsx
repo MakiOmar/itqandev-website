@@ -27,6 +27,7 @@ import './hero-floating-icons.css';
 import caseStudiesStyles from '~/components/marketing/widgets/case-studies.css?inline';
 import sectionHeadingStyles from '~/components/marketing/widgets/section-heading.css?inline';
 import heroButtonStyles from '~/components/marketing/widgets/hero-buttons.css?inline';
+import heroGlowStyles from '~/components/marketing/widgets/hero-glow.css?inline';
 import atomicWidgetStyles from '~/components/marketing/widgets/atomic-widgets.css?inline';
 
 function settingString(settings: Record<string, unknown> | undefined, key: string, fallback: string): string {
@@ -107,6 +108,7 @@ const HERO_BTN_BASE =
 
 export const HeroHomeSection = component$<HomeSectionSharedProps>(({ settings, uiLocale, embedded }) => {
   useStyles$(heroButtonStyles);
+  useStyles$(heroGlowStyles);
   useStyles$(atomicWidgetStyles);
   const routes = marketingRoutes(uiLocale);
   const headline = settingString(settings, 'headline', 'We build web, Android & iOS apps that scale');
@@ -185,14 +187,8 @@ export const HeroHomeSection = component$<HomeSectionSharedProps>(({ settings, u
           rtl={isUiLocaleRtl(uiLocale)}
         />
       ) : null}
-      <div
-        class="pointer-events-none absolute -right-24 -top-24 z-0 h-72 w-72 rounded-full bg-primary-400/25 blur-3xl dark:bg-primary-500/15"
-        aria-hidden="true"
-      />
-      <div
-        class="pointer-events-none absolute -bottom-40 -left-24 z-0 h-80 w-80 rounded-full bg-sky-300/20 blur-3xl dark:bg-sky-900/25"
-        aria-hidden="true"
-      />
+      <div class="hg-glow hg-primary" aria-hidden="true" />
+      <div class="hg-glow hg-secondary" aria-hidden="true" />
       <Container class="relative z-[1]">
         <div class="grid items-center gap-10 lg:grid-cols-2 lg:gap-12 xl:gap-16">
           <AnimatedReveal>

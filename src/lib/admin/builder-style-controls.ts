@@ -34,6 +34,8 @@ export type StyleControl = {
   min?: number;
   max?: number;
   step?: number;
+  /** Position an unset slider shows; defaults to `max`. */
+  defaultValue?: number;
   options?: Array<{ value: string; labelKey: string }>;
 };
 
@@ -210,6 +212,9 @@ export const STYLE_CONTROLS: StyleControl[] = [
   { key: 'letter_spacing', group: 'typography', type: 'length', min: -5, max: 20 },
   { key: 'text_color', group: 'typography', type: 'color' },
   { key: 'icon_color', group: 'icon', type: 'color' },
+  { key: 'glow_primary_color', group: 'glow', type: 'color' },
+  { key: 'glow_secondary_color', group: 'glow', type: 'color' },
+  { key: 'glow_opacity', group: 'glow', type: 'slider', min: 0, max: 1, step: 0.05, defaultValue: 0.25 },
   {
     key: 'text_transform',
     group: 'typography',
