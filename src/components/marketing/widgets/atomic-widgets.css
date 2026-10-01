@@ -1,0 +1,70 @@
+/*
+ * Atomic widget text colours: a light/dark theme default per role (`--aw-d`) that gives way to the
+ * Style tab text colour (`--s-text-color*`, incl. `styles.dark` overrides) at every breakpoint.
+ * Defaults mirror the Tailwind palette the widgets used before (tailwind.shared.js).
+ */
+.aw-c {
+  color: var(--s-text-color, var(--aw-d));
+}
+@media (min-width: 768px) {
+  .aw-c {
+    color: var(--s-text-color-md, var(--s-text-color, var(--aw-d)));
+  }
+}
+@media (min-width: 1024px) {
+  .aw-c {
+    color: var(--s-text-color-lg, var(--s-text-color-md, var(--s-text-color, var(--aw-d))));
+  }
+}
+
+.aw-heading {
+  --aw-d: #0f172a;
+}
+.aw-text {
+  --aw-d: #475569;
+}
+.aw-quote {
+  --aw-d: #334155;
+}
+.aw-badge {
+  --aw-d: #075985;
+}
+.aw-accent {
+  --aw-d: #0284c7;
+}
+.aw-crumbs {
+  --aw-d: #64748b;
+}
+.aw-crumb-current {
+  --aw-d: #1e293b;
+}
+/* Text on a primary-filled panel (CTA): same in both modes. */
+.aw-on-primary {
+  --aw-d: #ffffff;
+}
+.aw-on-primary-muted {
+  --aw-d: #e0f2fe;
+}
+
+/* Nearest theme scope wins (same selector as DARK_SCOPE_SELECTOR in theme-scope.ts). */
+.aw-heading:where(.dark, .dark *):not(:where(.dark .light, .dark .light *)) {
+  --aw-d: #ffffff;
+}
+.aw-text:where(.dark, .dark *):not(:where(.dark .light, .dark .light *)) {
+  --aw-d: #cbd5e1;
+}
+.aw-quote:where(.dark, .dark *):not(:where(.dark .light, .dark .light *)) {
+  --aw-d: #e2e8f0;
+}
+.aw-badge:where(.dark, .dark *):not(:where(.dark .light, .dark .light *)) {
+  --aw-d: #bae6fd;
+}
+.aw-accent:where(.dark, .dark *):not(:where(.dark .light, .dark .light *)) {
+  --aw-d: #38bdf8;
+}
+.aw-crumbs:where(.dark, .dark *):not(:where(.dark .light, .dark .light *)) {
+  --aw-d: #94a3b8;
+}
+.aw-crumb-current:where(.dark, .dark *):not(:where(.dark .light, .dark .light *)) {
+  --aw-d: #f1f5f9;
+}

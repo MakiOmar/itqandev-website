@@ -53,6 +53,15 @@
   --tb-d-text: #f1f5f9;
 }
 
+/* Icon colour: Style tab Icon group (`--s-icon-color*`), else primary-600 / primary-400. */
+.tb-icon {
+  --tb-d-icon: #0284c7;
+  color: var(--s-icon-color, var(--tb-d-icon));
+}
+.tb-icon:where(.dark, .dark *):not(:where(.dark .light, .dark .light *)) {
+  --tb-d-icon: #38bdf8;
+}
+
 /* Vertical divider on the inline-start edge of items that are not first in their row (mirrors in RTL). */
 .tb-item::before {
   content: '';
@@ -94,6 +103,9 @@
     font-weight: var(--s-font-weight-md, var(--s-font-weight, 500));
     color: var(--s-text-color-md, var(--s-text-color, var(--tb-d-text)));
   }
+  .tb-icon {
+    color: var(--s-icon-color-md, var(--s-icon-color, var(--tb-d-icon)));
+  }
   .tb-list[data-tablet='two_columns'] {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -117,6 +129,9 @@
     line-height: var(--s-line-height-lg, var(--s-line-height-md, var(--s-line-height, 1.25rem)));
     font-weight: var(--s-font-weight-lg, var(--s-font-weight-md, var(--s-font-weight, 500)));
     color: var(--s-text-color-lg, var(--s-text-color-md, var(--s-text-color, var(--tb-d-text))));
+  }
+  .tb-icon {
+    color: var(--s-icon-color-lg, var(--s-icon-color-md, var(--s-icon-color, var(--tb-d-icon))));
   }
   .tb-list[data-tablet] {
     grid-template-columns: none;

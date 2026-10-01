@@ -1,4 +1,5 @@
-import { component$ } from '@builder.io/qwik';
+import { component$, useStyles$ } from '@builder.io/qwik';
+import atomicStyles from './atomic-widgets.css?inline';
 import { Button } from '~/components/marketing/Button';
 import { MarketingImageLightbox } from '~/components/marketing/MarketingImageLightbox';
 import { LottiePlayer } from '~/components/marketing/widgets/LottiePlayer';
@@ -61,13 +62,14 @@ const RADIUS: Record<string, string> = {
  * Public atomic page-builder widgets.
  */
 export const AtomicWidgetView = component$<AtomicWidgetProps>((props) => {
+  useStyles$(atomicStyles);
   const s = props.settings;
   switch (props.type) {
     case 'heading': {
       const level = str(s, 'level', 'h2');
       const text = str(s, 'text', 'Heading');
       const align = ALIGN[str(s, 'align', 'start')] || ALIGN.start;
-      const cls = `font-bold tracking-tight text-slate-900 dark:text-white ${align} ${
+      const cls = `aw-c aw-heading font-bold tracking-tight ${align} ${
         level === 'h1' ? 'text-4xl sm:text-5xl' : level === 'h3' ? 'text-xl sm:text-2xl' : 'text-2xl sm:text-3xl'
       }`;
       if (level === 'h1') return <h1 class={cls}>{text}</h1>;
@@ -80,7 +82,7 @@ export const AtomicWidgetView = component$<AtomicWidgetProps>((props) => {
     case 'text': {
       const align = ALIGN[str(s, 'align', 'start')] || ALIGN.start;
       return (
-        <p class={`whitespace-pre-wrap text-slate-600 dark:text-slate-300 ${align}`}>
+        <p class={`aw-c aw-text whitespace-pre-wrap ${align}`}>
           {str(s, 'content')}
         </p>
       );
@@ -105,7 +107,7 @@ export const AtomicWidgetView = component$<AtomicWidgetProps>((props) => {
     }
     case 'quote':
       return (
-        <blockquote class="border-s-4 border-primary-500 ps-4 italic text-slate-700 dark:text-slate-200">
+        <blockquote class="aw-c aw-quote border-s-4 border-primary-500 ps-4 italic">
           <p>{str(s, 'quote')}</p>
           {str(s, 'cite') ? (
             <cite class="mt-2 block text-sm not-italic text-slate-500">— {str(s, 'cite')}</cite>
@@ -114,7 +116,7 @@ export const AtomicWidgetView = component$<AtomicWidgetProps>((props) => {
       );
     case 'badge':
       return (
-        <span class="inline-block rounded-full bg-primary-100 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-primary-800 dark:bg-primary-900/40 dark:text-primary-200">
+        <span class="aw-c aw-badge inline-block rounded-full bg-primary-100 px-3 py-1 text-xs font-semibold uppercase tracking-wide dark:bg-primary-900/40">
           {str(s, 'text', 'Badge')}
         </span>
       );
@@ -207,7 +209,7 @@ export const AtomicWidgetView = component$<AtomicWidgetProps>((props) => {
     }
     case 'icon':
       return (
-        <span class="inline-flex text-primary-600 dark:text-primary-400">
+        <span class="aw-c aw-accent inline-flex">
           <SvgIcon value={s.icon} size={num(s, 'size', 32)} />
         </span>
       );
@@ -277,7 +279,7 @@ export const AtomicWidgetView = component$<AtomicWidgetProps>((props) => {
       ];
       return (
         <nav aria-label="Breadcrumb">
-          <ol class="flex flex-wrap items-center gap-1 text-sm text-slate-500 dark:text-slate-400">
+          <ol class="aw-c aw-crumbs flex flex-wrap items-center gap-1 text-sm">
             {crumbs.map((c, i) => (
               <li key={i} class="flex items-center gap-1">
                 {i > 0 ? <span aria-hidden="true">/</span> : null}
@@ -289,7 +291,7 @@ export const AtomicWidgetView = component$<AtomicWidgetProps>((props) => {
                   <span
                     class={
                       i === crumbs.length - 1
-                        ? 'font-medium text-slate-800 dark:text-slate-100'
+                        ? 'aw-c aw-crumb-current font-medium'
                         : undefined
                     }
                     aria-current={i === crumbs.length - 1 ? 'page' : undefined}
@@ -358,13 +360,13 @@ export const AtomicWidgetView = component$<AtomicWidgetProps>((props) => {
         <div class="b-flip group relative h-56 w-full" tabIndex={0}>
           <div class="b-flip-inner relative h-full w-full rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-900">
             <div class="absolute inset-0 flex flex-col items-center justify-center gap-2 p-6 backface-hidden">
-              <SvgIcon value={s.front_icon} size={36} class="text-primary-600 dark:text-primary-400" />
-              <p class="text-lg font-semibold text-slate-900 dark:text-white">{str(s, 'front_heading', 'Front')}</p>
-              <p class="text-sm text-slate-600 dark:text-slate-300">{str(s, 'front_text')}</p>
+              <SvgIcon value={s.front_icon} size={36} class="aw-c aw-accent" />
+              <p class="aw-c aw-heading text-lg font-semibold">{str(s, 'front_heading', 'Front')}</p>
+              <p class="aw-c aw-text text-sm">{str(s, 'front_text')}</p>
             </div>
             <div class="absolute inset-0 flex flex-col items-center justify-center gap-2 p-6 [transform:rotateY(180deg)] backface-hidden">
-              <p class="text-lg font-semibold text-slate-900 dark:text-white">{str(s, 'back_heading', 'Back')}</p>
-              <p class="text-sm text-slate-600 dark:text-slate-300">{str(s, 'back_text')}</p>
+              <p class="aw-c aw-heading text-lg font-semibold">{str(s, 'back_heading', 'Back')}</p>
+              <p class="aw-c aw-text text-sm">{str(s, 'back_text')}</p>
               {str(s, 'back_url') ? (
                 <a class="text-sm font-medium text-primary-600" href={str(s, 'back_url')}>
                   {str(s, 'back_label', 'Learn more')}
@@ -377,9 +379,9 @@ export const AtomicWidgetView = component$<AtomicWidgetProps>((props) => {
     case 'trust_badges':
       return <TrustBadgesWidget settings={s} />;
     case 'post_title':
-      return <h1 class="text-3xl font-bold text-slate-900 dark:text-white">{str(s, 'text') || str(s, 'fallback', 'Title')}</h1>;
+      return <h1 class="aw-c aw-heading text-3xl font-bold">{str(s, 'text') || str(s, 'fallback', 'Title')}</h1>;
     case 'post_excerpt':
-      return <p class="text-lg text-slate-600 dark:text-slate-300">{str(s, 'text') || str(s, 'fallback')}</p>;
+      return <p class="aw-c aw-text text-lg">{str(s, 'text') || str(s, 'fallback')}</p>;
     case 'post_content':
       return (
         <div class="prose prose-slate max-w-none dark:prose-invert" dangerouslySetInnerHTML={str(s, 'html') || str(s, 'content') || str(s, 'fallback')} />
@@ -397,7 +399,7 @@ export const AtomicWidgetView = component$<AtomicWidgetProps>((props) => {
         </p>
       );
     case 'archive_title':
-      return <h1 class="text-3xl font-bold text-slate-900 dark:text-white">{str(s, 'text') || str(s, 'fallback', 'Archive')}</h1>;
+      return <h1 class="aw-c aw-heading text-3xl font-bold">{str(s, 'text') || str(s, 'fallback', 'Archive')}</h1>;
     case 'loop_grid': {
       const items = Array.isArray(s.items) ? (s.items as Array<Record<string, unknown>>) : [];
       const mode = str(s, 'mode', 'grid');

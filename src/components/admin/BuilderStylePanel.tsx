@@ -49,6 +49,7 @@ export const STYLE_ACCORDION_GROUP = 'builder-style';
 
 const GROUP_LABEL: Record<string, string> = {
   typography: 'builder.style.groupTypography',
+  icon: 'builder.style.groupIcon',
   layout: 'builder.style.groupLayout',
   spacing: 'builder.style.groupSpacing',
   image: 'builder.style.groupImage',
@@ -83,6 +84,7 @@ const KEY_LABEL: Record<string, string> = {
   line_height: 'builder.style.lineHeight',
   letter_spacing: 'builder.style.letterSpacing',
   text_color: 'builder.style.textColor',
+  icon_color: 'builder.style.iconColor',
   text_transform: 'builder.style.transform',
   align: 'builder.style.align',
   width: 'builder.style.width',

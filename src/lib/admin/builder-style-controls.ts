@@ -209,6 +209,7 @@ export const STYLE_CONTROLS: StyleControl[] = [
   { key: 'line_height', group: 'typography', type: 'length', min: 0, max: 80 },
   { key: 'letter_spacing', group: 'typography', type: 'length', min: -5, max: 20 },
   { key: 'text_color', group: 'typography', type: 'color' },
+  { key: 'icon_color', group: 'icon', type: 'color' },
   {
     key: 'text_transform',
     group: 'typography',

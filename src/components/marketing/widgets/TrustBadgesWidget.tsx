@@ -60,7 +60,7 @@ export const TrustBadgesWidget = component$<{ settings: Record<string, unknown> 
         <li key={badge.key} class="tb-item">
           {/* Icon is decorative; the text carries the meaning */}
           {badge.icon ? (
-            <span class="shrink-0 text-primary-600 dark:text-primary-400" aria-hidden="true">
+            <span class="tb-icon shrink-0" aria-hidden="true">
               <SvgIcon value={badge.icon} size={iconSize} />
             </span>
           ) : null}

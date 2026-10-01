@@ -1311,6 +1311,7 @@
       "filterSaturate": "Saturate",
       "filterHue": "Hue",
       "groupTypography": "Typography",
+      "groupIcon": "Icon",
       "typeRole": "Font role",
       "textColor": "Text colour",
       "roleHeading": "Heading font",

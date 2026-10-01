@@ -27,6 +27,7 @@ import './hero-floating-icons.css';
 import caseStudiesStyles from '~/components/marketing/widgets/case-studies.css?inline';
 import sectionHeadingStyles from '~/components/marketing/widgets/section-heading.css?inline';
 import heroButtonStyles from '~/components/marketing/widgets/hero-buttons.css?inline';
+import atomicWidgetStyles from '~/components/marketing/widgets/atomic-widgets.css?inline';
 
 function settingString(settings: Record<string, unknown> | undefined, key: string, fallback: string): string {
   const v = settings?.[key];
@@ -106,6 +107,7 @@ const HERO_BTN_BASE =
 
 export const HeroHomeSection = component$<HomeSectionSharedProps>(({ settings, uiLocale, embedded }) => {
   useStyles$(heroButtonStyles);
+  useStyles$(atomicWidgetStyles);
   const routes = marketingRoutes(uiLocale);
   const headline = settingString(settings, 'headline', 'We build web, Android & iOS apps that scale');
   const subheadline = settingString(
@@ -195,10 +197,10 @@ export const HeroHomeSection = component$<HomeSectionSharedProps>(({ settings, u
         <div class="grid items-center gap-10 lg:grid-cols-2 lg:gap-12 xl:gap-16">
           <AnimatedReveal>
             <div class="mx-auto max-w-2xl text-center lg:mx-0 lg:max-w-xl lg:text-start">
-              <h1 class="text-4xl font-bold tracking-tight text-slate-900 dark:text-white sm:text-5xl lg:text-6xl">
+              <h1 class="aw-c aw-heading text-4xl font-bold tracking-tight sm:text-5xl lg:text-6xl">
                 {headline}
               </h1>
-              <p class="mt-6 text-lg text-slate-600 dark:text-slate-300 sm:text-xl">{subheadline}</p>
+              <p class="aw-c aw-text mt-6 text-lg sm:text-xl">{subheadline}</p>
               <div class="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row lg:justify-start">
                 <a href={routes.contact} class={`${HERO_BTN_BASE} hb-primary`}>
                   {primaryCta}
@@ -594,6 +596,7 @@ export const BlogPreviewHomeSection = component$<
 });
 
 export const CtaHomeSection = component$<HomeSectionSharedProps>(({ settings, uiLocale, embedded }) => {
+  useStyles$(atomicWidgetStyles);
   const routes = marketingRoutes(uiLocale);
   const title = settingString(settings, 'title', 'Ready to start your project?');
   const subtitle = settingString(
@@ -609,8 +612,8 @@ export const CtaHomeSection = component$<HomeSectionSharedProps>(({ settings, ui
       <Container>
         <AnimatedReveal>
           <div class="mx-auto max-w-2xl rounded-2xl bg-primary-600 px-6 py-12 text-center dark:bg-primary-700 sm:px-12 sm:py-16">
-            <h2 class="text-2xl font-bold text-white sm:text-3xl">{title}</h2>
-            <p class="mt-4 text-primary-100">{subtitle}</p>
+            <h2 class="aw-c aw-on-primary text-2xl font-bold sm:text-3xl">{title}</h2>
+            <p class="aw-c aw-on-primary-muted mt-4">{subtitle}</p>
             <div class="mt-8">
               <Button
                 href={buttonUrl}

@@ -21,7 +21,7 @@ export type ColorStyleKind = 'color' | 'shadow';
 export const DARK_THEME_SENTINEL = 'theme';
 
 const BASE_COLOR_KEYS = [
-  'border_color', 'caption_color', 'text_color',
+  'border_color', 'caption_color', 'text_color', 'icon_color',
   'tab_color', 'tab_bg', 'tab_hover_color', 'tab_hover_bg', 'tab_active_color', 'tab_active_bg',
   'tab_indicator_color', 'nav_color', 'nav_bg', 'nav_border_color', 'nav_hover_color', 'nav_hover_bg',
   'link_color', 'link_hover_color', 'title_color', 'subtitle_color',

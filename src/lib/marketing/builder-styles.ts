@@ -40,6 +40,7 @@ export type StyleShadow = {
 
 export const STYLE_GROUP_ORDER = [
   'typography',
+  'icon',
   'layout',
   'spacing',
   'image',
@@ -90,7 +91,7 @@ export const WIDGET_STYLE_GROUPS: Record<string, readonly StyleGroupId[]> = {
   lottie: ['layout', 'spacing', 'border', 'custom'],
   hero: ['typography', 'btn_primary', 'btn_secondary', 'layout', 'spacing', 'border', 'hover', 'custom'],
   flip_box: ['typography', 'layout', 'spacing', 'border', 'hover', 'custom'],
-  trust_badges: ['typography', 'spacing', 'border', 'custom'],
+  trust_badges: ['typography', 'icon', 'spacing', 'border', 'custom'],
   button: ['typography', 'layout', 'spacing', 'border', 'hover', 'custom'],
   case_studies: [
     'title', 'subtitle', 'tabs', 'nav_buttons', 'link',
@@ -322,6 +323,7 @@ function emitBagVars(bag: StyleBag, suffix: '' | '-md' | '-lg', out: Record<stri
   set('line-height', lengthToCss(bag.line_height));
   set('letter-spacing', lengthToCss(bag.letter_spacing));
   set('text-color', typeof bag.text_color === 'string' ? bag.text_color : null);
+  set('icon-color', typeof bag.icon_color === 'string' ? bag.icon_color : null);
   set('text-transform', typeof bag.text_transform === 'string' ? bag.text_transform : null);
   set('font-style', typeof bag.font_style === 'string' ? bag.font_style : null);
   set('text-decoration', typeof bag.text_decoration === 'string' ? bag.text_decoration : null);
