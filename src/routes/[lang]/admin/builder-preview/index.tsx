@@ -49,6 +49,12 @@ export default component$(() => {
       if (e.origin !== window.location.origin || e.source !== window.parent) return;
       if (!isBuilderPreviewMessage(e.data) || e.data.type !== BUILDER_PREVIEW_DOCUMENT) return;
       payload.value = e.data.payload;
+      const theme = e.data.payload.theme;
+      if (theme === 'light' || theme === 'dark') {
+        // Preview only: unlike the toggles, never write localStorage.theme.
+        document.documentElement.classList.remove('light', 'dark');
+        document.documentElement.classList.add(theme);
+      }
     };
     // Preview is read-only: keep link clicks from navigating the frame away.
     const onClick = (e: MouseEvent) => {
@@ -106,7 +112,7 @@ export default component$(() => {
                     pageTitle: doc.pageTitle,
                     siteLanguages: [],
                     support: doc.support,
-                    isDarkMode: false,
+                    isDarkMode: doc.theme === 'dark',
                   })}
                   branding={s.branding}
                   sections={doc.bands}

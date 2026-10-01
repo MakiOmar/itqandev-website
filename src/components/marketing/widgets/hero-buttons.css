@@ -18,10 +18,10 @@
   --hb-d-hover-bg: #f0f9ff;
   --hb-d-bw: 2px;
 }
-:where(.dark, .dark *) .hb-primary {
+.hb-primary:where(.dark, .dark *):not(:where(.dark .light, .dark .light *)) {
   --hb-d-border: #38bdf8;
 }
-:where(.dark, .dark *) .hb-secondary {
+.hb-secondary:where(.dark, .dark *):not(:where(.dark .light, .dark .light *)) {
   --hb-d-color: #e0f2fe;
   --hb-d-border: #7dd3fc;
   --hb-d-hover-bg: rgb(8 47 73 / 0.4);

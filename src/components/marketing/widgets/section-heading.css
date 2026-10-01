@@ -22,10 +22,10 @@
   letter-spacing: var(--s-subtitle-letter-spacing, normal);
   text-transform: var(--s-subtitle-transform, none);
 }
-:where(.dark, .dark *) .sh-title {
+.sh-title:where(.dark, .dark *):not(:where(.dark .light, .dark .light *)) {
   --sh-d-title: #ffffff;
 }
-:where(.dark, .dark *) .sh-subtitle {
+.sh-subtitle:where(.dark, .dark *):not(:where(.dark .light, .dark .light *)) {
   --sh-d-subtitle: #94a3b8;
 }
 

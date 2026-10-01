@@ -1,4 +1,6 @@
-import { component$, useSignal, useTask$, $, type QRL, type Signal } from '@builder.io/qwik';
+import { component$, useSignal, useTask$, useVisibleTask$, $, type QRL, type Signal } from '@builder.io/qwik';
+import { followAdminTheme, type ThemeMode } from '~/lib/theme/theme-scope';
+import { BuilderThemeToggle } from '~/components/admin/BuilderThemeToggle';
 import { Link } from '@builder.io/qwik-city';
 import { AppearanceSettingsFields } from '~/components/admin/appearance/AppearanceSettingsFields';
 import {
@@ -153,6 +155,13 @@ export type FormBuilderWorkspaceProps = {
 
 export const FormBuilderWorkspace = component$<FormBuilderWorkspaceProps>((props) => {
   const device = useSignal<Device>('desktop');
+  const previewTheme = useSignal<ThemeMode>('light');
+  /** Once the editor picks a canvas theme, stop mirroring the admin theme. */
+  const previewThemePinned = useSignal(false);
+  // eslint-disable-next-line qwik/no-use-visible-task
+  useVisibleTask$(({ cleanup }) => {
+    cleanup(followAdminTheme(previewTheme, previewThemePinned));
+  });
   const selection = useSignal<Selection>(null);
   const inspectorTab = useSignal<FormInspectorTab>('content');
   const tab = useSignal<FormWorkspaceTab>('fields');
@@ -266,6 +275,15 @@ export const FormBuilderWorkspace = component$<FormBuilderWorkspaceProps>((props
             </button>
           ))}
         </div>
+        {/* Canvas preview theme switch */}
+        <BuilderThemeToggle
+          lang={props.lang}
+          mode={previewTheme.value}
+          onChange$={(mode) => {
+            previewThemePinned.value = true;
+            previewTheme.value = mode;
+          }}
+        />
         <BuilderImportExportButtons
           lang={props.lang}
           builder="form"
@@ -594,7 +612,15 @@ export const FormBuilderWorkspace = component$<FormBuilderWorkspaceProps>((props
           ) : null}
 
           {tab.value === 'fields' ? (
-            <div class="mx-auto space-y-3">
+            // Theme scope: the canvas previews light or dark independently of the admin theme.
+            <div
+              data-preview-theme={previewTheme.value}
+              style={{ colorScheme: previewTheme.value }}
+              class={[
+                previewTheme.value,
+                'mx-auto space-y-3 rounded-lg bg-gray-100 p-3 text-gray-900 dark:bg-slate-950 dark:text-gray-100',
+              ].join(' ')}
+            >
               <button
                 type="button"
                 class="rounded border border-dashed border-gray-400 px-3 py-1.5 text-xs dark:border-gray-600"

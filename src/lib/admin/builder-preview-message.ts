@@ -1,6 +1,7 @@
 import type { LayoutBreakpoint, PageLayoutBand } from '~/lib/marketing/appearance-types';
 import type { CaseStudy, Testimonial, BlogPost, Service } from '~/lib/marketing/types';
 import type { PortfolioCategory } from '~/lib/marketing/content-layer';
+import type { ThemeMode } from '~/lib/theme/theme-scope';
 
 /**
  * postMessage contract between the builder "view page" frame (parent) and the
@@ -15,6 +16,8 @@ export type BuilderPreviewPayload = {
   /** Which site chrome the document replaces when `surface` is `chrome`. */
   chromeKind?: 'header' | 'footer';
   device: LayoutBreakpoint;
+  /** Canvas preview mode; applied to the frame's `<html>` without touching the saved preference. */
+  theme?: ThemeMode;
   uiLocale: string;
   pageTitle: string;
   support?: {

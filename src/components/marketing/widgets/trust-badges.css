@@ -43,13 +43,14 @@
  * resolved per breakpoint like builder-widget-styles.css. Family/transform/etc. inherit from the wrapper.
  */
 .tb-text {
+  --tb-d-text: #1e293b;
   font-size: var(--s-font-size, 0.875rem);
   line-height: var(--s-line-height, 1.25rem);
   font-weight: var(--s-font-weight, 500);
-  color: var(--s-text-color, #1e293b);
+  color: var(--s-text-color, var(--tb-d-text));
 }
-:where(.dark, .dark *) .tb-text {
-  color: var(--s-text-color, #f1f5f9);
+.tb-text:where(.dark, .dark *):not(:where(.dark .light, .dark .light *)) {
+  --tb-d-text: #f1f5f9;
 }
 
 /* Vertical divider on the inline-start edge of items that are not first in their row (mirrors in RTL). */
@@ -91,10 +92,7 @@
     font-size: var(--s-font-size-md, var(--s-font-size, 0.875rem));
     line-height: var(--s-line-height-md, var(--s-line-height, 1.25rem));
     font-weight: var(--s-font-weight-md, var(--s-font-weight, 500));
-    color: var(--s-text-color-md, var(--s-text-color, #1e293b));
-  }
-  :where(.dark, .dark *) .tb-text {
-    color: var(--s-text-color-md, var(--s-text-color, #f1f5f9));
+    color: var(--s-text-color-md, var(--s-text-color, var(--tb-d-text)));
   }
   .tb-list[data-tablet='two_columns'] {
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -118,10 +116,7 @@
     font-size: var(--s-font-size-lg, var(--s-font-size-md, var(--s-font-size, 0.875rem)));
     line-height: var(--s-line-height-lg, var(--s-line-height-md, var(--s-line-height, 1.25rem)));
     font-weight: var(--s-font-weight-lg, var(--s-font-weight-md, var(--s-font-weight, 500)));
-    color: var(--s-text-color-lg, var(--s-text-color-md, var(--s-text-color, #1e293b)));
-  }
-  :where(.dark, .dark *) .tb-text {
-    color: var(--s-text-color-lg, var(--s-text-color-md, var(--s-text-color, #f1f5f9)));
+    color: var(--s-text-color-lg, var(--s-text-color-md, var(--s-text-color, var(--tb-d-text))));
   }
   .tb-list[data-tablet] {
     grid-template-columns: none;

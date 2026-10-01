@@ -45,6 +45,8 @@ import {
 import { PageBuilderViewMode } from '~/components/admin/pages/PageBuilderViewMode';
 import { appearanceSectionLabel } from '~/lib/i18n/appearance-labels';
 import { translateApp } from '~/lib/i18n/useTranslate';
+import { followAdminTheme, type ThemeMode } from '~/lib/theme/theme-scope';
+import { BuilderThemeToggle } from '~/components/admin/BuilderThemeToggle';
 import {
   ADMIN_NATIVE_OPTION_CLASS,
   ADMIN_NATIVE_SELECT_COMPACT_CLASS,
@@ -613,7 +615,9 @@ export const PageBuilderWorkspace = component$<PageBuilderWorkspaceProps>((props
   const sidebarView = useSignal<'palette' | 'controls'>('palette');
   /** Set when only the selection's indices shift (same node), so the sidebar view and tab stay put. */
   const selectionReindexed = useSignal(false);
-  const previewIsDark = useSignal(false);
+  const previewTheme = useSignal<ThemeMode>('light');
+  /** Once the editor picks a canvas theme, stop mirroring the admin theme. */
+  const previewThemePinned = useSignal(false);
 
   useTask$(({ track }) => {
     track(() => selection.value);
@@ -706,15 +710,7 @@ export const PageBuilderWorkspace = component$<PageBuilderWorkspaceProps>((props
 
   // eslint-disable-next-line qwik/no-use-visible-task
   useVisibleTask$(({ cleanup }) => {
-    const sync = () => {
-      previewIsDark.value =
-        typeof document !== 'undefined' && document.documentElement.classList.contains('dark');
-    };
-    sync();
-    if (typeof document === 'undefined') return;
-    const obs = new MutationObserver(sync);
-    obs.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
-    cleanup(() => obs.disconnect());
+    cleanup(followAdminTheme(previewTheme, previewThemePinned));
   });
 
   const clearDrag$ = $(() => {
@@ -762,7 +758,7 @@ export const PageBuilderWorkspace = component$<PageBuilderWorkspaceProps>((props
     siteLanguages: props.siteLanguages || [],
     branding: props.previewBranding,
     support: props.previewSupport,
-    isDarkMode: previewIsDark.value,
+    isDarkMode: previewTheme.value === 'dark',
   };
   const resolvedBands =
     props.livePreviewOverride?.value && props.livePreviewOverride.value.length > 0
@@ -844,6 +840,15 @@ export const PageBuilderWorkspace = component$<PageBuilderWorkspaceProps>((props
             </button>
           ))}
         </div>
+        {/* Canvas preview theme switch */}
+        <BuilderThemeToggle
+          lang={props.lang}
+          mode={previewTheme.value}
+          onChange$={(mode) => {
+            previewThemePinned.value = true;
+            previewTheme.value = mode;
+          }}
+        />
         <button
           type="button"
           aria-haspopup="dialog"
@@ -1917,6 +1922,11 @@ export const PageBuilderWorkspace = component$<PageBuilderWorkspaceProps>((props
           <PageBuilderViewMode
             lang={props.lang}
             ctx={previewCtx}
+            theme={previewTheme.value}
+            onTheme$={(mode) => {
+              previewThemePinned.value = true;
+              previewTheme.value = mode;
+            }}
             bands={bandsWithBuilderMediaPreview(resolvedBands ?? bands, props.registry.value, mediaPreviewById.value)}
             chromeKind={
               props.exportBuilderKind === 'header' || props.exportBuilderKind === 'footer'
@@ -1936,10 +1946,18 @@ export const PageBuilderWorkspace = component$<PageBuilderWorkspaceProps>((props
           <div
             data-public-page
             data-builder-canvas
-            style={{ containerType: 'inline-size', containerName: 'builder-canvas' }}
+            data-preview-theme={previewTheme.value}
+            style={{
+              containerType: 'inline-size',
+              containerName: 'builder-canvas',
+              colorScheme: previewTheme.value,
+            }}
             class={[
+              // Theme scope: nearest `.light` / `.dark` wins, so the canvas can differ from the admin.
+              previewTheme.value,
               previewFrameClass(previewDevice.value),
-              'relative isolate min-h-[60vh] bg-gradient-to-br from-slate-50 via-blue-50/30 to-indigo-50/20 shadow-lg transition-[max-width] duration-300 dark:from-slate-900 dark:via-slate-800/30 dark:to-slate-900/20',
+              // Opaque gradients matching the public `body` in site.css, so the admin backdrop never shows through.
+              'relative isolate min-h-[60vh] bg-[linear-gradient(135deg,#fafbfc_0%,#f5f7fa_100%)] text-slate-900 shadow-lg transition-[max-width] duration-300 dark:bg-[linear-gradient(135deg,#0f172a_0%,#1e293b_100%)] dark:text-slate-100',
               previewCtx.surface === 'chrome' ? 'py-3' : '',
             ].join(' ')}
           >

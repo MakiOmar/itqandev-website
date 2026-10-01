@@ -371,6 +371,9 @@
     "stackTablet": "Stack on mobile",
     "stackDesktop": "Stack below desktop",
     "previewDevice": "Preview device",
+    "previewTheme": "Preview colour mode",
+    "previewTheme_light": "Preview light mode",
+    "previewTheme_dark": "Preview dark mode",
     "device": {
       "mobile": "Mobile",
       "tablet": "Tablet",

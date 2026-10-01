@@ -34,7 +34,7 @@
   --ct-nav-hover-bg: var(--s-nav-hover-bg, var(--ct-d-nav-hover-bg));
   --ct-nav-radius: var(--s-nav-radius, 9999px);
 }
-:where(.dark, .dark *) .ct-root {
+.ct-root:where(.dark, .dark *):not(:where(.dark .light, .dark .light *)) {
   --ct-d-tab: #94a3b8;
   --ct-d-tab-hover: #e2e8f0;
   --ct-d-tab-active: #7dd3fc;

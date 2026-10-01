@@ -12,6 +12,8 @@ import {
   toPlainPreviewPayload,
 } from '~/lib/admin/builder-preview-message';
 import type { BuilderPreviewContext } from './PageBuilderCanvasBlock';
+import { BuilderThemeToggle } from '~/components/admin/BuilderThemeToggle';
+import type { ThemeMode } from '~/lib/theme/theme-scope';
 
 export type PageBuilderViewModeProps = {
   lang: string;
@@ -20,6 +22,8 @@ export type PageBuilderViewModeProps = {
   /** Which site chrome the document replaces when `ctx.surface` is `chrome`. */
   chromeKind?: 'header' | 'footer';
   device: Signal<LayoutBreakpoint>;
+  theme: ThemeMode;
+  onTheme$: QRL<(mode: ThemeMode) => void>;
   onClose$: QRL<() => void>;
 };
 
@@ -50,6 +54,7 @@ export const PageBuilderViewMode = component$<PageBuilderViewModeProps>((props) 
           surface: props.ctx.surface,
           chromeKind: props.chromeKind,
           device: props.device.value,
+          theme: props.theme,
           uiLocale: props.ctx.uiLocale,
           pageTitle: props.ctx.pageTitle,
           support: props.ctx.support,
@@ -76,6 +81,7 @@ export const PageBuilderViewMode = component$<PageBuilderViewModeProps>((props) 
   useVisibleTask$(({ track }) => {
     track(() => props.device.value);
     track(() => props.bands);
+    track(() => props.theme);
     if (frameReady.value) void postDocument();
   });
 
@@ -129,6 +135,8 @@ export const PageBuilderViewMode = component$<PageBuilderViewModeProps>((props) 
             </button>
           ))}
         </div>
+        {/* Frame preview theme switch */}
+        <BuilderThemeToggle lang={props.lang} mode={props.theme} onChange$={props.onTheme$} />
         <button
           type="button"
           class={BUILDER_TOOLBAR_ICON_BTN}

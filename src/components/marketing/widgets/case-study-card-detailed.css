@@ -19,7 +19,7 @@
   --csd-d-btn: #4338ca;
   --csd-d-btn-bg: #eef2ff;
 }
-:where(.dark, .dark *) .csd-card {
+.csd-card:where(.dark, .dark *):not(:where(.dark .light, .dark .light *)) {
   --csd-d-bg: #0f172a;
   --csd-d-border: rgb(51 65 85 / 0.7);
   --csd-d-hover-border: rgb(99 102 241 / 0.5);

@@ -49,7 +49,7 @@
   --tc-ring-width: var(--s-avatar-ring-width, 2px);
   --tc-ring-color: var(--s-avatar-ring-color, var(--tc-d-ring));
 }
-:where(.dark, .dark *) .tc-root {
+.tc-root:where(.dark, .dark *):not(:where(.dark .light, .dark .light *)) {
   --tc-d-bg: rgb(30 41 59 / 0.5);
   --tc-d-border: #334155;
   --tc-d-blur: none;

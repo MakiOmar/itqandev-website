@@ -3,8 +3,9 @@
  * FOUC / public shell: inlined in RouterHead (lib/perf/critical-css.ts).
  */
 
-@custom-variant dark (&:where(.dark, .dark *));
-@custom-variant light (&:where(.light, .light *));
+/* Nearest theme scope wins: a `.light` scope inside `.dark` (builder canvas preview) cancels dark, and vice versa. */
+@custom-variant dark (&:where(.dark, .dark *):not(:where(.dark .light, .dark .light *)));
+@custom-variant light (&:where(.light, .light *):not(:where(.light .dark, .light .dark *)));
 
 *,
 *::before,

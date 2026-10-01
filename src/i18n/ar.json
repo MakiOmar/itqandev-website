@@ -371,6 +371,9 @@
     "stackTablet": "تكديس على الجوال",
     "stackDesktop": "تكديس أسفل سطح المكتب",
     "previewDevice": "جهاز المعاينة",
+    "previewTheme": "وضع ألوان المعاينة",
+    "previewTheme_light": "معاينة الوضع الفاتح",
+    "previewTheme_dark": "معاينة الوضع الداكن",
     "device": {
       "mobile": "جوال",
       "tablet": "لوحي",

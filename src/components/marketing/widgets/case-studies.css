@@ -13,7 +13,7 @@
   --cs-link-color: var(--s-link-color, var(--cs-d-link));
   --cs-link-hover: var(--s-link-hover-color, var(--cs-d-link-hover));
 }
-:where(.dark, .dark *) .cs-root {
+.cs-root:where(.dark, .dark *):not(:where(.dark .light, .dark .light *)) {
   --cs-d-link: #38bdf8;
   --cs-d-link-hover: #7dd3fc;
 }
