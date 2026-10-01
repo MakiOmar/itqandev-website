@@ -1,4 +1,4 @@
-import { component$, useSignal, useOnWindow, useVisibleTask$, $, type QRL } from '@builder.io/qwik';
+import { component$, useSignal, useOnWindow, useTask$, useVisibleTask$, $, type QRL } from '@builder.io/qwik';
 import { translateApp } from '~/lib/i18n/useTranslate';
 import type { PageBuilderSelection } from './PageBuilderWorkspace';
 import type { PageLayoutBand } from '~/lib/marketing/appearance-types';
@@ -22,7 +22,12 @@ export type PageBuilderNavigatorProps = {
 
 type NavigatorDropState = { key: string; position: LayoutTreeDropPosition };
 
+/** Editor-only fold state keyed by node id; never written into page data. */
+type NavigatorCollapsedState = Record<string, boolean>;
+
 const NAV_DND = 'application/x-credocode-navigator';
+
+const NO_LABELS = { band: '', row: '', column: '', block: '' };
 
 /**
  * Modal outline of the band → row → column → block tree. Nodes can be dragged to
@@ -32,6 +37,7 @@ export const PageBuilderNavigator = component$<PageBuilderNavigatorProps>((props
   const dragKey = useSignal<string | null>(null);
   const drop = useSignal<NavigatorDropState | null>(null);
   const dialogRef = useSignal<HTMLElement>();
+  const collapsed = useSignal<NavigatorCollapsedState>({});
 
   const nodes = flattenLayoutTree(props.bands, {
     band: translateApp(props.lang, 'pages.band'),
@@ -41,6 +47,28 @@ export const PageBuilderNavigator = component$<PageBuilderNavigatorProps>((props
   });
   const selectedKey = selectionPathKey(props.selection);
   const siblingKeys = new Set(nodes.map((n) => layoutTreePathKey(n.path)));
+  const parentKeys = nodeKeysWithChildren(nodes);
+  const visibleNodes = visibleTreeNodes(nodes, parentKeys, collapsed.value);
+  const anyCollapsed = parentKeys.some((key) => collapsed.value[key]);
+  const allCollapsed = parentKeys.length > 0 && parentKeys.every((key) => collapsed.value[key]);
+
+  useTask$(({ track }) => {
+    const key = track(() => selectionPathKey(props.selection));
+    if (!key) return;
+    const next = expandAncestors(flattenLayoutTree(props.bands, NO_LABELS), key, collapsed.value);
+    if (next !== collapsed.value) collapsed.value = next;
+  });
+
+  useVisibleTask$(({ track }) => {
+    track(() => selectionPathKey(props.selection));
+    dialogRef.value
+      ?.querySelector('[role="treeitem"][aria-selected="true"]')
+      ?.scrollIntoView({ block: 'nearest' });
+  });
+
+  const toggleNode = $((key: string) => {
+    collapsed.value = { ...collapsed.value, [key]: !collapsed.value[key] };
+  });
 
   useOnWindow(
     'keydown',
@@ -95,6 +123,32 @@ export const PageBuilderNavigator = component$<PageBuilderNavigatorProps>((props
           </button>
         </header>
 
+        {/* Expand / collapse all */}
+        {parentKeys.length > 0 ? (
+          <div class="flex items-center justify-end gap-1 border-b border-gray-200 px-3 py-1.5 text-xs dark:border-gray-800">
+            <button
+              type="button"
+              class={treeBulkButtonClass}
+              disabled={!anyCollapsed}
+              onClick$={() => {
+                collapsed.value = {};
+              }}
+            >
+              {translateApp(props.lang, 'pages.navigatorExpandAll')}
+            </button>
+            <button
+              type="button"
+              class={treeBulkButtonClass}
+              disabled={allCollapsed}
+              onClick$={() => {
+                collapsed.value = Object.fromEntries(parentKeys.map((key) => [key, true]));
+              }}
+            >
+              {translateApp(props.lang, 'pages.navigatorCollapseAll')}
+            </button>
+          </div>
+        ) : null}
+
         <nav
           class="min-h-0 flex-1 overflow-y-auto p-2 text-xs"
           aria-label={translateApp(props.lang, 'pages.navigator')}
@@ -105,8 +159,10 @@ export const PageBuilderNavigator = component$<PageBuilderNavigatorProps>((props
             </p>
           ) : (
             <ul role="tree" class="space-y-0.5">
-              {nodes.map((node) => {
+              {visibleNodes.map((node) => {
                 const pathKey = layoutTreePathKey(node.path);
+                const hasChildren = parentKeys.includes(node.key);
+                const expanded = hasChildren && !collapsed.value[node.key];
                 const last = node.path[node.path.length - 1];
                 const prevPath = last > 0 ? [...node.path.slice(0, -1), last - 1] : null;
                 const nextPath = [...node.path.slice(0, -1), last + 1];
@@ -118,6 +174,7 @@ export const PageBuilderNavigator = component$<PageBuilderNavigatorProps>((props
                     role="treeitem"
                     aria-level={node.depth + 1}
                     aria-selected={selectedKey === pathKey ? 'true' : 'false'}
+                    aria-expanded={hasChildren ? (expanded ? 'true' : 'false') : undefined}
                     draggable={true}
                     preventdefault:dragover
                     preventdefault:drop
@@ -163,6 +220,32 @@ export const PageBuilderNavigator = component$<PageBuilderNavigatorProps>((props
                         <path d="M7 4a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0Zm0 6a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0Zm-1.5 7.5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3ZM16 4a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0Zm-1.5 7.5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3ZM16 16a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0Z" />
                       </svg>
                     </span>
+                    {/* Fold toggle; leaves keep an equal-width spacer so labels stay aligned */}
+                    {hasChildren ? (
+                      <button
+                        type="button"
+                        class="flex h-5 w-5 flex-shrink-0 items-center justify-center rounded text-gray-500 hover:bg-gray-200 hover:text-gray-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 dark:text-gray-400 dark:hover:bg-slate-700 dark:hover:text-gray-100"
+                        aria-expanded={expanded ? 'true' : 'false'}
+                        aria-label={`${translateApp(props.lang, 'pages.navigatorToggle')}: ${node.label}`}
+                        title={translateApp(props.lang, 'pages.navigatorToggle')}
+                        draggable={false}
+                        onClick$={() => toggleNode(node.key)}
+                      >
+                        <svg
+                          class={[
+                            'h-3 w-3 transition-transform duration-150',
+                            expanded ? 'rotate-90' : 'rtl:rotate-180',
+                          ].join(' ')}
+                          viewBox="0 0 20 20"
+                          fill="currentColor"
+                          aria-hidden="true"
+                        >
+                          <path d="M7.3 4.3a1 1 0 0 1 1.4 0l5 5a1 1 0 0 1 0 1.4l-5 5a1 1 0 0 1-1.4-1.4L11.6 10 7.3 5.7a1 1 0 0 1 0-1.4Z" />
+                        </svg>
+                      </button>
+                    ) : (
+                      <span class="h-5 w-5 flex-shrink-0" aria-hidden="true" />
+                    )}
                     <button
                       type="button"
                       class={labelClass(selectedKey === pathKey)}
@@ -213,6 +296,47 @@ export const PageBuilderNavigator = component$<PageBuilderNavigatorProps>((props
 
 function parsePathKey(key: string): LayoutTreePath {
   return key.split('.').map((v) => Number(v));
+}
+
+const treeBulkButtonClass =
+  'rounded px-2 py-1 font-medium text-gray-600 hover:bg-gray-100 hover:text-gray-900 disabled:cursor-default disabled:opacity-40 disabled:hover:bg-transparent dark:text-gray-300 dark:hover:bg-slate-800 dark:hover:text-gray-100';
+
+/** Flat nodes are depth-first, so a node has children iff the next node is deeper. */
+function nodeKeysWithChildren(nodes: LayoutTreeFlatNode[]): string[] {
+  return nodes.filter((node, i) => (nodes[i + 1]?.depth ?? -1) > node.depth).map((node) => node.key);
+}
+
+function visibleTreeNodes(
+  nodes: LayoutTreeFlatNode[],
+  parentKeys: string[],
+  collapsed: NavigatorCollapsedState,
+): LayoutTreeFlatNode[] {
+  const out: LayoutTreeFlatNode[] = [];
+  let hiddenBelowDepth: number | null = null;
+  for (const node of nodes) {
+    if (hiddenBelowDepth !== null && node.depth > hiddenBelowDepth) continue;
+    hiddenBelowDepth = null;
+    out.push(node);
+    if (collapsed[node.key] && parentKeys.includes(node.key)) hiddenBelowDepth = node.depth;
+  }
+  return out;
+}
+
+/** Returns the same object when no ancestor of `pathKey` was collapsed. */
+function expandAncestors(
+  nodes: LayoutTreeFlatNode[],
+  pathKey: string,
+  collapsed: NavigatorCollapsedState,
+): NavigatorCollapsedState {
+  let next = collapsed;
+  for (const node of nodes) {
+    if (!collapsed[node.key]) continue;
+    const key = layoutTreePathKey(node.path);
+    if (!pathKey.startsWith(`${key}.`)) continue;
+    if (next === collapsed) next = { ...collapsed };
+    delete next[node.key];
+  }
+  return next;
 }
 
 /** Top/bottom quarter = sibling insert; middle = drop inside when the node is a container. */
