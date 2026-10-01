@@ -79,6 +79,9 @@ const KitSwatch = component$<{ token: KitColorToken }>((props) => (
   />
 ));
 
+const GLOBAL_MENU_WIDTH = 208;
+const GLOBAL_MENU_MAX_HEIGHT = 280;
+
 /** Popover listing kit colours; picking one stores the var so it follows kit edits and the theme scope. */
 const GlobalColorsMenu = component$<{
   lang?: string;
@@ -88,7 +91,18 @@ const GlobalColorsMenu = component$<{
 }>((props) => {
   const open = useSignal(false);
   const rootRef = useSignal<HTMLSpanElement>();
+  const pos = useSignal<{ top: number; left: number }>({ top: 0, left: 0 });
   const title = translateApp(props.lang, 'builder.colorPicker.globalColors');
+  // eslint-disable-next-line qwik/no-use-visible-task
+  useVisibleTask$(({ track, cleanup }) => {
+    if (!track(() => open.value)) return;
+    // The menu is fixed, so any ancestor scroll (inspector panel) would detach it from its button.
+    const onScroll = (e: Event) => {
+      if (rootRef.value && !rootRef.value.contains(e.target as Node)) open.value = false;
+    };
+    window.addEventListener('scroll', onScroll, true);
+    cleanup(() => window.removeEventListener('scroll', onScroll, true));
+  });
   return (
     <span
       ref={rootRef}
@@ -98,6 +112,9 @@ const GlobalColorsMenu = component$<{
       }}
       window:onKeyDown$={(e) => {
         if (open.value && e.key === 'Escape') open.value = false;
+      }}
+      window:onResize$={() => {
+        open.value = false;
       }}
     >
       <button
@@ -111,8 +128,23 @@ const GlobalColorsMenu = component$<{
         aria-label={title}
         aria-expanded={open.value ? 'true' : 'false'}
         title={title}
-        onClick$={() => {
-          open.value = !open.value;
+        onClick$={(_, el) => {
+          if (open.value) {
+            open.value = false;
+            return;
+          }
+          const rect = el.getBoundingClientRect();
+          const margin = 8;
+          const left = Math.min(
+            Math.max(margin, rect.left),
+            window.innerWidth - GLOBAL_MENU_WIDTH - margin,
+          );
+          const below = rect.bottom + 4;
+          const top = below + GLOBAL_MENU_MAX_HEIGHT > window.innerHeight
+            ? Math.max(margin, rect.top - 4 - GLOBAL_MENU_MAX_HEIGHT)
+            : below;
+          pos.value = { top, left };
+          open.value = true;
         }}
       >
         {/* Globe icon (inline SVG, self-hosted) */}
@@ -125,7 +157,13 @@ const GlobalColorsMenu = component$<{
         <span
           role="listbox"
           aria-label={title}
-          class="absolute end-0 top-full z-50 mt-1 block w-52 rounded-lg border border-gray-200 bg-white p-2 shadow-lg dark:border-gray-700 dark:bg-slate-800"
+          class="fixed z-[100] block overflow-y-auto rounded-lg border border-gray-200 bg-white p-2 shadow-lg dark:border-gray-700 dark:bg-slate-800"
+          style={{
+            top: `${pos.value.top}px`,
+            left: `${pos.value.left}px`,
+            width: `${GLOBAL_MENU_WIDTH}px`,
+            maxHeight: `${GLOBAL_MENU_MAX_HEIGHT}px`,
+          }}
         >
           <span class="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
             {title}
