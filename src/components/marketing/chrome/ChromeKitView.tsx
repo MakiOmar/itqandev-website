@@ -2,8 +2,6 @@ import { component$ } from '@builder.io/qwik';
 import { MarketingLink } from '~/components/marketing/MarketingLink';
 import { Button } from '~/components/marketing/Button';
 import { ThemeToggle } from '~/components/marketing/ThemeToggle';
-import { SiteLanguageSwitcher } from '~/components/common/SiteLanguageSwitcher';
-import { UserDropdown } from '~/components/common/UserDropdown';
 import { withUiLocale } from '~/lib/i18n/ui-locale-path';
 import { resolveLaravelMediaUrl } from '~/lib/marketing/resolve-laravel-media-url';
 import { isFeatureModuleEnabled, type FeatureModuleKey } from '~/lib/api/project-settings';
@@ -11,9 +9,9 @@ import { getFeatureModuleForPublicHref } from '~/lib/admin/feature-module-routes
 import type { PublicNavItem } from '~/lib/marketing/public-menu';
 import type { AuthSession } from '~/lib/auth/types';
 import type { SiteLanguageRow } from '~/types/site-language';
-import { getLocalizedRoutes } from '~/lib/constants/routes';
 import type { PageLayoutBlock } from '~/lib/marketing/appearance-types';
 import { ChromePageBlock } from './ChromePageBlock';
+import { HeaderAccountKit, HeaderLanguageKit } from './HeaderActionKits';
 
 export type ChromeKitViewProps = {
   type: string;
@@ -194,31 +192,37 @@ export const ChromeKitView = component$<ChromeKitViewProps>((props) => {
         </div>
       );
     }
-    case 'header_actions': {
-      const showTheme = asBool(s.show_theme, true);
-      const showLanguage = asBool(s.show_language, true);
-      const showAuth = asBool(s.show_auth, true);
-      const langs = props.branding?.site_languages ?? [];
-      const loginHref = getLocalizedRoutes(props.uiLocale).ADMIN.LOGIN;
-      const user = props.session?.user;
+    case 'header_actions':
       return (
         <div class="flex flex-wrap items-center gap-2">
-          {showTheme ? <ThemeToggle /> : null}
-          {showLanguage && langs.length > 1 ? (
-            <SiteLanguageSwitcher languages={langs} />
+          {asBool(s.show_theme, true) ? <ThemeToggle /> : null}
+          {asBool(s.show_language, true) ? (
+            <HeaderLanguageKit languages={props.branding?.site_languages} />
           ) : null}
-          {showAuth ? (
-            user ? (
-              <UserDropdown user={user} />
-            ) : (
-              <Button href={loginHref} variant="outline" class="text-sm">
-                Login
-              </Button>
-            )
+          {asBool(s.show_auth, true) ? (
+            <HeaderAccountKit uiLocale={props.uiLocale} session={props.session} />
           ) : null}
         </div>
       );
-    }
+    case 'header_theme_toggle':
+      return <ThemeToggle />;
+    case 'header_language_switcher':
+      return (
+        <HeaderLanguageKit
+          languages={props.branding?.site_languages}
+          showFlag={asBool(s.show_flag, true)}
+          showLabel={asBool(s.show_label, true)}
+        />
+      );
+    case 'header_account':
+      return (
+        <HeaderAccountKit
+          uiLocale={props.uiLocale}
+          session={props.session}
+          loginLabel={typeof s.login_label === 'string' ? s.login_label : ''}
+          loginVariant={typeof s.login_variant === 'string' ? s.login_variant : 'outline'}
+        />
+      );
     case 'header_spacer':
       return <div class="hidden flex-1 lg:block" aria-hidden="true" />;
     case 'footer_links': {

@@ -14,7 +14,15 @@ import type { SiteLanguageRow } from '~/types/site-language';
  * Only lists locales that exist in qwik-speak (UI translations available).
  * Renders nothing when fewer than two choices.
  */
-export const SiteLanguageSwitcher = component$<{ languages: SiteLanguageRow[] | null | undefined }>((props) => {
+export const SiteLanguageSwitcher = component$<{
+  languages: SiteLanguageRow[] | null | undefined;
+  /** Defaults to true. */
+  showFlag?: boolean;
+  /** Language name on `sm`+ (code below); when false only the code shows. Defaults to true. */
+  showLabel?: boolean;
+}>((props) => {
+  const showFlag = props.showFlag !== false;
+  const showLabel = props.showLabel !== false;
   const locale = useSpeakLocale();
   const loc = useLocation();
   const nav = useNavigate();
@@ -62,11 +70,19 @@ export const SiteLanguageSwitcher = component$<{ languages: SiteLanguageRow[] | 
         class="flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium light:text-slate-900 light:hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800 transition-colors"
         aria-label="Change language"
       >
-        <span class="text-lg leading-none" aria-hidden="true">
-          {getLanguageFlagEmoji(current.code)}
-        </span>
-        <span class="hidden sm:inline">{current.native_label || current.label || current.code}</span>
-        <span class="sm:hidden">{String(current.code).toUpperCase()}</span>
+        {showFlag ? (
+          <span class="text-lg leading-none" aria-hidden="true">
+            {getLanguageFlagEmoji(current.code)}
+          </span>
+        ) : null}
+        {showLabel ? (
+          <>
+            <span class="hidden sm:inline">{current.native_label || current.label || current.code}</span>
+            <span class="sm:hidden">{String(current.code).toUpperCase()}</span>
+          </>
+        ) : (
+          <span>{String(current.code).toUpperCase()}</span>
+        )}
         <svg
           class={`h-4 w-4 transition-transform ${isOpen.value ? 'rotate-180' : ''}`}
           fill="none"
