@@ -89,7 +89,6 @@ export const PageBuilderContextMenu = component$<PageBuilderContextMenuProps>((p
   );
 
   useOnWindow('resize', $(() => props.onClose$()));
-  useOnWindow('blur', $(() => props.onClose$()));
 
   return (
     <div

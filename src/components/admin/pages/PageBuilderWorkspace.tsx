@@ -637,6 +637,9 @@ function builderNodeLabel(
 }
 
 /** Shortcuts stay with the browser while typing in a field or selecting text. */
+const BUILDER_CONTEXT_MENU_TARGETS =
+  '[data-builder-canvas] [data-builder-node], [role="tree"] [role="treeitem"], [data-builder-context-menu]';
+
 function isEditingText(e: KeyboardEvent): boolean {
   const target = e.target as HTMLElement | null;
   if (target?.closest('input, textarea, select, [contenteditable=""], [contenteditable="true"]')) return true;
@@ -794,6 +797,18 @@ export const PageBuilderWorkspace = component$<PageBuilderWorkspaceProps>((props
   // eslint-disable-next-line qwik/no-use-visible-task
   useVisibleTask$(({ cleanup }) => {
     cleanup(followAdminTheme(previewTheme, previewThemePinned));
+  });
+
+  // Qwik's preventdefault: only works on the exact target; a right-click on a link or image inside
+  // a node would open the native menu, which blurs the window and closes ours.
+  // eslint-disable-next-line qwik/no-use-visible-task
+  useVisibleTask$(({ cleanup }) => {
+    const suppressNativeMenu = (e: MouseEvent) => {
+      const target = e.target as Element | null;
+      if (target?.closest?.(BUILDER_CONTEXT_MENU_TARGETS)) e.preventDefault();
+    };
+    document.addEventListener('contextmenu', suppressNativeMenu, true);
+    cleanup(() => document.removeEventListener('contextmenu', suppressNativeMenu, true));
   });
 
   const setPreviewTheme$ = $((mode: ThemeMode) => {
