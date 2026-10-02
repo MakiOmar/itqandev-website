@@ -12,6 +12,7 @@ import type { SiteLanguageRow } from '~/types/site-language';
 import type { PageLayoutBlock } from '~/lib/marketing/appearance-types';
 import { ChromePageBlock } from './ChromePageBlock';
 import { HeaderAccountKit, HeaderLanguageKit } from './HeaderActionKits';
+import { HeaderMobileMenuKit } from './HeaderMobileMenuKit';
 
 export type ChromeKitViewProps = {
   type: string;
@@ -31,6 +32,8 @@ export type ChromeKitViewProps = {
   features?: Partial<Record<FeatureModuleKey, boolean>> & Record<string, boolean>;
   contact?: { email?: string; socials?: { name: string; url: string }[] };
   isDarkMode?: boolean;
+  /** Builder canvas render (no responsive hiding inside kits). */
+  editorPreview?: boolean;
 };
 
 function asBool(v: unknown, fallback = false): boolean {
@@ -203,6 +206,20 @@ export const ChromeKitView = component$<ChromeKitViewProps>((props) => {
             <HeaderAccountKit uiLocale={props.uiLocale} session={props.session} />
           ) : null}
         </div>
+      );
+    case 'header_mobile_menu':
+      return (
+        <HeaderMobileMenuKit
+          items={filterNav(asItems(s), props.features)}
+          showBelow={String(s.show_below ?? 'desktop')}
+          trigger={String(s.trigger ?? 'icon')}
+          triggerLabel={typeof s.trigger_label === 'string' ? s.trigger_label : ''}
+          panel={String(s.panel ?? 'drawer')}
+          direction={String(s.direction ?? 'end')}
+          animation={String(s.animation ?? 'slide')}
+          showChildren={asBool(s.show_children, true)}
+          editorPreview={props.editorPreview}
+        />
       );
     case 'header_theme_toggle':
       return <ThemeToggle />;

@@ -49,7 +49,7 @@ export type PageBuilderCanvasBlockProps = {
   ctx: BuilderPreviewContext;
 };
 
-const MENU_BLOCK_TYPES = new Set(['header_menu', 'footer_menu', 'footer_links']);
+const MENU_BLOCK_TYPES = new Set(['header_menu', 'header_mobile_menu', 'footer_menu', 'footer_links']);
 
 const SAMPLE_MENU_ITEMS = [
   { label: 'Home', href: '/', open_in_new_tab: false, children: [] },
@@ -136,6 +136,7 @@ export const PageBuilderCanvasBlock = component$<PageBuilderCanvasBlockProps>(
               session={props.ctx.session}
               features={{}}
               isDarkMode={props.ctx.isDarkMode}
+              editorPreview={true}
             />
           </div>
         </LocaleTransitionProvider>

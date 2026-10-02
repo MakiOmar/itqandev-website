@@ -58,7 +58,13 @@ export function defaultHeaderSections(menuItems: PublicNavItem[] = []): PageSect
             {
               id: 'col_header_actions',
               span: { mobile: 6, tablet: 3, desktop: 2 },
-              blocks: [kitBlock('kit_header_actions', 'header_actions') as never],
+              blocks: [
+                kitBlock('kit_header_actions', 'header_actions') as never,
+                kitBlock('kit_header_mobile_menu', 'header_mobile_menu', {
+                  menu_slug: 'primary',
+                  items: menuItems,
+                }) as never,
+              ],
             },
           ],
         },

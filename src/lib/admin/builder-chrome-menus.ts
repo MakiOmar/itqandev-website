@@ -9,7 +9,7 @@ import { MARKETING_ENDPOINTS } from '~/lib/marketing/endpoints';
 import type { PageLayoutBand, PageSectionNode } from '~/lib/marketing/appearance-types';
 import type { PublicNavItem } from '~/lib/marketing/public-menu';
 
-export const CHROME_MENU_KIT_TYPES = new Set(['header_menu', 'footer_menu']);
+export const CHROME_MENU_KIT_TYPES = new Set(['header_menu', 'header_mobile_menu', 'footer_menu']);
 
 export type ChromeMenuMap = Record<string, PublicNavItem[]>;
 

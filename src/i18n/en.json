@@ -1119,7 +1119,9 @@
   "header": {
     "logout": "Logout",
     "profile": "Profile Settings",
-    "dashboard": "Dashboard"
+    "dashboard": "Dashboard",
+    "openMenu": "Open menu",
+    "closeMenu": "Close menu"
   },
   "profile": {
     "title": "Profile Settings",
