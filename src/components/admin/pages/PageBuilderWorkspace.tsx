@@ -10,13 +10,12 @@ import {
   type QRL,
   type Signal,
 } from '@builder.io/qwik';
-import { showError, showInfo, showSuccess } from '~/lib/utils/toast';
+import { showError, showSuccess } from '~/lib/utils/toast';
 import { Link } from '@builder.io/qwik-city';
 import { AppearanceSettingsFields } from '~/components/admin/appearance/AppearanceSettingsFields';
 import { MediaSelector } from '~/components/common/MediaSelector';
 import { moveItem, newBlockId } from '~/lib/admin/appearance-actions';
 import {
-  canInsertBlockType,
   createBandWithBlock,
   createEmptyBand,
   createEmptyColumn,
@@ -86,8 +85,6 @@ import {
   canPasteLayoutNodeStyle,
   copyLayoutNodeStyle,
   duplicateLayoutNode,
-  dropBlocksOverLimit,
-  exceededBlockLimit,
   pasteLayoutNode,
   pasteLayoutNodeStyle,
   readNodeClipboard,
@@ -360,7 +357,6 @@ function insertWidgetIntoColumn(
   rowIndex: number,
   colIndex: number,
 ): { bands: PageLayoutBand[]; blockIndex: number } | null {
-  if (!canInsertBlockType(bands, registry, type)) return null;
   const entry = registry.find((r) => r.type === type);
   if (!entry) return null;
   const block: PageLayoutBlock = {
@@ -481,7 +477,6 @@ function insertWidgetIntoRemaining(
   rowIndex: number,
   device: LayoutBreakpoint,
 ): { bands: PageLayoutBand[]; colIndex: number; blockIndex: number } | null {
-  if (!canInsertBlockType(bands, registry, type)) return null;
   const entry = registry.find((r) => r.type === type);
   if (!entry) return null;
   const row = bands[bandIndex]?.rows[rowIndex];
@@ -832,24 +827,9 @@ export const PageBuilderWorkspace = component$<PageBuilderWorkspaceProps>((props
 
   const contextMenu = useSignal<{ x: number; y: number; path: LayoutTreePath; fromNavigator: boolean } | null>(null);
 
-  /** Commits unless the change would exceed a kit's max instances (e.g. a second hero). */
-  const commitWithinLimits$ = $(async (next: PageLayoutBand[]): Promise<boolean> => {
-    const over = exceededBlockLimit(next, props.registry.value);
-    if (over) {
-      showError(`${translateApp(props.lang, 'pages.ctxLimitReached')}: ${over}`);
-      return false;
-    }
-    await commit$(next);
-    return true;
-  });
-
   const commitInserted$ = $(async (bands: PageLayoutBand[], path: LayoutTreePath) => {
-    const trimmed = dropBlocksOverLimit(bands, path, props.registry.value);
-    if (!(await commitWithinLimits$(trimmed.bands))) return;
+    await commit$(bands);
     selection.value = navigatorPathToSelection(path);
-    if (trimmed.skipped.length) {
-      showInfo(`${translateApp(props.lang, 'pages.ctxSkippedLimited')}: ${trimmed.skipped.join(', ')}`);
-    }
   });
 
   const runNodeAction$ = $(async (action: BuilderNodeAction, path: LayoutTreePath) => {
@@ -945,13 +925,9 @@ export const PageBuilderWorkspace = component$<PageBuilderWorkspaceProps>((props
       if (paletteTab.value === 'globals') return false;
       // Header/footer kits render nothing on a page; blocks already placed keep their registry entry.
       if (props.previewSurface !== 'chrome' && isChromeKitType(entry.type)) return false;
-      if (searchQ) {
-        const hay = `${entry.label} ${entry.type} ${entry.category || ''}`.toLowerCase();
-        if (!hay.includes(searchQ)) return false;
-      }
-      return canInsertBlockType(bands, props.registry.value, entry.type, entry.kind);
-    })
-    .slice();
+      if (!searchQ) return true;
+      return `${entry.label} ${entry.type} ${entry.category || ''}`.toLowerCase().includes(searchQ);
+    });
 
   const insertableByCategory = groupRegistryByCategory(insertable);
   const selectedBlock = blockAtSelection(bands, selection.value);

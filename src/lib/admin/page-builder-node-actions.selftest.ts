@@ -4,15 +4,13 @@
 import {
   canPasteLayoutNodeStyle,
   copyLayoutNodeStyle,
-  dropBlocksOverLimit,
   duplicateLayoutNode,
-  exceededBlockLimit,
   pasteLayoutNode,
   pasteLayoutNodeStyle,
   removeLayoutNode,
   resetLayoutNodeStyle,
 } from './page-builder-node-actions';
-import type { AppearanceRegistryEntry, PageLayoutBand } from '../marketing/appearance-types';
+import type { PageLayoutBand } from '../marketing/appearance-types';
 
 function assert(cond: unknown, message: string): void {
   if (!cond) throw new Error(message);
@@ -75,17 +73,9 @@ assert(!canPasteLayoutNodeStyle(bands(), [0, 0], headingStyle), 'block style doe
 const reset = resetLayoutNodeStyle(bands(), [0]);
 assert(!reset[0].styles && !(reset[0].settings as Record<string, unknown>).background, 'reset clears styles and background');
 
-// Limits: a second hero exceeds max_instances 1.
-const registry = [{ type: 'hero', kind: 'kit', label: 'Hero', max_instances: 1 }] as AppearanceRegistryEntry[];
+// No instance limits: a duplicated band keeps every widget, including the hero.
+assert(dup!.bands[1].rows[0].columns[0].blocks.map((b) => b.type).join() === 'heading,hero', 'copy keeps all widgets');
 const twoHeroes = duplicateLayoutNode(bands(), [0, 0, 0, 1])!;
-assert(exceededBlockLimit(twoHeroes.bands, registry) === 'Hero', 'second hero flagged');
-assert(exceededBlockLimit(bands(), registry) === null, 'one hero is fine');
-
-// A duplicated band drops the limited hero from the copy but keeps the rest.
-const trimmed = dropBlocksOverLimit(dup!.bands, dup!.path, registry);
-assert(trimmed.skipped.join() === 'Hero', 'hero reported as skipped');
-assert(exceededBlockLimit(trimmed.bands, registry) === null, 'trimmed copy within limits');
-assert(trimmed.bands[0].rows[0].columns[0].blocks.length === 2, 'source band keeps its hero');
-assert(trimmed.bands[1].rows[0].columns[0].blocks.map((b) => b.type).join() === 'heading', 'copy keeps the heading');
+assert(twoHeroes.bands[0].rows[0].columns[0].blocks.filter((b) => b.type === 'hero').length === 2, 'hero duplicates');
 
 console.log('page-builder-node-actions selftest: ok');

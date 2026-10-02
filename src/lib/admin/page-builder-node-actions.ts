@@ -3,7 +3,6 @@
  * canvas and the navigator share them. Every function returns new bands; inputs are not mutated.
  */
 import { newBandId, newBlockId, newColumnId, newRowId } from './builder-ids';
-import { countBlocksByType } from './layout-block-counts';
 import {
   isInnerBandBlock,
   layoutTreeChildKind,
@@ -15,7 +14,6 @@ import {
   type LayoutTreePath,
 } from './page-layout-tree';
 import type {
-  AppearanceRegistryEntry,
   PageLayoutBand,
   PageLayoutBlock,
 } from '../marketing/appearance-types';
@@ -191,69 +189,6 @@ export function pasteLayoutNodeStyle(
 
 export function resetLayoutNodeStyle(bands: PageLayoutBand[], path: LayoutTreePath): PageLayoutBand[] {
   return pasteLayoutNodeStyle(bands, path, { kind: layoutTreeKindAt(path.length), styles: null });
-}
-
-/** First block type whose `max_instances` the layout now exceeds, or null. */
-/**
- * Strips widgets over their `max_instances` from the inserted container at `path` (the original
- * keeps them), so a header band holding the brand still duplicates. Returns skipped labels.
- */
-export function dropBlocksOverLimit(
-  bands: PageLayoutBand[],
-  path: LayoutTreePath,
-  registry: AppearanceRegistryEntry[],
-): { bands: PageLayoutBand[]; skipped: string[] } {
-  if (layoutTreeKindAt(path.length) === 'block') return { bands, skipped: [] };
-  const limits = new Map<string, AppearanceRegistryEntry>();
-  for (const entry of registry) {
-    if (entry.max_instances != null) limits.set(`${entry.kind || 'kit'}:${entry.type}`, entry);
-  }
-  if (limits.size === 0) return { bands, skipped: [] };
-
-  const next = cloneBands(bands);
-  const counts = countBlocksByType(next);
-  const skipped: string[] = [];
-  const keep = (block: PageLayoutBlock): boolean => {
-    const key = `${block.kind || 'kit'}:${block.type}`;
-    const entry = limits.get(key);
-    if (entry && (counts[key] ?? 0) > (entry.max_instances as number)) {
-      counts[key] -= 1;
-      skipped.push(entry.label || entry.type);
-      return false;
-    }
-    if (isInnerBandBlock(block)) filterRows(block.rows);
-    return true;
-  };
-  const filterColumns = (columns: { blocks?: PageLayoutBlock[] }[] | undefined) => {
-    for (const col of columns ?? []) {
-      if (Array.isArray(col.blocks)) col.blocks = col.blocks.filter(keep);
-    }
-  };
-  const filterRows = (rows: { columns?: { blocks?: PageLayoutBlock[] }[] }[] | undefined) => {
-    for (const row of rows ?? []) filterColumns(row.columns);
-  };
-
-  const node = layoutTreeNodeAt(next, path) as Record<string, unknown> | null;
-  if (!node) return { bands, skipped: [] };
-  const kind = layoutTreeKindAt(path.length);
-  if (kind === 'band') filterRows(node.rows as never);
-  else if (kind === 'row') filterColumns(node.columns as never);
-  else if (Array.isArray(node.blocks)) node.blocks = (node.blocks as PageLayoutBlock[]).filter(keep);
-  return { bands: next, skipped: [...new Set(skipped)] };
-}
-
-export function exceededBlockLimit(
-  bands: PageLayoutBand[],
-  registry: AppearanceRegistryEntry[],
-): string | null {
-  const counts = countBlocksByType(bands);
-  for (const entry of registry) {
-    const max = entry.max_instances;
-    if (max == null) continue;
-    const used = counts[`${entry.kind || 'kit'}:${entry.type}`] ?? 0;
-    if (used > max) return entry.label || entry.type;
-  }
-  return null;
 }
 
 function readJson<T>(key: string): T | null {

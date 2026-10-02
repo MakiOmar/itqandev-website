@@ -150,23 +150,6 @@ export function moveItem<T>(list: T[], from: number, to: number): T[] {
   return next;
 }
 
-export function countByType(items: { type: string }[]): Record<string, number> {
-  const counts: Record<string, number> = {};
-  for (const item of items) {
-    counts[item.type] = (counts[item.type] ?? 0) + 1;
-  }
-  return counts;
-}
-
-export function canInsertType(
-  type: string,
-  counts: Record<string, number>,
-  maxInstances: number | null | undefined,
-): boolean {
-  if (maxInstances == null) return true;
-  return (counts[type] ?? 0) < maxInstances;
-}
-
 /**
  * Resolve media library URLs for builder preview after reload (settings store ids only).
  */

@@ -190,7 +190,6 @@ export type AppearanceRegistryEntry = {
   kind?: 'widget' | 'kit';
   label: string;
   category?: string;
-  max_instances: number | null;
   default_settings?: Record<string, unknown>;
   settings_fields?: AppearanceSettingField[];
 };

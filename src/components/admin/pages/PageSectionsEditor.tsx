@@ -3,7 +3,6 @@ import { AppearanceSettingsFields } from '~/components/admin/appearance/Appearan
 import { AdminSwitch } from '~/components/admin/appearance/AdminSwitch';
 import { moveItem, newBlockId } from '~/lib/admin/appearance-actions';
 import {
-  canInsertBlockType,
   createBandWithBlock,
   createEmptyBand,
   createEmptyColumn,
@@ -53,9 +52,7 @@ export const PageSectionsEditor = component$<PageSectionsEditorProps>((props) =>
   const previewDevice = useSignal<LayoutBreakpoint>('desktop');
   const expandedBlockId = useSignal<string | null>(null);
 
-  const insertable = props.registry.filter(
-    (entry) => !isChromeKitType(entry.type) && canInsertBlockType(bands, props.registry, entry.type),
-  );
+  const insertable = props.registry.filter((entry) => !isChromeKitType(entry.type));
 
   return (
     <div class="space-y-4">
@@ -589,7 +586,6 @@ export const PageSectionsEditor = component$<PageSectionsEditorProps>((props) =>
                                   if (!type) return;
                                   const entry = props.registry.find((r) => r.type === type);
                                   if (!entry) return;
-                                  if (!canInsertBlockType(bands, props.registry, type)) return;
                                   const next = bands.map((b, bi) => {
                                     if (bi !== bandIndex) return b;
                                     return {

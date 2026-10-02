@@ -19,12 +19,9 @@ import {
   normalizeColumnSpans,
 } from '../marketing/page-layout-utils';
 import { collectAppearanceMediaIdsFromSettings } from './appearance-media-ref';
-import { canInsertType } from './appearance-actions';
 import { newBandId, newBlockId, newColumnId, newRowId } from './builder-ids';
-import { countBlocksByType } from './layout-block-counts';
 
 export { newBandId, newRowId } from './builder-ids';
-export { countBlocksByType } from './layout-block-counts';
 
 export {
   clampSpan,
@@ -207,22 +204,6 @@ export function createEmptyRow(columnCount = 2): PageLayoutRow {
     gap: 4,
     columns: Array.from({ length: n }, () => createEmptyColumn(share)),
   };
-}
-
-export function canInsertBlockType(
-  bands: PageLayoutBand[],
-  registry: AppearanceRegistryEntry[],
-  type: string,
-  kind?: 'widget' | 'kit',
-): boolean {
-  const entry = registry.find(
-    (r) => r.type === type && (!kind || !r.kind || r.kind === kind),
-  );
-  if (!entry) return false;
-  const leafKind = entry.kind || kind || 'kit';
-  const counts = countBlocksByType(bands);
-  const used = counts[`${leafKind}:${type}`] ?? counts[type] ?? 0;
-  return canInsertType(type, { [type]: used }, entry.max_instances);
 }
 
 export function mapPageLayoutBands(

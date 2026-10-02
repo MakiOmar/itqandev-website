@@ -73,7 +73,6 @@ export type AdminForm = {
 export type FormFieldRegistryEntry = {
   type: string;
   label: string;
-  max_instances: number | null;
   default_settings: Record<string, unknown>;
   settings_fields: Array<{
     key: string;
