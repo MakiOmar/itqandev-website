@@ -1,6 +1,6 @@
 /**
  * Device visibility for layout builders (Elementor-style Advanced → Responsive).
- * Hidden nodes are omitted from the rendered tree (not CSS display:none).
+ * Hidden nodes are omitted for the UA-detected device; public renders also add `hideOnClass`.
  */
 import { UAParser } from 'ua-parser-js';
 import type { DeviceHideOn, LayoutBreakpoint, PageLayoutBand } from './appearance-types';
@@ -33,6 +33,22 @@ export function isHiddenOnDevice(
 ): boolean {
   const h = normalizeHideOn(hideOn);
   return h[device] === true;
+}
+
+/**
+ * Viewport fallback for public renders: UA omission misses resized windows, desktop-mode phones
+ * and cached HTML. Breakpoints match `columnSpanClassNames` (base = mobile, md = tablet, lg = desktop).
+ * Not for builder canvases, where the viewport is the editor rather than the previewed device.
+ */
+export function hideOnClass(hideOn: unknown): string {
+  const h = normalizeHideOn(hideOn);
+  return [
+    h.mobile ? 'max-md:hidden!' : '',
+    h.tablet ? 'md:max-lg:hidden!' : '',
+    h.desktop ? 'lg:hidden!' : '',
+  ]
+    .filter(Boolean)
+    .join(' ');
 }
 
 export function isLayoutNodeVisibleOnDevice(

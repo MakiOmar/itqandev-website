@@ -1230,7 +1230,7 @@
     "shapeFlip": "Flip",
     "advanced": {
       "responsive": "Responsive",
-      "responsiveHint": "Hide this element on selected devices. Hidden elements are omitted from the HTML for that device (User-Agent detection), not merely CSS-hidden.",
+      "responsiveHint": "Hide this element on selected devices. It is left out of the HTML for the detected device and hidden by screen width (mobile under 768px, tablet 768–1023px, desktop 1024px and up).",
       "hideOn": "Hide on"
     },
     "style": {

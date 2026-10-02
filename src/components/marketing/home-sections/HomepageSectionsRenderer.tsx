@@ -24,7 +24,7 @@ import {
   columnContentLayout,
   rowGapClass,
 } from '~/lib/marketing/page-layout-utils';
-import { filterPageSectionsForDevice } from '~/lib/marketing/device-visibility';
+import { filterPageSectionsForDevice, hideOnClass } from '~/lib/marketing/device-visibility';
 import { useLayoutDevice } from '~/lib/marketing/layout-device-context';
 import { LayoutNodeShell } from '~/components/marketing/layout/LayoutNodeShell';
 import {
@@ -393,6 +393,7 @@ function renderLayoutBand(band: PageLayoutBand, props: HomepageSectionsRendererP
   const bandProps: HomepageSectionsRendererProps = { ...props, embedKits: true };
   const bandSettings = band.settings;
   const bandStyles = band.styles;
+  const hide = (hideOn: unknown) => (props.editorPreview ? '' : hideOnClass(hideOn));
   const inner = (
     <LayoutNodeShell
       id={band.id}
@@ -410,7 +411,7 @@ function renderLayoutBand(band: PageLayoutBand, props: HomepageSectionsRendererP
             id={row.id}
             settings={rowSettings}
             styles={rowStyles}
-            class="w-full rounded-xl"
+            class={`w-full rounded-xl ${hide(row.hide_on)}`}
           >
             <div
               class={`grid grid-cols-12 items-stretch ${rowGapClass(row.gap)} ${
@@ -430,12 +431,22 @@ function renderLayoutBand(band: PageLayoutBand, props: HomepageSectionsRendererP
                     id={col.id}
                     settings={colSettings}
                     styles={colStyles}
-                    class={`${spanClass} h-full`}
+                    class={`${spanClass} h-full ${hide(col.hide_on)}`}
                   >
                     <div class={content.class} style={content.style}>
                       {(col.blocks ?? [])
                         .filter((b) => b.enabled !== false)
-                        .map((block) => renderBlock(block, bandProps))}
+                        .map((block) => {
+                          const hideClass = hide(block.hide_on);
+                          const rendered = renderBlock(block, bandProps);
+                          return hideClass ? (
+                            <div key={block.id || block.type} class={hideClass}>
+                              {rendered}
+                            </div>
+                          ) : (
+                            rendered
+                          );
+                        })}
                     </div>
                   </LayoutNodeShell>
                 );
@@ -449,14 +460,14 @@ function renderLayoutBand(band: PageLayoutBand, props: HomepageSectionsRendererP
 
   if ((band.layout_width ?? 'boxed') === 'full') {
     return (
-      <section key={band.id} class="w-full">
+      <section key={band.id} class={`w-full ${hide(band.hide_on)}`}>
         {inner}
       </section>
     );
   }
 
   return (
-    <section key={band.id} class="mx-auto w-full max-w-6xl px-4 sm:px-6 lg:px-8">
+    <section key={band.id} class={`mx-auto w-full max-w-6xl px-4 sm:px-6 lg:px-8 ${hide(band.hide_on)}`}>
       {inner}
     </section>
   );

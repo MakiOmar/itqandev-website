@@ -8,7 +8,7 @@ import {
   rowGapClass,
 } from '~/lib/marketing/page-layout-utils';
 import type { PageLayoutBand, PageSectionNode } from '~/lib/marketing/appearance-types';
-import { filterPageLayoutBandForDevice } from '~/lib/marketing/device-visibility';
+import { filterPageLayoutBandForDevice, hideOnClass } from '~/lib/marketing/device-visibility';
 import { useLayoutDevice } from '~/lib/marketing/layout-device-context';
 import { LayoutNodeShell } from '~/components/marketing/layout/LayoutNodeShell';
 import { ChromeKitView, type ChromeKitViewProps } from './ChromeKitView';
@@ -53,7 +53,7 @@ export const ChromeLayoutRenderer = component$<ChromeLayoutRendererProps>((props
         const bandSettings = band.settings;
         const bandStyles = band.styles;
         return (
-          <div key={band.id} class={[widthClass, props.bandClass || ''].filter(Boolean).join(' ')}>
+          <div key={band.id} class={[widthClass, props.bandClass || '', hideOnClass(band.hide_on)].filter(Boolean).join(' ')}>
             <LayoutNodeShell id={band.id} settings={bandSettings} styles={bandStyles}>
               {(band.rows || []).map((row) => {
                 const stack =
@@ -65,7 +65,13 @@ export const ChromeLayoutRenderer = component$<ChromeLayoutRendererProps>((props
                 const rowSettings = row.settings;
                 const rowStyles = row.styles;
                 return (
-                  <LayoutNodeShell key={row.id} id={row.id} settings={rowSettings} styles={rowStyles}>
+                  <LayoutNodeShell
+                    key={row.id}
+                    id={row.id}
+                    settings={rowSettings}
+                    styles={rowStyles}
+                    class={hideOnClass(row.hide_on)}
+                  >
                     <div
                       class={[
                         'grid',
@@ -86,23 +92,33 @@ export const ChromeLayoutRenderer = component$<ChromeLayoutRendererProps>((props
                             id={col.id}
                             settings={colSettings}
                             styles={colStyles}
-                            class={`${columnSpanClassNames(spans)} h-full`}
+                            class={`${columnSpanClassNames(spans)} h-full ${hideOnClass(col.hide_on)}`}
                           >
                             <div class={content.class} style={content.style}>
-                            {(col.blocks || []).map((block) => (
-                              <ChromeKitView
-                                key={block.id || block.type}
-                                type={block.type}
-                                settings={(block.settings || {}) as Record<string, unknown>}
-                                block={block}
-                                uiLocale={props.uiLocale}
-                                branding={props.branding}
-                                session={props.session}
-                                features={props.features}
-                                contact={props.contact}
-                                isDarkMode={props.isDarkMode}
-                              />
-                            ))}
+                            {(col.blocks || []).map((block) => {
+                              const view = (
+                                <ChromeKitView
+                                  key={block.id || block.type}
+                                  type={block.type}
+                                  settings={(block.settings || {}) as Record<string, unknown>}
+                                  block={block}
+                                  uiLocale={props.uiLocale}
+                                  branding={props.branding}
+                                  session={props.session}
+                                  features={props.features}
+                                  contact={props.contact}
+                                  isDarkMode={props.isDarkMode}
+                                />
+                              );
+                              const hideClass = hideOnClass(block.hide_on);
+                              return hideClass ? (
+                                <div key={block.id || block.type} class={hideClass}>
+                                  {view}
+                                </div>
+                              ) : (
+                                view
+                              );
+                            })}
                             </div>
                           </LayoutNodeShell>
                         );
