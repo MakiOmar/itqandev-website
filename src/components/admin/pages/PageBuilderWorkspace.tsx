@@ -10,7 +10,7 @@ import {
   type QRL,
   type Signal,
 } from '@builder.io/qwik';
-import { showError, showSuccess } from '~/lib/utils/toast';
+import { showError, showInfo, showSuccess } from '~/lib/utils/toast';
 import { Link } from '@builder.io/qwik-city';
 import { AppearanceSettingsFields } from '~/components/admin/appearance/AppearanceSettingsFields';
 import { MediaSelector } from '~/components/common/MediaSelector';
@@ -86,6 +86,7 @@ import {
   canPasteLayoutNodeStyle,
   copyLayoutNodeStyle,
   duplicateLayoutNode,
+  dropBlocksOverLimit,
   exceededBlockLimit,
   pasteLayoutNode,
   pasteLayoutNodeStyle,
@@ -827,6 +828,15 @@ export const PageBuilderWorkspace = component$<PageBuilderWorkspaceProps>((props
     return true;
   });
 
+  const commitInserted$ = $(async (bands: PageLayoutBand[], path: LayoutTreePath) => {
+    const trimmed = dropBlocksOverLimit(bands, path, props.registry.value);
+    if (!(await commitWithinLimits$(trimmed.bands))) return;
+    selection.value = navigatorPathToSelection(path);
+    if (trimmed.skipped.length) {
+      showInfo(`${translateApp(props.lang, 'pages.ctxSkippedLimited')}: ${trimmed.skipped.join(', ')}`);
+    }
+  });
+
   const runNodeAction$ = $(async (action: BuilderNodeAction, path: LayoutTreePath) => {
     const current = ensurePageLayoutBands(props.sections.value);
     if (!layoutTreeNodeAt(current, path)) return;
@@ -840,7 +850,7 @@ export const PageBuilderWorkspace = component$<PageBuilderWorkspaceProps>((props
         return;
       case 'duplicate': {
         const res = duplicateLayoutNode(current, path);
-        if (res && (await commitWithinLimits$(res.bands))) selection.value = navigatorPathToSelection(res.path);
+        if (res) await commitInserted$(res.bands, res.path);
         return;
       }
       case 'copy': {
@@ -857,7 +867,7 @@ export const PageBuilderWorkspace = component$<PageBuilderWorkspaceProps>((props
           showError(translateApp(props.lang, 'pages.ctxCannotPaste'));
           return;
         }
-        if (await commitWithinLimits$(res.bands)) selection.value = navigatorPathToSelection(res.path);
+        await commitInserted$(res.bands, res.path);
         return;
       }
       case 'copy_style': {

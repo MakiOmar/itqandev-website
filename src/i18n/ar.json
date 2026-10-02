@@ -353,6 +353,7 @@
     "ctxCannotPaste": "لا يمكن لصق العنصر المنسوخ هنا",
     "ctxCannotPasteStyle": "التنسيق المنسوخ لا يناسب هذا العنصر",
     "ctxLimitReached": "وصلت هذه الصفحة إلى الحد الأقصى من",
+    "ctxSkippedLimited": "تم النسخ بدون العناصر التي بلغت حدها الأقصى",
     "navigatorExpandAll": "توسيع الكل",
     "navigatorCollapseAll": "طي الكل",
     "navigatorToggle": "إظهار العناصر المتداخلة أو إخفاؤها",

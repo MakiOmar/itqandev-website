@@ -353,6 +353,7 @@
     "ctxCannotPaste": "The copied element can't be pasted here",
     "ctxCannotPasteStyle": "The copied style doesn't fit this element",
     "ctxLimitReached": "This page already has the maximum number of",
+    "ctxSkippedLimited": "Copied without widgets that reached their limit",
     "navigatorExpandAll": "Expand all",
     "navigatorCollapseAll": "Collapse all",
     "navigatorToggle": "Show or hide nested items",

@@ -4,6 +4,7 @@
 import {
   canPasteLayoutNodeStyle,
   copyLayoutNodeStyle,
+  dropBlocksOverLimit,
   duplicateLayoutNode,
   exceededBlockLimit,
   pasteLayoutNode,
@@ -79,5 +80,12 @@ const registry = [{ type: 'hero', kind: 'kit', label: 'Hero', max_instances: 1 }
 const twoHeroes = duplicateLayoutNode(bands(), [0, 0, 0, 1])!;
 assert(exceededBlockLimit(twoHeroes.bands, registry) === 'Hero', 'second hero flagged');
 assert(exceededBlockLimit(bands(), registry) === null, 'one hero is fine');
+
+// A duplicated band drops the limited hero from the copy but keeps the rest.
+const trimmed = dropBlocksOverLimit(dup!.bands, dup!.path, registry);
+assert(trimmed.skipped.join() === 'Hero', 'hero reported as skipped');
+assert(exceededBlockLimit(trimmed.bands, registry) === null, 'trimmed copy within limits');
+assert(trimmed.bands[0].rows[0].columns[0].blocks.length === 2, 'source band keeps its hero');
+assert(trimmed.bands[1].rows[0].columns[0].blocks.map((b) => b.type).join() === 'heading', 'copy keeps the heading');
 
 console.log('page-builder-node-actions selftest: ok');
