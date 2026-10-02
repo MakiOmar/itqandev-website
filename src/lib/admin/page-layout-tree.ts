@@ -25,7 +25,8 @@ export type LayoutTreeFlatNode = {
   container: boolean;
 };
 
-type TreeNode = PageLayoutBand | PageLayoutRow | PageLayoutColumn | PageLayoutBlock;
+export type LayoutTreeNode = PageLayoutBand | PageLayoutRow | PageLayoutColumn | PageLayoutBlock;
+type TreeNode = LayoutTreeNode;
 
 const CYCLE: LayoutTreeNodeKind[] = ['row', 'column', 'block'];
 
@@ -42,6 +43,10 @@ export function isInnerBandBlock(block: PageLayoutBlock | undefined): boolean {
 
 export function layoutTreePathKey(path: LayoutTreePath): string {
   return path.join('.');
+}
+
+export function layoutTreeChildKind(kind: LayoutTreeNodeKind): LayoutTreeNodeKind | null {
+  return childKind(kind);
 }
 
 function childKind(kind: LayoutTreeNodeKind): LayoutTreeNodeKind | null {
@@ -65,6 +70,15 @@ function childrenOf(
     block.rows = [];
   }
   return block.rows;
+}
+
+/** Child list of the node at `parentPath` (the bands themselves for `[]`); mutates when `create`. */
+export function layoutTreeListAt(
+  bands: PageLayoutBand[],
+  parentPath: LayoutTreePath,
+  create = false,
+): TreeNode[] | null {
+  return listAt(bands, parentPath, create);
 }
 
 function listAt(

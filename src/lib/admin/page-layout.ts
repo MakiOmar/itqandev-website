@@ -19,7 +19,12 @@ import {
   normalizeColumnSpans,
 } from '../marketing/page-layout-utils';
 import { collectAppearanceMediaIdsFromSettings } from './appearance-media-ref';
-import { canInsertType, newBlockId, newColumnId } from './appearance-actions';
+import { canInsertType } from './appearance-actions';
+import { newBandId, newBlockId, newColumnId, newRowId } from './builder-ids';
+import { countBlocksByType } from './layout-block-counts';
+
+export { newBandId, newRowId } from './builder-ids';
+export { countBlocksByType } from './layout-block-counts';
 
 export {
   clampSpan,
@@ -29,14 +34,6 @@ export {
   normalizeColumnSpans,
   previewColSpanClass,
 } from '../marketing/page-layout-utils';
-
-export function newRowId(): string {
-  return `row_${Math.random().toString(36).slice(2, 10)}`;
-}
-
-export function newBandId(): string {
-  return `band_${Math.random().toString(36).slice(2, 10)}`;
-}
 
 export function ensurePageLayoutBands(sections: PageSectionNode[]): PageLayoutBand[] {
   return sections.map((node) => {
@@ -210,34 +207,6 @@ export function createEmptyRow(columnCount = 2): PageLayoutRow {
     gap: 4,
     columns: Array.from({ length: n }, () => createEmptyColumn(share)),
   };
-}
-
-export function countBlocksByType(bands: PageLayoutBand[]): Record<string, number> {
-  const counts: Record<string, number> = {};
-  for (const band of bands) {
-    for (const row of band.rows ?? []) {
-      for (const col of row.columns ?? []) {
-        for (const block of col.blocks ?? []) {
-          const kind = block.kind || 'kit';
-          const key = `${kind}:${block.type}`;
-          counts[key] = (counts[key] ?? 0) + 1;
-          counts[block.type] = (counts[block.type] ?? 0) + 1;
-          if (block.type === 'inner_band' && block.rows) {
-            for (const row of block.rows) {
-              for (const col of row.columns ?? []) {
-                for (const nested of col.blocks ?? []) {
-                  const nk = `${nested.kind || 'kit'}:${nested.type}`;
-                  counts[nk] = (counts[nk] ?? 0) + 1;
-                  counts[nested.type] = (counts[nested.type] ?? 0) + 1;
-                }
-              }
-            }
-          }
-        }
-      }
-    }
-  }
-  return counts;
 }
 
 export function canInsertBlockType(

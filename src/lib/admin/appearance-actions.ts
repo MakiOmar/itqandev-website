@@ -138,13 +138,7 @@ export function newSectionId(type: string): string {
   return `sec_${type}_${Math.random().toString(36).slice(2, 10)}`;
 }
 
-export function newBlockId(type: string): string {
-  return `blk_${type}_${Math.random().toString(36).slice(2, 10)}`;
-}
-
-export function newColumnId(): string {
-  return `col_${Math.random().toString(36).slice(2, 10)}`;
-}
+export { newBlockId, newColumnId } from './builder-ids';
 
 export function moveItem<T>(list: T[], from: number, to: number): T[] {
   if (from < 0 || to < 0 || from >= list.length || to >= list.length || from === to) {

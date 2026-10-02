@@ -2,6 +2,7 @@ import {
   component$,
   useComputed$,
   useContext,
+  useOnDocument,
   useSignal,
   useTask$,
   useVisibleTask$,
@@ -9,7 +10,7 @@ import {
   type QRL,
   type Signal,
 } from '@builder.io/qwik';
-import { showError } from '~/lib/utils/toast';
+import { showError, showSuccess } from '~/lib/utils/toast';
 import { Link } from '@builder.io/qwik-city';
 import { AppearanceSettingsFields } from '~/components/admin/appearance/AppearanceSettingsFields';
 import { MediaSelector } from '~/components/common/MediaSelector';
@@ -74,7 +75,29 @@ import {
   PageBuilderNavigator,
   navigatorPathToSelection,
 } from '~/components/admin/pages/PageBuilderNavigator';
-import { moveLayoutTreeNode } from '~/lib/admin/page-layout-tree';
+import {
+  layoutTreeKindAt,
+  layoutTreeNodeAt,
+  moveLayoutTreeNode,
+  type LayoutTreePath,
+} from '~/lib/admin/page-layout-tree';
+import {
+  canPasteLayoutNode,
+  canPasteLayoutNodeStyle,
+  copyLayoutNodeStyle,
+  duplicateLayoutNode,
+  exceededBlockLimit,
+  pasteLayoutNode,
+  pasteLayoutNodeStyle,
+  readNodeClipboard,
+  readStyleClipboard,
+  removeLayoutNode,
+  resetLayoutNodeStyle,
+  writeNodeClipboard,
+  writeStyleClipboard,
+  type BuilderNodeAction,
+} from '~/lib/admin/page-builder-node-actions';
+import { PageBuilderContextMenu } from '~/components/admin/pages/PageBuilderContextMenu';
 import { useBuilderCanvasGuard } from '~/lib/admin/builder-canvas-guard';
 import { useBuilderChromeMenus } from '~/lib/admin/builder-chrome-menus';
 import { AdminSessionContext } from '~/stores/admin-session-context';
@@ -586,6 +609,40 @@ function inspectorKey(selection: unknown, nodeId = ''): string {
   return `${JSON.stringify(selection)}|${nodeId}`;
 }
 
+function selectionToTreePath(sel: PageBuilderSelection): LayoutTreePath | null {
+  if (!sel) return null;
+  if (sel.kind === 'band') return [sel.bandIndex];
+  if (sel.kind === 'row') return [sel.bandIndex, sel.rowIndex];
+  if (sel.kind === 'column') return [sel.bandIndex, sel.rowIndex, sel.colIndex];
+  return [sel.bandIndex, sel.rowIndex, sel.colIndex, sel.blockIndex];
+}
+
+/** Context-menu title: "Row 2" for containers, the widget/kit label for blocks. */
+function builderNodeLabel(
+  bands: PageLayoutBand[],
+  path: LayoutTreePath,
+  registry: AppearanceRegistryEntry[],
+  lang: string,
+): string {
+  const kind = layoutTreeKindAt(path.length);
+  if (kind !== 'block') {
+    const key = kind === 'band' ? 'pages.band' : kind === 'row' ? 'pages.row' : 'pages.column';
+    return `${translateApp(lang, key)} ${path[path.length - 1] + 1}`;
+  }
+  const block = layoutTreeNodeAt(bands, path) as PageLayoutBlock | null;
+  const type = String(block?.type ?? '');
+  const entry = registry.find((r) => r.type === type);
+  return appearanceSectionLabel(lang, type, entry?.label || type);
+}
+
+/** Shortcuts stay with the browser while typing in a field or selecting text. */
+function isEditingText(e: KeyboardEvent): boolean {
+  const target = e.target as HTMLElement | null;
+  if (target?.closest('input, textarea, select, [contenteditable=""], [contenteditable="true"]')) return true;
+  const selected = typeof window !== 'undefined' ? window.getSelection()?.toString() : '';
+  return !!selected;
+}
+
 function isOwnBuilderNodeClick(e: Event, el: Element): boolean {
   const target = e.target as Element | null;
   return !!target && target.closest('[data-builder-node]') === el;
@@ -756,6 +813,103 @@ export const PageBuilderWorkspace = component$<PageBuilderWorkspaceProps>((props
     redoStack.value = [];
     props.sections.value = next;
   });
+
+  const contextMenu = useSignal<{ x: number; y: number; path: LayoutTreePath; fromNavigator: boolean } | null>(null);
+
+  /** Commits unless the change would exceed a kit's max instances (e.g. a second hero). */
+  const commitWithinLimits$ = $(async (next: PageLayoutBand[]): Promise<boolean> => {
+    const over = exceededBlockLimit(next, props.registry.value);
+    if (over) {
+      showError(`${translateApp(props.lang, 'pages.ctxLimitReached')}: ${over}`);
+      return false;
+    }
+    await commit$(next);
+    return true;
+  });
+
+  const runNodeAction$ = $(async (action: BuilderNodeAction, path: LayoutTreePath) => {
+    const current = ensurePageLayoutBands(props.sections.value);
+    if (!layoutTreeNodeAt(current, path)) return;
+    switch (action) {
+      case 'edit':
+        selection.value = navigatorPathToSelection(path);
+        return;
+      case 'navigator':
+        selection.value = navigatorPathToSelection(path);
+        showNavigator.value = true;
+        return;
+      case 'duplicate': {
+        const res = duplicateLayoutNode(current, path);
+        if (res && (await commitWithinLimits$(res.bands))) selection.value = navigatorPathToSelection(res.path);
+        return;
+      }
+      case 'copy': {
+        const node = layoutTreeNodeAt(current, path);
+        if (!node) return;
+        writeNodeClipboard({ kind: layoutTreeKindAt(path.length), node });
+        showSuccess(translateApp(props.lang, 'pages.ctxCopied'));
+        return;
+      }
+      case 'paste': {
+        const clip = readNodeClipboard();
+        const res = clip ? pasteLayoutNode(current, path, clip) : null;
+        if (!res) {
+          showError(translateApp(props.lang, 'pages.ctxCannotPaste'));
+          return;
+        }
+        if (await commitWithinLimits$(res.bands)) selection.value = navigatorPathToSelection(res.path);
+        return;
+      }
+      case 'copy_style': {
+        const clip = copyLayoutNodeStyle(current, path);
+        if (!clip) return;
+        writeStyleClipboard(clip);
+        showSuccess(translateApp(props.lang, 'pages.ctxStyleCopied'));
+        return;
+      }
+      case 'paste_style': {
+        const clip = readStyleClipboard();
+        if (!clip || !canPasteLayoutNodeStyle(current, path, clip)) {
+          showError(translateApp(props.lang, 'pages.ctxCannotPasteStyle'));
+          return;
+        }
+        await commit$(pasteLayoutNodeStyle(current, path, clip));
+        return;
+      }
+      case 'reset_style':
+        await commit$(resetLayoutNodeStyle(current, path));
+        return;
+      case 'delete':
+        selection.value = null;
+        await commit$(removeLayoutNode(current, path));
+        return;
+    }
+  });
+
+  const openContextMenu$ = $((e: MouseEvent, path: LayoutTreePath, fromNavigator = false) => {
+    contextMenu.value = { x: e.clientX, y: e.clientY, path, fromNavigator };
+    if (!fromNavigator) selection.value = navigatorPathToSelection(path);
+  });
+
+  useOnDocument(
+    'keydown',
+    $(async (e: Event) => {
+      const ev = e as KeyboardEvent;
+      if (viewMode.value || contextMenu.value || isEditingText(ev)) return;
+      const path = selectionToTreePath(selection.value);
+      if (!path) return;
+      const mod = ev.ctrlKey || ev.metaKey;
+      const key = ev.key.toLowerCase();
+      let action: BuilderNodeAction | null = null;
+      if (mod && key === 'd') action = 'duplicate';
+      else if (mod && key === 'c') action = 'copy';
+      else if (mod && key === 'v') action = 'paste';
+      else if (!mod && ev.key === 'Delete') action = 'delete';
+      if (!action) return;
+      ev.preventDefault();
+      await runNodeAction$(action, path);
+    }),
+  );
 
   const searchQ = paletteSearch.value.trim().toLowerCase();
   const insertable = props.registry.value
@@ -2024,6 +2178,27 @@ export const PageBuilderWorkspace = component$<PageBuilderWorkspaceProps>((props
             onClose$={$(() => {
               showNavigator.value = false;
             })}
+            onContextMenu$={$((e: MouseEvent, path: LayoutTreePath) => openContextMenu$(e, path, true))}
+          />
+        ) : null}
+
+        {contextMenu.value ? (
+          <PageBuilderContextMenu
+            key={`${contextMenu.value.path.join('.')}-${contextMenu.value.x}-${contextMenu.value.y}`}
+            lang={props.lang}
+            x={contextMenu.value.x}
+            y={contextMenu.value.y}
+            label={builderNodeLabel(bands, contextMenu.value.path, props.registry.value, props.lang)}
+            canPaste={canPasteLayoutNode(bands, contextMenu.value.path, readNodeClipboard())}
+            canPasteStyle={canPasteLayoutNodeStyle(bands, contextMenu.value.path, readStyleClipboard())}
+            fromNavigator={contextMenu.value.fromNavigator}
+            onAction$={$(async (action: BuilderNodeAction) => {
+              const target = contextMenu.value;
+              if (target) await runNodeAction$(action, target.path);
+            })}
+            onClose$={$(() => {
+              contextMenu.value = null;
+            })}
           />
         ) : null}
 
@@ -2128,6 +2303,10 @@ export const PageBuilderWorkspace = component$<PageBuilderWorkspaceProps>((props
                         if (isOwnBuilderNodeClick(e, el)) {
                           selection.value = { kind: 'band', bandIndex };
                         }
+                      }}
+                      preventdefault:contextmenu
+                      onContextMenu$={(e, el) => {
+                        if (isOwnBuilderNodeClick(e, el)) openContextMenu$(e, [bandIndex]);
                       }}
                     >
                       <div
@@ -2240,6 +2419,10 @@ export const PageBuilderWorkspace = component$<PageBuilderWorkspaceProps>((props
                                 if (isOwnBuilderNodeClick(e, el)) {
                                   selection.value = { kind: 'row', bandIndex, rowIndex };
                                 }
+                              }}
+                              preventdefault:contextmenu
+                              onContextMenu$={(e, el) => {
+                                if (isOwnBuilderNodeClick(e, el)) openContextMenu$(e, [bandIndex, rowIndex]);
                               }}
                               onDragOver$={(e) => {
                                 if (dragWidgetType.value || dragBlock.value) {
@@ -2479,6 +2662,12 @@ export const PageBuilderWorkspace = component$<PageBuilderWorkspaceProps>((props
                                             };
                                           }
                                         }}
+                                        preventdefault:contextmenu
+                                        onContextMenu$={(e, el) => {
+                                          if (isOwnBuilderNodeClick(e, el)) {
+                                            openContextMenu$(e, [bandIndex, rowIndex, colIndex]);
+                                          }
+                                        }}
                                         onDragOver$={(e) => {
                                           if (dragWidgetType.value || dragBlock.value) {
                                             e.preventDefault();
@@ -2666,6 +2855,12 @@ export const PageBuilderWorkspace = component$<PageBuilderWorkspaceProps>((props
                                                         colIndex,
                                                         blockIndex,
                                                       };
+                                                    }
+                                                  }}
+                                                  preventdefault:contextmenu
+                                                  onContextMenu$={(e, el) => {
+                                                    if (isOwnBuilderNodeClick(e, el)) {
+                                                      openContextMenu$(e, [bandIndex, rowIndex, colIndex, blockIndex]);
                                                     }
                                                   }}
                                                   onDragOver$={(e) => e.preventDefault()}

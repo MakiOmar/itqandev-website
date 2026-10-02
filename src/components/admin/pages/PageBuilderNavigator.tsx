@@ -18,6 +18,8 @@ export type PageBuilderNavigatorProps = {
   onSelect$: QRL<(next: PageBuilderSelection) => void>;
   onMove$: QRL<(from: LayoutTreePath, to: LayoutTreePath, position: LayoutTreeDropPosition) => void>;
   onClose$: QRL<() => void>;
+  /** Right-click on a tree row (node actions menu). */
+  onContextMenu$?: QRL<(e: MouseEvent, path: LayoutTreePath) => void>;
 };
 
 type NavigatorDropState = { key: string; position: LayoutTreeDropPosition };
@@ -73,7 +75,10 @@ export const PageBuilderNavigator = component$<PageBuilderNavigatorProps>((props
   useOnWindow(
     'keydown',
     $((e: Event) => {
-      if ((e as KeyboardEvent).key === 'Escape') props.onClose$();
+      if ((e as KeyboardEvent).key !== 'Escape') return;
+      // An open node menu takes Escape first; the navigator stays open under it.
+      if (document.querySelector('[data-builder-context-menu]')) return;
+      props.onClose$();
     }),
   );
 
@@ -191,6 +196,12 @@ export const PageBuilderNavigator = component$<PageBuilderNavigatorProps>((props
                       }
                     }}
                     onDragEnd$={clearDrag}
+                    preventdefault:contextmenu
+                    onContextMenu$={(e) => {
+                      e.stopPropagation();
+                      props.onSelect$(navigatorPathToSelection(node.path));
+                      props.onContextMenu$?.(e, node.path);
+                    }}
                     onDragOver$={(e, el) => {
                       const from = dragKey.value;
                       if (!from || from === pathKey) {
