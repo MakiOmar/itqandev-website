@@ -22,6 +22,8 @@ export interface AuthSession {
   user: User;
   token: string;
   expiresAt: number;
+  /** "Remember me": persistent cookie for `auth.rememberDays` instead of a browser-session cookie. */
+  remember?: boolean;
 }
 
 /**
@@ -30,6 +32,7 @@ export interface AuthSession {
 export interface LoginCredentials {
   email: string;
   password: string;
+  remember?: boolean;
 }
 
 /**

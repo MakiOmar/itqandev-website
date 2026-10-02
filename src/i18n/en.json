@@ -165,6 +165,7 @@
     "email": "Email",
     "password": "Password",
     "loggingIn": "Logging in...",
+    "rememberMe": "Remember me",
     "loginFailed": "Login failed",
     "enterEmail": "Enter email",
     "enterPassword": "Enter password"

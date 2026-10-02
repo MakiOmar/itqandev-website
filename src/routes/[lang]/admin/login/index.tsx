@@ -4,6 +4,7 @@ import { routeAction$, zod$, z } from '@builder.io/qwik-city';
 import { LoginForm } from '../../../../components/auth/LoginForm';
 import { auth } from '../../../../lib/auth';
 import { getConfig } from '../../../../lib/config';
+import { authSessionCookieOptions } from '../../../../lib/auth/session-lifetime';
 import { routesFromPreferredCookie, useAppRoutes } from '../../../../lib/constants/routes';
 
 /**
@@ -12,6 +13,8 @@ import { routesFromPreferredCookie, useAppRoutes } from '../../../../lib/constan
 const loginSchema = z.object({
   email: z.string().email('Please enter a valid email address'),
   password: z.string().min(1, 'Password is required'),
+  /** Unchecked checkboxes are omitted from form data. */
+  remember: z.string().optional(),
 });
 
 const sessionSyncSchema = z.object({
@@ -23,7 +26,7 @@ const sessionSyncSchema = z.object({
  */
 export const useSyncAuthSessionAction = routeAction$(
   async (data, { cookie, fail }) => {
-    let session: { user?: { id?: string | number }; token?: string; expiresAt?: number };
+    let session: { user?: { id?: string | number }; token?: string; expiresAt?: number; remember?: boolean };
     try {
       session = JSON.parse(data.sessionJson);
     } catch {
@@ -35,13 +38,7 @@ export const useSyncAuthSessionAction = routeAction$(
     }
 
     const config = getConfig();
-    cookie.set(config.auth.cookieName, data.sessionJson, {
-      path: '/',
-      httpOnly: true,
-      sameSite: 'lax',
-      secure: import.meta.env.PROD,
-      maxAge: [1, 'days'],
-    });
+    cookie.set(config.auth.cookieName, data.sessionJson, authSessionCookieOptions(session.remember === true));
 
     return { success: true as const };
   },
@@ -58,6 +55,7 @@ export const useLoginAction = routeAction$(
         {
           email: data.email,
           password: data.password,
+          remember: data.remember === 'on' || data.remember === '1' || data.remember === 'true',
         },
         cookie,
       );

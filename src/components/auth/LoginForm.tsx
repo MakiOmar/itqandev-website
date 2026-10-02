@@ -3,6 +3,7 @@ import type { ActionStore } from '@builder.io/qwik-city';
 import { Form } from '@builder.io/qwik-city';
 import { useTranslate, translateApp } from '../../lib/i18n/useTranslate';
 import { LanguageSwitcher } from '../common/LanguageSwitcher';
+import { ADMIN_CHECKBOX_CLASS, ADMIN_CHECKBOX_LABEL_CLASS } from '../../lib/admin/native-select-classes';
 
 /**
  * Login form component props
@@ -15,6 +16,14 @@ interface LoginFormProps {
   /** When true, login runs in the browser to avoid Vite SSR self-fetch deadlocks. */
   clientSideLogin?: boolean;
 }
+
+/** Shared by the server-action and client-side login forms. */
+const RememberMeField = component$<{ lang: string }>((props) => (
+  <label class={ADMIN_CHECKBOX_LABEL_CLASS}>
+    <input type="checkbox" name="remember" value="on" class={ADMIN_CHECKBOX_CLASS} />
+    {translateApp(props.lang, 'auth.rememberMe')}
+  </label>
+));
 
 /**
  * Login form component
@@ -40,6 +49,7 @@ export const LoginForm = component$<LoginFormProps>((props) => {
     const formData = new FormData(form);
     const email = String(formData.get('email') ?? '').trim();
     const password = String(formData.get('password') ?? '');
+    const remember = formData.get('remember') === 'on';
 
     if (!email || !password) {
       clientError.value = translateApp(lang, 'auth.login') + ' — email and password are required';
@@ -49,7 +59,7 @@ export const LoginForm = component$<LoginFormProps>((props) => {
 
     try {
       const { auth, takePendingAuthCookiePayload } = await import('../../lib/auth');
-      const session = await auth.login({ email, password });
+      const session = await auth.login({ email, password, remember });
       if (!session) {
         clientError.value = 'Invalid email or password';
         return;
@@ -142,6 +152,8 @@ export const LoginForm = component$<LoginFormProps>((props) => {
                 />
               </div>
 
+              <RememberMeField lang={lang} />
+
               {failedError && (
                 <div class="rounded-md bg-red-50 dark:bg-red-900/20 p-3 text-sm text-red-800 dark:text-red-300 transition-colors">
                   {failedError}
@@ -201,6 +213,8 @@ export const LoginForm = component$<LoginFormProps>((props) => {
                   </p>
                 )}
               </div>
+
+              <RememberMeField lang={lang} />
 
               {loginAction.value?.failed && (loginAction.value as any).error && (
                 <div class="rounded-md bg-red-50 dark:bg-red-900/20 p-3 text-sm text-red-800 dark:text-red-300 transition-colors">

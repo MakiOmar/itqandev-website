@@ -20,9 +20,12 @@ Reference guide for Laravel API endpoints expected by Qwik Dashboard.
 ```json
 {
   "email": "user@example.com",
-  "password": "password123"
+  "password": "password123",
+  "remember": true
 }
 ```
+
+`remember` is optional (boolean, default `false`; validated by `LoginRequest`). When true, Laravel's web guard also issues its remember-me cookie. The Qwik client uses the same flag for the `auth_session` cookie lifetime (see `VITE_AUTH_REMEMBER_DAYS` in [CONFIGURATION.md](./CONFIGURATION.md)).
 
 **Success Response (200):**
 ```json

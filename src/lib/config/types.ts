@@ -30,6 +30,8 @@ export interface AuthConfig {
   tokenHeader: string;
   refreshToken?: boolean;
   sessionStorage?: 'cookie' | 'localStorage' | 'sessionStorage';
+  /** Lifetime of the `auth_session` cookie when "Remember me" is checked. */
+  rememberDays?: number;
 }
 
 /**

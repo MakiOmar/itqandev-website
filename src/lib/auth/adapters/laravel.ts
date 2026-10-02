@@ -5,6 +5,7 @@ import { getConfig } from '../../config';
 import { LaravelApiClient } from '../../api/laravel-client';
 import { extractCookieHeader } from '../../api/client';
 import { resolveMarketingApiBaseUrl } from '../../marketing/resolve-api-base';
+import { authSessionCookieOptions, sessionExpiresAt } from '../session-lifetime';
 
 const COOKIE_TOKEN_PLACEHOLDER = 'sanctum_cookie';
 
@@ -42,6 +43,17 @@ function tokenFromSessionJson(raw: string | undefined | null): string | null {
     /* ignore */
   }
   return null;
+}
+
+function rememberFromSessionJson(raw: string | undefined | null): boolean {
+  if (!raw) {
+    return false;
+  }
+  try {
+    return (JSON.parse(raw) as { remember?: unknown })?.remember === true;
+  } catch {
+    return false;
+  }
 }
 
 /**
@@ -95,21 +107,21 @@ export class LaravelAuthAdapter implements AuthAdapter {
       };
 
       const rawToken = response.data.token || COOKIE_TOKEN_PLACEHOLDER;
+      const remember = credentials.remember === true;
       const serverSession: AuthSession = {
         user,
         token: rawToken,
-        expiresAt: Date.now() + 24 * 60 * 60 * 1000,
+        expiresAt: sessionExpiresAt(remember),
+        remember,
       };
 
       // Real token stays in the HttpOnly cookie only.
       if (cookie) {
-        cookie.set(this.config.auth.cookieName, JSON.stringify(serverSession), {
-          path: '/',
-          httpOnly: true,
-          sameSite: 'lax',
-          secure: import.meta.env.PROD,
-          maxAge: [1, 'days'],
-        });
+        cookie.set(
+          this.config.auth.cookieName,
+          JSON.stringify(serverSession),
+          authSessionCookieOptions(remember),
+        );
       } else if (typeof window !== 'undefined' && rawToken !== COOKIE_TOKEN_PLACEHOLDER) {
         pendingCookieSessionJson = JSON.stringify(serverSession);
       }
@@ -260,22 +272,23 @@ export class LaravelAuthAdapter implements AuthAdapter {
           updatedAt: laravelUser.updated_at,
         };
 
-        const existingToken = tokenFromSessionJson(cookie?.get(this.config.auth.cookieName)?.value);
+        const existingJson = cookie?.get(this.config.auth.cookieName)?.value;
+        const existingToken = tokenFromSessionJson(existingJson);
+        const remember = rememberFromSessionJson(existingJson);
         const session: AuthSession = {
           user,
           token: existingToken || COOKIE_TOKEN_PLACEHOLDER,
-          expiresAt: Date.now() + 24 * 60 * 60 * 1000,
+          expiresAt: sessionExpiresAt(remember),
+          remember,
         };
 
         // Keep the existing bearer in the HttpOnly cookie; do not replace it with the placeholder.
         if (cookie && existingToken) {
-          cookie.set(this.config.auth.cookieName, JSON.stringify(session), {
-            path: '/',
-            httpOnly: true,
-            sameSite: 'lax',
-            secure: import.meta.env.PROD,
-            maxAge: [1, 'days'],
-          });
+          cookie.set(
+            this.config.auth.cookieName,
+            JSON.stringify(session),
+            authSessionCookieOptions(remember),
+          );
         }
 
         persistPublicSession(session, this.config.auth.cookieName);

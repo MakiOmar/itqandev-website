@@ -39,6 +39,7 @@ const defaultConfig: DashboardConfig = {
     tokenHeader: 'Authorization',
     refreshToken: false,
     sessionStorage: 'cookie',
+    rememberDays: 30,
   },
   branding: {
     // NOTE: These are Qwik-side fallback defaults only.

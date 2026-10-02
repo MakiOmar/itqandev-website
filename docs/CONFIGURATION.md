@@ -68,7 +68,10 @@ VITE_AUTH_COOKIE_NAME=laravel_session
 VITE_AUTH_TOKEN_HEADER=Authorization
 VITE_AUTH_REFRESH_TOKEN=false
 VITE_AUTH_STORAGE=cookie
+VITE_AUTH_REMEMBER_DAYS=30
 ```
+
+**Remember me:** the login form's **Remember me** checkbox decides how long the HttpOnly `auth_session` cookie lives. Checked: a persistent cookie for `VITE_AUTH_REMEMBER_DAYS` days (default 30, capped at 365); each `/me` refresh keeps the choice. Unchecked: a browser-session cookie (no `Max-Age`), so closing the browser signs the user out. The flag is also sent to `POST /api/auth/login` as `remember`.
 
 **Behavior:** the dashboard is aligned with the Laravel API’s **Bearer token** from `POST /api/auth/login`. `GET /api/me` must return `user.permissions` (Spatie) so the sidebar can show modules the user is allowed to manage. Cookie-only SPA mode remains documented in [LARAVEL_INTEGRATION.md](./LARAVEL_INTEGRATION.md) if you add Sanctum stateful middleware on the server.
 

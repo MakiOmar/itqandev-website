@@ -165,6 +165,7 @@
     "email": "البريد الإلكتروني",
     "password": "كلمة المرور",
     "loggingIn": "...جاري الدخول",
+    "rememberMe": "تذكرني",
     "loginFailed": "فشل تسجيل الدخول",
     "enterEmail": "أدخل البريد الإلكتروني",
     "enterPassword": "أدخل كلمة المرور"
