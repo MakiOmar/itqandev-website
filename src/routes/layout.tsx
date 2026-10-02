@@ -51,12 +51,15 @@ export const onRequest: RequestHandler = ({ url, locale, redirect: redirectFn, c
 /**
  * Request handler for caching and performance optimization
  */
-export const onGet: RequestHandler = async ({ cacheControl, url }) => {
+export const onGet: RequestHandler = async ({ cacheControl, cookie, url }) => {
   const pathname = url.pathname;
   const logical = stripUiLocaleFromPathname(pathname);
   const config = getConfig();
 
-  if (logical === config.routes.admin.login || logical === config.routes.public.login || pathname.startsWith('/api/')) {
+  if (cookie.has(config.auth.cookieName)) {
+    // Signed-in HTML carries the user menu and must show builder edits on the next load.
+    cacheControl({ private: true, noCache: true, maxAge: 0 });
+  } else if (logical === config.routes.admin.login || logical === config.routes.public.login || pathname.startsWith('/api/')) {
     cacheControl({
       maxAge: 0,
       sMaxAge: 0,

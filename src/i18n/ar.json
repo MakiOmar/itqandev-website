@@ -1077,6 +1077,8 @@
     "floatingPosY": "ص (%)",
     "floatingSize": "الحجم (بكسل)",
     "noImage": "لا توجد صورة",
+    "dynamicTagsInsert": "إدراج وسم ديناميكي",
+    "dynamicTagsHide": "إخفاء الوسوم الديناميكية",
     "selectFromLibrary": "اختر من المكتبة",
     "selectForm": "اختر نموذجاً…",
     "formsLoading": "جاري تحميل النماذج…",

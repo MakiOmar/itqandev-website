@@ -24,6 +24,7 @@ import { API_ENDPOINTS } from '~/lib/api/endpoints';
 import { mapPublicBrandingFromApi } from '~/lib/marketing/resolve-laravel-media-url';
 import type { AppearanceRegistryEntry, PageSectionNode } from '~/lib/marketing/appearance-types';
 import type { ChromeLayoutKind } from '~/types/chrome-layout';
+import { dynamicTagsForChromeKind } from '~/lib/admin/builder-dynamic-tags';
 import type { BuilderDynamicTag } from '~/components/admin/appearance/BuilderDynamicTagChips';
 import { ADMIN_NATIVE_SELECT_COMPACT_CLASS } from '~/lib/admin/native-select-classes';
 import {
@@ -145,7 +146,7 @@ export const ChromeAppearanceBuilder = component$<ChromeAppearanceBuilderProps>(
       }
       layoutName.value = layout.name;
       sections.value = ensurePageLayoutBands((layout.sections || []) as PageSectionNode[]);
-      dynamicTags.value = regs.dynamic_tags ?? [];
+      dynamicTags.value = dynamicTagsForChromeKind(regs.dynamic_tags ?? [], kind);
 
       const settingsPayload =
         (settingsRes as { data?: Record<string, unknown> } | null)?.data ??

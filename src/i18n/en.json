@@ -1077,6 +1077,8 @@
     "floatingPosY": "Y (%)",
     "floatingSize": "Size (px)",
     "noImage": "No image",
+    "dynamicTagsInsert": "Insert dynamic tag",
+    "dynamicTagsHide": "Hide dynamic tags",
     "selectFromLibrary": "Select from library",
     "selectForm": "Select a form…",
     "formsLoading": "Loading forms…",
