@@ -13,6 +13,12 @@ import { LocaleTransitionProvider } from '~/components/common/LocaleTransitionOv
 import { Header } from '~/components/marketing/Header';
 import { Footer } from '~/components/marketing/Footer';
 import { PublicOverlayHost } from '~/components/marketing/overlays/PublicOverlayHost';
+import { AdminQuickDrawer } from '~/components/marketing/admin/AdminQuickDrawer';
+import { userHasDashboardMenu } from '~/lib/auth/dashboard-user';
+import {
+  AdminEditTargetContext,
+  type AdminEditTargetState,
+} from '~/lib/marketing/admin-edit-target';
 import { PublicShellTypographyHead } from '~/components/perf/PublicShellTypographyHead';
 import { defaultSystemTypography } from '~/lib/perf/typography';
 import { auth } from '~/lib/auth';
@@ -119,6 +125,10 @@ export default component$(() => {
     documentNav.value = shouldUsePublicDocumentNav(path, themeContext);
   });
   useContextProvider(PublicDocumentNavContext, documentNav);
+  const adminEditTarget = useSignal<AdminEditTargetState>(null);
+  useContextProvider(AdminEditTargetContext, adminEditTarget);
+  const drawerUser = authSession.value?.user;
+  const showAdminDrawer = userHasDashboardMenu(drawerUser);
 
   return (
     <div
@@ -165,6 +175,21 @@ export default component$(() => {
             techStack={shellLoader.value.siteContent?.techStack ?? []}
             siteContact={shellLoader.value.siteContent?.contact}
           />
+          {/* Admin quick drawer: dashboard users only, so visitors never download its chunk */}
+          {showAdminDrawer && drawerUser ? (
+            <AdminQuickDrawer
+              lang={uiLocale}
+              user={{
+                name: drawerUser.name,
+                email: drawerUser.email,
+                avatar: drawerUser.avatar,
+                role: drawerUser.role,
+                permissions: drawerUser.permissions,
+              }}
+              features={branding.value?.features}
+              themeTemplateId={shellLoader.value.themeTemplateId}
+            />
+          ) : null}
         </div>
         </LayoutDeviceProvider>
       </LocaleTransitionProvider>

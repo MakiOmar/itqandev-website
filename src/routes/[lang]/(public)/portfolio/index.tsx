@@ -1,4 +1,4 @@
-import { component$ } from '@builder.io/qwik';
+import { component$, useComputed$ } from '@builder.io/qwik';
 import type { DocumentHead } from '@builder.io/qwik-city';
 import { routeLoader$, useLocation } from '@builder.io/qwik-city';
 import { getPublicSiteBaseUrl } from '~/lib/seo/canonical-url';
@@ -20,6 +20,7 @@ import { isFeatureModuleEnabled } from '~/lib/api/project-settings';
 import { resolveMarketingApiBaseUrl } from '~/lib/marketing/resolve-api-base';
 import type { PageSectionNode } from '~/lib/marketing/appearance-types';
 import type { PublicPageDetail } from '~/types/page';
+import { cmsPageEditTarget, useAdminEditTarget } from '~/lib/marketing/admin-edit-target';
 
 const PORTFOLIO_PAGE_SLUG = 'portfolio';
 
@@ -107,7 +108,9 @@ export default component$(() => {
   const loc = useLocation();
   const uiLocale = uiLangFromUrlPathname(loc.url.pathname);
   const shell = usePublicShell();
-  const page = usePortfolioCmsPage().value;
+  const pageLoader = usePortfolioCmsPage();
+  useAdminEditTarget(useComputed$(() => cmsPageEditTarget(pageLoader.value)));
+  const page = pageLoader.value;
   const listing = usePortfolioListingData();
 
   return (

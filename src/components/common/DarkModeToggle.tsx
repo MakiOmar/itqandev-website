@@ -25,7 +25,7 @@ export const DarkModeToggle = component$(() => {
       <button
         onClick$={toggleTheme}
         type="button"
-        class="fixed bottom-6 ltr:right-6 rtl:left-6 z-50 flex h-14 w-14 items-center justify-center rounded-full bg-white dark:bg-slate-800 shadow-lg border border-slate-200 dark:border-slate-700 hover:shadow-xl transition-all duration-300 ease-in-out hover:scale-110"
+        class="fixed bottom-6 ltr:right-6 rtl:left-6 z-50 [html[data-admin-drawer=open]_&]:hidden flex h-14 w-14 items-center justify-center rounded-full bg-white dark:bg-slate-800 shadow-lg border border-slate-200 dark:border-slate-700 hover:shadow-xl transition-all duration-300 ease-in-out hover:scale-110"
         aria-label="Toggle dark mode"
         title="Toggle dark mode"
       >

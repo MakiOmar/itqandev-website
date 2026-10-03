@@ -1,4 +1,4 @@
-import { component$ } from '@builder.io/qwik';
+import { component$, useComputed$ } from '@builder.io/qwik';
 import type { DocumentHead } from '@builder.io/qwik-city';
 import { useLocation } from '@builder.io/qwik-city';
 import { routeLoader$ } from '@builder.io/qwik-city';
@@ -14,6 +14,7 @@ import { isFeatureModuleEnabled } from '~/lib/api/project-settings';
 import { SHOW_ON_FRONT_PAGE } from '~/lib/marketing/static-homepage';
 import type { PageSectionNode } from '~/lib/marketing/appearance-types';
 import type { PublicPageDetail } from '~/types/page';
+import { cmsPageEditTarget, useAdminEditTarget } from '~/lib/marketing/admin-edit-target';
 import { usePublicShell } from './layout';
 
 export const useHomeData = routeLoader$(async ({ request, params, resolveValue }) => {
@@ -52,6 +53,9 @@ export default component$(() => {
   const techStack = siteContent?.techStack ?? [];
   const branding = shell.value.branding;
   const useCmsHome = Boolean(cmsPage?.sections?.length);
+  useAdminEditTarget(
+    useComputed$(() => cmsPageEditTarget(data.value.cmsPage) ?? { kind: 'homepage' as const }),
+  );
 
   return (
     <HomepageSectionsRenderer

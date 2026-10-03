@@ -1,4 +1,4 @@
-import { component$ } from '@builder.io/qwik';
+import { component$, useComputed$ } from '@builder.io/qwik';
 import type { DocumentHead } from '@builder.io/qwik-city';
 import { routeLoader$, useLocation } from '@builder.io/qwik-city';
 import { HomepageSectionsRenderer } from '~/components/marketing/home-sections/HomepageSectionsRenderer';
@@ -13,6 +13,7 @@ import { mapMarketingSeoMetaFromApi } from '~/lib/marketing/seo-snippet';
 import { API_ENDPOINTS } from '~/lib/api/endpoints';
 import type { PageSectionNode } from '~/lib/marketing/appearance-types';
 import type { PublicPageDetail } from '~/types/page';
+import { cmsPageEditTarget, useAdminEditTarget } from '~/lib/marketing/admin-edit-target';
 import { isSearchEngineIndexingEnabled, publicRobotsContent } from '~/lib/seo/search-engine-indexing';
 
 function restPathParam(raw: unknown): string {
@@ -108,7 +109,9 @@ export const usePageSupportingData = routeLoader$(async ({ request, params }) =>
 export default component$(() => {
   const loc = useLocation();
   const uiLocale = uiLangFromUrlPathname(loc.url.pathname);
-  const raw = usePublicPageDetail().value as unknown;
+  const pageLoader = usePublicPageDetail();
+  useAdminEditTarget(useComputed$(() => cmsPageEditTarget(pageLoader.value)));
+  const raw = pageLoader.value as unknown;
   if (
     raw == null ||
     typeof raw !== 'object' ||

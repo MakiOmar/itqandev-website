@@ -18,6 +18,7 @@ import { ContentImage } from '~/components/marketing/ContentImage';
 import { MarketingImageLightbox } from '~/components/marketing/MarketingImageLightbox';
 import { ThemeBodyOrFallback } from '~/components/marketing/theme/ThemeBodyOrFallback';
 import { marketingEntityDetailHead } from '~/lib/marketing/marketing-entity-document-head';
+import { entityEditTarget, useAdminEditTarget } from '~/lib/marketing/admin-edit-target';
 
 /** SSR cannot forward cross-origin Laravel cookies; loaders return this marker for a client retry. */
 type DeferredCrossOriginPayload = {
@@ -132,6 +133,10 @@ export default component$(() => {
 
     return { kind: 'loading' as const };
   });
+
+  useAdminEditTarget(
+    useComputed$(() => (view.value.kind === 'ok' ? entityEditTarget('project', view.value.study) : null)),
+  );
 
   const state = view.value;
 

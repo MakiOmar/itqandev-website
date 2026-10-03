@@ -88,6 +88,9 @@ export const API_ENDPOINTS = {
     SEARCH_REPLACE_APPLY: '/v1/system/search-replace/apply',
     STATS: '/system/stats',
   },
+  CACHE: {
+    CLEAR: '/v1/cache/clear',
+  },
   /** Authenticated helpers (admin UI); server enforces uniqueness on the owning table. */
   CONTENT_SLUGS: {
     SUGGEST: '/v1/content-slugs/suggest',

@@ -1,4 +1,4 @@
-import { component$ } from '@builder.io/qwik';
+import { component$, useComputed$ } from '@builder.io/qwik';
 import type { DocumentHead } from '@builder.io/qwik-city';
 import { routeLoader$ } from '@builder.io/qwik-city';
 import { Link, useLocation } from '@builder.io/qwik-city';
@@ -16,6 +16,7 @@ import { marketingEntityDetailHead } from '~/lib/marketing/marketing-entity-docu
 import { Container } from '~/components/marketing/Container';
 import { Section } from '~/components/marketing/Section';
 import { ThemeBodyOrFallback } from '~/components/marketing/theme/ThemeBodyOrFallback';
+import { entityEditTarget, useAdminEditTarget } from '~/lib/marketing/admin-edit-target';
 
 export const useServiceDetail = routeLoader$(async ({ params, request, fail }) => {
   const slug = decodeURIComponent(String(params.slug ?? '').trim());
@@ -39,7 +40,9 @@ export const useServiceDetail = routeLoader$(async ({ params, request, fail }) =
 export default component$(() => {
   const loc = useLocation();
   const MR = marketingRoutes(uiLangFromUrlPathname(loc.url.pathname));
-  const raw = useServiceDetail().value as unknown;
+  const serviceLoader = useServiceDetail();
+  useAdminEditTarget(useComputed$(() => entityEditTarget('service', serviceLoader.value)));
+  const raw = serviceLoader.value as unknown;
   if (
     raw == null ||
     typeof raw !== 'object' ||

@@ -1,4 +1,4 @@
-import { component$ } from '@builder.io/qwik';
+import { component$, useComputed$ } from '@builder.io/qwik';
 import type { DocumentHead } from '@builder.io/qwik-city';
 import { routeLoader$, useLocation } from '@builder.io/qwik-city';
 import { publicListPageHead } from '~/lib/marketing/public-page-head';
@@ -11,6 +11,7 @@ import { API_ENDPOINTS } from '~/lib/api/endpoints';
 import { isFeatureModuleEnabled } from '~/lib/api/project-settings';
 import type { PageSectionNode } from '~/lib/marketing/appearance-types';
 import type { PublicPageDetail } from '~/types/page';
+import { cmsPageEditTarget, useAdminEditTarget } from '~/lib/marketing/admin-edit-target';
 
 const SERVICES_PAGE_SLUG = 'services';
 
@@ -75,7 +76,9 @@ export default component$(() => {
   const loc = useLocation();
   const uiLocale = uiLangFromUrlPathname(loc.url.pathname);
   const shell = usePublicShell();
-  const page = useServicesCmsPage().value;
+  const pageLoader = useServicesCmsPage();
+  useAdminEditTarget(useComputed$(() => cmsPageEditTarget(pageLoader.value)));
+  const page = pageLoader.value;
   const support = useServicesSupportingData();
 
   return (

@@ -1,4 +1,4 @@
-import { component$ } from '@builder.io/qwik';
+import { component$, useComputed$ } from '@builder.io/qwik';
 import type { DocumentHead } from '@builder.io/qwik-city';
 import { routeLoader$ } from '@builder.io/qwik-city';
 import { Link, useLocation } from '@builder.io/qwik-city';
@@ -13,6 +13,7 @@ import { Section } from '~/components/marketing/Section';
 import { AnimatedReveal } from '~/components/marketing/AnimatedReveal';
 import { ContentImage } from '~/components/marketing/ContentImage';
 import { ThemeBodyOrFallback } from '~/components/marketing/theme/ThemeBodyOrFallback';
+import { entityEditTarget, useAdminEditTarget } from '~/lib/marketing/admin-edit-target';
 
 export const useBlogPost = routeLoader$(async ({ params, fail }) => {
   const slug = params.slug;
@@ -26,7 +27,9 @@ export const useBlogPost = routeLoader$(async ({ params, fail }) => {
 export default component$(() => {
   const loc = useLocation();
   const MR = marketingRoutes(uiLangFromUrlPathname(loc.url.pathname));
-  const post = useBlogPost().value;
+  const postLoader = useBlogPost();
+  useAdminEditTarget(useComputed$(() => entityEditTarget('blog', postLoader.value)));
+  const post = postLoader.value;
   const shell = usePublicShell();
   const uiLocale = uiLangFromUrlPathname(loc.url.pathname);
   const baseUrl = getPublicSiteBaseUrl();

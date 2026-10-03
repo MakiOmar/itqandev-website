@@ -55,6 +55,8 @@ export type PublicShellState = {
   themeBodyCss?: string | null;
   overlays?: Array<{ id: number; delay_ms?: number; once?: boolean; sitewide?: boolean }>;
   themeContext: string | null;
+  /** Theme Builder template matched for this document path (admin quick-drawer edit link). */
+  themeTemplateId: number | null;
   header: HeaderPublicPayload;
   footer: FooterPublicPayload;
   /** WordPress-style static front page from site_meta. */
@@ -68,6 +70,7 @@ type PublicShellApiData = {
   homepage_sections?: HomepageSectionInstance[];
   theme_body?: { sections?: PageSectionNode[]; css?: string } | null;
   theme_context?: string | null;
+  theme_template_id?: number | null;
   overlays?: Array<{ id: number; delay_ms?: number; once?: boolean; sitewide?: boolean }>;
   header?: HeaderPublicPayload;
   footer?: FooterPublicPayload;
@@ -166,6 +169,7 @@ function localShellFallback(): PublicShellState {
     themeBody: null,
     themeBodyCss: null,
     themeContext: null,
+    themeTemplateId: null,
     overlays: [],
     header: { sections: defaultHeaderSections([]) },
     footer: { sections: defaultFooterSections() },
@@ -203,6 +207,7 @@ function mapShellApiPayload(data: PublicShellApiData, fallbackName: string): Pub
         ? data.theme_body.css
         : null,
     themeContext: typeof data.theme_context === 'string' ? data.theme_context : null,
+    themeTemplateId: Number(data.theme_template_id) > 0 ? Number(data.theme_template_id) : null,
     overlays: Array.isArray(data.overlays) ? data.overlays : [],
     header: normalizeChromePayload(data.header, () => defaultHeaderSections(menuItems)),
     footer: normalizeChromePayload(data.footer, () => defaultFooterSections()),
