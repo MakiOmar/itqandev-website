@@ -83,40 +83,6 @@ input[type='checkbox']:disabled {
   cursor: not-allowed;
 }
 
-/* Public header: readable nav on light vs dark (before / without Tailwind utilities) */
-html.light [data-public-page] header[role='banner'],
-html:not(.dark) [data-public-page] header[role='banner'] {
-  color: #0f172a;
-}
-
-html.light [data-public-page] header[role='banner'] a:not([class*='bg-primary']),
-html.light [data-public-page] header[role='banner'] button:not([class*='bg-primary']),
-html:not(.dark) [data-public-page] header[role='banner'] a:not([class*='bg-primary']),
-html:not(.dark) [data-public-page] header[role='banner'] button:not([class*='bg-primary']) {
-  color: #334155;
-}
-
-html.light [data-public-page] header[role='banner'] a[class*='bg-primary-100'],
-html.light [data-public-page] header[role='banner'] button[class*='bg-primary-100'],
-html:not(.dark) [data-public-page] header[role='banner'] a[class*='bg-primary-100'],
-html:not(.dark) [data-public-page] header[role='banner'] button[class*='bg-primary-100'] {
-  color: #0c4a6e;
-}
-
-.dark [data-public-page] header[role='banner'] {
-  color: #f1f5f9;
-}
-
-.dark [data-public-page] header[role='banner'] a:not([class*='bg-primary']),
-.dark [data-public-page] header[role='banner'] button:not([class*='bg-primary']) {
-  color: #e2e8f0;
-}
-
-.dark [data-public-page] header[role='banner'] a[class*='bg-primary-100'],
-.dark [data-public-page] header[role='banner'] button[class*='bg-primary-100'] {
-  color: #0c4a6e;
-}
-
 a,
 button,
 [role='button'],

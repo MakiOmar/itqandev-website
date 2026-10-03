@@ -8,6 +8,7 @@ import {
   ADMIN_NATIVE_SELECT_CLASS,
 } from '~/lib/admin/native-select-classes';
 import {
+  MAX_BACKDROP_BLUR,
   readBuilderBackground,
   type BuilderBackground,
   type BuilderBackgroundDark,
@@ -399,8 +400,28 @@ export const BuilderBackgroundFields = component$<BuilderBackgroundFieldsProps>(
                 await patch({ rain_color: (e.target as HTMLInputElement).value });
               }}
             />
-          </label>
+            </label>
         </div>
+      ) : null}
+
+      {/* Frosted glass: blurs whatever scrolls behind the node (pair with a translucent colour) */}
+      {bg.type !== 'none' ? (
+        <label class={ADMIN_FORM_LABEL_CLASS}>
+          {translateApp(props.lang, 'builder.background.backdropBlur')} ({bg.backdrop_blur ?? 0}px)
+          <input
+            type="range"
+            min={0}
+            max={MAX_BACKDROP_BLUR}
+            class="mt-1 w-full"
+            value={bg.backdrop_blur ?? 0}
+            onInput$={async (e) => {
+              await patch({ backdrop_blur: Number((e.target as HTMLInputElement).value) });
+            }}
+          />
+          <span class="mt-1 block text-xs font-normal text-slate-500 dark:text-slate-400">
+            {translateApp(props.lang, 'builder.background.backdropBlurHint')}
+          </span>
+        </label>
       ) : null}
     </div>
   );

@@ -23,11 +23,6 @@ export type ChromeLayoutRendererProps = {
   isDarkMode?: boolean;
   /** Extra classes on each band wrapper */
   bandClass?: string;
-  /**
-   * When true, skip band max-width/padding — parent already constrains
-   * (e.g. site Header shell matching marketing `Container` `max-w-6xl`).
-   */
-  embedInParent?: boolean;
 };
 
 /**
@@ -45,16 +40,12 @@ export const ChromeLayoutRenderer = component$<ChromeLayoutRendererProps>((props
     <>
       {bands.map((band) => {
         const boxed = (band.layout_width || 'boxed') !== 'full';
-        const widthClass = props.embedInParent
-          ? 'w-full'
-          : boxed
-            ? 'mx-auto w-full max-w-6xl px-4 sm:px-6 lg:px-8'
-            : 'w-full';
+        const widthClass = boxed ? 'mx-auto w-full max-w-6xl px-4 sm:px-6 lg:px-8' : 'w-full';
         const bandSettings = band.settings;
         const bandStyles = band.styles;
         return (
           <div key={band.id} class={[widthClass, props.bandClass || '', hideOnClass(band.hide_on)].filter(Boolean).join(' ')}>
-            <LayoutNodeShell id={band.id} settings={bandSettings} styles={bandStyles}>
+            <LayoutNodeShell id={band.id} settings={bandSettings} styles={bandStyles} clipContent={false}>
               {(band.rows || []).map((row) => {
                 const stack =
                   row.stack_below === 'tablet'
@@ -70,6 +61,7 @@ export const ChromeLayoutRenderer = component$<ChromeLayoutRendererProps>((props
                     id={row.id}
                     settings={rowSettings}
                     styles={rowStyles}
+                    clipContent={false}
                     class={hideOnClass(row.hide_on)}
                   >
                     <div
@@ -92,6 +84,7 @@ export const ChromeLayoutRenderer = component$<ChromeLayoutRendererProps>((props
                             id={col.id}
                             settings={colSettings}
                             styles={colStyles}
+                            clipContent={false}
                             class={`${columnSpanClassNames(spans)} h-full ${hideOnClass(col.hide_on)}`}
                           >
                             <div class={content.class} style={content.style}>

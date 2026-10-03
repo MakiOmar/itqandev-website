@@ -10,6 +10,8 @@ import {
 } from '~/lib/marketing/builder-styles';
 import { builderDarkStyleCss } from '~/lib/marketing/builder-dark-styles';
 import { ShapeDividerLayer, type ShapeDividerEdge } from './ShapeDividerLayer';
+// `.b-styled` rules for container Style tabs; header/footer shells render on pages without widgets.
+import '~/lib/marketing/builder-widget-styles.css';
 
 export type LayoutNodeShellProps = {
   /** Stable id for scoped custom CSS (`#b-{id}`). */
@@ -19,6 +21,11 @@ export type LayoutNodeShellProps = {
   styles?: BuilderStyles | null;
   /** Shell classes. No `space-*` utilities: background/divider overlays are direct children and would get margins. */
   class?: string;
+  /**
+   * Clip content to the node when it has a background (default). Header/footer shells pass false so
+   * dropdown menus can hang below the bar; the background layer clips itself either way.
+   */
+  clipContent?: boolean;
 };
 
 /**
@@ -47,7 +54,7 @@ export const LayoutNodeShell = component$<LayoutNodeShellProps>((props) => {
       class={[
         'relative w-full min-w-0',
         styled ? 'b-styled' : '',
-        hasBg ? 'overflow-hidden' : '',
+        hasBg && props.clipContent !== false ? 'overflow-hidden' : '',
         sticky ? 'sticky z-30' : '',
         props.class || '',
       ]

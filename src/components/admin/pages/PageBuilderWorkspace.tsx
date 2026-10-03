@@ -2240,8 +2240,9 @@ export const PageBuilderWorkspace = component$<PageBuilderWorkspaceProps>((props
               previewFrameClass(previewDevice.value),
               // Opaque gradients matching the public `body` in site.css, so the admin backdrop never shows through.
               'relative isolate bg-[linear-gradient(135deg,#fafbfc_0%,#f5f7fa_100%)] text-slate-900 shadow-lg transition-[max-width] duration-300 dark:bg-[linear-gradient(135deg,#0f172a_0%,#1e293b_100%)] dark:text-slate-100',
-              // Header/footer strips size to their content; pages keep a tall drop area.
-              previewCtx.surface === 'chrome' ? 'py-3' : 'min-h-[60vh]',
+              // Header/footer strips size to their content; pages keep a tall drop area. The header gets
+              // no padding: like the public site, its bands own every pixel of the bar.
+              previewCtx.surface !== 'chrome' ? 'min-h-[60vh]' : props.exportBuilderKind === 'header' ? '' : 'py-3',
             ].join(' ')}
           >
             <LayoutDeviceProvider device={previewDevice.value}>

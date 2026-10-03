@@ -1456,6 +1456,8 @@
       "rainDown": "Top to bottom",
       "rainUp": "Bottom to top",
       "rainBoth": "Both directions",
+      "backdropBlur": "Backdrop blur",
+      "backdropBlurHint": "Blurs what scrolls behind this area (frosted glass). Use a semi-transparent colour so the blur shows.",
       "title": "Background"
     },
     "colorPicker": {

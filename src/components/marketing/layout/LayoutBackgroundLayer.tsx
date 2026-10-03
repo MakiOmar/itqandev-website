@@ -1,5 +1,6 @@
 import { component$ } from '@builder.io/qwik';
 import {
+  builderBackgroundBackdropStyle,
   builderBackgroundLayerId,
   builderBackgroundOverlayStyle,
   builderBackgroundPaintStyle,
@@ -30,15 +31,17 @@ export const LayoutBackgroundLayer = component$<LayoutBackgroundLayerProps>((pro
   const darkCss = layerId ? builderDarkBackgroundCss(layerId, bg) : null;
   const paint = builderBackgroundPaintStyle(bg);
   const overlay = builderBackgroundOverlayStyle(bg);
+  const backdrop = builderBackgroundBackdropStyle(bg);
 
   return (
     <div
       id={layerId}
       class={[
-        'pointer-events-none absolute inset-0 overflow-hidden',
+        // rounded-[inherit]: follows the node's Style → radius even when the node does not clip.
+        'pointer-events-none absolute inset-0 overflow-hidden rounded-[inherit]',
         props.class || '',
       ].join(' ')}
-      style={builderBackgroundVars(bg)}
+      style={{ ...builderBackgroundVars(bg), ...(backdrop || {}) }}
       aria-hidden="true"
     >
       {darkCss ? <style dangerouslySetInnerHTML={darkCss} /> : null}

@@ -14,20 +14,42 @@ function kitBlock(
   return { id, kind: 'kit', type, enabled: true, settings };
 }
 
-/** Default header: brand | menu | spacer | cta | actions. */
+function hairline(color: string) {
+  return { color, h: 0, v: 1, blur: 0, spread: 0, inset: false };
+}
+
+function barPadding(x: number) {
+  return { top: 12, right: x, bottom: 12, left: x, unit: 'px', linked: false };
+}
+
+/**
+ * Default header: brand | menu | spacer | cta | actions. The bar look (translucent background,
+ * blur, hairline, boxed row) lives on the band/row like `HeaderBuilderService::withDefaultBarStyle`.
+ */
 export function defaultHeaderSections(menuItems: PublicNavItem[] = []): PageSectionNode[] {
   return [
     {
       id: 'band_header_main',
       type: 'layout',
       enabled: true,
-      layout_width: 'boxed',
-      settings: {},
+      layout_width: 'full',
+      settings: {
+        background: { type: 'color', color: '#ffffffe6', backdrop_blur: 12, dark: { color: '#0f172ae6' } },
+      },
+      styles: {
+        desktop: { box_shadow: hairline('#e2e8f0cc') },
+        dark: { box_shadow: hairline('#334155cc') },
+      },
       rows: [
         {
           id: 'band_header_main_row',
           stack_below: 'none',
           gap: 4,
+          styles: {
+            desktop: { max_width: { value: 72, unit: 'rem' }, align: 'center', padding: barPadding(32) },
+            tablet: { padding: barPadding(24) },
+            mobile: { padding: barPadding(16) },
+          },
           columns: [
             {
               id: 'col_header_brand',

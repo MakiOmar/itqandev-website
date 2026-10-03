@@ -40,9 +40,13 @@ export type BuilderBackground = {
   rain_speed?: number;
   rain_density?: number;
   rain_direction?: 'down' | 'up' | 'both';
+  /** Frosted-glass blur (px, 0–40) of what sits behind the node; 0 = off. */
+  backdrop_blur?: number;
   /** Dark-mode colour (and image) overrides; unset keys keep the light value. */
   dark?: BuilderBackgroundDark;
 };
+
+export const MAX_BACKDROP_BLUR = 40;
 
 export type BuilderBackgroundDark = {
   color?: string;
@@ -124,6 +128,7 @@ export function readBuilderBackground(settings: Record<string, unknown> | undefi
     rain_density: clampNum(row.rain_density, 10, 100, 50),
     rain_direction:
       row.rain_direction === 'up' || row.rain_direction === 'both' ? row.rain_direction : 'down',
+    backdrop_blur: clampNum(row.backdrop_blur, 0, MAX_BACKDROP_BLUR, 0),
     dark: readBackgroundDark(row.dark),
   };
 }
@@ -196,6 +201,16 @@ export function builderBackgroundOverlayStyle(bg: BuilderBackground): Record<str
   if (!bg.image_url && !bg.dark?.image_url) return null;
   if ((bg.overlay_opacity ?? 50) <= 0 && (bg.dark?.overlay_opacity ?? 0) <= 0) return null;
   return { backgroundColor: 'var(--bg-overlay)', opacity: 'var(--bg-overlay-opacity)' };
+}
+
+/**
+ * Backdrop blur for the background layer. It sits on the layer, not the node, because
+ * `backdrop-filter` on an ancestor traps `position: fixed` children (e.g. the mobile menu panel).
+ */
+export function builderBackgroundBackdropStyle(bg: BuilderBackground): Record<string, string> | null {
+  const blur = bg.backdrop_blur ?? 0;
+  if (blur <= 0) return null;
+  return { backdropFilter: `blur(${blur}px)`, WebkitBackdropFilter: `blur(${blur}px)` };
 }
 
 export function builderBackgroundLayerId(nodeId: string): string {

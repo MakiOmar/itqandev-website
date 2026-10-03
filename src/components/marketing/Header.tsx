@@ -51,30 +51,19 @@ export const Header = component$<HeaderProps>((props) => {
     }
   });
 
-  const barClass = props.overlayNav
-    ? 'absolute inset-x-0 top-0 z-40 border-b border-transparent bg-transparent'
-    : 'sticky top-0 z-40 border-b border-slate-200/80 dark:border-slate-700/80';
+  // Positioning only: background, border, padding and width come from the header builder bands.
+  const barClass = props.overlayNav ? 'absolute inset-x-0 top-0 z-40' : 'sticky top-0 z-40';
 
   return (
     <header class={barClass} data-site-header>
-      {/* Blur lives on a layer: backdrop-filter on <header> would trap the mobile menu's fixed panel inside the bar */}
-      {props.overlayNav ? null : (
-        <div class="absolute inset-0 -z-10 bg-white/90 backdrop-blur dark:bg-slate-900/90" aria-hidden="true" />
-      )}
-      <div class="relative py-3">
-        {/* Match marketing `Container` default (`max-w-6xl`) — not `max-w-7xl` */}
-        <div class="mx-auto w-full max-w-6xl px-4 sm:px-6 lg:px-8">
-          <ChromeLayoutRenderer
-            sections={sections}
-            uiLocale={uiLang}
-            branding={props.branding}
-            session={props.session}
-            features={props.features}
-            isDarkMode={isDarkMode.value}
-            embedInParent={true}
-          />
-        </div>
-      </div>
+      <ChromeLayoutRenderer
+        sections={sections}
+        uiLocale={uiLang}
+        branding={props.branding}
+        session={props.session}
+        features={props.features}
+        isDarkMode={isDarkMode.value}
+      />
     </header>
   );
 });
