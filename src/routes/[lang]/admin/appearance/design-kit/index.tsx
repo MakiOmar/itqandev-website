@@ -8,6 +8,11 @@ import { getApiClient } from '~/lib/api/client';
 import { API_ENDPOINTS } from '~/lib/api/endpoints';
 import { KIT_BASE_COLORS } from '~/lib/marketing/design-kit';
 import {
+  DesignKitBackgroundEditor,
+  normalizePageBackgrounds,
+  type PageBackgrounds,
+} from '~/components/admin/appearance/DesignKitBackgroundEditor';
+import {
   ADMIN_FORM_CARD_CLASS,
   ADMIN_PRIMARY_BUTTON_CLASS,
 } from '~/lib/admin/native-select-classes';
@@ -20,6 +25,8 @@ type DesignKit = {
   };
   /** Dark values by colour id; a missing id means "same as light". */
   colors_dark?: Record<string, string>;
+  /** Site-wide page background per theme mode. */
+  background: PageBackgrounds;
   type_roles: Record<string, { weight: string; size: string; line_height: string }>;
 };
 
@@ -42,7 +49,8 @@ export default component$(() => {
   useVisibleTask$(async () => {
     try {
       const res = await getApiClient(null).get<DesignKit>(API_ENDPOINTS.APPEARANCE.DESIGN_KIT);
-      kit.value = ((res as { data?: DesignKit }).data ?? res) as DesignKit;
+      const loaded = ((res as { data?: DesignKit }).data ?? res) as DesignKit;
+      kit.value = { ...loaded, background: normalizePageBackgrounds(loaded.background) };
     } catch (e) {
       showError(translateApp(lang, 'common.error'), { text: String((e as Error).message || '') });
     }
@@ -61,12 +69,18 @@ export default component$(() => {
     kit.value = { ...kit.value, colors_dark: dark };
   });
 
+  const setBackground$ = $((next: PageBackgrounds) => {
+    if (!kit.value) return;
+    kit.value = { ...kit.value, background: next };
+  });
+
   const onSave$ = $(async () => {
     if (!kit.value) return;
     saving.value = true;
     try {
       const res = await getApiClient(null).put(API_ENDPOINTS.APPEARANCE.DESIGN_KIT, kit.value);
-      kit.value = (((res as { data?: DesignKit }).data ?? kit.value) as DesignKit);
+      const saved = ((res as { data?: DesignKit }).data ?? kit.value) as DesignKit;
+      kit.value = { ...saved, background: normalizePageBackgrounds(saved.background) };
       await success(translateApp(lang, 'common.saved'));
     } catch (e) {
       await showError(translateApp(lang, 'common.error'), { text: String((e as Error).message || '') });
@@ -154,6 +168,14 @@ export default component$(() => {
             })}
           </tbody>
         </table>
+        {/* Site-wide page background (light / dark) */}
+        <div class="border-t border-gray-100 pt-4 dark:border-gray-800">
+          <DesignKitBackgroundEditor
+            lang={lang}
+            value={kit.value.background}
+            onChange$={setBackground$}
+          />
+        </div>
         <button type="button" class={ADMIN_PRIMARY_BUTTON_CLASS} disabled={saving.value} onClick$={onSave$}>
           {translateApp(lang, 'common.save')}
         </button>

@@ -1466,7 +1466,18 @@
   },
   "designKit": {
     "color": "Colour",
-    "darkHint": "Global colours used in the builders. Set a dark value to change a colour in dark mode; empty dark values keep the light colour."
+    "darkHint": "Global colours used in the builders. Set a dark value to change a colour in dark mode; empty dark values keep the light colour.",
+    "backgroundTitle": "Page background",
+    "backgroundHint": "Background behind every public page, including pages not built with the builder. Sections with their own fill (such as the hero) still cover it.",
+    "backgroundType": "Type",
+    "backgroundType_theme": "Theme default",
+    "backgroundType_color": "Solid colour",
+    "backgroundType_gradient": "Gradient",
+    "backgroundThemeHint": "Uses the built-in theme gradient.",
+    "backgroundColor": "Colour",
+    "backgroundStart": "Start colour",
+    "backgroundEnd": "End colour",
+    "backgroundAngle": "Angle (°)"
   },
   "adminDrawer": {
     "trigger": "Admin links",
