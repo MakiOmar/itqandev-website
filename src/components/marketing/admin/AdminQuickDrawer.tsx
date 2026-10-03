@@ -148,14 +148,14 @@ export const AdminQuickDrawer = component$<AdminQuickDrawerProps>((props) => {
         title={t('shortcut')}
         class={[
           'group fixed top-1/2 z-[70] flex -translate-y-1/2 flex-col items-center gap-2 px-2 py-4',
-          'ltr:right-0 rtl:left-0 ltr:rounded-l-2xl rtl:rounded-r-2xl',
+          'ltr:left-0 rtl:right-0 ltr:rounded-r-2xl rtl:rounded-l-2xl',
           'bg-gradient-to-b from-amber-400 to-amber-600 text-slate-950 shadow-lg shadow-amber-500/30',
           'transition-all duration-300 hover:px-3 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300',
           open.value ? 'pointer-events-none opacity-0' : 'opacity-100',
         ]}
       >
         {/* Pulse ring draws the eye without moving the layout */}
-        <span class="pointer-events-none absolute inset-0 animate-pulse ltr:rounded-l-2xl rtl:rounded-r-2xl ring-2 ring-amber-300/60" aria-hidden="true" />
+        <span class="pointer-events-none absolute inset-0 animate-pulse ltr:rounded-r-2xl rtl:rounded-l-2xl ring-2 ring-amber-300/60" aria-hidden="true" />
         <Icon name="bolt" class="relative h-4 w-4" />
         <span
           class="relative text-[11px] font-bold uppercase tracking-[0.2em]"
@@ -175,7 +175,7 @@ export const AdminQuickDrawer = component$<AdminQuickDrawerProps>((props) => {
         onClick$={() => (open.value = false)}
       />
 
-      {/* Glass drawer panel; slides in from the inline-end edge */}
+      {/* Glass drawer panel; slides in from the inline-start edge (left in LTR, right in RTL) */}
       <aside
         id="admin-quick-drawer"
         role="dialog"
@@ -185,9 +185,9 @@ export const AdminQuickDrawer = component$<AdminQuickDrawerProps>((props) => {
         inert={!open.value}
         class={[
           'fixed inset-y-0 z-[91] flex w-80 flex-col text-slate-200 shadow-2xl sm:w-96',
-          'ltr:right-0 rtl:left-0 ltr:border-l rtl:border-r border-amber-500/30',
+          'ltr:left-0 rtl:right-0 ltr:border-r rtl:border-l border-amber-500/30',
           'transition-transform duration-300 ease-out',
-          open.value ? 'translate-x-0' : 'ltr:translate-x-full rtl:-translate-x-full',
+          open.value ? 'translate-x-0' : 'ltr:-translate-x-full rtl:translate-x-full',
         ]}
         style={{ background: 'rgba(13, 19, 31, 0.88)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)' }}
       >
