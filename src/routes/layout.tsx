@@ -5,7 +5,6 @@ import { auth } from '../lib/auth';
 import { getConfig } from '../lib/config';
 import { NavigationIndicator } from '../components/navigation-indicator/navigation-indicator';
 import { pathnameHasUiLocale, stripUiLocaleFromPathname, uiLangFromPreferredCookie, uiLangPrefixFromPathname, withUiLocale } from '../lib/i18n/ui-locale-path';
-import { getLocalizedRoutes } from '../lib/constants/routes';
 import { PublicDocumentNavContext } from '../lib/marketing/public-document-nav-context';
 
 /**
@@ -91,13 +90,11 @@ export const onGet: RequestHandler = async ({ cacheControl, cookie, url }) => {
  * Checks authentication status and handles redirects
  * Note: This loader runs on all routes, but skips login page and API routes
  */
-export const useAuth = routeLoader$(async ({ cookie, url, redirect: redirectFn }) => {
+export const useAuth = routeLoader$(async ({ cookie, url }) => {
   const pathname = url.pathname;
   const config = getConfig();
   const normalizedPath = pathname.replace(/\/+$/, '') || '/';
   const logicalPath = stripUiLocaleFromPathname(normalizedPath);
-  const lang = uiLangFromPreferredCookie(cookie);
-  const R = getLocalizedRoutes(lang);
 
   const isAdminLoginPage =
     logicalPath === config.routes.admin.login || normalizedPath.endsWith('/admin/login');
@@ -107,20 +104,8 @@ export const useAuth = routeLoader$(async ({ cookie, url, redirect: redirectFn }
   const isPublicRoute = logicalPath === config.routes.public.home || logicalPath.startsWith('/public');
   const isAdminRoute = logicalPath.startsWith(config.routes.admin.prefix);
 
+  // Signed-in visitors are sent to the dashboard by the login route's `onGet`.
   if (isLoginPage) {
-    try {
-      const session = await auth.getSession(cookie);
-      if (session) {
-        throw redirectFn(302, R.ADMIN.HOME);
-      }
-    } catch (error: unknown) {
-      if (error && typeof error === 'object' && 'status' in error && 'location' in error) {
-        throw error;
-      }
-      if (import.meta.env.DEV) {
-        console.warn('Auth check on login page failed, allowing access:', error);
-      }
-    }
     return null;
   }
 

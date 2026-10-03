@@ -1,11 +1,16 @@
 import { component$ } from '@builder.io/qwik';
-import type { DocumentHead } from '@builder.io/qwik-city';
+import type { DocumentHead, RequestHandler } from '@builder.io/qwik-city';
 import { routeAction$, zod$, z } from '@builder.io/qwik-city';
 import { LoginForm } from '../../../../components/auth/LoginForm';
 import { auth } from '../../../../lib/auth';
+import { redirectSignedInFromLogin } from '../../../../lib/loaders/admin-auth';
 import { getConfig } from '../../../../lib/config';
 import { authSessionCookieOptions } from '../../../../lib/auth/session-lifetime';
 import { routesFromPreferredCookie, useAppRoutes } from '../../../../lib/constants/routes';
+
+export const onGet: RequestHandler = async ({ cookie, redirect: redirectFn }) => {
+  await redirectSignedInFromLogin(cookie, redirectFn);
+};
 
 /**
  * Login validation schema

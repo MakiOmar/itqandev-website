@@ -28,10 +28,6 @@ export async function loadAdminAuthSession(
   try {
     const session = await auth.getSession(cookie);
 
-    if (isLoginPage && session) {
-      throw redirectFn(302, R.ADMIN.HOME);
-    }
-
     if (!isLoginPage && !session) {
       throw redirectFn(302, R.ADMIN.LOGIN);
     }
@@ -45,5 +41,26 @@ export async function loadAdminAuthSession(
       throw redirectFn(302, R.ADMIN.LOGIN);
     }
     return null;
+  }
+}
+
+/**
+ * Signed-in visitors on the login page go straight to the dashboard. Runs as the login route's
+ * request handler: a second redirect thrown from a parallel loader turns the HTML response into a 404.
+ */
+export async function redirectSignedInFromLogin(
+  cookie: Cookie,
+  redirectFn: AdminAuthRedirect,
+): Promise<void> {
+  let session: AuthSession | null = null;
+  try {
+    session = await auth.getSession(cookie);
+  } catch (error: unknown) {
+    if (import.meta.env.DEV) {
+      console.warn('Auth check on login page failed, allowing access:', error);
+    }
+  }
+  if (session) {
+    throw redirectFn(302, routesFromPreferredCookie(cookie).ADMIN.HOME);
   }
 }
