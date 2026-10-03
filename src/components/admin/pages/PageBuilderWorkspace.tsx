@@ -2623,7 +2623,8 @@ export const PageBuilderWorkspace = component$<PageBuilderWorkspaceProps>((props
                                 {/* Exact device grid: 12 cols + effective span for active device */}
                                 <div
                                   class={[
-                                    'grid grid-cols-12 items-stretch',
+                                    // h-full: fill a row Style → Height so Vertical align uses the whole row.
+                                    'grid h-full grid-cols-12 items-stretch',
                                     rowGapClass(row.gap),
                                     row.direction === 'column' ? 'flex flex-col' : '',
                                   ].join(' ')}
@@ -2651,7 +2652,10 @@ export const PageBuilderWorkspace = component$<PageBuilderWorkspaceProps>((props
                                         data-builder-node
                                         class={[
                                           previewColSpanClass(effective),
-                                          'group/col relative min-h-12',
+                                          // grid: the shell stretches to the column height, so `h-full`
+                                          // inside resolves and row Vertical align can centre the blocks.
+                                          'group/col relative grid h-full',
+                                          col.blocks.length === 0 ? 'min-h-12' : '',
                                           hiddenOnDeviceClass(col, previewDevice.value),
                                         ].join(' ')}
                                         onClick$={(e, el) => {

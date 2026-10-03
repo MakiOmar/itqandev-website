@@ -414,7 +414,7 @@ function renderLayoutBand(band: PageLayoutBand, props: HomepageSectionsRendererP
             class={`w-full rounded-xl ${hide(row.hide_on)}`}
           >
             <div
-              class={`grid grid-cols-12 items-stretch ${rowGapClass(row.gap)} ${
+              class={`grid h-full grid-cols-12 items-stretch ${rowGapClass(row.gap)} ${
                 row.direction === 'column' ? 'flex flex-col' : ''
               }`}
               style={rowFlexStyle(row)}

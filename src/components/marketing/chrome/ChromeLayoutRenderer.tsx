@@ -66,7 +66,8 @@ export const ChromeLayoutRenderer = component$<ChromeLayoutRendererProps>((props
                   >
                     <div
                       class={[
-                        'grid',
+                        // h-full: fill a row Style → Height so Vertical align uses the whole row.
+                        'grid h-full',
                         stack,
                         rowGapClass(row.gap),
                         row.direction === 'column' ? 'flex flex-col' : '',
