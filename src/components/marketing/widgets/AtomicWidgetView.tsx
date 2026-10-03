@@ -4,7 +4,9 @@ import { Button } from '~/components/marketing/Button';
 import { MarketingImageLightbox } from '~/components/marketing/MarketingImageLightbox';
 import { LottiePlayer } from '~/components/marketing/widgets/LottiePlayer';
 import { TrustBadgesWidget } from '~/components/marketing/widgets/TrustBadgesWidget';
+import { TextLogoWidget } from '~/components/marketing/widgets/TextLogoWidget';
 import { SvgIcon } from '~/components/marketing/SvgIcon';
+import { marketingRoutes } from '~/lib/marketing/constants';
 
 export type AtomicWidgetProps = {
   type: string;
@@ -114,6 +116,8 @@ export const AtomicWidgetView = component$<AtomicWidgetProps>((props) => {
           ) : null}
         </blockquote>
       );
+    case 'text_logo':
+      return <TextLogoWidget settings={s} uiLocale={props.uiLocale} />;
     case 'badge':
       return (
         <span class="aw-c aw-badge inline-block rounded-full bg-primary-100 px-3 py-1 text-xs font-semibold uppercase tracking-wide dark:bg-primary-900/40">

@@ -1,0 +1,266 @@
+/*
+ * Text logo widget: mark tile + brand name (with `[[emphasised]]` run) + tagline.
+ * Style tab values arrive as `--s-logo-*` / `--s-highlight-*` vars (base = mobile, -md / -lg up);
+ * `--tl-d-*` are the theme defaults used when nothing is set.
+ */
+.tl {
+  --tl-d-mark-bg: #0ea5e9;
+  --tl-d-mark-bg-end: #bae6fd;
+  --tl-d-mark-color: #0f172a;
+  --tl-d-mark-shadow: 0 10px 15px -3px rgb(14 165 233 / 0.2), 0 4px 6px -4px rgb(14 165 233 / 0.2);
+  --tl-d-name: #0f172a;
+  --tl-d-em: #0284c7;
+  --tl-d-tagline: #64748b;
+}
+.tl:where(.dark, .dark *):not(:where(.dark .light, .dark .light *)) {
+  --tl-d-name: #ffffff;
+  --tl-d-em: #38bdf8;
+  --tl-d-tagline: #94a3b8;
+}
+
+/* Base (mobile) resolution */
+.tl {
+  --tl-mark-bg: var(--s-logo-mark-bg, var(--tl-d-mark-bg));
+  /* Only a start colour set → solid tile; nothing set → default gradient. */
+  --tl-mark-bg-end: var(--s-logo-mark-bg-end, var(--s-logo-mark-bg, var(--tl-d-mark-bg-end)));
+  --tl-mark-color: var(--s-logo-mark-color, var(--tl-d-mark-color));
+  --tl-mark-size: var(--s-logo-mark-size, 2.5rem);
+  --tl-mark-radius: var(--s-logo-mark-radius, 0.75rem);
+  --tl-mark-fs: var(--s-logo-mark-font-size, 1.25rem);
+  --tl-mark-fw: var(--s-logo-mark-font-weight, 700);
+  --tl-mark-icon: var(--s-logo-mark-icon-size, 1.25rem);
+  --tl-mark-shadow: var(--s-logo-mark-shadow, var(--tl-d-mark-shadow));
+  --tl-gap: var(--s-logo-gap, 0.75rem);
+  --tl-name: var(--s-logo-name-color, var(--tl-d-name));
+  --tl-name-fs: var(--s-logo-name-font-size, 1.25rem);
+  --tl-name-fw: var(--s-logo-name-font-weight, 900);
+  --tl-name-ls: var(--s-logo-name-letter-spacing, 0.05em);
+  --tl-name-tt: var(--s-logo-name-transform, none);
+  --tl-em-start: var(--s-highlight-color, var(--tl-d-em));
+  --tl-em-end: var(--s-highlight-color-end, var(--s-highlight-color, var(--tl-d-em)));
+  --tl-em-fw: var(--s-highlight-font-weight);
+  --tl-em-fs: var(--s-highlight-font-style);
+  --tl-tag: var(--s-logo-tagline-color, var(--tl-d-tagline));
+  --tl-tag-fs: var(--s-logo-tagline-font-size, 0.625rem);
+  --tl-tag-fw: var(--s-logo-tagline-font-weight, 400);
+  --tl-tag-ls: var(--s-logo-tagline-letter-spacing, 0.1em);
+  --tl-tag-tt: var(--s-logo-tagline-transform, uppercase);
+  --tl-tag-mt: var(--s-logo-tagline-spacing, -0.25rem);
+}
+
+@media (min-width: 768px) {
+  .tl {
+    --tl-mark-bg: var(--s-logo-mark-bg-md, var(--s-logo-mark-bg, var(--tl-d-mark-bg)));
+    --tl-mark-bg-end: var(
+      --s-logo-mark-bg-end-md,
+      var(--s-logo-mark-bg-end, var(--s-logo-mark-bg-md, var(--s-logo-mark-bg, var(--tl-d-mark-bg-end))))
+    );
+    --tl-mark-color: var(--s-logo-mark-color-md, var(--s-logo-mark-color, var(--tl-d-mark-color)));
+    --tl-mark-size: var(--s-logo-mark-size-md, var(--s-logo-mark-size, 2.5rem));
+    --tl-mark-radius: var(--s-logo-mark-radius-md, var(--s-logo-mark-radius, 0.75rem));
+    --tl-mark-fs: var(--s-logo-mark-font-size-md, var(--s-logo-mark-font-size, 1.25rem));
+    --tl-mark-fw: var(--s-logo-mark-font-weight-md, var(--s-logo-mark-font-weight, 700));
+    --tl-mark-icon: var(--s-logo-mark-icon-size-md, var(--s-logo-mark-icon-size, 1.25rem));
+    --tl-mark-shadow: var(--s-logo-mark-shadow-md, var(--s-logo-mark-shadow, var(--tl-d-mark-shadow)));
+    --tl-gap: var(--s-logo-gap-md, var(--s-logo-gap, 0.75rem));
+    --tl-name: var(--s-logo-name-color-md, var(--s-logo-name-color, var(--tl-d-name)));
+    --tl-name-fs: var(--s-logo-name-font-size-md, var(--s-logo-name-font-size, 1.25rem));
+    --tl-name-fw: var(--s-logo-name-font-weight-md, var(--s-logo-name-font-weight, 900));
+    --tl-name-ls: var(--s-logo-name-letter-spacing-md, var(--s-logo-name-letter-spacing, 0.05em));
+    --tl-name-tt: var(--s-logo-name-transform-md, var(--s-logo-name-transform, none));
+    --tl-em-start: var(--s-highlight-color-md, var(--s-highlight-color, var(--tl-d-em)));
+    --tl-em-end: var(
+      --s-highlight-color-end-md,
+      var(--s-highlight-color-end, var(--s-highlight-color-md, var(--s-highlight-color, var(--tl-d-em))))
+    );
+    --tl-em-fw: var(--s-highlight-font-weight-md, var(--s-highlight-font-weight));
+    --tl-em-fs: var(--s-highlight-font-style-md, var(--s-highlight-font-style));
+    --tl-tag: var(--s-logo-tagline-color-md, var(--s-logo-tagline-color, var(--tl-d-tagline)));
+    --tl-tag-fs: var(--s-logo-tagline-font-size-md, var(--s-logo-tagline-font-size, 0.625rem));
+    --tl-tag-fw: var(--s-logo-tagline-font-weight-md, var(--s-logo-tagline-font-weight, 400));
+    --tl-tag-ls: var(--s-logo-tagline-letter-spacing-md, var(--s-logo-tagline-letter-spacing, 0.1em));
+    --tl-tag-tt: var(--s-logo-tagline-transform-md, var(--s-logo-tagline-transform, uppercase));
+    --tl-tag-mt: var(--s-logo-tagline-spacing-md, var(--s-logo-tagline-spacing, -0.25rem));
+  }
+}
+
+@media (min-width: 1024px) {
+  .tl {
+    --tl-mark-bg: var(--s-logo-mark-bg-lg, var(--s-logo-mark-bg-md, var(--s-logo-mark-bg, var(--tl-d-mark-bg))));
+    --tl-mark-bg-end: var(
+      --s-logo-mark-bg-end-lg,
+      var(
+        --s-logo-mark-bg-end-md,
+        var(
+          --s-logo-mark-bg-end,
+          var(--s-logo-mark-bg-lg, var(--s-logo-mark-bg-md, var(--s-logo-mark-bg, var(--tl-d-mark-bg-end))))
+        )
+      )
+    );
+    --tl-mark-color: var(
+      --s-logo-mark-color-lg,
+      var(--s-logo-mark-color-md, var(--s-logo-mark-color, var(--tl-d-mark-color)))
+    );
+    --tl-mark-size: var(--s-logo-mark-size-lg, var(--s-logo-mark-size-md, var(--s-logo-mark-size, 2.5rem)));
+    --tl-mark-radius: var(--s-logo-mark-radius-lg, var(--s-logo-mark-radius-md, var(--s-logo-mark-radius, 0.75rem)));
+    --tl-mark-fs: var(
+      --s-logo-mark-font-size-lg,
+      var(--s-logo-mark-font-size-md, var(--s-logo-mark-font-size, 1.25rem))
+    );
+    --tl-mark-fw: var(
+      --s-logo-mark-font-weight-lg,
+      var(--s-logo-mark-font-weight-md, var(--s-logo-mark-font-weight, 700))
+    );
+    --tl-mark-icon: var(
+      --s-logo-mark-icon-size-lg,
+      var(--s-logo-mark-icon-size-md, var(--s-logo-mark-icon-size, 1.25rem))
+    );
+    --tl-mark-shadow: var(
+      --s-logo-mark-shadow-lg,
+      var(--s-logo-mark-shadow-md, var(--s-logo-mark-shadow, var(--tl-d-mark-shadow)))
+    );
+    --tl-gap: var(--s-logo-gap-lg, var(--s-logo-gap-md, var(--s-logo-gap, 0.75rem)));
+    --tl-name: var(--s-logo-name-color-lg, var(--s-logo-name-color-md, var(--s-logo-name-color, var(--tl-d-name))));
+    --tl-name-fs: var(
+      --s-logo-name-font-size-lg,
+      var(--s-logo-name-font-size-md, var(--s-logo-name-font-size, 1.25rem))
+    );
+    --tl-name-fw: var(
+      --s-logo-name-font-weight-lg,
+      var(--s-logo-name-font-weight-md, var(--s-logo-name-font-weight, 900))
+    );
+    --tl-name-ls: var(
+      --s-logo-name-letter-spacing-lg,
+      var(--s-logo-name-letter-spacing-md, var(--s-logo-name-letter-spacing, 0.05em))
+    );
+    --tl-name-tt: var(
+      --s-logo-name-transform-lg,
+      var(--s-logo-name-transform-md, var(--s-logo-name-transform, none))
+    );
+    --tl-em-start: var(--s-highlight-color-lg, var(--s-highlight-color-md, var(--s-highlight-color, var(--tl-d-em))));
+    --tl-em-end: var(
+      --s-highlight-color-end-lg,
+      var(
+        --s-highlight-color-end-md,
+        var(
+          --s-highlight-color-end,
+          var(--s-highlight-color-lg, var(--s-highlight-color-md, var(--s-highlight-color, var(--tl-d-em))))
+        )
+      )
+    );
+    --tl-em-fw: var(
+      --s-highlight-font-weight-lg,
+      var(--s-highlight-font-weight-md, var(--s-highlight-font-weight))
+    );
+    --tl-em-fs: var(
+      --s-highlight-font-style-lg,
+      var(--s-highlight-font-style-md, var(--s-highlight-font-style))
+    );
+    --tl-tag: var(
+      --s-logo-tagline-color-lg,
+      var(--s-logo-tagline-color-md, var(--s-logo-tagline-color, var(--tl-d-tagline)))
+    );
+    --tl-tag-fs: var(
+      --s-logo-tagline-font-size-lg,
+      var(--s-logo-tagline-font-size-md, var(--s-logo-tagline-font-size, 0.625rem))
+    );
+    --tl-tag-fw: var(
+      --s-logo-tagline-font-weight-lg,
+      var(--s-logo-tagline-font-weight-md, var(--s-logo-tagline-font-weight, 400))
+    );
+    --tl-tag-ls: var(
+      --s-logo-tagline-letter-spacing-lg,
+      var(--s-logo-tagline-letter-spacing-md, var(--s-logo-tagline-letter-spacing, 0.1em))
+    );
+    --tl-tag-tt: var(
+      --s-logo-tagline-transform-lg,
+      var(--s-logo-tagline-transform-md, var(--s-logo-tagline-transform, uppercase))
+    );
+    --tl-tag-mt: var(
+      --s-logo-tagline-spacing-lg,
+      var(--s-logo-tagline-spacing-md, var(--s-logo-tagline-spacing, -0.25rem))
+    );
+  }
+}
+
+/* Elements */
+.tl {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--tl-gap);
+  max-width: 100%;
+  text-decoration: none;
+  color: inherit;
+}
+.tl[data-layout='stacked'] {
+  flex-direction: column;
+  align-items: flex-start;
+}
+.tl-mark {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: var(--tl-mark-size);
+  height: var(--tl-mark-size);
+  border-radius: var(--tl-mark-radius);
+  background-color: var(--tl-mark-bg);
+  background-image: linear-gradient(to top right, var(--tl-mark-bg), var(--tl-mark-bg-end));
+  box-shadow: var(--tl-mark-shadow);
+  color: var(--tl-mark-color);
+  font-size: var(--tl-mark-fs);
+  font-weight: var(--tl-mark-fw);
+  line-height: 1;
+  white-space: nowrap;
+  overflow: hidden;
+}
+[dir='rtl'] .tl-mark {
+  background-image: linear-gradient(to top left, var(--tl-mark-bg), var(--tl-mark-bg-end));
+}
+.tl-mark svg,
+.tl-mark img {
+  width: var(--tl-mark-icon);
+  height: var(--tl-mark-icon);
+}
+.tl-text {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+}
+.tl-name {
+  color: var(--tl-name);
+  font-size: var(--tl-name-fs);
+  font-weight: var(--tl-name-fw);
+  letter-spacing: var(--tl-name-ls);
+  text-transform: var(--tl-name-tt);
+  line-height: 1.4;
+  white-space: nowrap;
+}
+.tl-em {
+  font-weight: var(--tl-em-fw);
+  font-style: var(--tl-em-fs);
+  color: var(--tl-em-start);
+  background-image: linear-gradient(90deg, var(--tl-em-start), var(--tl-em-end));
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+[dir='rtl'] .tl-em {
+  background-image: linear-gradient(270deg, var(--tl-em-start), var(--tl-em-end));
+}
+.tl-tagline {
+  display: block;
+  margin-top: var(--tl-tag-mt);
+  color: var(--tl-tag);
+  font-size: var(--tl-tag-fs);
+  font-weight: var(--tl-tag-fw);
+  letter-spacing: var(--tl-tag-ls);
+  text-transform: var(--tl-tag-tt);
+  line-height: 1.5;
+}
+@media (forced-colors: active) {
+  .tl-em {
+    background-image: none;
+    -webkit-text-fill-color: currentColor;
+  }
+}

@@ -55,6 +55,9 @@ export const STYLE_GROUP_ORDER = [
   'highlight',
   'tech',
   'glow',
+  'logo_mark',
+  'logo_name',
+  'logo_tagline',
   'tabs',
   'nav_buttons',
   'link',
@@ -99,6 +102,7 @@ export const WIDGET_STYLE_GROUPS: Record<string, readonly StyleGroupId[]> = {
   ],
   flip_box: ['typography', 'layout', 'spacing', 'border', 'hover', 'custom'],
   trust_badges: ['typography', 'icon', 'spacing', 'border', 'custom'],
+  text_logo: ['logo_mark', 'logo_name', 'highlight', 'logo_tagline', 'layout', 'spacing', 'border', 'custom'],
   button: ['typography', 'layout', 'spacing', 'border', 'hover', 'custom'],
   cta: ['card_box', 'title', 'subtitle', 'btn_primary', 'layout', 'spacing', 'border', 'custom'],
   case_studies: [
@@ -265,10 +269,24 @@ export const HERO_STYLE_KEYS = {
   tech_icon_size: 'length', tech_gap: 'length', tech_label_font_size: 'length',
 } as const satisfies Record<string, 'color' | 'string' | 'length' | 'shadow'>;
 
+/** Text logo mark tile, brand name and tagline; the emphasised name part reuses `highlight_*`. */
+export const LOGO_STYLE_KEYS = {
+  logo_mark_bg: 'color', logo_mark_bg_end: 'color', logo_mark_color: 'color',
+  logo_mark_size: 'length', logo_mark_radius: 'length', logo_mark_font_size: 'length',
+  logo_mark_font_weight: 'string', logo_mark_icon_size: 'length', logo_mark_shadow: 'shadow',
+  logo_gap: 'length',
+  logo_name_color: 'color', logo_name_font_size: 'length', logo_name_font_weight: 'string',
+  logo_name_letter_spacing: 'length', logo_name_transform: 'string',
+  logo_tagline_color: 'color', logo_tagline_font_size: 'length', logo_tagline_font_weight: 'string',
+  logo_tagline_letter_spacing: 'length', logo_tagline_transform: 'string',
+  logo_tagline_spacing: 'length',
+} as const satisfies Record<string, 'color' | 'string' | 'length' | 'shadow'>;
+
 const PART_STYLE_KEYS: Record<string, 'color' | 'string' | 'length' | 'shadow'> = {
   ...CASE_CARD_STYLE_KEYS,
   ...TESTIMONIAL_STYLE_KEYS,
   ...HERO_STYLE_KEYS,
+  ...LOGO_STYLE_KEYS,
 };
 /** Button parts (`btn_primary_*`, `btn_secondary_*`, `btn_card_*`): hero CTAs and the case study card button. */
 export const BUTTON_PARTS = ['btn_primary', 'btn_secondary', 'btn_card'] as const;

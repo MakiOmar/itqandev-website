@@ -186,6 +186,37 @@ const HERO_PART_CONTROLS: StyleControl[] = [
   { key: 'tech_icon_hover_color', group: 'tech', type: 'color' },
 ];
 
+const HEAVY_WEIGHT_OPTIONS = [
+  ...WEIGHT_OPTIONS,
+  { value: '800', labelKey: 'builder.style.weightExtrabold' },
+  { value: '900', labelKey: 'builder.style.weightBlack' },
+];
+
+/** Text logo: mark tile, brand name and tagline (the emphasised part uses the `highlight` group). */
+const LOGO_PART_CONTROLS: StyleControl[] = [
+  { key: 'logo_mark_bg', group: 'logo_mark', type: 'color' },
+  { key: 'logo_mark_bg_end', group: 'logo_mark', type: 'color' },
+  { key: 'logo_mark_color', group: 'logo_mark', type: 'color' },
+  { key: 'logo_mark_size', group: 'logo_mark', type: 'length', min: 16, max: 160 },
+  { key: 'logo_mark_radius', group: 'logo_mark', type: 'length', min: 0, max: 100 },
+  { key: 'logo_mark_font_size', group: 'logo_mark', type: 'length', min: 8, max: 80 },
+  { key: 'logo_mark_font_weight', group: 'logo_mark', type: 'select', options: HEAVY_WEIGHT_OPTIONS },
+  { key: 'logo_mark_icon_size', group: 'logo_mark', type: 'length', min: 8, max: 120 },
+  { key: 'logo_mark_shadow', group: 'logo_mark', type: 'shadow' },
+  { key: 'logo_gap', group: 'logo_mark', type: 'length', min: 0, max: 80 },
+  { key: 'logo_name_font_size', group: 'logo_name', type: 'length', min: 8, max: 96 },
+  { key: 'logo_name_font_weight', group: 'logo_name', type: 'select', options: HEAVY_WEIGHT_OPTIONS },
+  { key: 'logo_name_letter_spacing', group: 'logo_name', type: 'length', min: -5, max: 20 },
+  { key: 'logo_name_transform', group: 'logo_name', type: 'select', options: TRANSFORM_OPTIONS },
+  { key: 'logo_name_color', group: 'logo_name', type: 'color' },
+  { key: 'logo_tagline_font_size', group: 'logo_tagline', type: 'length', min: 6, max: 40 },
+  { key: 'logo_tagline_font_weight', group: 'logo_tagline', type: 'select', options: HEAVY_WEIGHT_OPTIONS },
+  { key: 'logo_tagline_letter_spacing', group: 'logo_tagline', type: 'length', min: -5, max: 20 },
+  { key: 'logo_tagline_transform', group: 'logo_tagline', type: 'select', options: TRANSFORM_OPTIONS },
+  { key: 'logo_tagline_spacing', group: 'logo_tagline', type: 'length', min: -20, max: 40 },
+  { key: 'logo_tagline_color', group: 'logo_tagline', type: 'color' },
+];
+
 /** Full button styling for a button part. The card button spans the card, so it has no min width. */
 function buttonControls(part: ButtonPart): StyleControl[] {
   const controls: StyleControl[] = [
@@ -427,6 +458,7 @@ export const STYLE_CONTROLS: StyleControl[] = [
   ...buttonControls('btn_card'),
   ...TESTIMONIAL_CONTROLS,
   ...HERO_PART_CONTROLS,
+  ...LOGO_PART_CONTROLS,
   { key: 'custom_css', group: 'custom', type: 'textarea' },
 ];
 

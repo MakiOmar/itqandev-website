@@ -1004,7 +1004,8 @@
       "cta": "دعوة لاتخاذ إجراء",
       "form": "نموذج",
       "testimonial_list": "آراء العملاء",
-      "trust_badges": "شارات الثقة"
+      "trust_badges": "شارات الثقة",
+      "text_logo": "شعار نصي"
     },
     "fields": {
       "headline": "العنوان الرئيسي (ضع الكلمات بين [[ ]] لتمييزها)",
@@ -1349,6 +1350,8 @@
       "weightMedium": "متوسط",
       "weightSemibold": "شبه عريض",
       "weightBold": "عريض",
+      "weightExtrabold": "عريض جدًا",
+      "weightBlack": "أسود",
       "transformNone": "بدون",
       "transformUpper": "أحرف كبيرة",
       "transformLower": "أحرف صغيرة",
@@ -1369,6 +1372,12 @@
       "groupBadge": "الشارة",
       "groupHighlight": "النص المميز",
       "groupTech": "منظومة التقنيات",
+      "groupLogoMark": "رمز الشعار",
+      "groupLogoName": "اسم الشعار",
+      "groupLogoTagline": "العبارة التعريفية",
+      "markSize": "حجم الرمز",
+      "markGap": "المسافة بجانب الرمز",
+      "taglineSpacing": "المسافة فوق العبارة التعريفية",
       "highlightColor": "لون التمييز",
       "gradientEndColor": "لون نهاية التدرج",
       "labelColor": "لون العنوان",

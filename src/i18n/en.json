@@ -1004,7 +1004,8 @@
       "cta": "Call to action",
       "form": "Form",
       "testimonial_list": "Testimonials",
-      "trust_badges": "Trust badges"
+      "trust_badges": "Trust badges",
+      "text_logo": "Text logo"
     },
     "fields": {
       "headline": "Headline (wrap words in [[ ]] to highlight)",
@@ -1349,6 +1350,8 @@
       "weightMedium": "Medium",
       "weightSemibold": "Semibold",
       "weightBold": "Bold",
+      "weightExtrabold": "Extra bold",
+      "weightBlack": "Black",
       "transformNone": "None",
       "transformUpper": "Uppercase",
       "transformLower": "Lowercase",
@@ -1369,6 +1372,12 @@
       "groupBadge": "Badge",
       "groupHighlight": "Highlighted text",
       "groupTech": "Tech ecosystem",
+      "groupLogoMark": "Logo mark",
+      "groupLogoName": "Logo name",
+      "groupLogoTagline": "Tagline",
+      "markSize": "Mark size",
+      "markGap": "Space beside mark",
+      "taglineSpacing": "Space above tagline",
       "highlightColor": "Highlight colour",
       "gradientEndColor": "Gradient end colour",
       "labelColor": "Label colour",
