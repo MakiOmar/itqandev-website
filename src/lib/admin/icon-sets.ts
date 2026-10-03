@@ -1,5 +1,6 @@
 import lucideIconsUrl from '@iconify-json/lucide/icons.json?url';
-import type { IconSetLibrary, SetIconValue } from '~/lib/icons/icon-value';
+import simpleIconsUrl from '@iconify-json/simple-icons/icons.json?url';
+import { isSafeIconBody, type IconSetLibrary, type SetIconValue } from '~/lib/icons/icon-value';
 
 type IconifyJson = {
   width?: number;
@@ -15,6 +16,7 @@ export type LoadedIconSet = {
 /** Admin-only: the set JSON is a hashed static asset on our own origin, fetched on first picker open. */
 const SET_URLS: Record<IconSetLibrary, string> = {
   lucide: lucideIconsUrl,
+  'simple-icons': simpleIconsUrl,
 };
 
 const cache = new Map<IconSetLibrary, Promise<LoadedIconSet>>();
@@ -28,7 +30,10 @@ export function loadIconSet(library: IconSetLibrary): Promise<LoadedIconSet> {
         return res.json() as Promise<IconifyJson>;
       })
       .then((json) => ({
-        names: Object.keys(json.icons).sort(),
+        // A few brand logos exceed the body size limit; hide anything the save allowlist would reject.
+        names: Object.keys(json.icons)
+          .filter((name) => isSafeIconBody(json.icons[name]!.body))
+          .sort(),
         icon: (name: string) => {
           const row = json.icons[name];
           if (!row) return null;

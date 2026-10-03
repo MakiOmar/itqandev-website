@@ -51,6 +51,9 @@ export const STYLE_GROUP_ORDER = [
   'subtitle',
   'btn_primary',
   'btn_secondary',
+  'badge',
+  'highlight',
+  'tech',
   'glow',
   'tabs',
   'nav_buttons',
@@ -90,7 +93,10 @@ export const WIDGET_STYLE_GROUPS: Record<string, readonly StyleGroupId[]> = {
   image_text: ['typography', 'layout', 'spacing', 'image', 'border', 'hover', 'caption', 'custom'],
   gallery: ['layout', 'spacing', 'image', 'border', 'hover', 'caption', 'custom'],
   lottie: ['layout', 'spacing', 'border', 'custom'],
-  hero: ['typography', 'btn_primary', 'btn_secondary', 'glow', 'layout', 'spacing', 'border', 'hover', 'custom'],
+  hero: [
+    'typography', 'badge', 'highlight', 'btn_primary', 'btn_secondary', 'tech', 'glow',
+    'layout', 'spacing', 'border', 'hover', 'custom',
+  ],
   flip_box: ['typography', 'layout', 'spacing', 'border', 'hover', 'custom'],
   trust_badges: ['typography', 'icon', 'spacing', 'border', 'custom'],
   button: ['typography', 'layout', 'spacing', 'border', 'hover', 'custom'],
@@ -248,11 +254,22 @@ export const TESTIMONIAL_STYLE_KEYS = {
   avatar_size: 'length', avatar_radius: 'length', avatar_ring_width: 'length', avatar_ring_color: 'color',
 } as const satisfies Record<string, 'color' | 'string' | 'length' | 'shadow'>;
 
+/** Hero badge pill, highlighted headline run and tech ecosystem row. */
+export const HERO_STYLE_KEYS = {
+  badge_color: 'color', badge_bg: 'color', badge_border_color: 'color', badge_icon_color: 'color',
+  badge_font_size: 'length', badge_icon_size: 'length', badge_radius: 'length',
+  badge_font_weight: 'string', badge_transform: 'string',
+  highlight_color: 'color', highlight_color_end: 'color',
+  highlight_font_weight: 'string', highlight_font_style: 'string',
+  tech_label_color: 'color', tech_icon_color: 'color', tech_icon_hover_color: 'color', tech_divider_color: 'color',
+  tech_icon_size: 'length', tech_gap: 'length', tech_label_font_size: 'length',
+} as const satisfies Record<string, 'color' | 'string' | 'length' | 'shadow'>;
+
 const PART_STYLE_KEYS: Record<string, 'color' | 'string' | 'length' | 'shadow'> = {
   ...CASE_CARD_STYLE_KEYS,
   ...TESTIMONIAL_STYLE_KEYS,
+  ...HERO_STYLE_KEYS,
 };
-
 /** Button parts (`btn_primary_*`, `btn_secondary_*`, `btn_card_*`): hero CTAs and the case study card button. */
 export const BUTTON_PARTS = ['btn_primary', 'btn_secondary', 'btn_card'] as const;
 export type ButtonPart = (typeof BUTTON_PARTS)[number];

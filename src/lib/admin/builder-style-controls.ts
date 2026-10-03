@@ -162,6 +162,30 @@ const TESTIMONIAL_CONTROLS: StyleControl[] = [
   { key: 'avatar_ring_color', group: 'avatar', type: 'color' },
 ];
 
+/** Hero badge pill, `[[highlighted]]` headline run and tech ecosystem row. */
+const HERO_PART_CONTROLS: StyleControl[] = [
+  { key: 'badge_font_size', group: 'badge', type: 'length', min: 8, max: 32 },
+  { key: 'badge_font_weight', group: 'badge', type: 'select', options: WEIGHT_OPTIONS },
+  { key: 'badge_transform', group: 'badge', type: 'select', options: TRANSFORM_OPTIONS },
+  { key: 'badge_color', group: 'badge', type: 'color' },
+  { key: 'badge_bg', group: 'badge', type: 'color' },
+  { key: 'badge_border_color', group: 'badge', type: 'color' },
+  { key: 'badge_icon_color', group: 'badge', type: 'color' },
+  { key: 'badge_icon_size', group: 'badge', type: 'length', min: 8, max: 48 },
+  { key: 'badge_radius', group: 'badge', type: 'length', min: 0, max: 100 },
+  { key: 'highlight_color', group: 'highlight', type: 'color' },
+  { key: 'highlight_color_end', group: 'highlight', type: 'color' },
+  { key: 'highlight_font_weight', group: 'highlight', type: 'select', options: WEIGHT_OPTIONS },
+  { key: 'highlight_font_style', group: 'highlight', type: 'select', options: FONT_STYLE_OPTIONS },
+  { key: 'tech_label_font_size', group: 'tech', type: 'length', min: 8, max: 32 },
+  { key: 'tech_label_color', group: 'tech', type: 'color' },
+  { key: 'tech_divider_color', group: 'tech', type: 'color' },
+  { key: 'tech_icon_size', group: 'tech', type: 'length', min: 12, max: 96 },
+  { key: 'tech_gap', group: 'tech', type: 'length', min: 0, max: 96 },
+  { key: 'tech_icon_color', group: 'tech', type: 'color' },
+  { key: 'tech_icon_hover_color', group: 'tech', type: 'color' },
+];
+
 /** Full button styling for a button part. The card button spans the card, so it has no min width. */
 function buttonControls(part: ButtonPart): StyleControl[] {
   const controls: StyleControl[] = [
@@ -402,6 +426,7 @@ export const STYLE_CONTROLS: StyleControl[] = [
   ...CASE_CARD_CONTROLS,
   ...buttonControls('btn_card'),
   ...TESTIMONIAL_CONTROLS,
+  ...HERO_PART_CONTROLS,
   { key: 'custom_css', group: 'custom', type: 'textarea' },
 ];
 

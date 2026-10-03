@@ -18,6 +18,8 @@ import { particlesConfigKey, resolveHeroParticlesConfig } from '~/lib/marketing/
 import { LazyParticlesBackground } from '~/components/marketing/LazyParticlesBackground';
 import { isUiLocaleRtl } from '~/lib/i18n/ui-locale-segments';
 import { HeroWatermark } from './HeroWatermark';
+import { HeroBadge, HeroHeadlineText, HeroTechRow, normalizeHeroTechItems } from './HeroParts';
+import { stripHighlightMarkers } from '~/lib/marketing/highlighted-text';
 import type { CaseStudy, Testimonial, BlogPost, Service } from '~/lib/marketing/types';
 import type { PortfolioCategory } from '~/lib/marketing/content-layer';
 import type { HeroFloatingIcon } from '~/lib/marketing/appearance-types';
@@ -28,6 +30,7 @@ import caseStudiesStyles from '~/components/marketing/widgets/case-studies.css?i
 import sectionHeadingStyles from '~/components/marketing/widgets/section-heading.css?inline';
 import heroButtonStyles from '~/components/marketing/widgets/hero-buttons.css?inline';
 import heroGlowStyles from '~/components/marketing/widgets/hero-glow.css?inline';
+import heroPartsStyles from '~/components/marketing/widgets/hero-parts.css?inline';
 import ctaWidgetStyles from '~/components/marketing/widgets/cta-widget.css?inline';
 import atomicWidgetStyles from '~/components/marketing/widgets/atomic-widgets.css?inline';
 
@@ -110,9 +113,14 @@ const HERO_BTN_BASE =
 export const HeroHomeSection = component$<HomeSectionSharedProps>(({ settings, uiLocale, embedded }) => {
   useStyles$(heroButtonStyles);
   useStyles$(heroGlowStyles);
+  useStyles$(heroPartsStyles);
   useStyles$(atomicWidgetStyles);
   const routes = marketingRoutes(uiLocale);
   const headline = settingString(settings, 'headline', 'We build web, Android & iOS apps that scale');
+  // Saved heroes predating these options have no flags: keep them off rather than injecting defaults.
+  const badgeEnabled = settingBool(settings, 'badge_enabled');
+  const techEnabled = settingBool(settings, 'tech_enabled');
+  const techItems = techEnabled ? normalizeHeroTechItems(settings?.tech_icons) : [];
   const subheadline = settingString(
     settings,
     'subheadline',
@@ -124,7 +132,7 @@ export const HeroHomeSection = component$<HomeSectionSharedProps>(({ settings, u
   const imageMobileRaw = settingString(settings, 'image_mobile', '/hero-banner-mobile.webp');
   const image = resolveLaravelMediaUrl(imageRaw) || imageRaw;
   const imageMobile = resolveLaravelMediaUrl(imageMobileRaw) || imageMobileRaw;
-  const imageAlt = settingOptionalString(settings, 'image_alt') || headline;
+  const imageAlt = settingOptionalString(settings, 'image_alt') || stripHighlightMarkers(headline);
 
   const fullViewport = settingBool(settings, 'full_viewport');
   // Allow 0 so nav can sit flush; clamp to registry range (0–200).
@@ -194,8 +202,12 @@ export const HeroHomeSection = component$<HomeSectionSharedProps>(({ settings, u
         <div class="grid items-center gap-10 lg:grid-cols-2 lg:gap-12 xl:gap-16">
           <AnimatedReveal>
             <div class="mx-auto max-w-2xl text-center lg:mx-0 lg:max-w-xl lg:text-start">
+              {/* Badge pill above the headline */}
+              {badgeEnabled ? (
+                <HeroBadge text={settingOptionalString(settings, 'badge_text')} icon={settings?.badge_icon} />
+              ) : null}
               <h1 class="aw-c aw-heading text-4xl font-bold tracking-tight sm:text-5xl lg:text-6xl">
-                {headline}
+                <HeroHeadlineText text={headline} />
               </h1>
               <p class="aw-c aw-text mt-6 text-lg sm:text-xl">{subheadline}</p>
               <div class="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row lg:justify-start">
@@ -206,6 +218,14 @@ export const HeroHomeSection = component$<HomeSectionSharedProps>(({ settings, u
                   {secondaryCta}
                 </a>
               </div>
+              {/* Tech ecosystem row: optional divider, label and brand icons */}
+              {techEnabled ? (
+                <HeroTechRow
+                  label={settingOptionalString(settings, 'tech_label')}
+                  divider={settings?.tech_divider === undefined || settingBool(settings, 'tech_divider')}
+                  items={techItems}
+                />
+              ) : null}
             </div>
           </AnimatedReveal>
           <AnimatedReveal delay={100}>

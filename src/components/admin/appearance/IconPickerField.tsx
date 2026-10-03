@@ -3,7 +3,7 @@ import { ColorPickerField } from '~/components/admin/ColorPickerField';
 import { MediaSelector } from '~/components/common/MediaSelector';
 import { SvgIcon } from '~/components/marketing/SvgIcon';
 import { loadIconSet, type LoadedIconSet } from '~/lib/admin/icon-sets';
-import { iconValueLabel, parseIconValue, type IconValue } from '~/lib/icons/icon-value';
+import { iconValueLabel, parseIconValue, type IconSetLibrary, type IconValue } from '~/lib/icons/icon-value';
 import { translateApp } from '~/lib/i18n/useTranslate';
 import { showError } from '~/lib/utils/toast';
 import type { Media } from '~/types/media';
@@ -21,7 +21,13 @@ const MAX_VISIBLE = 240;
 const BTN =
   'rounded-lg border border-gray-300 px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50 dark:border-gray-600 dark:text-gray-200 dark:hover:bg-slate-800';
 
-/** Elementor-style icon control: bundled Lucide set (self-hosted) or an uploaded SVG from the media library. */
+/** Library tabs in the picker dialog: general UI icons and brand logos, both self-hosted. */
+const LIBRARY_TABS: ReadonlyArray<{ id: IconSetLibrary; labelKey: string }> = [
+  { id: 'lucide', labelKey: 'libraryIcons' },
+  { id: 'simple-icons', labelKey: 'libraryBrands' },
+];
+
+/** Elementor-style icon control: bundled sets (Lucide, Simple Icons brands) or an uploaded SVG from the media library. */
 export const IconPickerField = component$<IconPickerFieldProps>((props) => {
   const libraryOpen = useSignal(false);
   const uploadOpen = useSignal(false);
@@ -29,15 +35,19 @@ export const IconPickerField = component$<IconPickerFieldProps>((props) => {
   const status = useSignal<'idle' | 'loading' | 'ready' | 'error'>('idle');
   const iconSet = useSignal<NoSerialize<LoadedIconSet>>();
   const current = parseIconValue(props.value);
+  const currentSetIcon = current && current.library !== 'svg' ? current : null;
+  const activeLibrary = useSignal<IconSetLibrary>(currentSetIcon?.library ?? 'lucide');
+  const loadedLibrary = useSignal<IconSetLibrary | null>(null);
   const t = (key: string, params?: Record<string, string | number>) =>
     translateApp(props.lang, `appearance.iconPicker.${key}`, params);
 
-  const openLibrary$ = $(async () => {
-    libraryOpen.value = true;
-    if (iconSet.value) return;
+  const loadLibrary$ = $(async (library: IconSetLibrary) => {
+    activeLibrary.value = library;
+    if (iconSet.value && loadedLibrary.value === library) return;
     status.value = 'loading';
     try {
-      iconSet.value = noSerialize(await loadIconSet('lucide'));
+      iconSet.value = noSerialize(await loadIconSet(library));
+      loadedLibrary.value = library;
       status.value = 'ready';
     } catch (err) {
       console.error('Icon library failed to load', err);
@@ -46,16 +56,22 @@ export const IconPickerField = component$<IconPickerFieldProps>((props) => {
     }
   });
 
+  const openLibrary$ = $(async () => {
+    libraryOpen.value = true;
+    await loadLibrary$(activeLibrary.value);
+  });
+
   const choose$ = $(async (name: string) => {
     const icon = iconSet.value?.icon(name);
     if (!icon) return;
     libraryOpen.value = false;
-    const color = current?.library === 'lucide' ? current.color : undefined;
+    const color = currentSetIcon?.color;
     await props.onChange$(color ? { ...icon, color } : icon);
   });
 
   const setColor$ = $(async (next: string) => {
-    if (current?.library !== 'lucide') return;
+    const current = parseIconValue(props.value);
+    if (!current || current.library === 'svg') return;
     const { color: _previous, ...rest } = current;
     await props.onChange$(next ? { ...rest, color: next } : rest);
   });
@@ -93,10 +109,10 @@ export const IconPickerField = component$<IconPickerFieldProps>((props) => {
       </div>
 
       {/* Icon colour: library icons draw with currentColor; uploaded images keep their own colours */}
-      {current?.library === 'lucide' ? (
+      {currentSetIcon ? (
         <div class="mt-2 flex items-center gap-2">
           <ColorPickerField
-            value={current.color || ''}
+            value={currentSetIcon.color || ''}
             onChange$={setColor$}
             lang={props.lang}
             clearable
@@ -105,8 +121,8 @@ export const IconPickerField = component$<IconPickerFieldProps>((props) => {
             class="h-8 w-10"
           />
           <span class="text-xs text-gray-600 dark:text-gray-300">{t('color')}</span>
-          <span class="text-[11px] text-gray-400">{current.color || t('colorInherit')}</span>
-          {current.color ? (
+          <span class="text-[11px] text-gray-400">{currentSetIcon.color || t('colorInherit')}</span>
+          {currentSetIcon.color ? (
             <button
               type="button"
               class="text-[11px] font-medium text-primary-600 hover:underline dark:text-primary-400"
@@ -154,6 +170,29 @@ export const IconPickerField = component$<IconPickerFieldProps>((props) => {
                 ×
               </button>
             </div>
+            {/* Library tabs: UI icons / brand logos */}
+            <div class="flex gap-1 border-b border-gray-200 px-4 pt-2 dark:border-gray-700" role="tablist">
+              {LIBRARY_TABS.map((tab) => {
+                const active = activeLibrary.value === tab.id;
+                return (
+                  <button
+                    key={tab.id}
+                    type="button"
+                    role="tab"
+                    aria-selected={active}
+                    class={[
+                      '-mb-px border-b-2 px-3 py-2 text-xs font-medium transition',
+                      active
+                        ? 'border-primary-500 text-primary-600 dark:text-primary-400'
+                        : 'border-transparent text-gray-500 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-100',
+                    ].join(' ')}
+                    onClick$={() => loadLibrary$(tab.id)}
+                  >
+                    {t(tab.labelKey)}
+                  </button>
+                );
+              })}
+            </div>
             <div class="min-h-[12rem] overflow-y-auto p-4">
               {status.value === 'loading' ? (
                 <p class="py-10 text-center text-sm text-gray-500">{t('loading')}</p>
@@ -171,7 +210,7 @@ export const IconPickerField = component$<IconPickerFieldProps>((props) => {
                   <ul class="grid grid-cols-5 gap-2 sm:grid-cols-8 md:grid-cols-10" role="list">
                     {visible.map((name) => {
                       const icon = iconSet.value?.icon(name);
-                      const selected = current?.library === 'lucide' && current.name === name;
+                      const selected = currentSetIcon?.library === activeLibrary.value && currentSetIcon.name === name;
                       return (
                         <li key={name}>
                           <button

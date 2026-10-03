@@ -1,0 +1,261 @@
+/*
+ * Hero badge, highlighted headline run and tech ecosystem row. `--s-badge-*`, `--s-highlight-*`
+ * and `--s-tech-*` come from the hero Style tab (Badge / Highlight / Tech groups), resolved per
+ * breakpoint (base = mobile, -md = tablet, -lg = desktop). `--hh-d-*` are theme defaults (light / dark).
+ */
+.hh-badge {
+  --hh-d-badge-color: #075985;
+  --hh-d-badge-bg: rgb(224 242 254 / 0.7);
+  --hh-d-badge-border: #bae6fd;
+  --hh-d-badge-icon: #0284c7;
+}
+.hh-mark {
+  --hh-d-mark: #0284c7;
+  --hh-d-mark-end: #06b6d4;
+}
+.hh-tech {
+  --hh-d-tech-label: #64748b;
+  --hh-d-tech-icon: #94a3b8;
+  --hh-d-tech-hover: #0284c7;
+  --hh-d-tech-divider: #e2e8f0;
+}
+.hh-badge:where(.dark, .dark *):not(:where(.dark .light, .dark .light *)) {
+  --hh-d-badge-color: #bae6fd;
+  --hh-d-badge-bg: rgb(8 47 73 / 0.5);
+  --hh-d-badge-border: rgb(56 189 248 / 0.35);
+  --hh-d-badge-icon: #38bdf8;
+}
+.hh-mark:where(.dark, .dark *):not(:where(.dark .light, .dark .light *)) {
+  --hh-d-mark: #38bdf8;
+  --hh-d-mark-end: #22d3ee;
+}
+.hh-tech:where(.dark, .dark *):not(:where(.dark .light, .dark .light *)) {
+  --hh-d-tech-label: #94a3b8;
+  --hh-d-tech-icon: #64748b;
+  --hh-d-tech-hover: #38bdf8;
+  --hh-d-tech-divider: rgb(51 65 85 / 0.8);
+}
+
+/* Base (mobile) resolution of Style tab values */
+.hh-badge {
+  --hh-badge-color: var(--s-badge-color, var(--hh-d-badge-color));
+  --hh-badge-bg: var(--s-badge-bg, var(--hh-d-badge-bg));
+  --hh-badge-border: var(--s-badge-border-color, var(--hh-d-badge-border));
+  --hh-badge-icon: var(--s-badge-icon-color, var(--hh-d-badge-icon));
+  --hh-badge-fs: var(--s-badge-font-size, 0.8125rem);
+  --hh-badge-icon-size: var(--s-badge-icon-size, 1rem);
+  --hh-badge-radius: var(--s-badge-radius, 9999px);
+  --hh-badge-fw: var(--s-badge-font-weight, 600);
+  --hh-badge-tt: var(--s-badge-transform, none);
+}
+.hh-mark {
+  --hh-mark-start: var(--s-highlight-color, var(--hh-d-mark));
+  /* Only a start colour set → solid run; nothing set → default gradient. */
+  --hh-mark-end: var(--s-highlight-color-end, var(--s-highlight-color, var(--hh-d-mark-end)));
+  --hh-mark-fw: var(--s-highlight-font-weight);
+  --hh-mark-fs: var(--s-highlight-font-style);
+}
+.hh-tech {
+  --hh-tech-label: var(--s-tech-label-color, var(--hh-d-tech-label));
+  --hh-tech-icon: var(--s-tech-icon-color, var(--hh-d-tech-icon));
+  --hh-tech-hover: var(--s-tech-icon-hover-color, var(--hh-d-tech-hover));
+  --hh-tech-divider: var(--s-tech-divider-color, var(--hh-d-tech-divider));
+  --hh-tech-icon-size: var(--s-tech-icon-size, 1.75rem);
+  --hh-tech-gap: var(--s-tech-gap, 1.25rem);
+  --hh-tech-label-fs: var(--s-tech-label-font-size, 0.75rem);
+}
+
+@media (min-width: 768px) {
+  .hh-badge {
+    --hh-badge-color: var(--s-badge-color-md, var(--s-badge-color, var(--hh-d-badge-color)));
+    --hh-badge-bg: var(--s-badge-bg-md, var(--s-badge-bg, var(--hh-d-badge-bg)));
+    --hh-badge-border: var(--s-badge-border-color-md, var(--s-badge-border-color, var(--hh-d-badge-border)));
+    --hh-badge-icon: var(--s-badge-icon-color-md, var(--s-badge-icon-color, var(--hh-d-badge-icon)));
+    --hh-badge-fs: var(--s-badge-font-size-md, var(--s-badge-font-size, 0.8125rem));
+    --hh-badge-icon-size: var(--s-badge-icon-size-md, var(--s-badge-icon-size, 1rem));
+    --hh-badge-radius: var(--s-badge-radius-md, var(--s-badge-radius, 9999px));
+    --hh-badge-fw: var(--s-badge-font-weight-md, var(--s-badge-font-weight, 600));
+    --hh-badge-tt: var(--s-badge-transform-md, var(--s-badge-transform, none));
+  }
+  .hh-mark {
+    --hh-mark-start: var(--s-highlight-color-md, var(--s-highlight-color, var(--hh-d-mark)));
+    --hh-mark-end: var(
+      --s-highlight-color-end-md,
+      var(--s-highlight-color-end, var(--s-highlight-color-md, var(--s-highlight-color, var(--hh-d-mark-end))))
+    );
+    --hh-mark-fw: var(--s-highlight-font-weight-md, var(--s-highlight-font-weight));
+    --hh-mark-fs: var(--s-highlight-font-style-md, var(--s-highlight-font-style));
+  }
+  .hh-tech {
+    --hh-tech-label: var(--s-tech-label-color-md, var(--s-tech-label-color, var(--hh-d-tech-label)));
+    --hh-tech-icon: var(--s-tech-icon-color-md, var(--s-tech-icon-color, var(--hh-d-tech-icon)));
+    --hh-tech-hover: var(--s-tech-icon-hover-color-md, var(--s-tech-icon-hover-color, var(--hh-d-tech-hover)));
+    --hh-tech-divider: var(--s-tech-divider-color-md, var(--s-tech-divider-color, var(--hh-d-tech-divider)));
+    --hh-tech-icon-size: var(--s-tech-icon-size-md, var(--s-tech-icon-size, 1.75rem));
+    --hh-tech-gap: var(--s-tech-gap-md, var(--s-tech-gap, 1.25rem));
+    --hh-tech-label-fs: var(--s-tech-label-font-size-md, var(--s-tech-label-font-size, 0.75rem));
+  }
+}
+
+@media (min-width: 1024px) {
+  .hh-badge {
+    --hh-badge-color: var(--s-badge-color-lg, var(--s-badge-color-md, var(--s-badge-color, var(--hh-d-badge-color))));
+    --hh-badge-bg: var(--s-badge-bg-lg, var(--s-badge-bg-md, var(--s-badge-bg, var(--hh-d-badge-bg))));
+    --hh-badge-border: var(
+      --s-badge-border-color-lg,
+      var(--s-badge-border-color-md, var(--s-badge-border-color, var(--hh-d-badge-border)))
+    );
+    --hh-badge-icon: var(
+      --s-badge-icon-color-lg,
+      var(--s-badge-icon-color-md, var(--s-badge-icon-color, var(--hh-d-badge-icon)))
+    );
+    --hh-badge-fs: var(--s-badge-font-size-lg, var(--s-badge-font-size-md, var(--s-badge-font-size, 0.8125rem)));
+    --hh-badge-icon-size: var(--s-badge-icon-size-lg, var(--s-badge-icon-size-md, var(--s-badge-icon-size, 1rem)));
+    --hh-badge-radius: var(--s-badge-radius-lg, var(--s-badge-radius-md, var(--s-badge-radius, 9999px)));
+    --hh-badge-fw: var(--s-badge-font-weight-lg, var(--s-badge-font-weight-md, var(--s-badge-font-weight, 600)));
+    --hh-badge-tt: var(--s-badge-transform-lg, var(--s-badge-transform-md, var(--s-badge-transform, none)));
+  }
+  .hh-mark {
+    --hh-mark-start: var(
+      --s-highlight-color-lg,
+      var(--s-highlight-color-md, var(--s-highlight-color, var(--hh-d-mark)))
+    );
+    --hh-mark-end: var(
+      --s-highlight-color-end-lg,
+      var(
+        --s-highlight-color-end-md,
+        var(
+          --s-highlight-color-end,
+          var(--s-highlight-color-lg, var(--s-highlight-color-md, var(--s-highlight-color, var(--hh-d-mark-end))))
+        )
+      )
+    );
+    --hh-mark-fw: var(
+      --s-highlight-font-weight-lg,
+      var(--s-highlight-font-weight-md, var(--s-highlight-font-weight))
+    );
+    --hh-mark-fs: var(
+      --s-highlight-font-style-lg,
+      var(--s-highlight-font-style-md, var(--s-highlight-font-style))
+    );
+  }
+  .hh-tech {
+    --hh-tech-label: var(
+      --s-tech-label-color-lg,
+      var(--s-tech-label-color-md, var(--s-tech-label-color, var(--hh-d-tech-label)))
+    );
+    --hh-tech-icon: var(
+      --s-tech-icon-color-lg,
+      var(--s-tech-icon-color-md, var(--s-tech-icon-color, var(--hh-d-tech-icon)))
+    );
+    --hh-tech-hover: var(
+      --s-tech-icon-hover-color-lg,
+      var(--s-tech-icon-hover-color-md, var(--s-tech-icon-hover-color, var(--hh-d-tech-hover)))
+    );
+    --hh-tech-divider: var(
+      --s-tech-divider-color-lg,
+      var(--s-tech-divider-color-md, var(--s-tech-divider-color, var(--hh-d-tech-divider)))
+    );
+    --hh-tech-icon-size: var(--s-tech-icon-size-lg, var(--s-tech-icon-size-md, var(--s-tech-icon-size, 1.75rem)));
+    --hh-tech-gap: var(--s-tech-gap-lg, var(--s-tech-gap-md, var(--s-tech-gap, 1.25rem)));
+    --hh-tech-label-fs: var(
+      --s-tech-label-font-size-lg,
+      var(--s-tech-label-font-size-md, var(--s-tech-label-font-size, 0.75rem))
+    );
+  }
+}
+
+/* Badge pill above the headline */
+.hh-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 1.5rem;
+  padding: 0.375rem 0.875rem;
+  border: 1px solid var(--hh-badge-border);
+  border-radius: var(--hh-badge-radius);
+  background-color: var(--hh-badge-bg);
+  color: var(--hh-badge-color);
+  font-size: var(--hh-badge-fs);
+  font-weight: var(--hh-badge-fw);
+  line-height: 1.25;
+  text-transform: var(--hh-badge-tt);
+  letter-spacing: 0.01em;
+}
+.hh-badge-icon {
+  width: var(--hh-badge-icon-size);
+  height: var(--hh-badge-icon-size);
+  color: var(--hh-badge-icon);
+}
+
+/* Highlighted headline run: gradient text (solid when start = end) */
+.hh-mark {
+  font-weight: var(--hh-mark-fw);
+  font-style: var(--hh-mark-fs);
+  color: var(--hh-mark-start);
+  background-image: linear-gradient(90deg, var(--hh-mark-start), var(--hh-mark-end));
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+}
+[dir='rtl'] .hh-mark {
+  background-image: linear-gradient(270deg, var(--hh-mark-start), var(--hh-mark-end));
+}
+@media (forced-colors: active) {
+  .hh-mark {
+    background-image: none;
+    -webkit-text-fill-color: currentColor;
+  }
+}
+
+/* Tech ecosystem row under the CTAs */
+.hh-tech {
+  margin-top: 2.5rem;
+}
+.hh-tech-divided {
+  padding-top: 2rem;
+  border-top: 1px solid var(--hh-tech-divider);
+}
+.hh-tech-label {
+  margin-bottom: 1rem;
+  color: var(--hh-tech-label);
+  font-size: var(--hh-tech-label-fs);
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+.hh-tech-list {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: var(--hh-tech-gap);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+@media (min-width: 1024px) {
+  .hh-tech-list {
+    justify-content: flex-start;
+  }
+}
+.hh-tech-icon {
+  width: var(--hh-tech-icon-size);
+  height: var(--hh-tech-icon-size);
+  color: var(--hh-tech-icon);
+  transition: color 0.2s ease, transform 0.2s ease;
+}
+.hh-tech-item:hover .hh-tech-icon {
+  color: var(--hh-tech-hover);
+  transform: translateY(-2px);
+}
+@media (prefers-reduced-motion: reduce) {
+  .hh-tech-icon {
+    transition: none;
+  }
+  .hh-tech-item:hover .hh-tech-icon {
+    transform: none;
+  }
+}

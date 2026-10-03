@@ -4,7 +4,13 @@
  * CDN scripts or third-party requests.
  */
 
-export type IconSetLibrary = 'lucide';
+export const ICON_SET_LIBRARIES = ['lucide', 'simple-icons'] as const;
+
+export type IconSetLibrary = (typeof ICON_SET_LIBRARIES)[number];
+
+function isIconSetLibrary(value: unknown): value is IconSetLibrary {
+  return typeof value === 'string' && (ICON_SET_LIBRARIES as readonly string[]).includes(value);
+}
 
 export type SetIconValue = {
   library: IconSetLibrary;
@@ -89,11 +95,11 @@ export function parseIconValue(raw: unknown): IconValue | null {
       ? { library: 'svg', media_id: id, url }
       : null;
   }
-  if (v.library === 'lucide') {
+  if (isIconSetLibrary(v.library)) {
     const body = typeof v.body === 'string' ? v.body.trim() : '';
     if (!isSafeIconBody(body)) return null;
     const viewBox = typeof v.view_box === 'string' && /^-?[\d.]+( -?[\d.]+){3}$/.test(v.view_box) ? v.view_box : DEFAULT_VIEW_BOX;
-    const icon: SetIconValue = { library: 'lucide', name: String(v.name ?? ''), body, view_box: viewBox };
+    const icon: SetIconValue = { library: v.library, name: String(v.name ?? ''), body, view_box: viewBox };
     if (isSafeIconColor(v.color)) icon.color = v.color.trim().toLowerCase();
     return icon;
   }
