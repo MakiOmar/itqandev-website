@@ -1013,6 +1013,7 @@
       "badge_icon": "Badge icon",
       "tech_enabled": "Show tech ecosystem",
       "tech_label": "Label",
+      "tech_layout": "Label position",
       "tech_divider": "Divider line above",
       "tech_icons": "Technologies",
       "subheadline": "Subheadline",

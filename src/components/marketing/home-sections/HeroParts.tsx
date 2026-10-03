@@ -52,10 +52,26 @@ export const HeroHeadlineText = (props: { text: string }) => (
   </>
 );
 
-export const HeroTechRow = (props: { label: string; divider: boolean; items: HeroTechItem[] }) => {
+export type HeroTechLayout = 'stacked' | 'inline';
+
+/** Unknown or missing values keep the original stacked look. */
+export function normalizeHeroTechLayout(raw: unknown): HeroTechLayout {
+  return raw === 'inline' ? 'inline' : 'stacked';
+}
+
+export const HeroTechRow = (props: {
+  label: string;
+  divider: boolean;
+  layout: HeroTechLayout;
+  items: HeroTechItem[];
+}) => {
   if (props.items.length === 0) return null;
   return (
-    <div class={['hh-tech', props.divider ? 'hh-tech-divided' : ''].filter(Boolean).join(' ')}>
+    <div
+      class={['hh-tech', props.divider ? 'hh-tech-divided' : '', props.layout === 'inline' ? 'hh-tech-inline' : '']
+        .filter(Boolean)
+        .join(' ')}
+    >
       {/* Section label, e.g. "Tech ecosystem" */}
       {props.label ? <p class="hh-tech-label">{props.label}</p> : null}
       <ul class="hh-tech-list" aria-label={props.label || undefined}>

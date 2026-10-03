@@ -236,8 +236,20 @@
   padding: 0;
   list-style: none;
 }
+/* Inline layout: label beside the icons, wrapping under them on narrow screens */
+.hh-tech-inline {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem 1.5rem;
+}
+.hh-tech-inline .hh-tech-label {
+  margin-bottom: 0;
+}
 @media (min-width: 1024px) {
-  .hh-tech-list {
+  .hh-tech-list,
+  .hh-tech-inline {
     justify-content: flex-start;
   }
 }

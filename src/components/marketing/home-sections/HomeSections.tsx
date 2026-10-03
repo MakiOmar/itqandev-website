@@ -18,7 +18,13 @@ import { particlesConfigKey, resolveHeroParticlesConfig } from '~/lib/marketing/
 import { LazyParticlesBackground } from '~/components/marketing/LazyParticlesBackground';
 import { isUiLocaleRtl } from '~/lib/i18n/ui-locale-segments';
 import { HeroWatermark } from './HeroWatermark';
-import { HeroBadge, HeroHeadlineText, HeroTechRow, normalizeHeroTechItems } from './HeroParts';
+import {
+  HeroBadge,
+  HeroHeadlineText,
+  HeroTechRow,
+  normalizeHeroTechItems,
+  normalizeHeroTechLayout,
+} from './HeroParts';
 import { stripHighlightMarkers } from '~/lib/marketing/highlighted-text';
 import type { CaseStudy, Testimonial, BlogPost, Service } from '~/lib/marketing/types';
 import type { PortfolioCategory } from '~/lib/marketing/content-layer';
@@ -223,6 +229,7 @@ export const HeroHomeSection = component$<HomeSectionSharedProps>(({ settings, u
                 <HeroTechRow
                   label={settingOptionalString(settings, 'tech_label')}
                   divider={settings?.tech_divider === undefined || settingBool(settings, 'tech_divider')}
+                  layout={normalizeHeroTechLayout(settings?.tech_layout)}
                   items={techItems}
                 />
               ) : null}
