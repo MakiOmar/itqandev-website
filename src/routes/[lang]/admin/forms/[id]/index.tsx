@@ -223,8 +223,11 @@ export default component$(() => {
                   {translateApp(lang, 'forms.fields.slug')}
                   <input
                     class={`${ADMIN_FORM_INPUT_CLASS} font-mono text-xs`}
-                    bind:value={slug}
-                    onInput$={slugAuto.onSlugInputLocksAutoFromTitle$}
+                    value={slug.value}
+                    onInput$={async (_, el) => {
+                      slug.value = el.value;
+                      await slugAuto.onSlugInputLocksAutoFromTitle$();
+                    }}
                     onBlur$={slugAuto.onSlugBlurEnsureUnique$}
                   />
                 </label>
