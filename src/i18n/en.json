@@ -1098,7 +1098,26 @@
     "floatingSize": "Size (px)",
     "noImage": "No image",
     "dynamicTagsInsert": "Insert dynamic tag",
-    "dynamicTagsHide": "Hide dynamic tags",
+    "dynamicTagGroups": {
+      "site": "Site",
+      "record": "Current item",
+      "archive": "Archive"
+    },
+    "chooseImage": "Choose image",
+    "changeImage": "Change image",
+    "removeImage": "Remove image",
+    "urlPlaceholder": "Type or paste your URL",
+    "htmlAllowed": "HTML allowed",
+    "repeaterAdd": "+ Add item",
+    "repeaterRemove": "Remove item",
+    "linkMode": {
+      "label": "Link",
+      "none": "None",
+      "custom": "Custom URL",
+      "lightbox": "Lightbox",
+      "url": "Link URL",
+      "newTab": "Open in new window"
+    },
     "selectFromLibrary": "Select from library",
     "selectForm": "Select a form…",
     "formsLoading": "Loading forms…",

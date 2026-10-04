@@ -25,7 +25,7 @@ import { mapPublicBrandingFromApi } from '~/lib/marketing/resolve-laravel-media-
 import type { AppearanceRegistryEntry, PageSectionNode } from '~/lib/marketing/appearance-types';
 import type { ChromeLayoutKind } from '~/types/chrome-layout';
 import { dynamicTagsForChromeKind } from '~/lib/admin/builder-dynamic-tags';
-import type { BuilderDynamicTag } from '~/components/admin/appearance/BuilderDynamicTagChips';
+import type { BuilderDynamicTag } from '~/components/admin/appearance/BuilderDynamicTagButton';
 import { ADMIN_NATIVE_SELECT_COMPACT_CLASS } from '~/lib/admin/native-select-classes';
 import {
   CHROME_EXCLUDED_BLOCK_TYPES,

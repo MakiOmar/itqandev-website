@@ -1098,7 +1098,26 @@
     "floatingSize": "الحجم (بكسل)",
     "noImage": "لا توجد صورة",
     "dynamicTagsInsert": "إدراج وسم ديناميكي",
-    "dynamicTagsHide": "إخفاء الوسوم الديناميكية",
+    "dynamicTagGroups": {
+      "site": "الموقع",
+      "record": "العنصر الحالي",
+      "archive": "الأرشيف"
+    },
+    "chooseImage": "اختر صورة",
+    "changeImage": "تغيير الصورة",
+    "removeImage": "إزالة الصورة",
+    "urlPlaceholder": "اكتب الرابط أو الصقه",
+    "htmlAllowed": "يُسمح باستخدام HTML",
+    "repeaterAdd": "+ إضافة عنصر",
+    "repeaterRemove": "إزالة العنصر",
+    "linkMode": {
+      "label": "الرابط",
+      "none": "بدون",
+      "custom": "رابط مخصص",
+      "lightbox": "عرض مكبّر",
+      "url": "عنوان الرابط",
+      "newTab": "فتح في نافذة جديدة"
+    },
     "selectFromLibrary": "اختر من المكتبة",
     "selectForm": "اختر نموذجاً…",
     "formsLoading": "جاري تحميل النماذج…",

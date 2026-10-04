@@ -20,19 +20,30 @@ import {
 } from '~/lib/admin/appearance-field-groups';
 import { SharedRepeaterTranslationsEditor } from './SharedRepeaterTranslationsEditor';
 import { ColorPickerField } from '~/components/admin/ColorPickerField';
-import {
-  appearanceMediaId,
-  appearanceMediaPreviewSrc,
-  appearanceMediaUrlInputValue,
-} from '~/lib/admin/appearance-media-ref';
-import { resolveLaravelMediaUrl } from '~/lib/marketing/resolve-laravel-media-url';
+import { appearanceMediaPreviewSrc, appearanceMediaUrlInputValue } from '~/lib/admin/appearance-media-ref';
 import { useTranslate, translateApp } from '~/lib/i18n/useTranslate';
 import { appearanceFieldLabel } from '~/lib/i18n/appearance-labels';
 import type { AppearanceSettingField } from '~/lib/marketing/appearance-types';
 import { normalizeResponsiveColumns } from '~/lib/marketing/grid-columns';
 import type { SiteLanguageRow } from '~/types/site-language';
 import type { CategorySelectOption } from './CategoryMultiSelectField';
-import { BuilderDynamicTagChips, type BuilderDynamicTag } from './BuilderDynamicTagChips';
+import { BuilderDynamicTagButton, type BuilderDynamicTag } from './BuilderDynamicTagButton';
+import {
+  INSPECTOR_INPUT,
+  INSPECTOR_LABEL,
+  INSPECTOR_ROW,
+  INSPECTOR_STACK,
+  INSPECTOR_STACK_LABEL,
+} from './inspector-classes';
+import { MediaPreviewPanel } from './MediaPreviewPanel';
+import { TrashGlyph } from './InspectorGlyphs';
+import { LinkModeControl } from './LinkModeControl';
+import {
+  LINK_MODE_KEYS,
+  hasLinkModeFields,
+  isFoldedLinkModeField,
+  isTruthySetting,
+} from '~/lib/admin/link-mode-fields';
 
 export type AppearanceSettingsFieldsProps = {
   fields: AppearanceSettingField[];
@@ -67,6 +78,8 @@ type FieldControlProps = {
   lang: string;
   categoryOptions?: CategorySelectOption[];
   dynamicTags?: BuilderDynamicTag[];
+  /** Fields include link URL + new tab + lightbox: show them as one Link control. */
+  linkMode?: boolean;
 };
 
 function asString(v: unknown): string {
@@ -90,11 +103,44 @@ const AppearanceSettingFieldControl = component$<FieldControlProps>((props) => {
     props.defaultLocale,
     translatable,
   );
+  const write$ = $(async (next: unknown) => {
+    await props.onSettingsChange$(
+      writeAppearanceSettingValue(props.values, field.key, next, props.activeLocale, props.defaultLocale, translatable),
+    );
+  });
+  const insertTag$ = $(async (token: string) => {
+    const current = asString(
+      readAppearanceSettingValue(props.values, field.key, props.activeLocale, props.defaultLocale, translatable),
+    );
+    await write$(`${current}${token}`);
+  });
+  const tags = props.dynamicTags ?? [];
+
+  if (props.linkMode && field.key === LINK_MODE_KEYS.url) {
+    const shared = (key: string) =>
+      readAppearanceSettingValue(props.values, key, props.activeLocale, props.defaultLocale, false);
+    return (
+      <LinkModeControl
+        lang={props.lang}
+        url={asString(raw)}
+        newTab={isTruthySetting(shared(LINK_MODE_KEYS.newTab))}
+        lightbox={isTruthySetting(shared(LINK_MODE_KEYS.lightbox))}
+        tags={tags}
+        onPatch$={async (patch) => {
+          let next = props.values;
+          for (const [key, value] of Object.entries(patch)) {
+            next = writeAppearanceSettingValue(next, key, value, props.activeLocale, props.defaultLocale, false);
+          }
+          await props.onSettingsChange$(next);
+        }}
+      />
+    );
+  }
 
   if (field.type === 'floating_icons') {
     return (
-      <div class="md:col-span-2">
-        <label class="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-300 text-start">
+      <div>
+        <label class={INSPECTOR_STACK_LABEL}>
           {label}
         </label>
         <HeroFloatingIconsEditor
@@ -193,23 +239,16 @@ const AppearanceSettingFieldControl = component$<FieldControlProps>((props) => {
     const options = field.options ?? [];
     // Unsaved/unknown values show the first option, which renderers treat as the default.
     const current = options.some((opt) => opt.value === asString(raw)) ? asString(raw) : (options[0]?.value ?? '');
+    const selectId = `setting-${field.key}`;
     return (
-      <div>
-        <label class="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-300">{label}</label>
+      <div class={INSPECTOR_ROW}>
+        <label for={selectId} class={INSPECTOR_LABEL}>{label}</label>
         <select
-          class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm dark:border-gray-600 dark:bg-slate-900"
+          id={selectId}
+          class={INSPECTOR_INPUT}
           value={current}
           onChange$={async (e) => {
-            await props.onSettingsChange$(
-              writeAppearanceSettingValue(
-                props.values,
-                field.key,
-                (e.target as HTMLSelectElement).value,
-                props.activeLocale,
-                props.defaultLocale,
-                translatable,
-              ),
-            );
+            await write$((e.target as HTMLSelectElement).value);
           }}
         >
           {options.map((opt) => (
@@ -223,54 +262,25 @@ const AppearanceSettingFieldControl = component$<FieldControlProps>((props) => {
   }
 
   if (field.type === 'url' || field.type === 'video' || field.type === 'link') {
+    const inputId = `setting-${field.key}`;
     return (
-      <div class="md:col-span-2">
-        <label class="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-300">{label}</label>
-        <input
-          type="url"
-          class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm dark:border-gray-600 dark:bg-slate-900"
-          value={asString(raw)}
-          dir="ltr"
-          placeholder={field.type === 'video' ? 'https://youtube.com/…' : 'https://'}
-          onInput$={async (e) => {
-            await props.onSettingsChange$(
-              writeAppearanceSettingValue(
-                props.values,
-                field.key,
-                (e.target as HTMLInputElement).value,
-                props.activeLocale,
-                props.defaultLocale,
-                translatable,
-              ),
-            );
-          }}
-        />
-        {props.dynamicTags?.length ? (
-          <BuilderDynamicTagChips
-            tags={props.dynamicTags}
-            onInsert$={async (token) => {
-              const current = asString(
-                readAppearanceSettingValue(
-                  props.values,
-                  field.key,
-                  props.activeLocale,
-                  props.defaultLocale,
-                  translatable,
-                ),
-              );
-              await props.onSettingsChange$(
-                writeAppearanceSettingValue(
-                  props.values,
-                  field.key,
-                  `${current}${token}`,
-                  props.activeLocale,
-                  props.defaultLocale,
-                  translatable,
-                ),
-              );
+      <div class={INSPECTOR_ROW}>
+        <label for={inputId} class={INSPECTOR_LABEL}>{label}</label>
+        {/* URL input with the dynamic-tag trigger inside its end edge */}
+        <div class="relative">
+          <input
+            id={inputId}
+            type="url"
+            class={[INSPECTOR_INPUT, tags.length ? 'pe-8' : ''].join(' ')}
+            value={asString(raw)}
+            dir="ltr"
+            placeholder={field.type === 'video' ? 'https://youtube.com/…' : translateApp(props.lang, 'appearance.urlPlaceholder')}
+            onInput$={async (e) => {
+              await write$((e.target as HTMLInputElement).value);
             }}
           />
-        ) : null}
+          <BuilderDynamicTagButton tags={tags} lang={props.lang} onInsert$={insertTag$} />
+        </div>
       </div>
     );
   }
@@ -299,51 +309,22 @@ const AppearanceSettingFieldControl = component$<FieldControlProps>((props) => {
 
   if (field.type === 'richtext') {
     return (
-      <div class="md:col-span-2">
-        <label class="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-300">{label}</label>
-        <textarea
-          class="min-h-[8rem] w-full rounded-lg border border-gray-300 bg-white px-3 py-2 font-mono text-sm dark:border-gray-600 dark:bg-slate-900"
-          value={asString(raw)}
-          onInput$={async (e) => {
-            await props.onSettingsChange$(
-              writeAppearanceSettingValue(
-                props.values,
-                field.key,
-                (e.target as HTMLTextAreaElement).value,
-                props.activeLocale,
-                props.defaultLocale,
-                translatable,
-              ),
-            );
-          }}
-        />
-        <p class="mt-1 text-[11px] text-gray-500">HTML allowed</p>
-        {props.dynamicTags?.length ? (
-          <BuilderDynamicTagChips
-            tags={props.dynamicTags}
-            onInsert$={async (token) => {
-              const current = asString(
-                readAppearanceSettingValue(
-                  props.values,
-                  field.key,
-                  props.activeLocale,
-                  props.defaultLocale,
-                  translatable,
-                ),
-              );
-              await props.onSettingsChange$(
-                writeAppearanceSettingValue(
-                  props.values,
-                  field.key,
-                  `${current}${token}`,
-                  props.activeLocale,
-                  props.defaultLocale,
-                  translatable,
-                ),
-              );
+      <div>
+        <label class={INSPECTOR_STACK_LABEL}>{label}</label>
+        <div class="relative">
+          <textarea
+            class={[
+              'min-h-[8rem] w-full rounded-md border border-gray-300 bg-white px-2 py-1.5 font-mono text-sm dark:border-gray-600 dark:bg-slate-900',
+              tags.length ? 'pe-8' : '',
+            ].join(' ')}
+            value={asString(raw)}
+            onInput$={async (e) => {
+              await write$((e.target as HTMLTextAreaElement).value);
             }}
           />
-        ) : null}
+          <BuilderDynamicTagButton tags={tags} lang={props.lang} onInsert$={insertTag$} top />
+        </div>
+        <p class="mt-1 text-[11px] text-gray-500">{translateApp(props.lang, 'appearance.htmlAllowed')}</p>
       </div>
     );
   }
@@ -365,225 +346,145 @@ const AppearanceSettingFieldControl = component$<FieldControlProps>((props) => {
     }
     const rows = Array.isArray(raw) ? (raw as Record<string, unknown>[]) : [];
     const itemFields = field.item_fields ?? [];
+    const setRows$ = $(async (next: Record<string, unknown>[]) => {
+      await write$(next);
+    });
     return (
-      <div class="md:col-span-2 space-y-3 rounded-lg border border-gray-200 p-3 dark:border-gray-700">
+      <div class="space-y-2 rounded-lg border border-gray-200 p-2.5 dark:border-gray-700">
+        {/* Repeater header: label + add row */}
         <div class="flex items-center justify-between">
-          <span class="text-xs font-medium text-gray-600 dark:text-gray-300">{label}</span>
+          <span class={INSPECTOR_LABEL}>{label}</span>
           <button
             type="button"
-            class="rounded border border-gray-300 px-2 py-1 text-xs hover:bg-gray-50 dark:border-gray-600 dark:hover:bg-slate-800"
+            class="rounded-md border border-gray-300 px-2 py-1 text-xs hover:bg-gray-50 dark:border-gray-600 dark:hover:bg-slate-800"
             onClick$={async () => {
               const blank: Record<string, unknown> = sharedRows ? { id: newRepeaterRowId() } : {};
               for (const f of itemFields) blank[f.key] = f.type === 'boolean' ? false : f.type === 'number' ? 0 : f.type === 'repeater' ? [] : '';
-              await props.onSettingsChange$(
-                writeAppearanceSettingValue(
-                  props.values,
-                  field.key,
-                  [...rows, blank],
-                  props.activeLocale,
-                  props.defaultLocale,
-                  translatable,
-                ),
-              );
+              await setRows$([...rows, blank]);
             }}
           >
-            + Add
+            {translateApp(props.lang, 'appearance.repeaterAdd')}
           </button>
         </div>
-        {rows.map((row, rowIndex) => (
-          <div
-            key={rowIndex}
-            class="space-y-2 rounded border border-gray-100 bg-gray-50 p-2 dark:border-gray-800 dark:bg-slate-950"
-          >
-            <div class="flex justify-end">
-              <button
-                type="button"
-                class="text-xs text-red-600"
-                onClick$={async () => {
-                  const next = rows.filter((_, i) => i !== rowIndex);
-                  await props.onSettingsChange$(
-                    writeAppearanceSettingValue(
-                      props.values,
-                      field.key,
-                      next,
-                      props.activeLocale,
-                      props.defaultLocale,
-                      translatable,
-                    ),
-                  );
-                }}
-              >
-                Remove
-              </button>
-            </div>
-            <div class="grid gap-2 md:grid-cols-2">
-              {itemFields.map((sub) => {
-                const subVal = row[sub.key];
-                if (sub.type === 'boolean') {
-                  const checked =
-                    subVal === true || subVal === 'true' || subVal === 1 || subVal === '1';
-                  return (
-                    <div key={sub.key} class="md:col-span-2">
-                      <AdminSwitch
-                        checked={checked}
+        {rows.map((row, rowIndex) => {
+          const setSub$ = $(async (key: string, value: unknown) => {
+            await setRows$(rows.map((r, i) => (i === rowIndex ? { ...r, [key]: value } : r)));
+          });
+          return (
+            <div
+              key={rowIndex}
+              class="space-y-2.5 rounded-md border border-gray-100 bg-gray-50 p-2 dark:border-gray-800 dark:bg-slate-950"
+            >
+              {/* Row toolbar: position + remove */}
+              <div class="flex items-center justify-between">
+                <span class="text-[11px] font-medium text-gray-400">#{rowIndex + 1}</span>
+                <button
+                  type="button"
+                  class="rounded p-1 text-gray-400 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-950/40"
+                  title={translateApp(props.lang, 'appearance.repeaterRemove')}
+                  aria-label={translateApp(props.lang, 'appearance.repeaterRemove')}
+                  onClick$={async () => {
+                    await setRows$(rows.filter((_, i) => i !== rowIndex));
+                  }}
+                >
+                  <TrashGlyph />
+                </button>
+              </div>
+              <div class={INSPECTOR_STACK}>
+                {itemFields.map((sub) => {
+                  const subVal = row[sub.key];
+                  const subId = `setting-${field.key}-${rowIndex}-${sub.key}`;
+                  if (sub.type === 'boolean') {
+                    const checked = subVal === true || subVal === 'true' || subVal === 1 || subVal === '1';
+                    return (
+                      <div key={sub.key} class={INSPECTOR_ROW}>
+                        <span class={INSPECTOR_LABEL}>{sub.label}</span>
+                        <div class="flex justify-end">
+                          <AdminSwitch checked={checked} ariaLabel={sub.label} onChange$={(next) => setSub$(sub.key, next)} />
+                        </div>
+                      </div>
+                    );
+                  }
+                  if (sub.type === 'icon') {
+                    return (
+                      <IconPickerField
+                        key={sub.key}
                         label={sub.label}
-                        onChange$={async (next) => {
-                          const copy = rows.map((r, i) =>
-                            i === rowIndex ? { ...r, [sub.key]: next } : r,
-                          );
-                          await props.onSettingsChange$(
-                            writeAppearanceSettingValue(
-                              props.values,
-                              field.key,
-                              copy,
-                              props.activeLocale,
-                              props.defaultLocale,
-                              translatable,
-                            ),
-                          );
+                        value={subVal}
+                        lang={props.lang}
+                        onChange$={(next) => setSub$(sub.key, next)}
+                      />
+                    );
+                  }
+                  if (sub.type === 'media') {
+                    return (
+                      <MediaPreviewPanel
+                        key={sub.key}
+                        label={sub.label}
+                        lang={props.lang}
+                        value={subVal}
+                        previewSrc={appearanceMediaPreviewSrc(subVal, props.mediaPreviewById)}
+                        onPick$={() => props.onPickMedia$(`${field.key}.${rowIndex}.${sub.key}`, sub.accept)}
+                        onClear$={() => setSub$(sub.key, '')}
+                        compact
+                      />
+                    );
+                  }
+                  if (sub.type === 'textarea') {
+                    return (
+                      <div key={sub.key}>
+                        <label for={subId} class={INSPECTOR_STACK_LABEL}>{sub.label}</label>
+                        <textarea
+                          id={subId}
+                          rows={3}
+                          class={INSPECTOR_INPUT}
+                          value={asString(subVal)}
+                          onInput$={(e) => setSub$(sub.key, (e.target as HTMLTextAreaElement).value)}
+                        />
+                      </div>
+                    );
+                  }
+                  if (sub.type === 'select') {
+                    return (
+                      <div key={sub.key} class={INSPECTOR_ROW}>
+                        <label for={subId} class={INSPECTOR_LABEL}>{sub.label}</label>
+                        <select
+                          id={subId}
+                          class={INSPECTOR_INPUT}
+                          value={asString(subVal)}
+                          onChange$={(e) => setSub$(sub.key, (e.target as HTMLSelectElement).value)}
+                        >
+                          {(sub.options ?? []).map((opt) => (
+                            <option key={opt.value} value={opt.value}>
+                              {opt.label}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                    );
+                  }
+                  const isUrl = sub.type === 'url' || sub.type === 'video' || sub.type === 'link';
+                  return (
+                    <div key={sub.key} class={INSPECTOR_ROW}>
+                      <label for={subId} class={INSPECTOR_LABEL}>{sub.label}</label>
+                      <input
+                        id={subId}
+                        type={sub.type === 'number' ? 'number' : isUrl ? 'url' : 'text'}
+                        dir={isUrl ? 'ltr' : undefined}
+                        class={INSPECTOR_INPUT}
+                        value={asString(subVal)}
+                        onInput$={(e) => {
+                          const value = (e.target as HTMLInputElement).value;
+                          return setSub$(sub.key, sub.type === 'number' ? Number(value) : value);
                         }}
                       />
                     </div>
                   );
-                }
-                if (sub.type === 'icon') {
-                  return (
-                    <IconPickerField
-                      key={sub.key}
-                      label={sub.label}
-                      value={subVal}
-                      lang={props.lang}
-                      onChange$={async (next) => {
-                        const copy = rows.map((r, i) => (i === rowIndex ? { ...r, [sub.key]: next } : r));
-                        await props.onSettingsChange$(
-                          writeAppearanceSettingValue(
-                            props.values,
-                            field.key,
-                            copy,
-                            props.activeLocale,
-                            props.defaultLocale,
-                            translatable,
-                          ),
-                        );
-                      }}
-                    />
-                  );
-                }
-                if (sub.type === 'media') {
-                  return (
-                    <div key={sub.key} class="md:col-span-2">
-                      <label class="mb-1 block text-[11px] text-gray-500">{sub.label}</label>
-                      <button
-                        type="button"
-                        class="rounded bg-primary-600 px-2 py-1 text-xs text-white"
-                        onClick$={async () => {
-                          // Nested media uses composite key: parent.rowIndex.subKey via pick handler convention.
-                          await props.onPickMedia$(`${field.key}.${rowIndex}.${sub.key}`, sub.accept);
-                        }}
-                      >
-                        Pick media
-                      </button>
-                      <span class="ms-2 text-xs text-gray-500">
-                        {asString(subVal) || '—'}
-                      </span>
-                    </div>
-                  );
-                }
-                if (sub.type === 'textarea') {
-                  return (
-                    <div key={sub.key} class="md:col-span-2">
-                      <label class="mb-1 block text-[11px] text-gray-500">{sub.label}</label>
-                      <textarea
-                        class="w-full rounded border border-gray-300 bg-white px-2 py-1 text-sm dark:border-gray-600 dark:bg-slate-900"
-                        value={asString(subVal)}
-                        onInput$={async (e) => {
-                          const copy = rows.map((r, i) =>
-                            i === rowIndex
-                              ? { ...r, [sub.key]: (e.target as HTMLTextAreaElement).value }
-                              : r,
-                          );
-                          await props.onSettingsChange$(
-                            writeAppearanceSettingValue(
-                              props.values,
-                              field.key,
-                              copy,
-                              props.activeLocale,
-                              props.defaultLocale,
-                              translatable,
-                            ),
-                          );
-                        }}
-                      />
-                    </div>
-                  );
-                }
-                if (sub.type === 'select') {
-                  return (
-                    <div key={sub.key}>
-                      <label class="mb-1 block text-[11px] text-gray-500">{sub.label}</label>
-                      <select
-                        class="w-full rounded border border-gray-300 bg-white px-2 py-1 text-sm dark:border-gray-600 dark:bg-slate-900"
-                        value={asString(subVal)}
-                        onChange$={async (e) => {
-                          const copy = rows.map((r, i) =>
-                            i === rowIndex
-                              ? { ...r, [sub.key]: (e.target as HTMLSelectElement).value }
-                              : r,
-                          );
-                          await props.onSettingsChange$(
-                            writeAppearanceSettingValue(
-                              props.values,
-                              field.key,
-                              copy,
-                              props.activeLocale,
-                              props.defaultLocale,
-                              translatable,
-                            ),
-                          );
-                        }}
-                      >
-                        {(sub.options ?? []).map((opt) => (
-                          <option key={opt.value} value={opt.value}>
-                            {opt.label}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                  );
-                }
-                return (
-                  <div key={sub.key}>
-                    <label class="mb-1 block text-[11px] text-gray-500">{sub.label}</label>
-                    <input
-                      type={sub.type === 'number' ? 'number' : sub.type === 'url' || sub.type === 'video' ? 'url' : 'text'}
-                      class="w-full rounded border border-gray-300 bg-white px-2 py-1 text-sm dark:border-gray-600 dark:bg-slate-900"
-                      value={asString(subVal)}
-                      onInput$={async (e) => {
-                        const v =
-                          sub.type === 'number'
-                            ? Number((e.target as HTMLInputElement).value)
-                            : (e.target as HTMLInputElement).value;
-                        const copy = rows.map((r, i) =>
-                          i === rowIndex ? { ...r, [sub.key]: v } : r,
-                        );
-                        await props.onSettingsChange$(
-                          writeAppearanceSettingValue(
-                            props.values,
-                            field.key,
-                            copy,
-                            props.activeLocale,
-                            props.defaultLocale,
-                            translatable,
-                          ),
-                        );
-                      }}
-                    />
-                  </div>
-                );
-              })}
+                })}
+              </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     );
   }
@@ -591,160 +492,47 @@ const AppearanceSettingFieldControl = component$<FieldControlProps>((props) => {
   if (field.type === 'boolean') {
     const checked = raw === true || raw === 'true' || raw === 1 || raw === '1';
     return (
-      <div class="flex items-center md:col-span-2">
-        <AdminSwitch
-          checked={checked}
-          label={label}
-          onChange$={async (next) => {
-            await props.onSettingsChange$(
-              writeAppearanceSettingValue(
-                props.values,
-                field.key,
-                next,
-                props.activeLocale,
-                props.defaultLocale,
-                translatable,
-              ),
-            );
-          }}
-        />
-      </div>
-    );
-  }
-
-  if (field.type === 'media') {
-    const preview = appearanceMediaPreviewSrc(raw, props.mediaPreviewById);
-    const previewSrc = preview ? resolveLaravelMediaUrl(preview) || preview : '';
-    const mediaId = appearanceMediaId(raw);
-    const urlInput = appearanceMediaUrlInputValue(raw);
-    return (
-      <div class="md:col-span-2">
-        <label class="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-300">
-          {label}
-        </label>
-        <div class="flex items-start gap-3">
-          {/* Thumbnail doubles as the library picker trigger. */}
-          <button
-            type="button"
-            class="flex h-16 w-24 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-dashed border-gray-300 bg-white text-xs text-gray-400 hover:border-primary-500 dark:border-gray-600 dark:bg-gray-950"
-            aria-label={translateApp(props.lang, 'appearance.selectFromLibrary')}
-            onClick$={async () => {
-              await props.onPickMedia$(field.key, field.accept);
-            }}
-          >
-            {previewSrc ? (
-              <img src={previewSrc} alt="" class="h-full w-full object-cover" />
-            ) : mediaId !== null ? (
-              <span>#{mediaId}</span>
-            ) : (
-              <span>{translateApp(props.lang, 'appearance.noImage')}</span>
-            )}
-          </button>
-          <div class="flex min-w-0 flex-1 flex-col gap-2">
-            <div class="flex flex-wrap gap-2">
-              <button
-                type="button"
-                class="rounded-lg bg-primary-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-primary-700"
-                onClick$={async () => {
-                  await props.onPickMedia$(field.key, field.accept);
-                }}
-              >
-                {translateApp(props.lang, 'appearance.selectFromLibrary')}
-              </button>
-              {raw !== undefined && raw !== null && raw !== '' ? (
-                <button
-                  type="button"
-                  class="rounded-lg border border-gray-300 px-3 py-1.5 text-xs dark:border-gray-600"
-                  onClick$={async () => {
-                    await props.onSettingsChange$(
-                      writeAppearanceSettingValue(
-                        props.values,
-                        field.key,
-                        '',
-                        props.activeLocale,
-                        props.defaultLocale,
-                        translatable,
-                      ),
-                    );
-                  }}
-                >
-                  {translateApp(props.lang, 'appearance.clear')}
-                </button>
-              ) : null}
-            </div>
-            <input
-              type="url"
-              class="w-full min-w-0 rounded border px-2 py-1 text-xs dark:bg-gray-900"
-              placeholder={translateApp(props.lang, 'appearance.orPasteUrl')}
-              value={urlInput}
-              onInput$={async (e) => {
-                await props.onSettingsChange$(
-                  writeAppearanceSettingValue(
-                    props.values,
-                    field.key,
-                    (e.target as HTMLInputElement).value,
-                    props.activeLocale,
-                    props.defaultLocale,
-                    translatable,
-                  ),
-                );
-              }}
-            />
-          </div>
+      <div class={INSPECTOR_ROW}>
+        <span class={INSPECTOR_LABEL}>{label}</span>
+        <div class="flex justify-end">
+          <AdminSwitch checked={checked} ariaLabel={label} onChange$={write$} />
         </div>
       </div>
     );
   }
 
-  if (field.type === 'textarea') {
+  if (field.type === 'media') {
     return (
-      <div class="md:col-span-2">
-        <label class="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-300">
-          {label}
-        </label>
-        <textarea
-          rows={3}
-          class="w-full rounded border px-2 py-1 text-sm dark:bg-gray-900"
-          value={asString(raw)}
-          onInput$={async (e) => {
-            await props.onSettingsChange$(
-              writeAppearanceSettingValue(
-                props.values,
-                field.key,
-                (e.target as HTMLTextAreaElement).value,
-                props.activeLocale,
-                props.defaultLocale,
-                translatable,
-              ),
-            );
-          }}
-        />
-        {props.dynamicTags?.length ? (
-          <BuilderDynamicTagChips
-            tags={props.dynamicTags}
-            onInsert$={async (token) => {
-              const current = asString(
-                readAppearanceSettingValue(
-                  props.values,
-                  field.key,
-                  props.activeLocale,
-                  props.defaultLocale,
-                  translatable,
-                ),
-              );
-              await props.onSettingsChange$(
-                writeAppearanceSettingValue(
-                  props.values,
-                  field.key,
-                  `${current}${token}`,
-                  props.activeLocale,
-                  props.defaultLocale,
-                  translatable,
-                ),
-              );
+      <MediaPreviewPanel
+        label={label}
+        lang={props.lang}
+        value={raw}
+        previewSrc={appearanceMediaPreviewSrc(raw, props.mediaPreviewById)}
+        onPick$={() => props.onPickMedia$(field.key, field.accept)}
+        onClear$={() => write$('')}
+        urlValue={appearanceMediaUrlInputValue(raw)}
+        onUrlInput$={write$}
+      />
+    );
+  }
+
+  if (field.type === 'textarea') {
+    const inputId = `setting-${field.key}`;
+    return (
+      <div>
+        <label for={inputId} class={INSPECTOR_STACK_LABEL}>{label}</label>
+        <div class="relative">
+          <textarea
+            id={inputId}
+            rows={3}
+            class={[INSPECTOR_INPUT, tags.length ? 'pe-8' : ''].join(' ')}
+            value={asString(raw)}
+            onInput$={async (e) => {
+              await write$((e.target as HTMLTextAreaElement).value);
             }}
           />
-        ) : null}
+          <BuilderDynamicTagButton tags={tags} lang={props.lang} onInsert$={insertTag$} top />
+        </div>
       </div>
     );
   }
@@ -754,22 +542,10 @@ const AppearanceSettingFieldControl = component$<FieldControlProps>((props) => {
     const max = field.max ?? 100;
     const value = Number(raw ?? field.default ?? min);
     const inputId = `setting-${field.key}`;
-    const write = $(async (next: number) => {
-      await props.onSettingsChange$(
-        writeAppearanceSettingValue(
-          props.values,
-          field.key,
-          next,
-          props.activeLocale,
-          props.defaultLocale,
-          translatable,
-        ),
-      );
-    });
     return (
-      <div class="md:col-span-2">
+      <div>
         <div class="mb-1 flex items-center justify-between gap-2">
-          <label for={inputId} class="text-xs font-medium text-gray-600 dark:text-gray-300">
+          <label for={inputId} class={INSPECTOR_LABEL}>
             {label}
           </label>
           <input
@@ -777,10 +553,10 @@ const AppearanceSettingFieldControl = component$<FieldControlProps>((props) => {
             min={min}
             max={max}
             aria-label={label}
-            class="w-16 rounded border px-1.5 py-0.5 text-end text-xs dark:bg-gray-900"
+            class="w-16 rounded-md border border-gray-300 bg-white px-1.5 py-0.5 text-end text-xs dark:border-gray-600 dark:bg-slate-900"
             value={value}
             onInput$={async (e) => {
-              await write(Number((e.target as HTMLInputElement).value));
+              await write$(Number((e.target as HTMLInputElement).value));
             }}
           />
         </div>
@@ -793,7 +569,7 @@ const AppearanceSettingFieldControl = component$<FieldControlProps>((props) => {
           class="w-full accent-primary-600"
           value={value}
           onInput$={async (e) => {
-            await write(Number((e.target as HTMLInputElement).value));
+            await write$(Number((e.target as HTMLInputElement).value));
           }}
         />
       </div>
@@ -801,28 +577,21 @@ const AppearanceSettingFieldControl = component$<FieldControlProps>((props) => {
   }
 
   if (field.type === 'number') {
+    const inputId = `setting-${field.key}`;
     return (
-      <div>
-        <label class="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-300">
+      <div class={INSPECTOR_ROW}>
+        <label for={inputId} class={INSPECTOR_LABEL}>
           {label}
         </label>
         <input
+          id={inputId}
           type="number"
           min={field.min ?? 1}
           max={field.max ?? 24}
-          class="w-full rounded border px-2 py-1 text-sm dark:bg-gray-900"
+          class={INSPECTOR_INPUT}
           value={Number(raw ?? field.default ?? field.min ?? 1)}
           onInput$={async (e) => {
-            await props.onSettingsChange$(
-              writeAppearanceSettingValue(
-                props.values,
-                field.key,
-                Number((e.target as HTMLInputElement).value),
-                props.activeLocale,
-                props.defaultLocale,
-                translatable,
-              ),
-            );
+            await write$(Number((e.target as HTMLInputElement).value));
           }}
         />
       </div>
@@ -837,66 +606,38 @@ const AppearanceSettingFieldControl = component$<FieldControlProps>((props) => {
       ? `#${hex[1]}${hex[1]}${hex[2]}${hex[2]}${hex[3]}${hex[3]}`
       : hex || '#0389a1';
     return (
-      <div class="md:col-span-2">
-        <label class="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-300 text-start">
-          {label}
-        </label>
-        <div class="flex flex-wrap items-center gap-2">
+      <div class={INSPECTOR_ROW}>
+        <span class={INSPECTOR_LABEL}>{label}</span>
+        {/* Swatch + hex input; clear sits inside the row */}
+        <div class="flex min-w-0 items-center gap-1.5">
           <ColorPickerField
             value={hex}
             fallback={pickerValue}
             alpha={false}
             lang={props.lang}
             label={label}
-            onChange$={async (next) => {
-              await props.onSettingsChange$(
-                writeAppearanceSettingValue(
-                  props.values,
-                  field.key,
-                  next,
-                  props.activeLocale,
-                  props.defaultLocale,
-                  false,
-                ),
-              );
-            }}
+            onChange$={write$}
           />
           <input
             type="text"
             placeholder="#0389a1"
-            class="min-w-[8rem] flex-1 rounded border px-2 py-1.5 text-sm dark:bg-gray-900"
+            aria-label={label}
+            dir="ltr"
+            class={INSPECTOR_INPUT}
             value={hex}
             onInput$={async (e) => {
-              await props.onSettingsChange$(
-                writeAppearanceSettingValue(
-                  props.values,
-                  field.key,
-                  (e.target as HTMLInputElement).value,
-                  props.activeLocale,
-                  props.defaultLocale,
-                  false,
-                ),
-              );
+              await write$((e.target as HTMLInputElement).value);
             }}
           />
           {hex ? (
             <button
               type="button"
-              class="rounded border border-gray-300 px-2.5 py-1.5 text-xs dark:border-gray-600"
-              onClick$={async () => {
-                await props.onSettingsChange$(
-                  writeAppearanceSettingValue(
-                    props.values,
-                    field.key,
-                    '',
-                    props.activeLocale,
-                    props.defaultLocale,
-                    false,
-                  ),
-                );
-              }}
+              class="shrink-0 rounded p-1 text-gray-400 hover:bg-gray-100 hover:text-red-600 dark:hover:bg-slate-800"
+              title={translateApp(props.lang, 'appearance.clear')}
+              aria-label={translateApp(props.lang, 'appearance.clear')}
+              onClick$={() => write$('')}
             >
-              {translateApp(props.lang, 'appearance.clear')}
+              <TrashGlyph />
             </button>
           ) : null}
         </div>
@@ -906,28 +647,21 @@ const AppearanceSettingFieldControl = component$<FieldControlProps>((props) => {
 
   if (field.type === 'json') {
     const text = typeof raw === 'string' ? raw : JSON.stringify(raw ?? [], null, 2);
+    const inputId = `setting-${field.key}`;
     return (
-      <div class="md:col-span-2">
-        <label class="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-300">
+      <div>
+        <label for={inputId} class={INSPECTOR_STACK_LABEL}>
           {label}
         </label>
         <textarea
+          id={inputId}
           rows={6}
-          class="w-full rounded border px-2 py-1 font-mono text-xs dark:bg-gray-900"
+          class={`${INSPECTOR_INPUT} font-mono text-xs`}
           value={text}
           onInput$={async (e) => {
             const next = (e.target as HTMLTextAreaElement).value;
             try {
-              await props.onSettingsChange$(
-                writeAppearanceSettingValue(
-                  props.values,
-                  field.key,
-                  JSON.parse(next),
-                  props.activeLocale,
-                  props.defaultLocale,
-                  translatable,
-                ),
-              );
+              await write$(JSON.parse(next));
             } catch {
               /* ignore invalid JSON while typing */
             }
@@ -937,54 +671,25 @@ const AppearanceSettingFieldControl = component$<FieldControlProps>((props) => {
     );
   }
 
+  const inputId = `setting-${field.key}`;
   return (
-    <div>
-      <label class="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-300">
+    <div class={INSPECTOR_ROW}>
+      <label for={inputId} class={INSPECTOR_LABEL}>
         {label}
       </label>
-      <input
-        type="text"
-        class="w-full rounded border px-2 py-1 text-sm dark:bg-gray-900"
-        value={asString(raw)}
-        onInput$={async (e) => {
-          await props.onSettingsChange$(
-            writeAppearanceSettingValue(
-              props.values,
-              field.key,
-              (e.target as HTMLInputElement).value,
-              props.activeLocale,
-              props.defaultLocale,
-              translatable,
-            ),
-          );
-        }}
-      />
-      {props.dynamicTags?.length ? (
-        <BuilderDynamicTagChips
-          tags={props.dynamicTags}
-          onInsert$={async (token) => {
-            const current = asString(
-              readAppearanceSettingValue(
-                props.values,
-                field.key,
-                props.activeLocale,
-                props.defaultLocale,
-                translatable,
-              ),
-            );
-            await props.onSettingsChange$(
-              writeAppearanceSettingValue(
-                props.values,
-                field.key,
-                `${current}${token}`,
-                props.activeLocale,
-                props.defaultLocale,
-                translatable,
-              ),
-            );
+      {/* Text input with the dynamic-tag trigger inside its end edge */}
+      <div class="relative">
+        <input
+          id={inputId}
+          type="text"
+          class={[INSPECTOR_INPUT, tags.length ? 'pe-8' : ''].join(' ')}
+          value={asString(raw)}
+          onInput$={async (e) => {
+            await write$((e.target as HTMLInputElement).value);
           }}
         />
-      ) : null}
+        <BuilderDynamicTagButton tags={tags} lang={props.lang} onInsert$={insertTag$} />
+      </div>
     </div>
   );
 });
@@ -997,8 +702,9 @@ export const AppearanceSettingsFields = component$<AppearanceSettingsFieldsProps
   const activeLocale = (props.activeLocale || defaultLocale).toLowerCase();
   const showTabs = languages.length > 1;
 
+  const linkMode = hasLinkModeFields(props.fields);
   const sharedFields = props.fields
-    .filter((f) => !isAppearanceFieldTranslatable(f))
+    .filter((f) => !isAppearanceFieldTranslatable(f) && !isFoldedLinkModeField(f, linkMode))
     // Card style first, then the category picker, so neither is buried under long lists.
     .slice()
     .sort((a, b) => {
@@ -1006,7 +712,9 @@ export const AppearanceSettingsFields = component$<AppearanceSettingsFieldsProps
         f.key === 'card_style' ? -1 : f.type === 'category_multi' ? 0 : f.type === 'responsive_columns' ? 2 : 1;
       return rank(a) - rank(b);
     });
-  const localizedFields = props.fields.filter((f) => isAppearanceFieldTranslatable(f));
+  const localizedFields = props.fields.filter(
+    (f) => isAppearanceFieldTranslatable(f) && !isFoldedLinkModeField(f, linkMode),
+  );
   const grouped = hasAppearanceFieldGroups(props.fields);
   const groups = grouped ? groupAppearanceFields(props.fields) : [];
   const groupIds = groups.map((g) => g.id);
@@ -1035,6 +743,7 @@ export const AppearanceSettingsFields = component$<AppearanceSettingsFieldsProps
         mediaPreviewById={props.mediaPreviewById}
         onMediaPreview$={props.onMediaPreview$}
         dynamicTags={props.dynamicTags}
+        linkMode={linkMode}
       />
     );
   };
@@ -1114,8 +823,8 @@ export const AppearanceSettingsFields = component$<AppearanceSettingsFieldsProps
               (f) => f.type === 'boolean' && group.fields.some((dep) => dep.show_if === f.key),
             );
             const toggleOff = toggle ? !isAppearanceSettingOn(props.values, toggle.key) : false;
-            const visibleFields = group.fields.filter((f) =>
-              isAppearanceFieldVisible(f, props.fields, props.values),
+            const visibleFields = group.fields.filter(
+              (f) => isAppearanceFieldVisible(f, props.fields, props.values) && !isFoldedLinkModeField(f, linkMode),
             );
             const titleKey = `appearance.groups.${group.id}`;
             const translatedTitle = translateApp(lang, titleKey);
@@ -1181,7 +890,7 @@ export const AppearanceSettingsFields = component$<AppearanceSettingsFieldsProps
       ) : null}
 
       {!grouped && localizedFields.length > 0 ? (
-        <div class="grid gap-3 md:grid-cols-2">
+        <div class={INSPECTOR_STACK}>
           {localizedFields.map((field) => (
             <AppearanceSettingFieldControl
               key={`loc-${field.key}-${activeLocale}`}
@@ -1195,6 +904,7 @@ export const AppearanceSettingsFields = component$<AppearanceSettingsFieldsProps
               mediaPreviewById={props.mediaPreviewById}
               onMediaPreview$={props.onMediaPreview$}
               dynamicTags={props.dynamicTags}
+              linkMode={linkMode}
             />
           ))}
         </div>
@@ -1207,7 +917,7 @@ export const AppearanceSettingsFields = component$<AppearanceSettingsFieldsProps
               {translateApp(lang, 'appearance.sharedSettings')}
             </p>
           ) : null}
-          <div class="grid gap-3 md:grid-cols-2">
+          <div class={INSPECTOR_STACK}>
             {sharedFields.map((field) => (
               <AppearanceSettingFieldControl
                 key={`shared-${field.key}`}
@@ -1222,6 +932,7 @@ export const AppearanceSettingsFields = component$<AppearanceSettingsFieldsProps
                 mediaPreviewById={props.mediaPreviewById}
                 onMediaPreview$={props.onMediaPreview$}
                 dynamicTags={props.dynamicTags}
+                linkMode={linkMode}
               />
             ))}
           </div>

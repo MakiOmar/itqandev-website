@@ -133,7 +133,7 @@ import {
   saveBuilderBand,
   type SavedBuilderBand,
 } from '~/lib/admin/saved-builder-sections';
-import type { BuilderDynamicTag } from '~/components/admin/appearance/BuilderDynamicTagChips';
+import type { BuilderDynamicTag } from '~/components/admin/appearance/BuilderDynamicTagButton';
 
 const WIDGET_DND = 'application/x-credocode-widget';
 

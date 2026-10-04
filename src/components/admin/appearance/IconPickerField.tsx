@@ -7,6 +7,14 @@ import { iconValueLabel, parseIconValue, type IconSetLibrary, type IconValue } f
 import { translateApp } from '~/lib/i18n/useTranslate';
 import { showError } from '~/lib/utils/toast';
 import type { Media } from '~/types/media';
+import { PlusGlyph, TrashGlyph } from './InspectorGlyphs';
+import {
+  INSPECTOR_CHECKER_STYLE,
+  INSPECTOR_LABEL,
+  INSPECTOR_OVERLAY_BTN,
+  INSPECTOR_ROW,
+  INSPECTOR_STACK_LABEL,
+} from './inspector-classes';
 
 export type IconPickerFieldProps = {
   label: string;
@@ -20,6 +28,10 @@ const MAX_VISIBLE = 240;
 
 const BTN =
   'rounded-lg border border-gray-300 px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50 dark:border-gray-600 dark:text-gray-200 dark:hover:bg-slate-800';
+
+/** One half of the library | upload bar under the preview. */
+const SPLIT_BTN =
+  'bg-white px-2 py-2 text-xs font-medium text-gray-700 hover:bg-gray-50 hover:text-primary-600 dark:bg-slate-900 dark:text-gray-200 dark:hover:bg-slate-800 dark:hover:text-primary-400';
 
 /** Library tabs in the picker dialog: general UI icons and brand logos, both self-hosted. */
 const LIBRARY_TABS: ReadonlyArray<{ id: IconSetLibrary; labelKey: string }> = [
@@ -81,56 +93,74 @@ export const IconPickerField = component$<IconPickerFieldProps>((props) => {
   const visible = matches.slice(0, MAX_VISIBLE);
 
   return (
-    <div class="md:col-span-2">
-      <label class="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-300">{props.label}</label>
-      {/* Current icon preview + actions */}
-      <div class="flex flex-wrap items-center gap-2">
-        <span class="inline-flex h-10 w-10 items-center justify-center rounded-lg border border-gray-200 bg-gray-50 text-gray-800 dark:border-gray-700 dark:bg-slate-800 dark:text-gray-100">
-          {current ? <SvgIcon value={current} size={22} /> : <span class="text-xs text-gray-400">—</span>}
-        </span>
-        <span class="min-w-0 flex-1 truncate text-xs text-gray-500 dark:text-gray-400">
-          {current ? iconValueLabel(current) : t('none')}
-        </span>
-        <button type="button" class={BTN} onClick$={openLibrary$}>
-          {t('choose')}
-        </button>
-        <button type="button" class={BTN} onClick$={() => (uploadOpen.value = true)}>
-          {t('upload')}
-        </button>
-        {current ? (
+    <div>
+      <span class={INSPECTOR_STACK_LABEL}>{props.label}</span>
+      {/* Preview panel: checkerboard, remove on the preview, library / upload split bar */}
+      <div class="overflow-hidden rounded-md border border-gray-200 dark:border-gray-700">
+        <div class="relative bg-gray-50 dark:bg-slate-950" style={INSPECTOR_CHECKER_STYLE}>
           <button
             type="button"
-            class="rounded-lg px-2 py-1.5 text-xs font-medium text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-950/40"
-            onClick$={() => props.onChange$('')}
+            class="flex h-24 w-full items-center justify-center text-gray-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary-500 dark:text-gray-100"
+            title={current ? iconValueLabel(current) : t('none')}
+            aria-label={t('choose')}
+            onClick$={openLibrary$}
           >
-            {t('remove')}
+            {current ? (
+              <SvgIcon value={current} size={48} />
+            ) : (
+              <span class="flex flex-col items-center gap-1 text-xs font-medium text-gray-500 dark:text-gray-400">
+                <PlusGlyph />
+                {t('none')}
+              </span>
+            )}
           </button>
-        ) : null}
+          {current ? (
+            <button
+              type="button"
+              class={INSPECTOR_OVERLAY_BTN}
+              title={t('remove')}
+              aria-label={t('remove')}
+              onClick$={() => props.onChange$('')}
+            >
+              <TrashGlyph />
+            </button>
+          ) : null}
+        </div>
+        <div class="grid grid-cols-2 divide-x divide-gray-200 border-t border-gray-200 rtl:divide-x-reverse dark:divide-gray-700 dark:border-gray-700">
+          <button type="button" class={SPLIT_BTN} onClick$={openLibrary$}>
+            {t('choose')}
+          </button>
+          <button type="button" class={SPLIT_BTN} onClick$={() => (uploadOpen.value = true)}>
+            {t('upload')}
+          </button>
+        </div>
       </div>
 
       {/* Icon colour: library icons draw with currentColor; uploaded images keep their own colours */}
       {currentSetIcon ? (
-        <div class="mt-2 flex items-center gap-2">
-          <ColorPickerField
-            value={currentSetIcon.color || ''}
-            onChange$={setColor$}
-            lang={props.lang}
-            clearable
-            fallback="#0389a1"
-            label={t('color')}
-            class="h-8 w-10"
-          />
-          <span class="text-xs text-gray-600 dark:text-gray-300">{t('color')}</span>
-          <span class="text-[11px] text-gray-400">{currentSetIcon.color || t('colorInherit')}</span>
-          {currentSetIcon.color ? (
-            <button
-              type="button"
-              class="text-[11px] font-medium text-primary-600 hover:underline dark:text-primary-400"
-              onClick$={() => setColor$('')}
-            >
-              {t('colorReset')}
-            </button>
-          ) : null}
+        <div class={`${INSPECTOR_ROW} mt-2`}>
+          <span class={INSPECTOR_LABEL}>{t('color')}</span>
+          <div class="flex min-w-0 items-center gap-2">
+            <ColorPickerField
+              value={currentSetIcon.color || ''}
+              onChange$={setColor$}
+              lang={props.lang}
+              clearable
+              fallback="#0389a1"
+              label={t('color')}
+              class="h-8 w-10"
+            />
+            <span class="truncate text-[11px] text-gray-400" dir="ltr">{currentSetIcon.color || t('colorInherit')}</span>
+            {currentSetIcon.color ? (
+              <button
+                type="button"
+                class="ms-auto shrink-0 text-[11px] font-medium text-primary-600 hover:underline dark:text-primary-400"
+                onClick$={() => setColor$('')}
+              >
+                {t('colorReset')}
+              </button>
+            ) : null}
+          </div>
         </div>
       ) : current?.library === 'svg' ? (
         <p class="mt-2 text-[11px] text-gray-500 dark:text-gray-400">{t('uploadColorHint')}</p>

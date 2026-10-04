@@ -13,7 +13,7 @@ import {
 } from '~/lib/admin/appearance-actions';
 import { ensurePageLayoutBands } from '~/lib/admin/page-layout';
 import type { AppearanceRegistryEntry, PageSectionNode } from '~/lib/marketing/appearance-types';
-import type { BuilderDynamicTag } from '~/components/admin/appearance/BuilderDynamicTagChips';
+import type { BuilderDynamicTag } from '~/components/admin/appearance/BuilderDynamicTagButton';
 
 /**
  * Homepage Appearance uses the same band workspace as CMS pages (legacy flat sections wrap).
