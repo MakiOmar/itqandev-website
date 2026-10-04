@@ -1398,6 +1398,7 @@
       "groupLogoTagline": "العبارة التعريفية",
       "markSize": "حجم الرمز",
       "markGap": "المسافة بجانب الرمز",
+      "textAlignment": "محاذاة النص",
       "taglineSpacing": "المسافة فوق العبارة التعريفية",
       "highlightColor": "لون التمييز",
       "gradientEndColor": "لون نهاية التدرج",

@@ -31,6 +31,8 @@
   --tl-mark-icon: var(--s-logo-mark-icon-size, 1.25rem);
   --tl-mark-shadow: var(--s-logo-mark-shadow, var(--tl-d-mark-shadow));
   --tl-gap: var(--s-logo-gap, 0.75rem);
+  /* Unset follows the widget's Layout → Align (inherited from the styled wrapper). */
+  --tl-align: var(--s-logo-text-align, var(--s-align, start));
   --tl-name: var(--s-logo-name-color, var(--tl-d-name));
   --tl-name-fs: var(--s-logo-name-font-size, 1.25rem);
   --tl-name-fw: var(--s-logo-name-font-weight, 900);
@@ -63,6 +65,7 @@
     --tl-mark-icon: var(--s-logo-mark-icon-size-md, var(--s-logo-mark-icon-size, 1.25rem));
     --tl-mark-shadow: var(--s-logo-mark-shadow-md, var(--s-logo-mark-shadow, var(--tl-d-mark-shadow)));
     --tl-gap: var(--s-logo-gap-md, var(--s-logo-gap, 0.75rem));
+    --tl-align: var(--s-logo-text-align-md, var(--s-logo-text-align, var(--s-align-md, var(--s-align, start))));
     --tl-name: var(--s-logo-name-color-md, var(--s-logo-name-color, var(--tl-d-name)));
     --tl-name-fs: var(--s-logo-name-font-size-md, var(--s-logo-name-font-size, 1.25rem));
     --tl-name-fw: var(--s-logo-name-font-weight-md, var(--s-logo-name-font-weight, 900));
@@ -120,6 +123,13 @@
       var(--s-logo-mark-shadow-md, var(--s-logo-mark-shadow, var(--tl-d-mark-shadow)))
     );
     --tl-gap: var(--s-logo-gap-lg, var(--s-logo-gap-md, var(--s-logo-gap, 0.75rem)));
+    --tl-align: var(
+      --s-logo-text-align-lg,
+      var(
+        --s-logo-text-align-md,
+        var(--s-logo-text-align, var(--s-align-lg, var(--s-align-md, var(--s-align, start))))
+      )
+    );
     --tl-name: var(--s-logo-name-color-lg, var(--s-logo-name-color-md, var(--s-logo-name-color, var(--tl-d-name))));
     --tl-name-fs: var(
       --s-logo-name-font-size-lg,
@@ -192,9 +202,10 @@
   text-decoration: none;
   color: inherit;
 }
+/* Grid, not flex: `justify-items` takes left / center / right, so the mark lines up with the text in RTL too. */
 .tl[data-layout='stacked'] {
-  flex-direction: column;
-  align-items: flex-start;
+  display: inline-grid;
+  justify-items: var(--tl-align);
 }
 .tl-mark {
   display: inline-flex;
@@ -226,6 +237,7 @@
   display: flex;
   min-width: 0;
   flex-direction: column;
+  text-align: var(--tl-align);
 }
 .tl-name {
   color: var(--tl-name);

@@ -274,7 +274,7 @@ export const LOGO_STYLE_KEYS = {
   logo_mark_bg: 'color', logo_mark_bg_end: 'color', logo_mark_color: 'color',
   logo_mark_size: 'length', logo_mark_radius: 'length', logo_mark_font_size: 'length',
   logo_mark_font_weight: 'string', logo_mark_icon_size: 'length', logo_mark_shadow: 'shadow',
-  logo_gap: 'length',
+  logo_gap: 'length', logo_text_align: 'string',
   logo_name_color: 'color', logo_name_font_size: 'length', logo_name_font_weight: 'string',
   logo_name_letter_spacing: 'length', logo_name_transform: 'string',
   logo_tagline_color: 'color', logo_tagline_font_size: 'length', logo_tagline_font_weight: 'string',

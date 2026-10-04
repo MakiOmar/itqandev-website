@@ -1398,6 +1398,7 @@
       "groupLogoTagline": "Tagline",
       "markSize": "Mark size",
       "markGap": "Space beside mark",
+      "textAlignment": "Text alignment",
       "taglineSpacing": "Space above tagline",
       "highlightColor": "Highlight colour",
       "gradientEndColor": "Gradient end colour",

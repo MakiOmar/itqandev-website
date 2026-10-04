@@ -204,6 +204,16 @@ const LOGO_PART_CONTROLS: StyleControl[] = [
   { key: 'logo_mark_icon_size', group: 'logo_mark', type: 'length', min: 8, max: 120 },
   { key: 'logo_mark_shadow', group: 'logo_mark', type: 'shadow' },
   { key: 'logo_gap', group: 'logo_mark', type: 'length', min: 0, max: 80 },
+  {
+    key: 'logo_text_align',
+    group: 'logo_name',
+    type: 'choose',
+    options: [
+      { value: 'left', labelKey: 'builder.style.alignLeft' },
+      { value: 'center', labelKey: 'builder.style.alignCenter' },
+      { value: 'right', labelKey: 'builder.style.alignRight' },
+    ],
+  },
   { key: 'logo_name_font_size', group: 'logo_name', type: 'length', min: 8, max: 96 },
   { key: 'logo_name_font_weight', group: 'logo_name', type: 'select', options: HEAVY_WEIGHT_OPTIONS },
   { key: 'logo_name_letter_spacing', group: 'logo_name', type: 'length', min: -5, max: 20 },

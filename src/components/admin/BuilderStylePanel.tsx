@@ -242,6 +242,7 @@ const KEY_LABEL: Record<string, string> = {
   logo_mark_icon_size: 'builder.style.iconSize',
   logo_mark_shadow: 'builder.style.boxShadow',
   logo_gap: 'builder.style.markGap',
+  logo_text_align: 'builder.style.textAlignment',
   logo_name_font_size: 'builder.style.fontSize',
   logo_name_font_weight: 'builder.style.fontWeight',
   logo_name_letter_spacing: 'builder.style.letterSpacing',
