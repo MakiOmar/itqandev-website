@@ -1,15 +1,24 @@
-import { component$, useSignal, $, noSerialize, type NoSerialize, type QRL } from '@builder.io/qwik';
+import { component$, useId, useSignal, $, noSerialize, type NoSerialize, type QRL } from '@builder.io/qwik';
 import { ColorPickerField } from '~/components/admin/ColorPickerField';
 import { MediaSelector } from '~/components/common/MediaSelector';
 import { SvgIcon } from '~/components/marketing/SvgIcon';
 import { loadIconSet, type LoadedIconSet } from '~/lib/admin/icon-sets';
-import { iconValueLabel, parseIconValue, type IconSetLibrary, type IconValue } from '~/lib/icons/icon-value';
+import {
+  ICON_SIZE_MAX,
+  ICON_SIZE_MIN,
+  iconValueLabel,
+  normalizeIconSize,
+  parseIconValue,
+  type IconSetLibrary,
+  type IconValue,
+} from '~/lib/icons/icon-value';
 import { translateApp } from '~/lib/i18n/useTranslate';
 import { showError } from '~/lib/utils/toast';
 import type { Media } from '~/types/media';
 import { PlusGlyph, TrashGlyph } from './InspectorGlyphs';
 import {
   INSPECTOR_CHECKER_STYLE,
+  INSPECTOR_INPUT,
   INSPECTOR_LABEL,
   INSPECTOR_OVERLAY_BTN,
   INSPECTOR_ROW,
@@ -41,6 +50,7 @@ const LIBRARY_TABS: ReadonlyArray<{ id: IconSetLibrary; labelKey: string }> = [
 
 /** Elementor-style icon control: bundled sets (Lucide, Simple Icons brands) or an uploaded SVG from the media library. */
 export const IconPickerField = component$<IconPickerFieldProps>((props) => {
+  const sizeInputId = `icon-size-${useId()}`;
   const libraryOpen = useSignal(false);
   const uploadOpen = useSignal(false);
   const query = useSignal('');
@@ -77,8 +87,13 @@ export const IconPickerField = component$<IconPickerFieldProps>((props) => {
     const icon = iconSet.value?.icon(name);
     if (!icon) return;
     libraryOpen.value = false;
-    const color = currentSetIcon?.color;
-    await props.onChange$(color ? { ...icon, color } : icon);
+    const previous = parseIconValue(props.value);
+    const color = previous && previous.library !== 'svg' ? previous.color : undefined;
+    await props.onChange$({
+      ...icon,
+      ...(color ? { color } : {}),
+      ...(previous?.size ? { size: previous.size } : {}),
+    });
   });
 
   const setColor$ = $(async (next: string) => {
@@ -86,6 +101,15 @@ export const IconPickerField = component$<IconPickerFieldProps>((props) => {
     if (!current || current.library === 'svg') return;
     const { color: _previous, ...rest } = current;
     await props.onChange$(next ? { ...rest, color: next } : rest);
+  });
+
+  /** Empty clears the size so the widget's own default applies again. */
+  const setSize$ = $(async (raw: string) => {
+    const current = parseIconValue(props.value);
+    if (!current) return;
+    const { size: _previous, ...rest } = current;
+    const size = raw.trim() === '' ? undefined : normalizeIconSize(raw);
+    await props.onChange$(size ? { ...rest, size } : rest);
   });
 
   const q = query.value.trim().toLowerCase();
@@ -106,7 +130,7 @@ export const IconPickerField = component$<IconPickerFieldProps>((props) => {
             onClick$={openLibrary$}
           >
             {current ? (
-              <SvgIcon value={current} size={48} />
+              <SvgIcon value={{ ...current, size: undefined }} size={48} />
             ) : (
               <span class="flex flex-col items-center gap-1 text-xs font-medium text-gray-500 dark:text-gray-400">
                 <PlusGlyph />
@@ -164,6 +188,41 @@ export const IconPickerField = component$<IconPickerFieldProps>((props) => {
         </div>
       ) : current?.library === 'svg' ? (
         <p class="mt-2 text-[11px] text-gray-500 dark:text-gray-400">{t('uploadColorHint')}</p>
+      ) : null}
+
+      {/* Icon size: library icons and uploads; empty keeps the widget's default size */}
+      {current ? (
+        <div class={`${INSPECTOR_ROW} mt-2`}>
+          <label class={INSPECTOR_LABEL} for={sizeInputId}>
+            {t('size')}
+          </label>
+          <div class="flex min-w-0 items-center gap-2">
+            <div class="relative min-w-0 flex-1">
+              <input
+                id={sizeInputId}
+                type="number"
+                inputMode="numeric"
+                min={ICON_SIZE_MIN}
+                max={ICON_SIZE_MAX}
+                step={1}
+                class={`${INSPECTOR_INPUT} pe-8`}
+                placeholder={t('sizeDefault')}
+                value={current.size ?? ''}
+                onChange$={(_, el) => setSize$(el.value)}
+              />
+              <span class="pointer-events-none absolute end-2 top-1/2 -translate-y-1/2 text-[11px] text-gray-400">px</span>
+            </div>
+            {current.size ? (
+              <button
+                type="button"
+                class="shrink-0 text-[11px] font-medium text-primary-600 hover:underline dark:text-primary-400"
+                onClick$={() => setSize$('')}
+              >
+                {t('colorReset')}
+              </button>
+            ) : null}
+          </div>
+        </div>
       ) : null}
 
       {/* Icon library dialog */}
@@ -283,7 +342,8 @@ export const IconPickerField = component$<IconPickerFieldProps>((props) => {
             uploadOpen.value = false;
             const url = media.url || '';
             if (!media.id || !url) return;
-            await props.onChange$({ library: 'svg', media_id: Number(media.id), url });
+            const size = parseIconValue(props.value)?.size;
+            await props.onChange$({ library: 'svg', media_id: Number(media.id), url, ...(size ? { size } : {}) });
           })}
           onClose={$(() => {
             uploadOpen.value = false;

@@ -19,12 +19,15 @@ export type SetIconValue = {
   view_box: string;
   /** Hex colour applied through `currentColor`; unset inherits the surrounding text colour. */
   color?: string;
+  /** Pixel size chosen in the picker; overrides the widget's default size. */
+  size?: number;
 };
 
 export type UploadedIconValue = {
   library: 'svg';
   media_id: number;
   url: string;
+  size?: number;
 };
 
 export type IconValue = SetIconValue | UploadedIconValue;
@@ -55,6 +58,17 @@ const TAG_RE = /<\/?([a-zA-Z][\w-]*)((?:\s+[a-zA-Z][\w:-]*\s*=\s*"[^"<>]*")*)\s*
 const ATTR_RE = /([a-zA-Z][\w:-]*)\s*=\s*"([^"<>]*)"/g;
 const UNSAFE_VALUE_RE = /url\s*\(|javascript\s*:|expression\s*\(/i;
 const ICON_COLOR_RE = /^#(?:[0-9a-f]{3,4}|[0-9a-f]{6}|[0-9a-f]{8})$/i;
+
+/** Same bounds as backend `IconValueNormalizer::SIZE_MIN` / `SIZE_MAX`. */
+export const ICON_SIZE_MIN = 8;
+export const ICON_SIZE_MAX = 256;
+
+/** Whole-pixel icon size within bounds, or undefined when unset / not numeric. */
+export function normalizeIconSize(raw: unknown): number | undefined {
+  if (raw === '' || raw === null || typeof raw === 'boolean') return undefined;
+  const n = Number(raw);
+  return Number.isFinite(n) ? Math.min(ICON_SIZE_MAX, Math.max(ICON_SIZE_MIN, Math.round(n))) : undefined;
+}
 
 /** Only hex colours reach the SVG style attribute. */
 export function isSafeIconColor(color: unknown): color is string {
@@ -91,9 +105,11 @@ export function parseIconValue(raw: unknown): IconValue | null {
   if (v.library === 'svg') {
     const url = typeof v.url === 'string' ? v.url.trim() : '';
     const id = Number(v.media_id);
-    return url && Number.isInteger(id) && id > 0 && isHttpOrRootUrl(url)
-      ? { library: 'svg', media_id: id, url }
-      : null;
+    if (!url || !Number.isInteger(id) || id < 1 || !isHttpOrRootUrl(url)) return null;
+    const upload: UploadedIconValue = { library: 'svg', media_id: id, url };
+    const uploadSize = normalizeIconSize(v.size);
+    if (uploadSize) upload.size = uploadSize;
+    return upload;
   }
   if (isIconSetLibrary(v.library)) {
     const body = typeof v.body === 'string' ? v.body.trim() : '';
@@ -101,6 +117,8 @@ export function parseIconValue(raw: unknown): IconValue | null {
     const viewBox = typeof v.view_box === 'string' && /^-?[\d.]+( -?[\d.]+){3}$/.test(v.view_box) ? v.view_box : DEFAULT_VIEW_BOX;
     const icon: SetIconValue = { library: v.library, name: String(v.name ?? ''), body, view_box: viewBox };
     if (isSafeIconColor(v.color)) icon.color = v.color.trim().toLowerCase();
+    const size = normalizeIconSize(v.size);
+    if (size) icon.size = size;
     return icon;
   }
   return null;

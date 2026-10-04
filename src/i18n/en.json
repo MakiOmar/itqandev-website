@@ -1148,6 +1148,8 @@
       "color": "Icon colour",
       "colorInherit": "Inherits text colour",
       "colorReset": "Reset",
+      "size": "Icon size",
+      "sizeDefault": "Default",
       "uploadColorHint": "Uploaded icons keep their own colours. Use an icon from the library to change the colour."
     },
     "editingLocaleCopy": "Editing {{locale}} copy. Empty fields fall back to the default language.",

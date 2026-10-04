@@ -16,7 +16,9 @@ export type SvgIconProps = {
 export const SvgIcon = (props: SvgIconProps) => {
   const icon = parseIconValue(props.value);
   if (!icon) return null;
-  const size = props.size ?? 24;
+  const size = icon.size ?? props.size ?? 24;
+  // Inline so a size picked on the icon beats widget CSS (e.g. `.tl-mark svg { width: … }`).
+  const sizeStyle = icon.size ? { width: `${icon.size}px`, height: `${icon.size}px` } : {};
 
   if (icon.library === 'svg') {
     return (
@@ -28,6 +30,7 @@ export const SvgIcon = (props: SvgIconProps) => {
         aria-hidden="true"
         loading="lazy"
         class={['inline-block object-contain', props.class].filter(Boolean).join(' ')}
+        style={icon.size ? sizeStyle : undefined}
       />
     );
   }
@@ -41,7 +44,7 @@ export const SvgIcon = (props: SvgIconProps) => {
       aria-hidden="true"
       focusable="false"
       class={['inline-block shrink-0', props.class].filter(Boolean).join(' ')}
-      style={icon.color ? { color: icon.color } : undefined}
+      style={icon.color || icon.size ? { ...sizeStyle, ...(icon.color ? { color: icon.color } : {}) } : undefined}
       dangerouslySetInnerHTML={icon.body}
     />
   );
