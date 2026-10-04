@@ -1,4 +1,4 @@
-import { component$, createContextId, isDev, useContext, useContextProvider, useSignal, useVisibleTask$ } from "@builder.io/qwik";
+import { component$, createContextId, useContext, useContextProvider, useSignal, useVisibleTask$ } from "@builder.io/qwik";
 import { QwikCityProvider, RouterOutlet, useLocation } from "@builder.io/qwik-city";
 import { useQwikSpeak, useSpeakLocale } from "qwik-speak";
 import { RouterHead } from "./components/router-head/router-head";
@@ -172,7 +172,7 @@ export default component$(() => {
       <QwikCityProvider>
         <head>
           <meta charset="utf-8" />
-          {!isDev && (
+          {!import.meta.env.DEV && (
             <link
               rel="manifest"
               href={`${import.meta.env.BASE_URL}manifest.json`}
