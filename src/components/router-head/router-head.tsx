@@ -23,6 +23,7 @@ export const RouterHead = component$(() => {
   const loc = useLocation();
   const isAdmin = isAdminDashboardPath(loc.url.pathname);
   const hasCanonicalLink = head.links.some((l) => l.rel === "canonical");
+  const hasFaviconLink = head.links.some((l) => l.rel === "icon");
   const fallbackCanonical = buildCanonicalHref(loc.url.pathname, loc.url.origin);
   const uiLocaleBootstrap = uiLocaleBootstrapJson();
   const preconnectHints = collectPreconnectHints(loc.url.origin, loc.url.pathname);
@@ -40,7 +41,8 @@ export const RouterHead = component$(() => {
         <link rel="canonical" href={fallbackCanonical} />
       ) : null}
       <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-      <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+      {/* Bundled fallback; layouts add the Settings → Branding favicon to head.links */}
+      {!hasFaviconLink ? <link rel="icon" type="image/svg+xml" href="/favicon.svg" /> : null}
 
       {/* Critical CSS: first paint + FOUC gate before Tailwind bundle loads */}
       <style id="critical-css" dangerouslySetInnerHTML={INLINE_CRITICAL_CSS} />

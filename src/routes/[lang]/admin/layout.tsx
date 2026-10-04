@@ -14,6 +14,7 @@ import { routesFromPreferredCookie } from '../../../lib/constants/routes';
 import { loadAdminAuthSession } from '../../../lib/loaders/admin-auth';
 import { isAdminLoginPath, loadAdminSettings } from '../../../lib/loaders/admin-settings';
 import { loadPublicSiteMeta } from '../../../lib/loaders/public-site-meta';
+import { faviconLink } from '../../../lib/seo/favicon';
 
 /** Route loaders must be declared in this layout module (not lib/) so client chunks never call routeLoader$. */
 export const useAdminAuth = routeLoader$(async ({ cookie, url, redirect: redirectFn }) =>
@@ -36,8 +37,17 @@ export const onRequest: RequestHandler = ({ headers }) => {
   headers.set('X-Robots-Tag', 'noindex, nofollow');
 };
 
-export const head: DocumentHead = {
-  meta: [{ name: 'robots', content: 'noindex, nofollow' }],
+export const head: DocumentHead = ({ resolveValue }) => {
+  let icon: ReturnType<typeof faviconLink> = null;
+  try {
+    icon = faviconLink(resolveValue(usePublicSiteMeta).favicon);
+  } catch {
+    icon = null;
+  }
+  return {
+    meta: [{ name: 'robots', content: 'noindex, nofollow' }],
+    ...(icon ? { links: [icon] } : {}),
+  };
 };
 
 /**

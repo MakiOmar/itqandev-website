@@ -220,6 +220,8 @@ export default component$(() => {
               <label class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-200">
                 {translateApp(lang, 'settings.favicon')}
               </label>
+              {/* Where the favicon shows and which file works best */}
+              <p class="mb-2 text-xs text-gray-500 dark:text-gray-400">{translateApp(lang, 'settings.faviconHint')}</p>
               <div class="mb-3 flex h-24 items-center justify-center rounded-lg border border-dashed border-gray-300 bg-gray-50 dark:border-gray-600 dark:bg-gray-900">
                 {faviconUrl.value ? (
                   <img
@@ -230,7 +232,7 @@ export default component$(() => {
                     class="h-10 w-10 object-contain"
                   />
                 ) : (
-                  <span class="text-sm text-gray-500 dark:text-gray-400">No favicon selected</span>
+                  <span class="text-sm text-gray-500 dark:text-gray-400">{translateApp(lang, 'settings.faviconEmpty')}</span>
                 )}
               </div>
               <div class="mb-2">

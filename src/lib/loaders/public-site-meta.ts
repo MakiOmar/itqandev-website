@@ -10,6 +10,7 @@ import { resolvePublicSiteLanguages } from '../i18n/public-site-languages';
 import { defaultSystemTypography, parseSiteTypography } from '../perf/typography';
 import type { SiteTypography } from '~/types/typography';
 import { parseKitColors, type KitColorToken } from '../marketing/design-kit';
+import { resolveLaravelMediaUrl } from '../marketing/resolve-laravel-media-url';
 
 export interface PublicSiteMetaState {
   typography: SiteTypography;
@@ -20,6 +21,8 @@ export interface PublicSiteMetaState {
   /** Kit custom properties (`:root,.light` / `.dark`); injected into builder canvases. */
   design_kit_css?: string;
   kit_colors?: KitColorToken[];
+  /** Settings → Branding favicon (absolute media URL) for the dashboard tab icon. */
+  favicon?: string;
 }
 
 function pickContentEditingLocale(
@@ -76,6 +79,7 @@ export async function loadPublicSiteMeta(
       content_editing_locale: pickContentEditingLocale(site_languages, default_locale, cookieHeader),
       design_kit_css: typeof settings?.design_kit_css === 'string' ? settings.design_kit_css : undefined,
       kit_colors: parseKitColors(settings?.design_kit),
+      favicon: typeof settings?.favicon === 'string' ? resolveLaravelMediaUrl(settings.favicon) : undefined,
     };
   } catch (e) {
     if (import.meta.env.DEV && !isDevSsrMarketingFetchFailure(e)) {

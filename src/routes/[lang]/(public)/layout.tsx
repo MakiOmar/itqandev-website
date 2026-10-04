@@ -33,6 +33,7 @@ import type { PublicNavItem } from '~/lib/marketing/public-menu';
 import type { SiteContent } from '~/lib/marketing/types';
 import type { HomepageSectionInstance } from '~/lib/marketing/appearance-types';
 import { isSearchEngineIndexingEnabled, publicRobotsContent } from '~/lib/seo/search-engine-indexing';
+import { faviconLink } from '~/lib/seo/favicon';
 import { pathLooksLikeFrontPageAlias } from '~/lib/marketing/static-homepage';
 
 /**
@@ -203,10 +204,11 @@ export const head: DocumentHead = ({ resolveValue }) => {
     const robots = publicRobotsContent({
       siteIndexingEnabled: isSearchEngineIndexingEnabled(shell.branding?.search_engine_indexing),
     });
-    if (!robots) {
-      return {};
-    }
-    return { meta: [{ name: 'robots', content: robots }] };
+    const icon = faviconLink(shell.branding?.favicon);
+    return {
+      ...(robots ? { meta: [{ name: 'robots', content: robots }] } : {}),
+      ...(icon ? { links: [icon] } : {}),
+    };
   } catch {
     return {};
   }

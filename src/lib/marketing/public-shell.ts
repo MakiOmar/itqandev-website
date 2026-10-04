@@ -7,7 +7,7 @@ import { getConfig } from '~/lib/config';
 import { resolvePublicSiteLanguages } from '~/lib/i18n/public-site-languages';
 import { marketingGet, getMarketingApiBaseUrl, type MarketingFetchContext } from './api-client';
 import { MARKETING_ENDPOINTS } from './endpoints';
-import { mapPublicBrandingFromApi } from './resolve-laravel-media-url';
+import { mapPublicBrandingFromApi, resolveLaravelMediaUrl } from './resolve-laravel-media-url';
 import type { PublicNavItem } from './public-menu';
 import type { Service, SiteContent } from './types';
 import { parseSiteTypography } from '~/lib/perf/typography';
@@ -35,6 +35,8 @@ export type PublicBrandingState = {
   logo: string;
   logoDark: string;
   logoLight: string;
+  /** Settings → Branding favicon, resolved to an absolute media URL; empty uses `/favicon.svg`. */
+  favicon?: string;
   site_languages: ReturnType<typeof resolvePublicSiteLanguages>;
   features?: Record<string, boolean>;
   typography?: SiteTypography;
@@ -124,6 +126,7 @@ function brandingFromSiteMeta(
     logo: branding.logo,
     logoDark: branding.logoDark,
     logoLight: branding.logoLight,
+    favicon: typeof settings?.favicon === 'string' ? resolveLaravelMediaUrl(settings.favicon) : undefined,
     site_languages: resolvePublicSiteLanguages(settings?.site_languages),
     features,
     typography: parseSiteTypography(settings?.typography),

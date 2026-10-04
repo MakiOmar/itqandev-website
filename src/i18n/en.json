@@ -804,6 +804,8 @@
     "branding": "Branding",
     "logo": "Logo",
     "favicon": "Favicon",
+    "faviconHint": "Shown in browser tabs and bookmarks on the site and dashboard. Use a square SVG, PNG or ICO (at least 48×48).",
+    "faviconEmpty": "No favicon selected, the default icon is used",
     "primaryColor": "Primary color",
     "secondaryColor": "Secondary color",
     "save": "Save Settings",

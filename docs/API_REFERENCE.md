@@ -517,6 +517,8 @@ Also available: `GET /api/health` (minimal `{ "status": "ok" }`) and Laravel’s
 
 Returns **locale-resolved** branding, `site_languages`, resolved **`typography`**, and **`search_engine_indexing`** (boolean, default `true`) for the marketing shell (see `SettingsController::publicMeta`, `SiteSettingsPresenter`, and `TypographyResolver`).
 
+It also returns **`favicon`** (Settings → Branding favicon URL, or `null`). Public and dashboard layouts add it as `<link rel="icon">`; the bundled `/favicon.svg` is used only when it is empty.
+
 When `search_engine_indexing` is `false`, the public sitefront must not advertise URLs to crawlers (`robots.txt` `Disallow: /`, empty sitemap, `noindex` on public HTML). Admin dashboard stays noindex in all cases.
 
 **Locale:** optional `locale` query and/or `X-Content-Locale` header. When set to a non-default site language, `site_name`, `site_description`, and `site_address` are overlaid from `settings_translations` (fallback to primary when a field is missing). Raw `settings_translations` is never returned on public endpoints.
