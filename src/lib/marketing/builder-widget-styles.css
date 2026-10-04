@@ -34,6 +34,102 @@
 }
 
 /*
+ * Custom properties inherit, so a band / row / column's box settings (e.g. a 70px header row
+ * height) would otherwise resize every nested widget or container. `initial` makes the nested
+ * node fall back to its own defaults; its inline vars and `!important` dark overrides still win.
+ * Typography and text alignment keep inheriting on purpose.
+ */
+.b-styled .b-styled {
+  --s-width: initial;
+  --s-width-md: initial;
+  --s-width-lg: initial;
+  --s-max-width: initial;
+  --s-max-width-md: initial;
+  --s-max-width-lg: initial;
+  --s-height: initial;
+  --s-height-md: initial;
+  --s-height-lg: initial;
+  --s-mt: initial;
+  --s-mt-md: initial;
+  --s-mt-lg: initial;
+  --s-mr: initial;
+  --s-mr-md: initial;
+  --s-mr-lg: initial;
+  --s-mb: initial;
+  --s-mb-md: initial;
+  --s-mb-lg: initial;
+  --s-ml: initial;
+  --s-ml-md: initial;
+  --s-ml-lg: initial;
+  --s-pt: initial;
+  --s-pt-md: initial;
+  --s-pt-lg: initial;
+  --s-pr: initial;
+  --s-pr-md: initial;
+  --s-pr-lg: initial;
+  --s-pb: initial;
+  --s-pb-md: initial;
+  --s-pb-lg: initial;
+  --s-pl: initial;
+  --s-pl-md: initial;
+  --s-pl-lg: initial;
+  --s-align-ml: initial;
+  --s-align-ml-md: initial;
+  --s-align-ml-lg: initial;
+  --s-align-mr: initial;
+  --s-align-mr-md: initial;
+  --s-align-mr-lg: initial;
+  --s-overflow: initial;
+  --s-overflow-md: initial;
+  --s-overflow-lg: initial;
+  --s-z-index: initial;
+  --s-z-index-md: initial;
+  --s-z-index-lg: initial;
+  --s-opacity: initial;
+  --s-opacity-md: initial;
+  --s-opacity-lg: initial;
+  --s-filter: initial;
+  --s-filter-md: initial;
+  --s-filter-lg: initial;
+  --s-border-style: initial;
+  --s-border-style-md: initial;
+  --s-border-style-lg: initial;
+  --s-border-width: initial;
+  --s-border-width-md: initial;
+  --s-border-width-lg: initial;
+  --s-border-color: initial;
+  --s-border-color-md: initial;
+  --s-border-color-lg: initial;
+  --s-radius: initial;
+  --s-radius-md: initial;
+  --s-radius-lg: initial;
+  --s-box-shadow: initial;
+  --s-box-shadow-md: initial;
+  --s-box-shadow-lg: initial;
+  --s-object-fit: initial;
+  --s-object-fit-md: initial;
+  --s-object-fit-lg: initial;
+  --s-object-position: initial;
+  --s-object-position-md: initial;
+  --s-object-position-lg: initial;
+  --s-hover-opacity: initial;
+  --s-hover-opacity-md: initial;
+  --s-hover-opacity-lg: initial;
+  --s-hover-filter: initial;
+  --s-hover-filter-md: initial;
+  --s-hover-filter-lg: initial;
+  --s-hover-box-shadow: initial;
+  --s-hover-box-shadow-md: initial;
+  --s-hover-box-shadow-lg: initial;
+  --s-hover-transform: initial;
+  --s-hover-transform-md: initial;
+  --s-hover-transform-lg: initial;
+  --s-hover-transition: initial;
+  --s-hover-transition-md: initial;
+  --s-hover-transition-lg: initial;
+}
+
+/*
  * Kits without `.b-styled-media` apply chrome on the wrapper itself so Style tab
  * border / opacity / height / shadow actually paint (case studies, lists, etc.).
  */

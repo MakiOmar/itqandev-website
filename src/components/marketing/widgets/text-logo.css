@@ -196,6 +196,8 @@
 /* Elements */
 .tl {
   display: inline-flex;
+  /* Off the text baseline, so no descender gap under the logo skews vertical centering. */
+  vertical-align: top;
   align-items: center;
   gap: var(--tl-gap);
   max-width: 100%;
