@@ -12,6 +12,7 @@ import { resolveMarketingApiBaseUrl } from '~/lib/marketing/resolve-api-base';
 import { mapMarketingSeoMetaFromApi } from '~/lib/marketing/seo-snippet';
 import { API_ENDPOINTS } from '~/lib/api/endpoints';
 import type { PageSectionNode } from '~/lib/marketing/appearance-types';
+import { mergeThemeBodyWithContent } from '~/lib/marketing/theme-body-content';
 import type { PublicPageDetail } from '~/types/page';
 import { cmsPageEditTarget, useAdminEditTarget } from '~/lib/marketing/admin-edit-target';
 import { isSearchEngineIndexingEnabled, publicRobotsContent } from '~/lib/seo/search-engine-indexing';
@@ -123,7 +124,10 @@ export default component$(() => {
   const page = raw as PublicPageDetail;
   const shell = usePublicShell();
   const support = usePageSupportingData();
-  const sections = (page.sections || []) as PageSectionNode[];
+  const sections = mergeThemeBodyWithContent(
+    shell.value.themeBody,
+    (page.sections || []) as PageSectionNode[],
+  );
 
   return (
     <HomepageSectionsRenderer

@@ -10,6 +10,7 @@ import { resolveMarketingApiBaseUrl } from '~/lib/marketing/resolve-api-base';
 import { API_ENDPOINTS } from '~/lib/api/endpoints';
 import { isFeatureModuleEnabled } from '~/lib/api/project-settings';
 import type { PageSectionNode } from '~/lib/marketing/appearance-types';
+import { mergeThemeBodyWithContent } from '~/lib/marketing/theme-body-content';
 import type { PublicPageDetail } from '~/types/page';
 import { cmsPageEditTarget, useAdminEditTarget } from '~/lib/marketing/admin-edit-target';
 
@@ -74,7 +75,7 @@ export default component$(() => {
 
   return (
     <HomepageSectionsRenderer
-      sections={(page.sections || []) as PageSectionNode[]}
+      sections={mergeThemeBodyWithContent(shell.value.themeBody, (page.sections || []) as PageSectionNode[])}
       uiLocale={uiLocale}
       services={shell.value.siteContent?.services ?? []}
       caseStudies={support.value.caseStudies}

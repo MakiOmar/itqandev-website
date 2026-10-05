@@ -224,6 +224,7 @@ function renderBlock(
         settings={settings}
         uiLocale={props.uiLocale}
         styled={wrapStyles}
+        pageContext={props.pageContext}
       />,
     );
   }

@@ -14,6 +14,8 @@ export type AtomicWidgetProps = {
   uiLocale: string;
   /** When true, image fit/radius come from the Style wrapper CSS variables. */
   styled?: boolean;
+  /** Current record; Breadcrumbs with "Use route crumbs" end on its title. */
+  pageContext?: { title: string; slug?: string };
 };
 
 function str(s: Record<string, unknown>, key: string, fallback = ''): string {
@@ -272,7 +274,8 @@ export const AtomicWidgetView = component$<AtomicWidgetProps>((props) => {
       const homeLabel = str(s, 'home_label', 'Home');
       const items = Array.isArray(s.items) ? (s.items as Array<Record<string, unknown>>) : [];
       const homeHref = marketingRoutes(props.uiLocale).home;
-      const crumbs = [
+      const currentTitle = s.auto !== false ? props.pageContext?.title?.trim() || '' : '';
+      const crumbs: Array<{ label: string; href?: string }> = [
         { label: homeLabel, href: homeHref },
         ...items
           .filter((c) => String(c.label || '').trim())
@@ -280,6 +283,7 @@ export const AtomicWidgetView = component$<AtomicWidgetProps>((props) => {
             label: String(c.label || ''),
             href: String(c.url || '').trim() || undefined,
           })),
+        ...(currentTitle ? [{ label: currentTitle }] : []),
       ];
       return (
         <nav aria-label="Breadcrumb">
