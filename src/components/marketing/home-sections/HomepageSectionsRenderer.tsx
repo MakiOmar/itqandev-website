@@ -23,6 +23,7 @@ import {
   isPageLayoutBand,
   normalizeColumnSpans,
   rowFlexStyle,
+  columnBlockWrapperClass,
   columnContentLayout,
   rowGapClass,
 } from '~/lib/marketing/page-layout-utils';
@@ -455,10 +456,10 @@ function renderLayoutBand(band: PageLayoutBand, props: HomepageSectionsRendererP
                       {(col.blocks ?? [])
                         .filter((b) => b.enabled !== false)
                         .map((block) => {
-                          const hideClass = hide(block.hide_on);
+                          const wrapperClass = columnBlockWrapperClass(col, hide(block.hide_on));
                           const rendered = renderBlock(block, bandProps);
-                          return hideClass ? (
-                            <div key={block.id || block.type} class={hideClass}>
+                          return wrapperClass ? (
+                            <div key={block.id || block.type} class={wrapperClass}>
                               {rendered}
                             </div>
                           ) : (

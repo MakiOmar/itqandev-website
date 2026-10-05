@@ -234,6 +234,19 @@ export function columnContentLayout(
   };
 }
 
+/**
+ * Class for the element around one block in a column, or null when none is needed. Flex columns
+ * always wrap blocks, matching the builder canvas: leaves default to `width: 100%`, so as direct
+ * flex items they would fill the column and ignore `align` / `justify`.
+ */
+export function columnBlockWrapperClass(
+  col: Pick<PageLayoutColumn, 'flex'>,
+  hideClass: string,
+): string | null {
+  if (col.flex) return ['relative', hideClass].filter(Boolean).join(' ');
+  return hideClass || null;
+}
+
 /** Kit `limit` fields are stored as 1–24 in Appearance / Theme Builder. */
 export const KIT_ITEM_LIMIT_MAX = 24;
 

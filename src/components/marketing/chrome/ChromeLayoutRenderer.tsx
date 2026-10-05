@@ -1,5 +1,6 @@
 import { component$ } from '@builder.io/qwik';
 import {
+  columnBlockWrapperClass,
   columnContentLayout,
   columnSpanClassNames,
   isPageLayoutBand,
@@ -104,9 +105,9 @@ export const ChromeLayoutRenderer = component$<ChromeLayoutRendererProps>((props
                                   isDarkMode={props.isDarkMode}
                                 />
                               );
-                              const hideClass = hideOnClass(block.hide_on);
-                              return hideClass ? (
-                                <div key={block.id || block.type} class={hideClass}>
+                              const wrapperClass = columnBlockWrapperClass(col, hideOnClass(block.hide_on));
+                              return wrapperClass ? (
+                                <div key={block.id || block.type} class={wrapperClass}>
                                   {view}
                                 </div>
                               ) : (
