@@ -1007,7 +1007,9 @@
       "form": "نموذج",
       "testimonial_list": "آراء العملاء",
       "trust_badges": "شارات الثقة",
-      "text_logo": "شعار نصي"
+      "text_logo": "شعار نصي",
+      "theme_switch": "مبدّل المظهر",
+      "contact_float": "تواصل عائم"
     },
     "fields": {
       "headline": "العنوان الرئيسي (ضع الكلمات بين [[ ]] لتمييزها)",
@@ -1064,7 +1066,27 @@
       "show_dividers": "إظهار الفواصل",
       "divider_color": "لون الفاصل",
       "divider_height": "ارتفاع الفاصل (بكسل)",
-      "divider_style": "نمط الفاصل"
+      "divider_style": "نمط الفاصل",
+      "variant": "النمط",
+      "light_icon": "الأيقونة في الوضع الفاتح",
+      "dark_icon": "الأيقونة في الوضع الداكن",
+      "light_label": "النص في الوضع الفاتح (ويُقرأ لقارئ الشاشة)",
+      "dark_label": "النص في الوضع الداكن (ويُقرأ لقارئ الشاشة)",
+      "show_label": "إظهار النص بجانب الأيقونة",
+      "floating": "تثبيت في زاوية الشاشة",
+      "corner": "الزاوية",
+      "offset_x": "المسافة الجانبية (بكسل)",
+      "offset_y": "المسافة من الأعلى / الأسفل (بكسل)",
+      "launcher_icon": "أيقونة الزر",
+      "launcher_label": "نص الزر (اختياري)",
+      "panel_title": "عنوان اللوحة",
+      "panel_text": "مقدمة اللوحة",
+      "whatsapp_enabled": "إظهار واتساب",
+      "whatsapp_number": "رقم واتساب (دولي، أرقام فقط، مثل 9665XXXXXXXX)",
+      "whatsapp_label": "نص زر واتساب",
+      "whatsapp_message": "الرسالة المعبأة مسبقاً",
+      "message_enabled": "إظهار \"اترك رسالة\"",
+      "message_label": "نص زر الرسالة"
     },
     "categoryMultiHint": "حدد التصنيفات التي تظهر في التبويبات/الشريط الجانبي. مرّر لوحة الخصائص إن لزم — الحقل مميز بإطار. اترك الكل غير محدد لعرض كل تصنيف يحتوي على مشاريع منشورة.",
     "categoriesLoading": "جاري تحميل التصنيفات…",
@@ -1087,7 +1109,11 @@
       "particles": "الجسيمات",
       "floating_icons": "الأيقونات العائمة",
       "badge": "الشارة",
-      "tech": "منظومة التقنيات"
+      "tech": "منظومة التقنيات",
+      "position": "الموضع",
+      "launcher": "الزر واللوحة",
+      "whatsapp": "واتساب",
+      "message": "اترك رسالة"
     },
     "floatingIconsAdd": "إضافة أيقونة",
     "floatingIconsEmpty": "لا توجد أيقونات عائمة بعد.",
@@ -1454,7 +1480,14 @@
       "glowPrimaryColor": "لون الزاوية العلوية",
       "glowSecondaryColor": "لون الزاوية السفلية",
       "glowOpacity": "شدة التوهج",
-      "hoverIconColor": "لون الأيقونة عند التمرير"
+      "hoverIconColor": "لون الأيقونة عند التمرير",
+      "groupToggle": "المبدّل",
+      "groupLauncher": "زر الفتح",
+      "groupPanel": "اللوحة",
+      "groupWhatsapp": "زر واتساب",
+      "titleColor": "لون العنوان",
+      "switchActiveBackground": "لون المسار (الوضع الداكن مفعّل)",
+      "switchKnobColor": "لون المقبض"
     },
     "background": {
       "type": "نوع الخلفية",
@@ -1553,5 +1586,11 @@
     "settings": "الإعدادات",
     "systemHealth": "صحة النظام",
     "logout": "تسجيل الخروج"
+  },
+  "floatingWidgets": {
+    "closePanel": "إغلاق",
+    "openContact": "تواصل معنا",
+    "contactPage": "الذهاب إلى صفحة التواصل",
+    "backToOptions": "رجوع"
   }
 }

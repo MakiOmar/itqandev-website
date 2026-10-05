@@ -97,7 +97,7 @@ export const AdminQuickDrawer = component$<AdminQuickDrawerProps>((props) => {
     open.value = false;
   });
 
-  // The public layout is `isolate`, so root-level floating chrome (DarkModeToggle) is hidden via this flag.
+  // The public layout is `isolate`, so floating widgets (theme switch, floating contact) hide via this flag.
   useTask$(({ track, cleanup }) => {
     const isOpen = track(() => open.value);
     if (typeof document === 'undefined') return;

@@ -1,0 +1,286 @@
+/*
+ * Floating contact widget: corner launcher that opens a panel with WhatsApp and "leave a message".
+ * Style tab values arrive as `--s-launcher-*` / `--s-panel-*` / `--s-whatsapp-*` vars
+ * (base = mobile, -md / -lg up); `--cf-d-*` are the theme defaults used when nothing is set.
+ */
+.cf {
+  --cf-d-panel-bg: #ffffff;
+  --cf-d-panel-color: #475569;
+  --cf-d-panel-title: #0f172a;
+  --cf-d-panel-border: #e2e8f0;
+}
+.cf:where(.dark, .dark *):not(:where(.dark .light, .dark .light *)) {
+  --cf-d-panel-bg: #0f172a;
+  --cf-d-panel-color: #cbd5e1;
+  --cf-d-panel-title: #ffffff;
+  --cf-d-panel-border: #334155;
+}
+.cf {
+  --cf-l-color: var(--s-launcher-color, #ffffff);
+  --cf-l-bg: var(--s-launcher-bg, var(--color-primary-600, #0284c7));
+  --cf-l-hover-bg: var(--s-launcher-hover-bg, var(--color-primary-700, #0369a1));
+  --cf-l-size: var(--s-launcher-size, 3.5rem);
+  --cf-l-icon: var(--s-launcher-icon-size, 1.5rem);
+  --cf-l-radius: var(--s-launcher-radius, 9999px);
+  --cf-l-fs: var(--s-launcher-font-size, 0.9375rem);
+  --cf-l-fw: var(--s-launcher-font-weight, 600);
+  --cf-l-shadow: var(--s-launcher-shadow, 0 10px 25px -5px rgb(15 23 42 / 0.3));
+  --cf-p-bg: var(--s-panel-bg, var(--cf-d-panel-bg));
+  --cf-p-color: var(--s-panel-color, var(--cf-d-panel-color));
+  --cf-p-title: var(--s-panel-title-color, var(--cf-d-panel-title));
+  --cf-p-border: var(--s-panel-border-color, var(--cf-d-panel-border));
+  --cf-p-width: var(--s-panel-width, 22.5rem);
+  --cf-p-radius: var(--s-panel-radius, 1rem);
+  --cf-p-shadow: var(--s-panel-shadow, 0 25px 50px -12px rgb(15 23 42 / 0.35));
+  --cf-wa-color: var(--s-whatsapp-color, #ffffff);
+  --cf-wa-bg: var(--s-whatsapp-bg, #25d366);
+  --cf-wa-hover-bg: var(--s-whatsapp-hover-bg, #1ebe5a);
+  --cf-wa-radius: var(--s-whatsapp-radius, 0.75rem);
+}
+@media (min-width: 768px) {
+  .cf {
+    --cf-l-color: var(--s-launcher-color-md, var(--s-launcher-color, #ffffff));
+    --cf-l-bg: var(--s-launcher-bg-md, var(--s-launcher-bg, var(--color-primary-600, #0284c7)));
+    --cf-l-hover-bg: var(--s-launcher-hover-bg-md, var(--s-launcher-hover-bg, var(--color-primary-700, #0369a1)));
+    --cf-l-size: var(--s-launcher-size-md, var(--s-launcher-size, 3.5rem));
+    --cf-l-icon: var(--s-launcher-icon-size-md, var(--s-launcher-icon-size, 1.5rem));
+    --cf-l-radius: var(--s-launcher-radius-md, var(--s-launcher-radius, 9999px));
+    --cf-l-fs: var(--s-launcher-font-size-md, var(--s-launcher-font-size, 0.9375rem));
+    --cf-l-fw: var(--s-launcher-font-weight-md, var(--s-launcher-font-weight, 600));
+    --cf-l-shadow: var(--s-launcher-shadow-md, var(--s-launcher-shadow, 0 10px 25px -5px rgb(15 23 42 / 0.3)));
+    --cf-p-bg: var(--s-panel-bg-md, var(--s-panel-bg, var(--cf-d-panel-bg)));
+    --cf-p-color: var(--s-panel-color-md, var(--s-panel-color, var(--cf-d-panel-color)));
+    --cf-p-title: var(--s-panel-title-color-md, var(--s-panel-title-color, var(--cf-d-panel-title)));
+    --cf-p-border: var(--s-panel-border-color-md, var(--s-panel-border-color, var(--cf-d-panel-border)));
+    --cf-p-width: var(--s-panel-width-md, var(--s-panel-width, 22.5rem));
+    --cf-p-radius: var(--s-panel-radius-md, var(--s-panel-radius, 1rem));
+    --cf-p-shadow: var(--s-panel-shadow-md, var(--s-panel-shadow, 0 25px 50px -12px rgb(15 23 42 / 0.35)));
+    --cf-wa-color: var(--s-whatsapp-color-md, var(--s-whatsapp-color, #ffffff));
+    --cf-wa-bg: var(--s-whatsapp-bg-md, var(--s-whatsapp-bg, #25d366));
+    --cf-wa-hover-bg: var(--s-whatsapp-hover-bg-md, var(--s-whatsapp-hover-bg, #1ebe5a));
+    --cf-wa-radius: var(--s-whatsapp-radius-md, var(--s-whatsapp-radius, 0.75rem));
+  }
+}
+@media (min-width: 1024px) {
+  .cf {
+    --cf-l-color: var(--s-launcher-color-lg, var(--s-launcher-color-md, var(--s-launcher-color, #ffffff)));
+    --cf-l-bg: var(--s-launcher-bg-lg, var(--s-launcher-bg-md, var(--s-launcher-bg, var(--color-primary-600, #0284c7))));
+    --cf-l-hover-bg: var(--s-launcher-hover-bg-lg, var(--s-launcher-hover-bg-md, var(--s-launcher-hover-bg, var(--color-primary-700, #0369a1))));
+    --cf-l-size: var(--s-launcher-size-lg, var(--s-launcher-size-md, var(--s-launcher-size, 3.5rem)));
+    --cf-l-icon: var(--s-launcher-icon-size-lg, var(--s-launcher-icon-size-md, var(--s-launcher-icon-size, 1.5rem)));
+    --cf-l-radius: var(--s-launcher-radius-lg, var(--s-launcher-radius-md, var(--s-launcher-radius, 9999px)));
+    --cf-l-fs: var(--s-launcher-font-size-lg, var(--s-launcher-font-size-md, var(--s-launcher-font-size, 0.9375rem)));
+    --cf-l-fw: var(--s-launcher-font-weight-lg, var(--s-launcher-font-weight-md, var(--s-launcher-font-weight, 600)));
+    --cf-l-shadow: var(--s-launcher-shadow-lg, var(--s-launcher-shadow-md, var(--s-launcher-shadow, 0 10px 25px -5px rgb(15 23 42 / 0.3))));
+    --cf-p-bg: var(--s-panel-bg-lg, var(--s-panel-bg-md, var(--s-panel-bg, var(--cf-d-panel-bg))));
+    --cf-p-color: var(--s-panel-color-lg, var(--s-panel-color-md, var(--s-panel-color, var(--cf-d-panel-color))));
+    --cf-p-title: var(--s-panel-title-color-lg, var(--s-panel-title-color-md, var(--s-panel-title-color, var(--cf-d-panel-title))));
+    --cf-p-border: var(--s-panel-border-color-lg, var(--s-panel-border-color-md, var(--s-panel-border-color, var(--cf-d-panel-border))));
+    --cf-p-width: var(--s-panel-width-lg, var(--s-panel-width-md, var(--s-panel-width, 22.5rem)));
+    --cf-p-radius: var(--s-panel-radius-lg, var(--s-panel-radius-md, var(--s-panel-radius, 1rem)));
+    --cf-p-shadow: var(--s-panel-shadow-lg, var(--s-panel-shadow-md, var(--s-panel-shadow, 0 25px 50px -12px rgb(15 23 42 / 0.35))));
+    --cf-wa-color: var(--s-whatsapp-color-lg, var(--s-whatsapp-color-md, var(--s-whatsapp-color, #ffffff)));
+    --cf-wa-bg: var(--s-whatsapp-bg-lg, var(--s-whatsapp-bg-md, var(--s-whatsapp-bg, #25d366)));
+    --cf-wa-hover-bg: var(--s-whatsapp-hover-bg-lg, var(--s-whatsapp-hover-bg-md, var(--s-whatsapp-hover-bg, #1ebe5a)));
+    --cf-wa-radius: var(--s-whatsapp-radius-lg, var(--s-whatsapp-radius-md, var(--s-whatsapp-radius, 0.75rem)));
+  }
+}
+
+/* Placement: logical insets so start / end corners mirror on RTL pages. */
+.cf {
+  position: fixed;
+  z-index: 60;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.75rem;
+}
+.cf[data-corner$='start'] { align-items: flex-start; }
+.cf[data-corner^='bottom'] { bottom: var(--cf-oy, 24px); }
+.cf[data-corner^='top'] { top: var(--cf-oy, 24px); flex-direction: column-reverse; }
+.cf[data-corner$='end'] { inset-inline-end: var(--cf-ox, 24px); }
+.cf[data-corner$='start'] { inset-inline-start: var(--cf-ox, 24px); }
+/* Builder canvas: in the flow, panel shown, so the block can be selected and styled. */
+.cf[data-preview] {
+  position: relative;
+  inset: auto;
+  z-index: auto;
+}
+html[data-admin-drawer='open'] .cf:not([data-preview]) {
+  display: none;
+}
+
+.cf-launcher {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  min-width: var(--cf-l-size);
+  height: var(--cf-l-size);
+  padding: 0;
+  border: 0;
+  border-radius: var(--cf-l-radius);
+  background: var(--cf-l-bg);
+  color: var(--cf-l-color);
+  box-shadow: var(--cf-l-shadow);
+  font-size: var(--cf-l-fs);
+  font-weight: var(--cf-l-fw);
+  line-height: 1;
+  cursor: pointer;
+  transition: background-color 0.2s, transform 0.2s;
+}
+.cf-launcher[data-labelled] {
+  padding-inline: calc(var(--cf-l-size) * 0.32);
+}
+.cf-launcher:hover {
+  background: var(--cf-l-hover-bg);
+  transform: scale(1.04);
+}
+.cf-launcher:focus-visible,
+.cf-close:focus-visible,
+.cf-action:focus-visible,
+.cf-back:focus-visible {
+  outline: 2px solid var(--color-primary-500, #0ea5e9);
+  outline-offset: 2px;
+}
+.cf-launcher svg,
+.cf-launcher img {
+  width: var(--cf-l-icon);
+  height: var(--cf-l-icon);
+}
+
+.cf-panel {
+  display: flex;
+  flex-direction: column;
+  width: min(var(--cf-p-width), calc(100vw - 2 * var(--cf-ox, 24px)));
+  max-height: calc(100vh - var(--cf-l-size) - 2 * var(--cf-oy, 24px) - 1rem);
+  overflow: hidden;
+  border: 1px solid var(--cf-p-border);
+  border-radius: var(--cf-p-radius);
+  background: var(--cf-p-bg);
+  color: var(--cf-p-color);
+  box-shadow: var(--cf-p-shadow);
+  animation: cf-in 0.18s ease-out;
+}
+.cf[data-preview] .cf-panel {
+  max-height: none;
+  animation: none;
+}
+@keyframes cf-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.98);
+  }
+}
+.cf-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 1rem 1rem 0.75rem;
+}
+.cf-title {
+  margin: 0;
+  color: var(--cf-p-title);
+  font-size: 1rem;
+  font-weight: 700;
+  line-height: 1.4;
+}
+.cf-text {
+  margin: 0.25rem 0 0;
+  font-size: 0.875rem;
+  line-height: 1.5;
+  white-space: pre-line;
+}
+.cf-close {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  border: 0;
+  border-radius: 9999px;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+}
+.cf-close:hover {
+  background: color-mix(in srgb, currentColor 12%, transparent);
+}
+.cf-close svg {
+  width: 1.125rem;
+  height: 1.125rem;
+}
+.cf-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.625rem;
+  padding: 0 1rem 1rem;
+  overflow-y: auto;
+}
+.cf-action {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  width: 100%;
+  min-height: 2.75rem;
+  padding: 0.625rem 1rem;
+  border-radius: var(--cf-wa-radius);
+  font-size: 0.9375rem;
+  font-weight: 600;
+  line-height: 1.3;
+  text-align: center;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background-color 0.2s, border-color 0.2s;
+}
+.cf-action svg {
+  width: 1.25rem;
+  height: 1.25rem;
+  flex-shrink: 0;
+}
+.cf-wa {
+  border: 0;
+  background: var(--cf-wa-bg);
+  color: var(--cf-wa-color);
+}
+.cf-wa:hover {
+  background: var(--cf-wa-hover-bg);
+}
+.cf-msg {
+  border: 1px solid var(--cf-p-border);
+  background: transparent;
+  color: var(--cf-p-title);
+}
+.cf-msg:hover {
+  border-color: currentColor;
+}
+.cf-back {
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.25rem 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font-size: 0.875rem;
+  cursor: pointer;
+}
+.cf-back svg {
+  width: 1rem;
+  height: 1rem;
+}
+[dir='rtl'] .cf-back svg {
+  transform: scaleX(-1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cf-launcher,
+  .cf-panel {
+    transition: none;
+    animation: none;
+  }
+}

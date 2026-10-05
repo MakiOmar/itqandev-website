@@ -1,4 +1,5 @@
 import { component$, $ } from '@builder.io/qwik';
+import { toggleDocumentTheme } from '~/lib/theme/theme-scope';
 
 /**
  * Header-inline theme toggle (dark/light).
@@ -6,12 +7,7 @@ import { component$, $ } from '@builder.io/qwik';
  */
 export const ThemeToggle = component$(() => {
   const toggleTheme = $(() => {
-    if (typeof window === 'undefined') return;
-    const isDark = document.documentElement.classList.contains('dark');
-    const newTheme = isDark ? 'light' : 'dark';
-    document.documentElement.classList.remove('light', 'dark');
-    document.documentElement.classList.add(newTheme);
-    localStorage.setItem('theme', newTheme);
+    toggleDocumentTheme();
   });
 
   return (

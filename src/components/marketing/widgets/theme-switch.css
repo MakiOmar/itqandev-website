@@ -1,0 +1,218 @@
+/*
+ * Theme switch widget: icon button or sliding switch, inline or floating in a corner.
+ * Style tab values arrive as `--s-toggle-*` vars (base = mobile, -md / -lg up);
+ * `--tsw-d-*` are the theme defaults used when nothing is set.
+ */
+.tsw {
+  --tsw-d-color: #334155;
+  --tsw-d-bg: transparent;
+  --tsw-d-hover-color: var(--tsw-color);
+  --tsw-d-hover-bg: #f1f5f9;
+  --tsw-d-border: transparent;
+  --tsw-d-active-bg: #334155;
+  --tsw-d-size: 2.5rem;
+  --tsw-d-icon: 1.25rem;
+  --tsw-d-radius: 0.5rem;
+  --tsw-d-shadow: none;
+}
+.tsw:where(.dark, .dark *):not(:where(.dark .light, .dark .light *)) {
+  --tsw-d-color: #cbd5e1;
+  --tsw-d-hover-bg: #334155;
+  --tsw-d-active-bg: #0284c7;
+}
+/* Floating defaults match the former site-wide corner button. */
+.tsw[data-floating] {
+  --tsw-d-color: #60a5fa;
+  --tsw-d-bg: #ffffff;
+  --tsw-d-hover-bg: #ffffff;
+  --tsw-d-border: #e2e8f0;
+  --tsw-d-size: 3.5rem;
+  --tsw-d-icon: 1.5rem;
+  --tsw-d-radius: 9999px;
+  --tsw-d-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+}
+.tsw[data-floating]:where(.dark, .dark *):not(:where(.dark .light, .dark .light *)) {
+  --tsw-d-color: #f59e0b;
+  --tsw-d-bg: #1e293b;
+  --tsw-d-hover-bg: #1e293b;
+  --tsw-d-border: #334155;
+}
+.tsw {
+  --tsw-color: var(--s-toggle-color, var(--tsw-d-color));
+  --tsw-bg: var(--s-toggle-bg, var(--tsw-d-bg));
+  --tsw-hover-color: var(--s-toggle-hover-color, var(--tsw-d-hover-color));
+  --tsw-hover-bg: var(--s-toggle-hover-bg, var(--tsw-d-hover-bg));
+  --tsw-border: var(--s-toggle-border-color, var(--tsw-d-border));
+  --tsw-active-bg: var(--s-toggle-active-bg, var(--tsw-d-active-bg));
+  --tsw-knob-bg: var(--s-toggle-knob-bg, #ffffff);
+  --tsw-size: var(--s-toggle-size, var(--tsw-d-size));
+  --tsw-icon: var(--s-toggle-icon-size, var(--tsw-d-icon));
+  --tsw-radius: var(--s-toggle-radius, var(--tsw-d-radius));
+  --tsw-fs: var(--s-toggle-font-size, 0.875rem);
+  --tsw-fw: var(--s-toggle-font-weight, 500);
+  --tsw-shadow: var(--s-toggle-shadow, var(--tsw-d-shadow));
+}
+@media (min-width: 768px) {
+  .tsw {
+    --tsw-color: var(--s-toggle-color-md, var(--s-toggle-color, var(--tsw-d-color)));
+    --tsw-bg: var(--s-toggle-bg-md, var(--s-toggle-bg, var(--tsw-d-bg)));
+    --tsw-hover-color: var(--s-toggle-hover-color-md, var(--s-toggle-hover-color, var(--tsw-d-hover-color)));
+    --tsw-hover-bg: var(--s-toggle-hover-bg-md, var(--s-toggle-hover-bg, var(--tsw-d-hover-bg)));
+    --tsw-border: var(--s-toggle-border-color-md, var(--s-toggle-border-color, var(--tsw-d-border)));
+    --tsw-active-bg: var(--s-toggle-active-bg-md, var(--s-toggle-active-bg, var(--tsw-d-active-bg)));
+    --tsw-knob-bg: var(--s-toggle-knob-bg-md, var(--s-toggle-knob-bg, #ffffff));
+    --tsw-size: var(--s-toggle-size-md, var(--s-toggle-size, var(--tsw-d-size)));
+    --tsw-icon: var(--s-toggle-icon-size-md, var(--s-toggle-icon-size, var(--tsw-d-icon)));
+    --tsw-radius: var(--s-toggle-radius-md, var(--s-toggle-radius, var(--tsw-d-radius)));
+    --tsw-fs: var(--s-toggle-font-size-md, var(--s-toggle-font-size, 0.875rem));
+    --tsw-fw: var(--s-toggle-font-weight-md, var(--s-toggle-font-weight, 500));
+    --tsw-shadow: var(--s-toggle-shadow-md, var(--s-toggle-shadow, var(--tsw-d-shadow)));
+  }
+}
+@media (min-width: 1024px) {
+  .tsw {
+    --tsw-color: var(--s-toggle-color-lg, var(--s-toggle-color-md, var(--s-toggle-color, var(--tsw-d-color))));
+    --tsw-bg: var(--s-toggle-bg-lg, var(--s-toggle-bg-md, var(--s-toggle-bg, var(--tsw-d-bg))));
+    --tsw-hover-color: var(--s-toggle-hover-color-lg, var(--s-toggle-hover-color-md, var(--s-toggle-hover-color, var(--tsw-d-hover-color))));
+    --tsw-hover-bg: var(--s-toggle-hover-bg-lg, var(--s-toggle-hover-bg-md, var(--s-toggle-hover-bg, var(--tsw-d-hover-bg))));
+    --tsw-border: var(--s-toggle-border-color-lg, var(--s-toggle-border-color-md, var(--s-toggle-border-color, var(--tsw-d-border))));
+    --tsw-active-bg: var(--s-toggle-active-bg-lg, var(--s-toggle-active-bg-md, var(--s-toggle-active-bg, var(--tsw-d-active-bg))));
+    --tsw-knob-bg: var(--s-toggle-knob-bg-lg, var(--s-toggle-knob-bg-md, var(--s-toggle-knob-bg, #ffffff)));
+    --tsw-size: var(--s-toggle-size-lg, var(--s-toggle-size-md, var(--s-toggle-size, var(--tsw-d-size))));
+    --tsw-icon: var(--s-toggle-icon-size-lg, var(--s-toggle-icon-size-md, var(--s-toggle-icon-size, var(--tsw-d-icon))));
+    --tsw-radius: var(--s-toggle-radius-lg, var(--s-toggle-radius-md, var(--s-toggle-radius, var(--tsw-d-radius))));
+    --tsw-fs: var(--s-toggle-font-size-lg, var(--s-toggle-font-size-md, var(--s-toggle-font-size, 0.875rem)));
+    --tsw-fw: var(--s-toggle-font-weight-lg, var(--s-toggle-font-weight-md, var(--s-toggle-font-weight, 500)));
+    --tsw-shadow: var(--s-toggle-shadow-lg, var(--s-toggle-shadow-md, var(--s-toggle-shadow, var(--tsw-d-shadow))));
+  }
+}
+
+/* Floating placement: logical insets so start / end corners mirror on RTL pages. */
+.tsw[data-floating] {
+  position: fixed;
+  z-index: 60;
+}
+.tsw[data-corner^='bottom'] { bottom: var(--tsw-oy, 24px); }
+.tsw[data-corner^='top'] { top: var(--tsw-oy, 24px); }
+.tsw[data-corner$='end'] { inset-inline-end: var(--tsw-ox, 24px); }
+.tsw[data-corner$='start'] { inset-inline-start: var(--tsw-ox, 24px); }
+html[data-admin-drawer='open'] .tsw[data-floating] {
+  display: none;
+}
+
+.tsw-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  min-width: var(--tsw-size);
+  height: var(--tsw-size);
+  padding: 0;
+  border: 1px solid var(--tsw-border);
+  border-radius: var(--tsw-radius);
+  background: var(--tsw-bg);
+  color: var(--tsw-color);
+  box-shadow: var(--tsw-shadow);
+  font-size: var(--tsw-fs);
+  font-weight: var(--tsw-fw);
+  line-height: 1;
+  cursor: pointer;
+  transition: background-color 0.2s, color 0.2s, transform 0.2s;
+}
+.tsw-btn[data-labelled] {
+  padding-inline: calc(var(--tsw-size) * 0.3);
+}
+.tsw-btn:hover {
+  background: var(--tsw-hover-bg);
+  color: var(--tsw-hover-color);
+}
+.tsw[data-floating] .tsw-btn:hover {
+  transform: scale(1.06);
+}
+.tsw-btn:focus-visible {
+  outline: 2px solid var(--color-primary-500, #0ea5e9);
+  outline-offset: 2px;
+}
+.tsw-ic {
+  display: inline-flex;
+}
+.tsw-ic svg,
+.tsw-ic img {
+  width: var(--tsw-icon);
+  height: var(--tsw-icon);
+}
+
+/* Sliding switch: the knob carries the current mode's icon and moves to the end in dark mode. */
+.tsw[data-variant='switch'] .tsw-btn {
+  min-width: 0;
+  height: auto;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+}
+.tsw[data-variant='switch'] .tsw-btn:hover {
+  background: transparent;
+}
+.tsw-track {
+  position: relative;
+  display: inline-block;
+  flex-shrink: 0;
+  width: calc(var(--tsw-size) * 1.8);
+  height: var(--tsw-size);
+  border: 1px solid var(--tsw-border);
+  border-radius: var(--tsw-radius);
+  background: var(--tsw-bg);
+  box-shadow: var(--tsw-shadow);
+  transition: background-color 0.2s;
+}
+.tsw[data-variant='switch'] {
+  --tsw-d-bg: #e2e8f0;
+  --tsw-d-radius: 9999px;
+  --tsw-d-size: 2rem;
+  --tsw-d-icon: 1rem;
+}
+.tsw[data-variant='switch'] .tsw-btn:hover .tsw-track {
+  background: var(--tsw-hover-bg);
+}
+.tsw-knob {
+  position: absolute;
+  top: 50%;
+  inset-inline-start: 3px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: calc(var(--tsw-size) - 8px);
+  height: calc(var(--tsw-size) - 8px);
+  border-radius: var(--tsw-radius);
+  background: var(--tsw-knob-bg);
+  color: var(--tsw-color);
+  box-shadow: 0 1px 3px rgb(0 0 0 / 0.2);
+  transform: translateY(-50%);
+  transition: inset-inline-start 0.2s ease;
+}
+
+/* Only the current mode's icon and label are rendered (display:none also hides them from screen readers). */
+.tsw [data-when='dark'] {
+  display: none;
+}
+.tsw:where(.dark, .dark *):not(:where(.dark .light, .dark .light *)) [data-when='light'] {
+  display: none;
+}
+.tsw:where(.dark, .dark *):not(:where(.dark .light, .dark .light *)) [data-when='dark'] {
+  display: inline-flex;
+}
+.tsw:where(.dark, .dark *):not(:where(.dark .light, .dark .light *)) .tsw-track {
+  background: var(--tsw-active-bg);
+}
+.tsw:where(.dark, .dark *):not(:where(.dark .light, .dark .light *)) .tsw-knob {
+  inset-inline-start: calc(100% - var(--tsw-size) + 5px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tsw-btn,
+  .tsw-track,
+  .tsw-knob {
+    transition: none;
+  }
+}

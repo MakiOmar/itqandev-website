@@ -1007,7 +1007,9 @@
       "form": "Form",
       "testimonial_list": "Testimonials",
       "trust_badges": "Trust badges",
-      "text_logo": "Text logo"
+      "text_logo": "Text logo",
+      "theme_switch": "Theme switch",
+      "contact_float": "Floating contact"
     },
     "fields": {
       "headline": "Headline (wrap words in [[ ]] to highlight)",
@@ -1064,7 +1066,27 @@
       "show_dividers": "Show dividers",
       "divider_color": "Divider color",
       "divider_height": "Divider height (px)",
-      "divider_style": "Divider style"
+      "divider_style": "Divider style",
+      "variant": "Style",
+      "light_icon": "Icon in light mode",
+      "dark_icon": "Icon in dark mode",
+      "light_label": "Label in light mode (also the screen reader text)",
+      "dark_label": "Label in dark mode (also the screen reader text)",
+      "show_label": "Show label next to the icon",
+      "floating": "Float in a screen corner",
+      "corner": "Corner",
+      "offset_x": "Side offset (px)",
+      "offset_y": "Top / bottom offset (px)",
+      "launcher_icon": "Button icon",
+      "launcher_label": "Button text (optional)",
+      "panel_title": "Panel title",
+      "panel_text": "Panel intro",
+      "whatsapp_enabled": "Show WhatsApp",
+      "whatsapp_number": "WhatsApp number (international, digits only, e.g. 9665XXXXXXXX)",
+      "whatsapp_label": "WhatsApp button label",
+      "whatsapp_message": "Pre-filled message",
+      "message_enabled": "Show \"leave a message\"",
+      "message_label": "Message button label"
     },
     "categoryMultiHint": "Check categories to show as filter tabs/sidebar. Leave all unchecked to show every category with published projects.",
     "categoriesLoading": "Loading categories…",
@@ -1087,7 +1109,11 @@
       "particles": "Particles",
       "floating_icons": "Floating icons",
       "badge": "Badge",
-      "tech": "Tech ecosystem"
+      "tech": "Tech ecosystem",
+      "position": "Position",
+      "launcher": "Button & panel",
+      "whatsapp": "WhatsApp",
+      "message": "Leave a message"
     },
     "floatingIconsAdd": "Add icon",
     "floatingIconsEmpty": "No floating icons yet.",
@@ -1454,7 +1480,14 @@
       "glowPrimaryColor": "Top corner colour",
       "glowSecondaryColor": "Bottom corner colour",
       "glowOpacity": "Glow intensity",
-      "hoverIconColor": "Hover icon colour"
+      "hoverIconColor": "Hover icon colour",
+      "groupToggle": "Switch",
+      "groupLauncher": "Launcher button",
+      "groupPanel": "Panel",
+      "groupWhatsapp": "WhatsApp button",
+      "titleColor": "Title colour",
+      "switchActiveBackground": "Track colour (dark mode on)",
+      "switchKnobColor": "Knob colour"
     },
     "background": {
       "type": "Background type",
@@ -1553,5 +1586,11 @@
     "settings": "Settings",
     "systemHealth": "System health",
     "logout": "Log out"
+  },
+  "floatingWidgets": {
+    "closePanel": "Close",
+    "openContact": "Contact us",
+    "contactPage": "Go to the contact page",
+    "backToOptions": "Back"
   }
 }

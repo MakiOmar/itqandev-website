@@ -13,6 +13,8 @@ import { BlogPostsList } from '~/components/marketing/blog/BlogPostsList';
 import { PortfolioProjectsList } from '~/components/marketing/portfolio/PortfolioProjectsList';
 import { AtomicWidgetView } from '~/components/marketing/widgets/AtomicWidgetView';
 import { TestimonialsWidget } from '~/components/marketing/widgets/TestimonialsWidget';
+import { ThemeSwitchWidget } from '~/components/marketing/widgets/ThemeSwitchWidget';
+import { ContactFloatWidget } from '~/components/marketing/widgets/ContactFloatWidget';
 import { StyledBuilderLeaf } from '~/components/marketing/widgets/StyledBuilderLeaf';
 import { ContentKitView } from '~/components/marketing/kits/ContentKitView';
 import { isFeatureModuleEnabled } from '~/lib/api/project-settings';
@@ -81,6 +83,8 @@ const WIDGET_TYPES = new Set([
   'archive_title',
   'loop_grid',
   'testimonial_list',
+  'theme_switch',
+  'contact_float',
 ]);
 
 const CONTENT_KITS = new Set([
@@ -195,6 +199,19 @@ function renderBlock(
         settings={settings}
         testimonials={props.testimonials}
         uiLocale={props.uiLocale}
+        editorPreview={props.editorPreview}
+      />,
+    );
+  }
+  if (block.type === 'theme_switch') {
+    return wrap(<ThemeSwitchWidget settings={settings} editorPreview={props.editorPreview} />);
+  }
+  if (block.type === 'contact_float') {
+    return wrap(
+      <ContactFloatWidget
+        settings={settings}
+        uiLocale={props.uiLocale}
+        formsEnabled={showFormsModule}
         editorPreview={props.editorPreview}
       />,
     );

@@ -1,22 +1,14 @@
 import { component$, $ } from '@builder.io/qwik';
+import { toggleDocumentTheme } from '~/lib/theme/theme-scope';
 
 /**
- * Dark mode toggle component - Floating icon button
+ * Dashboard dark mode toggle - floating icon button (admin pages only).
  * Follows Qwik's official theme management pattern from:
  * https://qwik.dev/docs/cookbook/theme-management/
  */
 export const DarkModeToggle = component$(() => {
-  // Toggle theme following Qwik's official pattern
   const toggleTheme = $(() => {
-    if (typeof window === 'undefined') return;
-    
-    const isDark = document.documentElement.classList.contains('dark');
-    const newTheme = isDark ? 'light' : 'dark';
-    
-    // Remove both classes, then add the new one
-    document.documentElement.classList.remove('light', 'dark');
-    document.documentElement.classList.add(newTheme);
-    localStorage.setItem('theme', newTheme);
+    toggleDocumentTheme();
   });
 
   return (

@@ -58,6 +58,10 @@ export const STYLE_GROUP_ORDER = [
   'logo_mark',
   'logo_name',
   'logo_tagline',
+  'toggle',
+  'launcher',
+  'panel',
+  'whatsapp',
   'tabs',
   'nav_buttons',
   'link',
@@ -123,6 +127,8 @@ export const WIDGET_STYLE_GROUPS: Record<string, readonly StyleGroupId[]> = {
     'nav_buttons', 'layout', 'spacing', 'border', 'custom',
   ],
   form: ['typography', 'layout', 'spacing', 'border', 'custom'],
+  theme_switch: ['toggle', 'layout', 'spacing', 'custom'],
+  contact_float: ['launcher', 'panel', 'whatsapp', 'custom'],
 };
 
 export function containerStyleGroups(): readonly StyleGroupId[] {
@@ -282,11 +288,26 @@ export const LOGO_STYLE_KEYS = {
   logo_tagline_spacing: 'length',
 } as const satisfies Record<string, 'color' | 'string' | 'length' | 'shadow'>;
 
+/** Theme switch button / track, floating contact launcher, its panel and the WhatsApp button. */
+export const FLOATING_STYLE_KEYS = {
+  toggle_color: 'color', toggle_bg: 'color', toggle_hover_color: 'color', toggle_hover_bg: 'color',
+  toggle_border_color: 'color', toggle_active_bg: 'color', toggle_knob_bg: 'color',
+  toggle_size: 'length', toggle_icon_size: 'length', toggle_radius: 'length',
+  toggle_font_size: 'length', toggle_font_weight: 'string', toggle_shadow: 'shadow',
+  launcher_color: 'color', launcher_bg: 'color', launcher_hover_bg: 'color',
+  launcher_size: 'length', launcher_icon_size: 'length', launcher_radius: 'length',
+  launcher_font_size: 'length', launcher_font_weight: 'string', launcher_shadow: 'shadow',
+  panel_bg: 'color', panel_color: 'color', panel_title_color: 'color', panel_border_color: 'color',
+  panel_width: 'length', panel_radius: 'length', panel_shadow: 'shadow',
+  whatsapp_color: 'color', whatsapp_bg: 'color', whatsapp_hover_bg: 'color', whatsapp_radius: 'length',
+} as const satisfies Record<string, 'color' | 'string' | 'length' | 'shadow'>;
+
 const PART_STYLE_KEYS: Record<string, 'color' | 'string' | 'length' | 'shadow'> = {
   ...CASE_CARD_STYLE_KEYS,
   ...TESTIMONIAL_STYLE_KEYS,
   ...HERO_STYLE_KEYS,
   ...LOGO_STYLE_KEYS,
+  ...FLOATING_STYLE_KEYS,
 };
 /** Button parts (`btn_primary_*`, `btn_secondary_*`, `btn_card_*`): hero CTAs and the case study card button. */
 export const BUTTON_PARTS = ['btn_primary', 'btn_secondary', 'btn_card'] as const;

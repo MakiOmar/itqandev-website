@@ -2,7 +2,6 @@ import { component$, createContextId, useContext, useContextProvider, useSignal,
 import { QwikCityProvider, RouterOutlet, useLocation } from "@builder.io/qwik-city";
 import { useQwikSpeak, useSpeakLocale } from "qwik-speak";
 import { RouterHead } from "./components/router-head/router-head";
-import { DarkModeToggle } from "./components/common/DarkModeToggle";
 import { speakConfig } from "./lib/i18n/config";
 import { translationFn } from "./lib/i18n/translation-fn";
 import { isUiLocaleRtl } from "./lib/i18n/ui-locale-segments";
@@ -185,7 +184,6 @@ export default component$(() => {
           <BodyRenderCompleteGuard />
           <LocaleFontSync />
           <RouterOutlet />
-          <DarkModeToggle />
         </body>
       </QwikCityProvider>
     </>

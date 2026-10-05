@@ -11,6 +11,7 @@ import { getApiClient } from '../../lib/api/client';
 import { ProjectSettingsContext } from '../../stores/project-settings-store';
 import { getLocalizedRoutes } from '../../lib/constants/routes';
 import { AdminSessionContext } from '../../stores/admin-session-context';
+import { DarkModeToggle } from '../common/DarkModeToggle';
 
 function isAdminPageBuilderPath(pathname: string): boolean {
   const logical = stripUiLocaleFromPathname(pathname.replace(/\/+$/, '') || '/');
@@ -205,6 +206,8 @@ export const AuthenticatedAdminLayout = component$((props: { settings?: ProjectS
           </main>
         </div>
       </div>
+      {/* Dashboard theme switch; public pages place the builder Theme switch widget instead */}
+      <DarkModeToggle />
     </>
   );
 });

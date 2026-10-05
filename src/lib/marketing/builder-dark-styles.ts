@@ -2,6 +2,7 @@ import { DARK_SCOPE_SELECTOR } from '~/lib/theme/theme-scope';
 import {
   BUTTON_PARTS,
   CASE_CARD_STYLE_KEYS,
+  FLOATING_STYLE_KEYS,
   HERO_STYLE_KEYS,
   LOGO_STYLE_KEYS,
   TESTIMONIAL_STYLE_KEYS,
@@ -36,7 +37,7 @@ const COLOR_STYLE_KINDS: ReadonlyMap<string, ColorStyleKind> = (() => {
   const map = new Map<string, ColorStyleKind>();
   for (const key of BASE_COLOR_KEYS) map.set(key, 'color');
   for (const key of BASE_SHADOW_KEYS) map.set(key, 'shadow');
-  for (const [key, kind] of Object.entries({ ...CASE_CARD_STYLE_KEYS, ...TESTIMONIAL_STYLE_KEYS, ...HERO_STYLE_KEYS, ...LOGO_STYLE_KEYS })) {
+  for (const [key, kind] of Object.entries({ ...CASE_CARD_STYLE_KEYS, ...TESTIMONIAL_STYLE_KEYS, ...HERO_STYLE_KEYS, ...LOGO_STYLE_KEYS, ...FLOATING_STYLE_KEYS })) {
     if (kind === 'color' || kind === 'shadow') map.set(key, kind);
   }
   for (const part of BUTTON_PARTS) {

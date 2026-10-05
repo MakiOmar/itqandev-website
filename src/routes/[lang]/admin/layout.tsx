@@ -5,6 +5,7 @@ import { routeLoader$, useLocation } from '@builder.io/qwik-city';
 import { AdminSessionContext } from '../../../stores/admin-session-context';
 import { AdminSiteTypographyHead } from '../../../components/perf/AdminSiteTypographyHead';
 import { AuthenticatedAdminLayout } from '../../../components/dashboard/AuthenticatedAdminLayout';
+import { DarkModeToggle } from '../../../components/common/DarkModeToggle';
 import { getConfig } from '../../../lib/config';
 import { stripUiLocaleFromPathname } from '../../../lib/i18n/ui-locale-path';
 import { getFeatureModuleForAdminPath } from '../../../lib/admin/feature-module-routes';
@@ -108,6 +109,7 @@ export default component$(() => {
       <>
         <AdminSiteTypographyHead typography={siteMeta.value.typography} />
         <Slot />
+        <DarkModeToggle />
       </>
     );
   }

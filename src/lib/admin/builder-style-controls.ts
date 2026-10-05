@@ -227,6 +227,43 @@ const LOGO_PART_CONTROLS: StyleControl[] = [
   { key: 'logo_tagline_color', group: 'logo_tagline', type: 'color' },
 ];
 
+/** Theme switch (button or switch track), floating contact launcher, panel and WhatsApp button. */
+const FLOATING_PART_CONTROLS: StyleControl[] = [
+  { key: 'toggle_size', group: 'toggle', type: 'length', min: 20, max: 96 },
+  { key: 'toggle_icon_size', group: 'toggle', type: 'length', min: 8, max: 64 },
+  { key: 'toggle_radius', group: 'toggle', type: 'length', min: 0, max: 100 },
+  { key: 'toggle_font_size', group: 'toggle', type: 'length', min: 8, max: 32 },
+  { key: 'toggle_font_weight', group: 'toggle', type: 'select', options: WEIGHT_OPTIONS },
+  { key: 'toggle_color', group: 'toggle', type: 'color' },
+  { key: 'toggle_bg', group: 'toggle', type: 'color' },
+  { key: 'toggle_border_color', group: 'toggle', type: 'color' },
+  { key: 'toggle_hover_color', group: 'toggle', type: 'color' },
+  { key: 'toggle_hover_bg', group: 'toggle', type: 'color' },
+  { key: 'toggle_active_bg', group: 'toggle', type: 'color' },
+  { key: 'toggle_knob_bg', group: 'toggle', type: 'color' },
+  { key: 'toggle_shadow', group: 'toggle', type: 'shadow' },
+  { key: 'launcher_size', group: 'launcher', type: 'length', min: 32, max: 120 },
+  { key: 'launcher_icon_size', group: 'launcher', type: 'length', min: 12, max: 64 },
+  { key: 'launcher_radius', group: 'launcher', type: 'length', min: 0, max: 100 },
+  { key: 'launcher_font_size', group: 'launcher', type: 'length', min: 8, max: 32 },
+  { key: 'launcher_font_weight', group: 'launcher', type: 'select', options: WEIGHT_OPTIONS },
+  { key: 'launcher_color', group: 'launcher', type: 'color' },
+  { key: 'launcher_bg', group: 'launcher', type: 'color' },
+  { key: 'launcher_hover_bg', group: 'launcher', type: 'color' },
+  { key: 'launcher_shadow', group: 'launcher', type: 'shadow' },
+  { key: 'panel_width', group: 'panel', type: 'length', min: 240, max: 640 },
+  { key: 'panel_radius', group: 'panel', type: 'length', min: 0, max: 48 },
+  { key: 'panel_bg', group: 'panel', type: 'color' },
+  { key: 'panel_color', group: 'panel', type: 'color' },
+  { key: 'panel_title_color', group: 'panel', type: 'color' },
+  { key: 'panel_border_color', group: 'panel', type: 'color' },
+  { key: 'panel_shadow', group: 'panel', type: 'shadow' },
+  { key: 'whatsapp_radius', group: 'whatsapp', type: 'length', min: 0, max: 100 },
+  { key: 'whatsapp_color', group: 'whatsapp', type: 'color' },
+  { key: 'whatsapp_bg', group: 'whatsapp', type: 'color' },
+  { key: 'whatsapp_hover_bg', group: 'whatsapp', type: 'color' },
+];
+
 /** Full button styling for a button part. The card button spans the card, so it has no min width. */
 function buttonControls(part: ButtonPart): StyleControl[] {
   const controls: StyleControl[] = [
@@ -469,6 +506,7 @@ export const STYLE_CONTROLS: StyleControl[] = [
   ...TESTIMONIAL_CONTROLS,
   ...HERO_PART_CONTROLS,
   ...LOGO_PART_CONTROLS,
+  ...FLOATING_PART_CONTROLS,
   { key: 'custom_css', group: 'custom', type: 'textarea' },
 ];
 

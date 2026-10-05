@@ -21,6 +21,20 @@ export function documentThemeMode(): ThemeMode {
   return document.documentElement.classList.contains('dark') ? 'dark' : 'light';
 }
 
+/** Flip the `<html>` theme and persist it under the key the head bootstrap script reads. Browser only. */
+export function toggleDocumentTheme(): ThemeMode {
+  const next: ThemeMode = documentThemeMode() === 'dark' ? 'light' : 'dark';
+  const root = document.documentElement;
+  root.classList.remove('light', 'dark');
+  root.classList.add(next);
+  try {
+    localStorage.setItem('theme', next);
+  } catch {
+    /* storage blocked (private mode): the class change still applies for this page */
+  }
+  return next;
+}
+
 /**
  * Mirror the `<html>` theme into `target` until `pinned` is set (the editor chose a canvas theme).
  * Returns the observer cleanup. Browser only.
