@@ -360,8 +360,6 @@
     "globalsTab": "Globals",
     "sticky": "Sticky",
     "addInnerBand": "Inner band",
-    "makeGlobal": "Make global",
-    "unlinkGlobal": "Unlink global",
     "savedSections": "Saved sections",
     "saveSection": "Save section",
     "previewAs": "Preview as",
@@ -436,7 +434,16 @@
     "excludeFromSearchBadge": "Hidden from search",
     "backToWidgets": "Widgets",
     "addRowAbove": "Row above",
-    "addBandAbove": "Band above"
+    "addBandAbove": "Band above",
+    "ctxSaveGlobal": "Save as global",
+    "ctxUnlinkGlobal": "Unlink from global",
+    "globalNameHint": "Name this global widget. Edits to it update every page that uses it.",
+    "globalNameRequired": "Enter a name.",
+    "globalSaved": "Saved as a global widget.",
+    "globalSaveFailed": "Could not save the global widget.",
+    "globalUnlinked": "Unlinked. This copy is now edited separately.",
+    "globalEditingNotice": "Global widget \"{{name}}\". Changes apply everywhere it is used and are saved with this page.",
+    "globalBadge": "Global"
   },
   "forms": {
     "title": "Forms",

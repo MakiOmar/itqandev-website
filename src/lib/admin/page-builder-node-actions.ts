@@ -26,6 +26,8 @@ export type BuilderNodeAction =
   | 'copy_style'
   | 'paste_style'
   | 'reset_style'
+  | 'save_global'
+  | 'unlink_global'
   | 'navigator'
   | 'delete';
 

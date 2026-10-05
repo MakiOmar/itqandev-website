@@ -96,6 +96,13 @@ import {
   type BuilderNodeAction,
 } from '~/lib/admin/page-builder-node-actions';
 import { PageBuilderContextMenu } from '~/components/admin/pages/PageBuilderContextMenu';
+import {
+  canSaveAsGlobal,
+  isGlobalPlacement,
+  isResolvedGlobalPlacement,
+  syncGlobalPlacements,
+} from '~/lib/admin/builder-globals';
+import { useBuilderGlobals } from '~/lib/admin/use-builder-globals';
 import { useBuilderCanvasGuard } from '~/lib/admin/builder-canvas-guard';
 import { useBuilderChromeMenus } from '~/lib/admin/builder-chrome-menus';
 import { AdminSessionContext } from '~/stores/admin-session-context';
@@ -318,8 +325,6 @@ type GlobalWidgetApiRow = { id: number; name: string; status?: string };
 type PaletteTab = 'widgets' | 'kits' | 'globals';
 
 type InspectorTab = 'content' | 'style' | 'advanced';
-
-type GlobalWidgetCreated = { id?: number };
 
 type BandLayoutWidth = 'boxed' | 'full';
 
@@ -767,17 +772,6 @@ export const PageBuilderWorkspace = component$<PageBuilderWorkspaceProps>((props
     () => JSON.stringify(props.sections.value) !== savedSnapshot.value,
   );
 
-  const save$ = $(async () => {
-    try {
-      if (await props.onSave$()) {
-        savedSnapshot.value = JSON.stringify(props.sections.value);
-      }
-    } catch (err) {
-      console.error('Builder save failed', err);
-      showError(translateApp(props.lang, 'common.error'));
-    }
-  });
-
   // eslint-disable-next-line qwik/no-use-visible-task
   useVisibleTask$(({ track, cleanup }) => {
     if (!track(() => hasUnsavedChanges.value)) return;
@@ -822,7 +816,31 @@ export const PageBuilderWorkspace = component$<PageBuilderWorkspaceProps>((props
     const prev = JSON.stringify(props.sections.value);
     undoStack.value = [...undoStack.value.slice(-29), prev];
     redoStack.value = [];
-    props.sections.value = next;
+    props.sections.value = syncGlobalPlacements(ensurePageLayoutBands(props.sections.value), next);
+  });
+
+  const builderGlobals = useBuilderGlobals({
+    lang: props.lang,
+    sections: props.sections,
+    savedSnapshot,
+    registry: props.registry,
+    commit$,
+    onCreated$: $((id: number, name: string) => {
+      globalsList.value = [...globalsList.value, { id, name }].sort((a, b) => a.name.localeCompare(b.name));
+    }),
+  });
+  const { saveAsGlobal$, unlinkGlobal$, saveChangedGlobals$ } = builderGlobals;
+
+  const save$ = $(async () => {
+    try {
+      if (!(await saveChangedGlobals$())) return;
+      if (await props.onSave$()) {
+        savedSnapshot.value = JSON.stringify(props.sections.value);
+      }
+    } catch (err) {
+      console.error('Builder save failed', err);
+      showError(translateApp(props.lang, 'common.error'));
+    }
   });
 
   const contextMenu = useSignal<{ x: number; y: number; path: LayoutTreePath; fromNavigator: boolean } | null>(null);
@@ -884,6 +902,12 @@ export const PageBuilderWorkspace = component$<PageBuilderWorkspaceProps>((props
       case 'reset_style':
         await commit$(resetLayoutNodeStyle(current, path));
         return;
+      case 'save_global':
+        await saveAsGlobal$(path, builderNodeLabel(current, path, props.registry.value, props.lang));
+        return;
+      case 'unlink_global':
+        await unlinkGlobal$(path);
+        return;
       case 'delete':
         selection.value = null;
         await commit$(removeLayoutNode(current, path));
@@ -936,6 +960,10 @@ export const PageBuilderWorkspace = component$<PageBuilderWorkspaceProps>((props
   const selectedBlockSettings = selectedBlock?.settings;
   const selectedBlockStyles = selectedBlock?.styles;
   const selectedBlockHideOn = selectedBlock?.hide_on;
+  const selectedGlobalId = isGlobalPlacement(selectedBlock) ? Number(selectedBlock?.global_id) : 0;
+  const selectedGlobalName = selectedGlobalId
+    ? builderGlobals.globals.value[String(selectedGlobalId)]?.name ?? `#${selectedGlobalId}`
+    : '';
   const selectedRow = rowAtSelection(bands, selection.value);
   const selectedCol = colAtSelection(bands, selection.value);
   const previewCtx: BuilderPreviewContext = {
@@ -1744,6 +1772,22 @@ export const PageBuilderWorkspace = component$<PageBuilderWorkspaceProps>((props
                         selectedBlock.type,
                     )}
                   </p>
+                  {/* Global placement: edits are shared, unlink to edit this copy on its own */}
+                  {selectedGlobalId ? (
+                    <div class="space-y-2 rounded-lg border border-emerald-300 bg-emerald-50 p-2.5 text-xs text-emerald-900 dark:border-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-100">
+                      <p>{translateApp(props.lang, 'pages.globalEditingNotice', { name: selectedGlobalName })}</p>
+                      <button
+                        type="button"
+                        class="w-full rounded border border-emerald-400 bg-white px-2 py-1 font-medium text-emerald-800 hover:bg-emerald-100 dark:border-emerald-700 dark:bg-slate-900 dark:text-emerald-200 dark:hover:bg-emerald-900/40"
+                        onClick$={async () => {
+                          const path = selectionToTreePath(selection.value);
+                          if (path) await unlinkGlobal$(path);
+                        }}
+                      >
+                        {translateApp(props.lang, 'pages.ctxUnlinkGlobal')}
+                      </button>
+                    </div>
+                  ) : null}
                   {inspectorTab.value === 'content' ? (
                   <>
                   {(() => {
@@ -1792,58 +1836,18 @@ export const PageBuilderWorkspace = component$<PageBuilderWorkspaceProps>((props
                       />
                     );
                   })()}
-                  {selectedBlock.kind !== 'global' ? (
+                  {canSaveAsGlobal(bands, selectionToTreePath(selection.value) ?? []) ? (
                     <button
                       type="button"
                       class="mt-2 w-full rounded border border-gray-300 px-2 py-1 text-xs dark:border-gray-600"
                       onClick$={async () => {
-                        try {
-                          const res = await getApiClient(null).post(
-                            API_ENDPOINTS.APPEARANCE.GLOBALS,
-                            {
-                              name: selectedBlock.type,
-                              status: 'published',
-                              document: {
-                                kind: selectedBlock.kind || 'widget',
-                                type: selectedBlock.type,
-                                settings: selectedBlock.settings || {},
-                              },
-                            },
-                          );
-                          const id = Number((res.data as GlobalWidgetCreated | undefined)?.id);
-                          if (!id) return;
-                          await commit$(
-                            updateBlockInBands(bands, selectedBlock.id, (blk) => ({
-                              ...blk,
-                              kind: 'global',
-                              global_id: id,
-                              type: 'global',
-                            })),
-                          );
-                        } catch {
-                          /* ignore */
-                        }
+                        const path = selectionToTreePath(selection.value);
+                        if (path) await runNodeAction$('save_global', path);
                       }}
                     >
-                      {translateApp(props.lang, 'pages.makeGlobal')}
+                      {translateApp(props.lang, 'pages.ctxSaveGlobal')}
                     </button>
-                  ) : (
-                    <button
-                      type="button"
-                      class="mt-2 w-full rounded border border-gray-300 px-2 py-1 text-xs dark:border-gray-600"
-                      onClick$={async () => {
-                        await commit$(
-                          updateBlockInBands(bands, selectedBlock.id, (blk) => ({
-                            ...blk,
-                            kind: 'widget',
-                            global_id: undefined,
-                          })),
-                        );
-                      }}
-                    >
-                      {translateApp(props.lang, 'pages.unlinkGlobal')}
-                    </button>
-                  )}
+                  ) : null}
                   </>
                   ) : null}
                   {inspectorTab.value === 'style' ? (
@@ -2193,8 +2197,17 @@ export const PageBuilderWorkspace = component$<PageBuilderWorkspaceProps>((props
             canPaste={canPasteLayoutNode(bands, contextMenu.value.path, readNodeClipboard())}
             canPasteStyle={canPasteLayoutNodeStyle(bands, contextMenu.value.path, readStyleClipboard())}
             fromNavigator={contextMenu.value.fromNavigator}
+            globalAction={
+              canSaveAsGlobal(bands, contextMenu.value.path)
+                ? 'save'
+                : isResolvedGlobalPlacement(layoutTreeNodeAt(bands, contextMenu.value.path) as PageLayoutBlock | null)
+                  ? 'unlink'
+                  : null
+            }
             onAction$={$(async (action: BuilderNodeAction) => {
               const target = contextMenu.value;
+              // Close first: actions such as Save as global open a dialog over the canvas.
+              contextMenu.value = null;
               if (target) await runNodeAction$(action, target.path);
             })}
             onClose$={$(() => {
@@ -2842,6 +2855,7 @@ export const PageBuilderWorkspace = component$<PageBuilderWorkspaceProps>((props
                                                   ?.blocks[blockIndex];
                                               const shown =
                                                 resolved && resolved.id === block.id ? resolved : block;
+                                              const blockIsGlobal = isGlobalPlacement(block);
                                               return (
                                                 <div
                                                   key={block.id}
@@ -2940,7 +2954,8 @@ export const PageBuilderWorkspace = component$<PageBuilderWorkspaceProps>((props
                                                   <div
                                                     stoppropagation:click
                                                     class={[
-                                                      'absolute end-0 top-0 z-40 items-center gap-0.5 rounded-es-md bg-primary-600 px-1 py-0.5 text-[11px] font-medium text-white shadow',
+                                                      'absolute end-0 top-0 z-40 items-center gap-0.5 rounded-es-md px-1 py-0.5 text-[11px] font-medium text-white shadow',
+                                                      blockIsGlobal ? 'bg-emerald-600' : 'bg-primary-600',
                                                       blockSelected ? 'flex' : 'hidden group-hover/block:flex',
                                                     ].join(' ')}
                                                   >
@@ -2976,7 +2991,11 @@ export const PageBuilderWorkspace = component$<PageBuilderWorkspaceProps>((props
                                                       <svg class="h-3 w-3" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
                                                         <path d="M7 4a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0Zm0 6a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0Zm-1.5 7.5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3ZM16 4a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0Zm-1.5 7.5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3ZM16 16a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0Z" />
                                                       </svg>
-                                                      <span class="max-w-[10rem] truncate">{blockLabel}</span>
+                                                      <span class="max-w-[10rem] truncate">
+                                                        {blockIsGlobal
+                                                          ? `${blockLabel} · ${translateApp(props.lang, 'pages.globalBadge')}`
+                                                          : blockLabel}
+                                                      </span>
                                                     </span>
                                                     <button
                                                       type="button"

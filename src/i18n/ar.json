@@ -360,8 +360,6 @@
     "globalsTab": "عامة",
     "sticky": "ثابت",
     "addInnerBand": "شريط داخلي",
-    "makeGlobal": "جعل عام",
-    "unlinkGlobal": "فك الارتباط",
     "savedSections": "أقسام محفوظة",
     "saveSection": "حفظ القسم",
     "previewAs": "معاينة كـ",
@@ -436,7 +434,16 @@
     "excludeFromSearchBadge": "مخفية عن البحث",
     "backToWidgets": "العناصر",
     "addRowAbove": "صف قبله",
-    "addBandAbove": "شريط قبله"
+    "addBandAbove": "شريط قبله",
+    "ctxSaveGlobal": "حفظ كعنصر عام",
+    "ctxUnlinkGlobal": "فك الارتباط بالعنصر العام",
+    "globalNameHint": "سمِّ هذا العنصر العام. أي تعديل عليه يظهر في كل الصفحات التي تستخدمه.",
+    "globalNameRequired": "أدخل اسمًا.",
+    "globalSaved": "تم الحفظ كعنصر عام.",
+    "globalSaveFailed": "تعذّر حفظ العنصر العام.",
+    "globalUnlinked": "تم فك الارتباط. أصبحت هذه النسخة تُعدَّل بشكل مستقل.",
+    "globalEditingNotice": "عنصر عام \"{{name}}\". التغييرات تُطبَّق في كل مكان يُستخدم فيه وتُحفظ مع هذه الصفحة.",
+    "globalBadge": "عام"
   },
   "forms": {
     "title": "النماذج",

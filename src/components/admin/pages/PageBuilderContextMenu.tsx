@@ -12,6 +12,8 @@ export type PageBuilderContextMenuProps = {
   canPasteStyle: boolean;
   /** Opened from the navigator: no "Navigator" item. */
   fromNavigator: boolean;
+  /** Widget/kit blocks can be saved as a global; global placements can be unlinked. */
+  globalAction: 'save' | 'unlink' | null;
   onAction$: QRL<(action: BuilderNodeAction) => void>;
   onClose$: QRL<() => void>;
 };
@@ -40,6 +42,11 @@ export const PageBuilderContextMenu = component$<PageBuilderContextMenuProps>((p
     { action: 'copy_style', labelKey: 'pages.ctxCopyStyle', separatorBefore: true },
     { action: 'paste_style', labelKey: 'pages.ctxPasteStyle', disabled: !props.canPasteStyle },
     { action: 'reset_style', labelKey: 'pages.ctxResetStyle' },
+    ...(props.globalAction === 'save'
+      ? [{ action: 'save_global' as const, labelKey: 'pages.ctxSaveGlobal', separatorBefore: true }]
+      : props.globalAction === 'unlink'
+        ? [{ action: 'unlink_global' as const, labelKey: 'pages.ctxUnlinkGlobal', separatorBefore: true }]
+        : []),
     ...(props.fromNavigator
       ? []
       : [{ action: 'navigator' as const, labelKey: 'pages.navigator', separatorBefore: true }]),
