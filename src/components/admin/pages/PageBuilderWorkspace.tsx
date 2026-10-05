@@ -715,17 +715,26 @@ export const PageBuilderWorkspace = component$<PageBuilderWorkspaceProps>((props
     sidebarView.value = selection.value ? 'controls' : 'palette';
   });
 
-  // eslint-disable-next-line qwik/no-use-visible-task
-  useVisibleTask$(async () => {
+  // Globals are shared by every builder; reloaded when the tab opens so ones saved elsewhere show up.
+  const loadGlobalsList$ = $(async () => {
     try {
-      const res = await getApiClient(null).get(API_ENDPOINTS.APPEARANCE.GLOBALS);
-      const rows = Array.isArray(res.data) ? (res.data as GlobalWidgetApiRow[]) : [];
+      const res = await getApiClient(null).get<GlobalWidgetApiRow[] | { data?: GlobalWidgetApiRow[] }>(
+        API_ENDPOINTS.APPEARANCE.GLOBALS,
+      );
+      const body = res.data;
+      const rows = Array.isArray(body) ? body : Array.isArray(body?.data) ? body.data : [];
       globalsList.value = rows
         .filter((r) => r.status !== 'draft')
         .map((r) => ({ id: Number(r.id), name: String(r.name || r.id) }));
-    } catch {
+    } catch (err) {
+      console.error('Builder global widgets list failed', err);
       globalsList.value = [];
     }
+  });
+
+  // eslint-disable-next-line qwik/no-use-visible-task
+  useVisibleTask$(async () => {
+    await loadGlobalsList$();
     savedBands.value = listSavedBuilderBands();
   });
 
@@ -1974,8 +1983,9 @@ export const PageBuilderWorkspace = component$<PageBuilderWorkspaceProps>((props
                       ? 'bg-primary-600 text-white'
                       : 'text-gray-600 dark:text-gray-300',
                   ].join(' ')}
-                  onClick$={() => {
+                  onClick$={async () => {
                     paletteTab.value = 'globals';
+                    await loadGlobalsList$();
                   }}
                 >
                   {translateApp(props.lang, 'pages.globalsTab')}
@@ -2024,6 +2034,12 @@ export const PageBuilderWorkspace = component$<PageBuilderWorkspaceProps>((props
                     </button>
                   ))}
                 </div>
+              ) : null}
+              {/* Globals empty state */}
+              {paletteTab.value === 'globals' && globalsList.value.length === 0 ? (
+                <p class="rounded-lg border border-dashed border-gray-300 px-3 py-3 text-xs text-gray-500 dark:border-gray-600 dark:text-gray-400">
+                  {translateApp(props.lang, 'pages.globalsEmpty')}
+                </p>
               ) : null}
               {paletteTab.value === 'globals'
                 ? globalsList.value.map((g) => (

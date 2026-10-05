@@ -443,7 +443,8 @@
     "globalSaveFailed": "Could not save the global widget.",
     "globalUnlinked": "Unlinked. This copy is now edited separately.",
     "globalEditingNotice": "Global widget \"{{name}}\". Changes apply everywhere it is used and are saved with this page.",
-    "globalBadge": "Global"
+    "globalBadge": "Global",
+    "globalsEmpty": "No global widgets yet. Right-click a widget in any builder and choose \"Save as global\"."
   },
   "forms": {
     "title": "Forms",
