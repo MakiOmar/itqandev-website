@@ -86,7 +86,12 @@
     "slotFooter": "Footer",
     "inherit": "Inherit (cascade)",
     "createLayout": "Create layout",
-    "bodyNotApplicable": "Body slot applies only for Homepage / 404 (or Entire site) conditions."
+    "createSingleLayout": "Create single layout",
+    "bodyNotApplicable": "Add an Include condition for the entire site, a singular type (page, post, …) or an archive to use a body layout.",
+    "bodyContentHint": "Pages and posts show their own content where the layout has a Post content widget.",
+    "bodyGroupSingle": "Singles",
+    "bodyGroupArchive": "Archives",
+    "bodyGroupBody": "Bodies"
   },
   "contactPage": {
     "address": "Address",

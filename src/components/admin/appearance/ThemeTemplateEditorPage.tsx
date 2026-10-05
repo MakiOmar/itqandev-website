@@ -8,7 +8,7 @@ import { BuilderImportExportButtons } from '~/components/admin/BuilderImportExpo
 import { useTranslate, translateApp } from '~/lib/i18n/useTranslate';
 import { useSwal } from '~/lib/hooks/useSwal';
 import {
-  adminBodyBuilderHref,
+  adminChromeBuilderHref,
   adminFooterBuilderHref,
   adminHeaderBuilderHref,
   getLocalizedRoutes,
@@ -21,6 +21,7 @@ import {
   updateThemeTemplateFromBrowser,
 } from '~/lib/admin/theme-template-actions';
 import type {
+  ChromeLayoutKind,
   ChromeLayoutMeta,
   ThemeConditionRule,
   ThemeTemplateConditionsDoc,
@@ -61,6 +62,15 @@ const GROUP_KEYS: Record<string, { key: string; label: string }[]> = {
   ],
 };
 
+/** Layout kinds the backend accepts in the Body slot (ChromeLayoutService::assertAssignableId). */
+const BODY_SLOT_KINDS = ['single', 'archive', 'body'] as const satisfies readonly ChromeLayoutKind[];
+
+const BODY_KIND_LABEL_KEYS: Record<(typeof BODY_SLOT_KINDS)[number], string> = {
+  single: 'themeBuilder.bodyGroupSingle',
+  archive: 'themeBuilder.bodyGroupArchive',
+  body: 'themeBuilder.bodyGroupBody',
+};
+
 export const ThemeTemplateEditorPage = component$<{
   mode: 'create' | 'edit';
   initial?: ThemeTemplateMeta | null;
@@ -87,14 +97,14 @@ export const ThemeTemplateEditorPage = component$<{
   // eslint-disable-next-line qwik/no-use-visible-task
   useVisibleTask$(async () => {
     try {
-      const [h, f, b] = await Promise.all([
+      const [h, f, ...bodyKinds] = await Promise.all([
         fetchPublishedChromeOptionsFromBrowser('header'),
         fetchPublishedChromeOptionsFromBrowser('footer'),
-        fetchPublishedChromeOptionsFromBrowser('body'),
+        ...BODY_SLOT_KINDS.map((k) => fetchPublishedChromeOptionsFromBrowser(k)),
       ]);
       headers.value = h;
       footers.value = f;
-      bodies.value = b;
+      bodies.value = bodyKinds.flat();
     } catch (e) {
       await showError(String((e as Error)?.message || translateApp(lang, 'common.error')));
     } finally {
@@ -375,8 +385,9 @@ export const ThemeTemplateEditorPage = component$<{
               label: translateApp(lang, 'themeBuilder.slotBody'),
               options: bodies.value,
               value: bodyId,
-              createHref: R.ADMIN.APPEARANCE_BODY_NEW,
-              builderHref: (id: number) => adminBodyBuilderHref(lang, id),
+              createHref: R.ADMIN.APPEARANCE_SINGLES_NEW,
+              builderHref: (id: number) =>
+                adminChromeBuilderHref(lang, bodies.value.find((o) => o.id === id)?.kind ?? 'body', id),
               enabled: allowBody.value,
             },
             {
@@ -407,15 +418,34 @@ export const ThemeTemplateEditorPage = component$<{
                   <option class={ADMIN_NATIVE_OPTION_CLASS} value="">
                     {translateApp(lang, 'themeBuilder.inherit')}
                   </option>
-                  {slot.options.map((opt) => (
-                    <option key={opt.id} class={ADMIN_NATIVE_OPTION_CLASS} value={String(opt.id)}>
-                      {opt.name}
-                    </option>
-                  ))}
+                  {slot.key === 'body'
+                    ? BODY_SLOT_KINDS.map((kind) => {
+                        const group = slot.options.filter((opt) => opt.kind === kind);
+                        return group.length > 0 ? (
+                          <optgroup key={kind} label={translateApp(lang, BODY_KIND_LABEL_KEYS[kind])}>
+                            {group.map((opt) => (
+                              <option key={opt.id} class={ADMIN_NATIVE_OPTION_CLASS} value={String(opt.id)}>
+                                {opt.name}
+                              </option>
+                            ))}
+                          </optgroup>
+                        ) : null;
+                      })
+                    : slot.options.map((opt) => (
+                        <option key={opt.id} class={ADMIN_NATIVE_OPTION_CLASS} value={String(opt.id)}>
+                          {opt.name}
+                        </option>
+                      ))}
                 </select>
+                {/* Body: where the record's own content lands */}
+                {slot.key === 'body' ? (
+                  <p class="text-xs text-gray-500 dark:text-gray-400">
+                    {translateApp(lang, 'themeBuilder.bodyContentHint')}
+                  </p>
+                ) : null}
                 <div class="flex flex-wrap gap-3 text-xs">
                   <Link href={slot.createHref} class="text-primary-600 hover:underline">
-                    {translateApp(lang, 'themeBuilder.createLayout')}
+                    {translateApp(lang, slot.key === 'body' ? 'themeBuilder.createSingleLayout' : 'themeBuilder.createLayout')}
                   </Link>
                   {slot.value.value ? (
                     <Link href={slot.builderHref(slot.value.value)} class="text-gray-600 hover:underline dark:text-gray-300">

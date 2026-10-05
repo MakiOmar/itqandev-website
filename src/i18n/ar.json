@@ -86,7 +86,12 @@
     "slotFooter": "التذييل",
     "inherit": "وراثة (التسلسل)",
     "createLayout": "إنشاء تخطيط",
-    "bodyNotApplicable": "موضع المحتوى ينطبق فقط على الرئيسية / 404 (أو الموقع بالكامل)."
+    "createSingleLayout": "إنشاء تخطيط مفرد",
+    "bodyNotApplicable": "أضف شرط تضمين للموقع بالكامل أو لنوع مفرد (صفحة، مقال، …) أو لأرشيف لاستخدام تخطيط المحتوى.",
+    "bodyContentHint": "تعرض الصفحات والمقالات محتواها الخاص مكان عنصر «محتوى المنشور» في التخطيط.",
+    "bodyGroupSingle": "المفردات",
+    "bodyGroupArchive": "الأرشيفات",
+    "bodyGroupBody": "المحتويات"
   },
   "contactPage": {
     "address": "العنوان",

@@ -128,12 +128,9 @@ export function emptyThemeConditions(): ThemeTemplateConditionsDoc {
 
 /** True when conditions can apply a body layout (homepage / 404). */
 export function themeConditionsAllowBody(conditions: ThemeTemplateConditionsDoc): boolean {
-  const includes = conditions.rules.filter((r) => r.include);
-  if (includes.length === 0) return false;
-  return includes.some(
-    (r) =>
-      (r.group === 'singular' && (r.key === 'homepage' || r.key === 'not_found')) ||
-      (r.group === 'entire' && r.key === 'site'),
+  // Mirrors ThemeTemplateService::bodyAppliesForContext: every singular and archive context takes a body.
+  return conditions.rules.some(
+    (r) => r.include && (r.group === 'entire' || r.group === 'singular' || r.group === 'archive'),
   );
 }
 
