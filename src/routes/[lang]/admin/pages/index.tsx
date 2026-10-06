@@ -9,7 +9,12 @@ import { useSwal } from '../../../../lib/hooks/useSwal';
 import { getApiClient } from '../../../../lib/api/client';
 import { adminApiClient } from '../../../../lib/admin/admin-api-client';
 import { API_ENDPOINTS } from '../../../../lib/api/endpoints';
-import { adminPageEditHref, useAppRoutes } from '../../../../lib/constants/routes';
+import { adminPageBuilderHref, adminPageEditHref, useAppRoutes } from '../../../../lib/constants/routes';
+import {
+  AdminRowActionsMenu,
+  ADMIN_ROW_ACTION_DANGER_CLASS,
+  ADMIN_ROW_ACTION_ITEM_CLASS,
+} from '../../../../components/admin/AdminRowActionsMenu';
 import type { AdminPage } from '../../../../types/page';
 import { usePublicSiteMeta } from '../layout';
 import { useLocaleAwareList } from '../../../../lib/hooks/useLocaleAwareList';
@@ -290,30 +295,36 @@ export default component$(() => {
                     </td>
                     <td class="px-3 py-2 align-middle font-mono text-xs">{page.path || page.slug}</td>
                     <td class="px-3 py-2 align-middle">{page.status}</td>
-                    <td class="px-3 py-2 text-end align-middle space-x-2">
-                      {publicHref ? (
-                        <a
-                          href={publicHref}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          class="text-primary-600 hover:underline dark:text-primary-400"
+                    <td class="px-3 py-2 text-end align-middle">
+                      {/* Row actions dropdown */}
+                      <AdminRowActionsMenu label={`${translateApp(lang, 'common.actions')}: ${page.title}`}>
+                        <Link role="menuitem" href={adminPageEditHref(lang, page.id)} class={ADMIN_ROW_ACTION_ITEM_CLASS}>
+                          {translateApp(lang, 'common.edit')}
+                        </Link>
+                        <Link role="menuitem" href={adminPageBuilderHref(lang, page.id)} class={ADMIN_ROW_ACTION_ITEM_CLASS}>
+                          {translateApp(lang, 'pages.editWithBuilder')}
+                        </Link>
+                        {publicHref ? (
+                          <a
+                            role="menuitem"
+                            href={publicHref}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            class={ADMIN_ROW_ACTION_ITEM_CLASS}
+                          >
+                            {translateApp(lang, 'common.view')}
+                          </a>
+                        ) : null}
+                        <div class="my-1 border-t border-gray-100 dark:border-gray-700" role="separator" />
+                        <button
+                          type="button"
+                          role="menuitem"
+                          class={ADMIN_ROW_ACTION_DANGER_CLASS}
+                          onClick$={() => onDelete$(page.id)}
                         >
-                          {translateApp(lang, 'common.view')}
-                        </a>
-                      ) : null}
-                      <Link
-                        href={adminPageEditHref(lang, page.id)}
-                        class="text-primary-600 hover:underline"
-                      >
-                        {translateApp(lang, 'common.edit')}
-                      </Link>
-                      <button
-                        type="button"
-                        class="text-red-600 hover:underline"
-                        onClick$={() => onDelete$(page.id)}
-                      >
-                        {translateApp(lang, 'common.delete')}
-                      </button>
+                          {translateApp(lang, 'common.delete')}
+                        </button>
+                      </AdminRowActionsMenu>
                     </td>
                   </tr>
                   );

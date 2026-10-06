@@ -464,7 +464,8 @@
     "templatesNoMatch": "لا توجد قوالب مطابقة للبحث.",
     "templatesHint": "انقر على قالب لإدراج نسخة منه عند العنصر المحدد، أو في شريط جديد في النهاية.",
     "templateInsert": "إدراج نسخة",
-    "templateKindBlock": "عنصر"
+    "templateKindBlock": "عنصر",
+    "editWithBuilder": "تحرير بالمنشئ"
   },
   "forms": {
     "title": "النماذج",

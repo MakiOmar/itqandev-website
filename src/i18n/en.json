@@ -464,7 +464,8 @@
     "templatesNoMatch": "No templates match your search.",
     "templatesHint": "Click a template to insert a copy at the selected element, or in a new band at the end.",
     "templateInsert": "Insert a copy",
-    "templateKindBlock": "Widget"
+    "templateKindBlock": "Widget",
+    "editWithBuilder": "Edit with builder"
   },
   "forms": {
     "title": "Forms",
