@@ -42,10 +42,11 @@ export const PageBuilderContextMenu = component$<PageBuilderContextMenuProps>((p
     { action: 'copy_style', labelKey: 'pages.ctxCopyStyle', separatorBefore: true },
     { action: 'paste_style', labelKey: 'pages.ctxPasteStyle', disabled: !props.canPasteStyle },
     { action: 'reset_style', labelKey: 'pages.ctxResetStyle' },
+    { action: 'save_template', labelKey: 'pages.ctxSaveTemplate', separatorBefore: true },
     ...(props.globalAction === 'save'
-      ? [{ action: 'save_global' as const, labelKey: 'pages.ctxSaveGlobal', separatorBefore: true }]
+      ? [{ action: 'save_global' as const, labelKey: 'pages.ctxSaveGlobal' }]
       : props.globalAction === 'unlink'
-        ? [{ action: 'unlink_global' as const, labelKey: 'pages.ctxUnlinkGlobal', separatorBefore: true }]
+        ? [{ action: 'unlink_global' as const, labelKey: 'pages.ctxUnlinkGlobal' }]
         : []),
     ...(props.fromNavigator
       ? []

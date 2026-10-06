@@ -245,6 +245,7 @@ export const Sidebar = component$<SidebarProps>((props) => {
         { label: translateApp(lang, 'sidebar.appearanceLoopItems'), href: R.ADMIN.APPEARANCE_LOOP_ITEMS },
         { label: translateApp(lang, 'sidebar.appearanceOverlays'), href: R.ADMIN.APPEARANCE_OVERLAYS, featureModule: 'overlays' },
         { label: translateApp(lang, 'sidebar.appearanceDesignKit'), href: R.ADMIN.APPEARANCE_DESIGN_KIT },
+        { label: translateApp(lang, 'sidebar.appearanceTemplates'), href: R.ADMIN.APPEARANCE_TEMPLATES },
         { label: translateApp(lang, 'chromeLayouts.typeDefaults'), href: R.ADMIN.APPEARANCE_CHROME_DEFAULTS },
       ],
       roles: ['admin', 'super_admin'],

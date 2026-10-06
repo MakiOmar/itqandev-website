@@ -368,8 +368,6 @@
     "globalsTab": "Globals",
     "sticky": "Sticky",
     "addInnerBand": "Inner band",
-    "savedSections": "Saved sections",
-    "saveSection": "Save section",
     "previewAs": "Preview as",
     "applyPreview": "Apply preview",
     "rowJustify": "Align",
@@ -453,7 +451,20 @@
     "globalUnlinked": "Unlinked. This copy is now edited separately.",
     "globalEditingNotice": "Global widget \"{{name}}\". Changes apply everywhere it is used and are saved with this page.",
     "globalBadge": "Global",
-    "globalsEmpty": "No global widgets yet. Right-click a widget in any builder and choose \"Save as global\"."
+    "globalsEmpty": "No global widgets yet. Right-click a widget in any builder and choose \"Save as global\".",
+    "ctxSaveTemplate": "Save as template",
+    "templateNameHint": "Name this template. Inserting it adds an independent copy; later edits to the template do not change pages that already use it.",
+    "templateNameRequired": "Enter a template name.",
+    "templateSaved": "Template saved",
+    "templatesMigrated": "{{count}} section(s) saved in this browser were moved to templates",
+    "templateDeleteConfirm": "Delete the template \"{{name}}\"? Pages that already use a copy are not affected.",
+    "templateDeleted": "Template deleted",
+    "templatesTab": "Templates",
+    "templatesEmpty": "No templates yet. Right-click a band, row, column or widget in any builder and choose \"Save as template\".",
+    "templatesNoMatch": "No templates match your search.",
+    "templatesHint": "Click a template to insert a copy at the selected element, or in a new band at the end.",
+    "templateInsert": "Insert a copy",
+    "templateKindBlock": "Widget"
   },
   "forms": {
     "title": "Forms",
@@ -977,7 +988,8 @@
     "tools": "Tools",
     "toolsSearchReplace": "Search & Replace",
     "closeSidebar": "Close sidebar",
-    "toggleSidebar": "Toggle sidebar"
+    "toggleSidebar": "Toggle sidebar",
+    "appearanceTemplates": "Templates"
   },
   "appearance": {
     "homepageTitle": "Homepage builder",
@@ -1670,5 +1682,18 @@
     "openContact": "Contact us",
     "contactPage": "Go to the contact page",
     "backToOptions": "Back"
+  },
+  "builderTemplates": {
+    "title": "Builder templates",
+    "subtitle": "Reusable bands, rows, columns and widgets saved from the builders.",
+    "kind": "Type",
+    "allKinds": "All types",
+    "updated": "Updated",
+    "rename": "Rename",
+    "editHint": "To change the content, insert the template in a builder, edit it there and save it as a new template.",
+    "notFound": "Template not found",
+    "emptyTitle": "No templates yet",
+    "bulkDeleteConfirm": "Delete {{count}} selected template(s)? Pages that already use a copy are not affected.",
+    "bulkDeleted": "{{count}} template(s) deleted"
   }
 }

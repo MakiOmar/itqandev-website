@@ -40,6 +40,7 @@ export function getLocalizedRoutes(lang: string) {
       APPEARANCE_OVERLAYS_NEW: L(`${p}/appearance/overlays/new`),
       APPEARANCE_DESIGN_KIT: L(`${p}/appearance/design-kit`),
       APPEARANCE_GLOBALS: L(`${p}/appearance/globals`),
+      APPEARANCE_TEMPLATES: L(`${p}/appearance/templates`),
       APPEARANCE_THEME_BUILDER: L(`${p}/appearance/theme-builder`),
       APPEARANCE_THEME_BUILDER_NEW: L(`${p}/appearance/theme-builder/new`),
       APPEARANCE_CHROME_DEFAULTS: L(`${p}/appearance/chrome-defaults`),
@@ -222,6 +223,12 @@ export function chromeListHref(R: ReturnType<typeof getLocalizedRoutes>, kind: s
   if (kind === 'loop_item') return R.ADMIN.APPEARANCE_LOOP_ITEMS;
   if (kind === 'overlay') return R.ADMIN.APPEARANCE_OVERLAYS;
   return R.ADMIN.APPEARANCE_BODY;
+}
+
+export function adminBuilderTemplateEditHref(lang: string, id: string | number): string {
+  const config = getConfig();
+  const p = config.routes.admin.prefix;
+  return withUiLocale(lang, `${p}/appearance/templates/${id}`);
 }
 
 export function adminThemeTemplateEditHref(lang: string, id: string | number): string {

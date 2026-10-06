@@ -627,6 +627,9 @@ Require `Authorization: Bearer` and the `manageSettings` gate (`admin` / `super_
 | `GET/POST/…` | `/api/appearance/singles…` `/archives…` `/loop-items…` `/overlays…` | Theme document kinds on `chrome_layouts` |
 | `GET/POST` | `/api/appearance/globals` | Global widgets (`manageSettings`) |
 | `GET/PUT/DELETE` | `/api/appearance/globals/{id}` | Show / update / delete a global leaf |
+| `GET/POST` | `/api/appearance/templates` | Builder templates (admin/super_admin). `GET` takes optional `?kind=band\|row\|column\|block` and returns rows without `document`. `POST {name, kind, document}` returns 201 with `document` |
+| `GET/PUT/DELETE` | `/api/appearance/templates/{id}` | Show (with `document`) / update `{name?, document?}` / soft delete (204) |
+| `POST` | `/api/appearance/templates/bulk-delete` | `{ids: int[]}` (1–500) returns `{deleted, message}` |
 | `GET/PUT` | `/api/appearance/design-kit` | Branding tokens: `colors`, optional `colors_dark`, `type_roles` (shape below) |
 | `GET` | `/api/appearance/{kind}/{id}/revisions` | Last-N JSON snapshots |
 | `GET` | `/api/appearance/theme-templates` | Paginated Theme Builder page templates |

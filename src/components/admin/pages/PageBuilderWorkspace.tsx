@@ -135,11 +135,8 @@ import type { SiteLanguageRow } from '~/types/site-language';
 import type { Media } from '~/types/media';
 import type { CaseStudy, Testimonial, BlogPost } from '~/lib/marketing/types';
 import type { PortfolioCategory } from '~/lib/marketing/content-layer';
-import {
-  listSavedBuilderBands,
-  saveBuilderBand,
-  type SavedBuilderBand,
-} from '~/lib/admin/saved-builder-sections';
+import { useBuilderTemplates } from '~/lib/admin/use-builder-templates';
+import { BuilderTemplatesPanel } from '~/components/admin/pages/BuilderTemplatesPanel';
 import type { BuilderDynamicTag } from '~/components/admin/appearance/BuilderDynamicTagButton';
 
 const WIDGET_DND = 'application/x-credocode-widget';
@@ -322,7 +319,7 @@ type MediaPickerTarget = { blockId: string; key: string; accept?: string };
 
 type GlobalWidgetApiRow = { id: number; name: string; status?: string };
 
-type PaletteTab = 'widgets' | 'kits' | 'globals';
+type PaletteTab = 'widgets' | 'kits' | 'globals' | 'templates';
 
 type InspectorTab = 'content' | 'style' | 'advanced';
 
@@ -692,7 +689,6 @@ export const PageBuilderWorkspace = component$<PageBuilderWorkspaceProps>((props
   const undoStack = useSignal<string[]>([]);
   const redoStack = useSignal<string[]>([]);
   const globalsList = useSignal<GlobalWidgetApiRow[]>([]);
-  const savedBands = useSignal<SavedBuilderBand[]>([]);
   const viewMode = useSignal(false);
   const showNavigator = useSignal(false);
   const inspectorTab = useSignal<InspectorTab>('content');
@@ -735,7 +731,6 @@ export const PageBuilderWorkspace = component$<PageBuilderWorkspaceProps>((props
   // eslint-disable-next-line qwik/no-use-visible-task
   useVisibleTask$(async () => {
     await loadGlobalsList$();
-    savedBands.value = listSavedBuilderBands();
   });
 
   // Library images are stored by id; fetch their URLs (one request per 200 ids) so the canvas
@@ -859,6 +854,13 @@ export const PageBuilderWorkspace = component$<PageBuilderWorkspaceProps>((props
     selection.value = navigatorPathToSelection(path);
   });
 
+  const builderTemplates = useBuilderTemplates({
+    lang: props.lang,
+    sections: props.sections,
+    selectedPath$: $(() => selectionToTreePath(selection.value)),
+    commitInserted$,
+  });
+
   const runNodeAction$ = $(async (action: BuilderNodeAction, path: LayoutTreePath) => {
     const current = ensurePageLayoutBands(props.sections.value);
     if (!layoutTreeNodeAt(current, path)) return;
@@ -911,6 +913,9 @@ export const PageBuilderWorkspace = component$<PageBuilderWorkspaceProps>((props
       case 'reset_style':
         await commit$(resetLayoutNodeStyle(current, path));
         return;
+      case 'save_template':
+        await builderTemplates.saveAsTemplate$(path, builderNodeLabel(current, path, props.registry.value, props.lang));
+        return;
       case 'save_global':
         await saveAsGlobal$(path, builderNodeLabel(current, path, props.registry.value, props.lang));
         return;
@@ -955,7 +960,7 @@ export const PageBuilderWorkspace = component$<PageBuilderWorkspaceProps>((props
       const kind = entry.kind || 'kit';
       if (paletteTab.value === 'widgets' && kind !== 'widget') return false;
       if (paletteTab.value === 'kits' && kind !== 'kit') return false;
-      if (paletteTab.value === 'globals') return false;
+      if (paletteTab.value === 'globals' || paletteTab.value === 'templates') return false;
       // Header/footer kits render nothing on a page; blocks already placed keep their registry entry.
       if (props.previewSurface !== 'chrome' && isChromeKitType(entry.type)) return false;
       if (!searchQ) return true;
@@ -1218,15 +1223,11 @@ export const PageBuilderWorkspace = component$<PageBuilderWorkspaceProps>((props
                   <button
                     type="button"
                     class="rounded border border-gray-300 px-2 py-1 text-xs dark:border-gray-600"
-                    onClick$={() => {
-                      const band = bands[selection.value!.bandIndex];
-                      if (!band) return;
-                      const name = window.prompt(translateApp(props.lang, 'pages.saveSection'), translateApp(props.lang, 'pages.band'));
-                      if (!name) return;
-                      savedBands.value = saveBuilderBand(name, band);
+                    onClick$={async () => {
+                      await runNodeAction$('save_template', [selection.value!.bandIndex]);
                     }}
                   >
-                    {translateApp(props.lang, 'pages.saveSection')}
+                    {translateApp(props.lang, 'pages.ctxSaveTemplate')}
                   </button>
                   {inspectorTab.value === 'content' ? (
                   <label class="block text-xs font-medium text-gray-600 dark:text-gray-300">
@@ -1990,6 +1991,21 @@ export const PageBuilderWorkspace = component$<PageBuilderWorkspaceProps>((props
                 >
                   {translateApp(props.lang, 'pages.globalsTab')}
                 </button>
+                <button
+                  type="button"
+                  class={[
+                    'flex-1 rounded-md px-2 py-1 text-xs font-semibold',
+                    paletteTab.value === 'templates'
+                      ? 'bg-primary-600 text-white'
+                      : 'text-gray-600 dark:text-gray-300',
+                  ].join(' ')}
+                  onClick$={async () => {
+                    paletteTab.value = 'templates';
+                    await builderTemplates.loadTemplates$();
+                  }}
+                >
+                  {translateApp(props.lang, 'pages.templatesTab')}
+                </button>
               </div>
               <input
                 type="search"
@@ -2011,29 +2027,22 @@ export const PageBuilderWorkspace = component$<PageBuilderWorkspaceProps>((props
               >
                 {translateApp(props.lang, 'pages.addBand')}
               </button>
-              <p class="text-[11px] text-gray-500 dark:text-gray-400">
-                {translateApp(props.lang, 'pages.dragWidgetsHint')}
-              </p>
-              {savedBands.value.length > 0 ? (
-                <div class="space-y-1">
-                  <p class="text-[11px] font-semibold uppercase text-gray-500">
-                    {translateApp(props.lang, 'pages.savedSections')}
-                  </p>
-                  {savedBands.value.map((row) => (
-                    <button
-                      key={row.id}
-                      type="button"
-                      class="w-full rounded-lg border border-dashed border-gray-300 px-3 py-1.5 text-start text-xs dark:border-gray-600"
-                      onClick$={async () => {
-                        const clone = JSON.parse(JSON.stringify(row.band)) as PageLayoutBand;
-                        clone.id = newBlockId('band');
-                        await commit$([...bands, clone]);
-                      }}
-                    >
-                      {row.name}
-                    </button>
-                  ))}
-                </div>
+              {paletteTab.value !== 'templates' ? (
+                <p class="text-[11px] text-gray-500 dark:text-gray-400">
+                  {translateApp(props.lang, 'pages.dragWidgetsHint')}
+                </p>
+              ) : null}
+              {paletteTab.value === 'templates' ? (
+                <BuilderTemplatesPanel
+                  lang={props.lang}
+                  templates={builderTemplates.templates.value}
+                  loading={builderTemplates.loading.value}
+                  busyId={builderTemplates.busyId.value}
+                  search={searchQ}
+                  registry={props.registry.value}
+                  onInsert$={builderTemplates.insertTemplate$}
+                  onDelete$={builderTemplates.deleteTemplate$}
+                />
               ) : null}
               {/* Globals empty state */}
               {paletteTab.value === 'globals' && globalsList.value.length === 0 ? (
