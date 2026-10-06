@@ -15,60 +15,25 @@ import { uiLangFromUrlPathname, uiLocaleFromPublicRoute } from '~/lib/i18n/ui-lo
 import { translateApp } from '~/lib/i18n/useTranslate';
 import { HomepageSectionsRenderer } from '~/components/marketing/home-sections/HomepageSectionsRenderer';
 import { PORTFOLIO_PER_PAGE } from '~/components/marketing/portfolio/PortfolioProjectsList';
-import { API_ENDPOINTS } from '~/lib/api/endpoints';
-import { isFeatureModuleEnabled } from '~/lib/api/project-settings';
-import { resolveMarketingApiBaseUrl } from '~/lib/marketing/resolve-api-base';
+import { resolveIndexCmsPage } from '~/lib/marketing/public-cms-page';
 import type { PageSectionNode } from '~/lib/marketing/appearance-types';
 import type { PublicPageDetail } from '~/types/page';
 import { cmsPageEditTarget, useAdminEditTarget } from '~/lib/marketing/admin-edit-target';
 
 const PORTFOLIO_PAGE_SLUG = 'portfolio';
 
-function parsePublicPageDetail(json: PublicPageDetail & { data?: unknown }): PublicPageDetail | null {
-  if (json && typeof json === 'object' && Array.isArray(json.sections)) {
-    return json;
-  }
-  if (json && typeof json === 'object' && json.data && typeof json.data === 'object') {
-    return json.data as PublicPageDetail;
-  }
-  return null;
-}
-
 export const usePortfolioCmsPage = routeLoader$(async ({ request, params, error, resolveValue }) => {
   const shell = await resolveValue(usePublicShell);
-  if (shell.themeBody && shell.themeBody.length > 0) {
-    return {
-      slug: PORTFOLIO_PAGE_SLUG,
-      title: 'Portfolio',
-      excerpt: '',
-      sections: shell.themeBody,
-      exclude_from_search: false,
-    } as PublicPageDetail;
-  }
-  if (!isFeatureModuleEnabled(shell.branding.features, 'pages')) {
-    throw error(404, 'Not found');
-  }
-
   const cookie = request.headers.get('cookie') || '';
-  const uiLocale = uiLocaleFromPublicRoute(cookie, params.lang, request.url);
-  const base = resolveMarketingApiBaseUrl(request.url);
-  let page: PublicPageDetail | null = null;
-  try {
-    const res = await fetch(`${base}${API_ENDPOINTS.PUBLIC_PAGES.GET(PORTFOLIO_PAGE_SLUG)}`, {
-      headers: {
-        Accept: 'application/json',
-        'X-Content-Locale': uiLocale || 'en',
-        Cookie: cookie,
-      },
-    });
-    if (res.ok) {
-      const json = (await res.json()) as PublicPageDetail & { data?: unknown };
-      page = parsePublicPageDetail(json);
-    }
-  } catch {
-    page = null;
-  }
-  if (!page || typeof page.slug !== 'string' || !Array.isArray(page.sections)) {
+  const page = await resolveIndexCmsPage({
+    slug: PORTFOLIO_PAGE_SLUG,
+    fallbackTitle: 'Portfolio',
+    shell,
+    uiLocale: uiLocaleFromPublicRoute(cookie, params.lang, request.url) || 'en',
+    cookie,
+    requestUrl: request.url,
+  });
+  if (!page) {
     throw error(404, 'Not found');
   }
   return page;
@@ -127,7 +92,7 @@ export default component$(() => {
         siteContact={shell.value.siteContent?.contact}
         layoutAware={true}
         allowDefaultSections={false}
-        pageContext={{ title: page.title || 'Portfolio', slug: page.slug }}
+        pageContext={{ title: page.title || 'Portfolio', subtitle: page.subtitle ?? undefined, slug: page.slug }}
         portfolioList={listing.value.list}
         portfolioCategories={listing.value.categories}
         portfolioCategorySlug={listing.value.categorySlug}

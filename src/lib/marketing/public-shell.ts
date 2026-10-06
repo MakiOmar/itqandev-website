@@ -54,6 +54,8 @@ export type PublicShellState = {
   homepageSections: HomepageSectionInstance[];
   /** Theme Builder body (band layout) when matched for homepage / 404. */
   themeBody: PageSectionNode[] | null;
+  /** `replace`: archive template renders the whole index page; `wrap`: it frames the CMS page content. */
+  themeBodyMode: 'replace' | 'wrap' | null;
   themeBodyCss?: string | null;
   overlays?: Array<{ id: number; delay_ms?: number; once?: boolean; sitewide?: boolean }>;
   themeContext: string | null;
@@ -71,6 +73,7 @@ type PublicShellApiData = {
   services?: Record<string, unknown>[];
   homepage_sections?: HomepageSectionInstance[];
   theme_body?: { sections?: PageSectionNode[]; css?: string } | null;
+  theme_body_mode?: string | null;
   theme_context?: string | null;
   theme_template_id?: number | null;
   overlays?: Array<{ id: number; delay_ms?: number; once?: boolean; sitewide?: boolean }>;
@@ -170,6 +173,7 @@ function localShellFallback(): PublicShellState {
     siteContent: base,
     homepageSections: defaultHomepageSections(),
     themeBody: null,
+    themeBodyMode: null,
     themeBodyCss: null,
     themeContext: null,
     themeTemplateId: null,
@@ -205,6 +209,12 @@ function mapShellApiPayload(data: PublicShellApiData, fallbackName: string): Pub
     siteContent: mergeShellServicesIntoSiteContent(base, data.services),
     homepageSections,
     themeBody: themeBodySections,
+    themeBodyMode:
+      themeBodySections === null
+        ? null
+        : data.theme_body_mode === 'replace' || data.theme_body_mode === 'wrap'
+          ? data.theme_body_mode
+          : null,
     themeBodyCss:
       data.theme_body && typeof data.theme_body === 'object' && typeof data.theme_body.css === 'string'
         ? data.theme_body.css

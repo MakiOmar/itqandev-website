@@ -587,6 +587,7 @@ When `mode` is `custom`, `google_css_href` is omitted and `sources` maps format 
       "sections": []
     },
     "theme_body": null,
+    "theme_body_mode": null,
     "theme_context": "homepage",
     "theme_template_id": null
   }
@@ -598,7 +599,8 @@ When `mode` is `custom`, `google_css_href` is omitted and `sources` maps format 
 - `services` — published services array (empty when the `services` feature module is disabled). Same records as `GET /api/public/services`.
 - `homepage_sections` — enabled Appearance builder sections (defaults to the seven marketing homepage types when unset). Flat list; when a Theme Builder body matches homepage, the Qwik homepage prefers `theme_body` instead.
 - `header` / `footer` — page-layout documents `{ "sections": [ … ] }`. Menu kits include resolved `settings.items`.
-- `theme_body` — optional band layout from a matching Theme Builder template (homepage / 404 only).
+- `theme_body` — optional band layout from a matching Theme Builder template (homepage, 404, CMS pages, single records and module index pages).
+- `theme_body_mode` — `replace` (archive template renders the whole index page) or `wrap` (template frames the CMS page content); `null` without a body.
 - `theme_context` / `theme_template_id` — resolved route context and winning published template id.
 
 Cached server-side (~300s) per `locale` + presentation locale + path + theme_context key. Legacy endpoints remain available for tools and gradual migration.
@@ -770,7 +772,7 @@ Requires permission **`manage pages`** for admin routes. Public routes are guest
 | DELETE | `/api/v1/pages/{id}` | Delete page |
 | POST | `/api/v1/pages/bulk-delete` | Bulk delete `{ "ids": [...] }` |
 | GET | `/api/public/pages` | Published pages for marketing (**omits** `exclude_from_search`); includes `path` / `public_path` |
-| GET | `/api/public/pages/{slug}` | Published page detail by unique slug (nested URLs still resolve by leaf slug). Includes `exclude_from_search`. Direct URL works even when excluded from the list. |
+| GET | `/api/public/pages/{slug}` | Published page detail by unique slug (nested URLs still resolve by leaf slug). Includes `exclude_from_search` and the optional `subtitle` (also on the list). `{{post.*}}` tags in `sections` resolve against the page. Direct URL works even when excluded from the list. |
 
 Seeded slug **`contact`** (`ContactPageSeeder`) is the page-builder layout for the marketing contact experience. Public `/{lang}/contact/` loads that CMS page when the pages module is enabled; otherwise it uses the legacy hard-coded form + office card.
 
