@@ -10,6 +10,8 @@ import { adminApiClient } from '../../../../../../lib/admin/admin-api-client';
 import { API_ENDPOINTS } from '../../../../../../lib/api/endpoints';
 import { adminPageEditHref, useAppRoutes } from '../../../../../../lib/constants/routes';
 import { fetchAppearanceRegistriesFromBrowser } from '../../../../../../lib/admin/appearance-actions';
+import { dynamicTagsForCmsPage } from '../../../../../../lib/admin/builder-dynamic-tags';
+import type { BuilderDynamicTag } from '../../../../../../components/admin/appearance/BuilderDynamicTagButton';
 import { getPageBuilderMarketingSupport } from '../../../../../../lib/marketing/content-layer';
 import { uiLocaleFromPublicRoute } from '../../../../../../lib/i18n/ui-locale-path';
 import type { AppearanceRegistryEntry, PageSectionNode } from '../../../../../../lib/marketing/appearance-types';
@@ -68,6 +70,7 @@ export default component$(() => {
 
   const sections = useSignal<PageSectionNode[]>(page.sections || []);
   const registry = useSignal<AppearanceRegistryEntry[]>([]);
+  const dynamicTags = useSignal<BuilderDynamicTag[]>([]);
   const activeLocale = useSignal(langConfig.value.default_locale || 'en');
   const saving = useSignal(false);
 
@@ -76,6 +79,7 @@ export default component$(() => {
     try {
       const regs = await fetchAppearanceRegistriesFromBrowser();
       registry.value = [...(regs.widgets ?? []), ...(regs.kits ?? regs.homepage_sections ?? [])];
+      dynamicTags.value = dynamicTagsForCmsPage(regs.dynamic_tags ?? []);
     } catch {
       registry.value = [];
     }
@@ -133,6 +137,7 @@ export default component$(() => {
       onSave$={handleSave$}
       saving={saving}
       previewSupport={previewSupport.value}
+      dynamicTags={dynamicTags.value}
     />
   );
 });

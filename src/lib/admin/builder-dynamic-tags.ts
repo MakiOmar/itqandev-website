@@ -21,3 +21,8 @@ export function dynamicTagsForChromeKind<T extends TagLike>(tags: readonly T[], 
   const groups = GROUPS_BY_KIND[kind] ?? ['site'];
   return tags.filter((tag) => groups.includes(tag.group || 'site'));
 }
+
+/** A CMS page's own layout resolves `record` tags against that page (public page API). */
+export function dynamicTagsForCmsPage<T extends TagLike>(tags: readonly T[]): T[] {
+  return dynamicTagsForChromeKind(tags, 'single');
+}

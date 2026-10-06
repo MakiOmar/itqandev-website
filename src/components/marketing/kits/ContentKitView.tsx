@@ -15,7 +15,7 @@ export type ContentKitProps = {
   type: string;
   settings: Record<string, unknown>;
   uiLocale: string;
-  pageContext?: { title: string; slug?: string };
+  pageContext?: { title: string; subtitle?: string; slug?: string };
   /** When true (CMS page layout columns), skip outer Section/Container wrappers. */
   embedded?: boolean;
   /** Site-wide contact block for `use_site_contact` on contact_info kit. */
@@ -708,6 +708,7 @@ export const ContentKitView = component$<ContentKitProps>((props) => {
         'Page';
       const homeLabel = str(s, 'home_label', 'Home');
       const eyebrow = str(s, 'eyebrow').trim();
+      const subtitle = str(s, 'subtitle').trim() || props.pageContext?.subtitle?.trim() || '';
       const extras = Array.isArray(s.extra_crumbs)
         ? (s.extra_crumbs as Array<Record<string, unknown>>)
         : [];
@@ -761,9 +762,10 @@ export const ContentKitView = component$<ContentKitProps>((props) => {
               {pageTitle}
             </h1>
           ) : null}
-          {str(s, 'subtitle') ? (
+          {/* Kit setting wins; otherwise the CMS page subtitle */}
+          {subtitle ? (
             <p class="mt-4 max-w-2xl text-lg leading-relaxed text-slate-600 dark:text-slate-300 sm:text-xl">
-              {str(s, 'subtitle')}
+              {subtitle}
             </p>
           ) : null}
         </>

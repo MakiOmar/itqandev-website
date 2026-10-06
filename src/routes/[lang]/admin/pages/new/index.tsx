@@ -91,6 +91,7 @@ export default component$(() => {
   const formData = useSignal({
     title: '',
     slug: '',
+    subtitle: '',
     excerpt: '',
     status: 'draft' as 'draft' | 'published',
   });
@@ -144,6 +145,8 @@ export default component$(() => {
       const result = await runPageCreateFromBrowser({
         title: formData.value.title,
         slug,
+        subtitle: formData.value.subtitle,
+        canonical_subtitle: formData.value.subtitle,
         excerpt: formData.value.excerpt,
         status: formData.value.status,
         content_locale: contentLocaleDraft.value,
@@ -233,6 +236,26 @@ export default component$(() => {
                     formData.value.slug,
                   )}
                 />
+              </div>
+
+              {/* Optional subtitle: page_header kit fallback and {{post.subtitle}} tag */}
+              <div class="md:col-span-2">
+                <label for="page-subtitle" class={ADMIN_FORM_LABEL_CLASS}>
+                  {translateApp(lang, 'pages.fields.subtitle')}
+                </label>
+                <input
+                  id="page-subtitle"
+                  class={ADMIN_FORM_INPUT_CLASS}
+                  maxLength={255}
+                  value={formData.value.subtitle}
+                  placeholder={translateApp(lang, 'pages.subtitlePlaceholder')}
+                  onInput$={(e) => {
+                    formData.value = { ...formData.value, subtitle: (e.target as HTMLInputElement).value };
+                  }}
+                />
+                <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                  {translateApp(lang, 'pages.subtitleHint')}
+                </p>
               </div>
 
               <div class="md:col-span-2">

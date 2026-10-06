@@ -7,7 +7,11 @@ import { PageHierarchyFields } from '../../../../../components/admin/pages/PageH
 import { useTranslate, translateApp } from '../../../../../lib/i18n/useTranslate';
 import { useSwal } from '../../../../../lib/hooks/useSwal';
 import { usePublicSiteMeta } from '../../layout';
-import { runPageUpdateFromBrowser } from '../../../../../lib/admin/page-actions';
+import {
+  mergeSecondaryPageTranslations,
+  pageSubtitleForLocale,
+  runPageUpdateFromBrowser,
+} from '../../../../../lib/admin/page-actions';
 import { adminApiClient } from '../../../../../lib/admin/admin-api-client';
 import { API_ENDPOINTS } from '../../../../../lib/api/endpoints';
 import {
@@ -48,6 +52,7 @@ function mapPageFromApi(raw: Record<string, unknown>): AdminPage {
     id: Number(raw.id),
     title: String(raw.title ?? ''),
     slug: String(raw.slug ?? ''),
+    subtitle: (raw.subtitle as string | null) ?? '',
     excerpt: (raw.excerpt as string | null) ?? '',
     status: String(raw.status ?? 'draft'),
     content_locale: (raw.content_locale as string | null) ?? null,
@@ -106,6 +111,7 @@ export default component$(() => {
   const formData = useSignal({
     title: page.title,
     slug: page.slug,
+    subtitle: page.subtitle || '',
     excerpt: page.excerpt || '',
     status: (page.status === 'published' ? 'published' : 'draft') as 'draft' | 'published',
   });
@@ -120,6 +126,7 @@ export default component$(() => {
   const editingLocaleDraft = useSignal(langConfig.value.content_editing_locale);
   const canonicalTitle = useSignal(page.title);
   const canonicalExcerpt = useSignal(page.excerpt || '');
+  const canonicalSubtitle = useSignal(page.subtitle || '');
   const translationsJson = useSignal(JSON.stringify(page.translations || []));
   const headerLayoutId = useSignal<number | null>(page.header_layout_id ?? null);
   const footerLayoutId = useSignal<number | null>(page.footer_layout_id ?? null);
@@ -151,10 +158,17 @@ export default component$(() => {
       siteDef,
       contentLocaleDraft.value.trim() || null,
     );
+    const editing = editingLocaleDraft.value || primary;
     formData.value = {
       ...formData.value,
       title: merged.title,
       excerpt: merged.excerpt,
+      subtitle: pageSubtitleForLocale(
+        canonicalSubtitle.value,
+        translationsJson.value,
+        editing,
+        shouldWritePrimaryColumns(editing, primary),
+      ),
     };
   });
 
@@ -168,14 +182,18 @@ export default component$(() => {
         contentLocaleDraft.value.trim() || null,
       );
       const editingLocale = editingLocaleDraft.value || effectivePrimary;
-      if (shouldWritePrimaryColumns(editingLocale, effectivePrimary)) {
+      const isPrimary = shouldWritePrimaryColumns(editingLocale, effectivePrimary);
+      if (isPrimary) {
         canonicalTitle.value = formData.value.title;
         canonicalExcerpt.value = formData.value.excerpt;
+        canonicalSubtitle.value = formData.value.subtitle;
       }
       // Metadata only — never send sections (builder owns layout).
       const result = await runPageUpdateFromBrowser(page.id, {
         title: formData.value.title,
         slug: formData.value.slug,
+        subtitle: formData.value.subtitle,
+        canonical_subtitle: canonicalSubtitle.value,
         excerpt: formData.value.excerpt,
         status: formData.value.status,
         content_locale: contentLocaleDraft.value,
@@ -190,6 +208,16 @@ export default component$(() => {
         exclude_from_search: excludeFromSearch.value,
       });
       if (result.success) {
+        if (!isPrimary) {
+          // Keep local rows current so a later save in another language does not revert this one.
+          translationsJson.value = JSON.stringify(
+            mergeSecondaryPageTranslations(translationsJson.value, editingLocale, {
+              title: formData.value.title,
+              excerpt: formData.value.excerpt,
+              subtitle: formData.value.subtitle,
+            }),
+          );
+        }
         await success(translateApp(lang, 'common.updated'));
       } else {
         await showError(result.error || translateApp(lang, 'common.error'));
@@ -269,6 +297,25 @@ export default component$(() => {
                       formData.value.slug,
                     )}
                   />
+                </div>
+                {/* Optional subtitle: page_header kit fallback and {{post.subtitle}} tag */}
+                <div class="md:col-span-2">
+                  <label for="page-edit-subtitle" class={ADMIN_FORM_LABEL_CLASS}>
+                    {translateApp(lang, 'pages.fields.subtitle')}
+                  </label>
+                  <input
+                    id="page-edit-subtitle"
+                    class={ADMIN_FORM_INPUT_CLASS}
+                    maxLength={255}
+                    value={formData.value.subtitle}
+                    placeholder={translateApp(lang, 'pages.subtitlePlaceholder')}
+                    onInput$={(e) => {
+                      formData.value = { ...formData.value, subtitle: (e.target as HTMLInputElement).value };
+                    }}
+                  />
+                  <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                    {translateApp(lang, 'pages.subtitleHint')}
+                  </p>
                 </div>
                 <div class="md:col-span-2">
                   <label for="page-edit-excerpt" class={ADMIN_FORM_LABEL_CLASS}>

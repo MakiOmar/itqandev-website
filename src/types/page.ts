@@ -3,6 +3,7 @@ import type { PageSectionNode } from '../lib/marketing/appearance-types';
 export type PageTranslationRow = {
   locale: string;
   title?: string | null;
+  subtitle?: string | null;
   excerpt?: string | null;
 };
 
@@ -10,6 +11,7 @@ export type AdminPage = {
   id: number;
   title: string;
   slug: string;
+  subtitle?: string | null;
   excerpt: string | null;
   status: 'draft' | 'published' | string;
   content_locale: string | null;
@@ -31,6 +33,8 @@ export type PublicPageDetail = {
   id: number;
   title: string;
   slug: string;
+  /** Optional line under the title (`page_header` kit, `{{post.subtitle}}`). */
+  subtitle?: string | null;
   excerpt: string | null;
   content_locale?: string | null;
   published_at: string | null;

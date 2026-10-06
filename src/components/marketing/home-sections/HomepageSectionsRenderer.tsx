@@ -124,7 +124,7 @@ export type HomepageSectionsRendererProps = {
    */
   layoutAware?: boolean;
   /** Current CMS page identity for page_header kit (title / crumbs). */
-  pageContext?: { title: string; slug?: string };
+  pageContext?: { title: string; subtitle?: string; slug?: string };
   /** Site contact for contact_info `use_site_contact`. */
   siteContact?: ContactInfo | null;
   /** Skip kit Section/Container when rendering inside layout columns. */

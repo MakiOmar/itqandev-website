@@ -87,7 +87,7 @@ export default component$(() => {
       siteContact={shell.value.siteContent?.contact}
       layoutAware={true}
       allowDefaultSections={false}
-      pageContext={{ title: page.title || 'Contact', slug: page.slug }}
+      pageContext={{ title: page.title || 'Contact', subtitle: page.subtitle ?? undefined, slug: page.slug }}
     />
   );
 });

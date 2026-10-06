@@ -36,7 +36,7 @@ function parseSectionsJson(raw: string | undefined | null): unknown[] {
 export function mergeSecondaryPageTranslations(
   translationsJson: string | undefined,
   uiLocale: string,
-  edited: { title: string; excerpt: string },
+  edited: { title: string; excerpt: string; subtitle?: string },
 ): unknown[] {
   const base = parseTranslationsJson(translationsJson) ?? [];
   const u = uiLocale.toLowerCase();
@@ -44,7 +44,10 @@ export function mergeSecondaryPageTranslations(
     if (!row || typeof row !== 'object') return false;
     return String((row as Record<string, unknown>).locale ?? '').toLowerCase() === u;
   });
-  const row = { locale: u, title: edited.title, excerpt: edited.excerpt };
+  const row: Record<string, string> = { locale: u, title: edited.title, excerpt: edited.excerpt };
+  if (edited.subtitle !== undefined) {
+    row.subtitle = edited.subtitle;
+  }
   if (idx >= 0) {
     base[idx] = { ...(base[idx] as object), ...row };
   } else {
@@ -53,11 +56,28 @@ export function mergeSecondaryPageTranslations(
   return base;
 }
 
+/** Subtitle shown in the editor for a locale: primary column, or that locale's row only (no fallback). */
+export function pageSubtitleForLocale(
+  canonicalSubtitle: string,
+  translationsJson: string | undefined,
+  editingLocale: string,
+  isPrimary: boolean,
+): string {
+  if (isPrimary) return canonicalSubtitle;
+  const u = editingLocale.toLowerCase();
+  const row = (parseTranslationsJson(translationsJson) ?? []).find(
+    (r) => !!r && typeof r === 'object' && String((r as Record<string, unknown>).locale ?? '').toLowerCase() === u,
+  ) as Record<string, unknown> | undefined;
+  return typeof row?.subtitle === 'string' ? row.subtitle : '';
+}
+
 export const pageFormSchema = z
   .object({
     title: z.string().min(1).max(255),
     slug: z.string().min(1).max(255),
     excerpt: z.string().max(512).optional(),
+    subtitle: z.string().max(255).optional(),
+    canonical_subtitle: z.string().optional(),
     status: z.enum(['draft', 'published']).optional(),
     content_locale: z.string().max(16).optional(),
     editing_locale: z.string().max(16).optional(),
@@ -78,6 +98,9 @@ function buildPageBody(data: Record<string, unknown>): Record<string, unknown> {
 
   let title = String(data.title || '');
   let excerpt = data.excerpt != null ? String(data.excerpt) : '';
+  // Undefined subtitle = caller does not edit it (e.g. builder save) → backend keeps the stored value.
+  const editedSubtitle = data.subtitle !== undefined ? String(data.subtitle ?? '').trim() : undefined;
+  let subtitle = editedSubtitle;
   let translationsOut: unknown[] | undefined;
 
   if (shouldWritePrimaryColumns(editingLocale, effectivePrimary)) {
@@ -85,9 +108,11 @@ function buildPageBody(data: Record<string, unknown>): Record<string, unknown> {
   } else {
     title = String(data.canonical_title ?? title);
     excerpt = String(data.canonical_excerpt ?? excerpt);
+    subtitle = data.canonical_subtitle !== undefined ? String(data.canonical_subtitle ?? '').trim() : undefined;
     translationsOut = mergeSecondaryPageTranslations(data.translations_json as string | undefined, editingLocale, {
       title: String(data.title || ''),
       excerpt: data.excerpt != null ? String(data.excerpt) : '',
+      subtitle: editedSubtitle,
     });
   }
 
@@ -97,6 +122,9 @@ function buildPageBody(data: Record<string, unknown>): Record<string, unknown> {
     excerpt,
     status: data.status === 'published' ? 'published' : 'draft',
   };
+  if (subtitle !== undefined) {
+    body.subtitle = subtitle || null;
+  }
   // Only the fullscreen builder writes layout. Classic metadata saves must omit
   // `sections` so they cannot wipe builder content with [].
   const persistSections =

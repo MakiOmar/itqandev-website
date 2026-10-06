@@ -15,7 +15,7 @@ export type AtomicWidgetProps = {
   /** When true, image fit/radius come from the Style wrapper CSS variables. */
   styled?: boolean;
   /** Current record; Breadcrumbs with "Use route crumbs" end on its title. */
-  pageContext?: { title: string; slug?: string };
+  pageContext?: { title: string; subtitle?: string; slug?: string };
 };
 
 function str(s: Record<string, unknown>, key: string, fallback = ''): string {
