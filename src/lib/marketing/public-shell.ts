@@ -230,6 +230,20 @@ export function resolveServiceFromShell(shell: PublicShellState, slug: string): 
   return services.find((s) => s.slug === normalized) ?? null;
 }
 
+/**
+ * Document path the shell resolves templates for. Client-side navigation runs loaders through
+ * `<route>/q-data.json`, which must resolve as the route itself, not as an unknown (404) URL.
+ */
+export function shellDocumentPath(documentUrl: string | null | undefined): string | null {
+  if (!documentUrl || String(documentUrl).trim() === '') return null;
+  try {
+    const path = new URL(String(documentUrl), 'http://local.invalid').pathname;
+    return path.replace(/\/q-data\.json$/i, '/') || null;
+  } catch {
+    return null;
+  }
+}
+
 export async function fetchPublicShell(
   locale: string | null | undefined,
   fetchContext?: MarketingFetchContext,
@@ -245,15 +259,8 @@ export async function fetchPublicShell(
     if (locale && String(locale).trim() !== '') {
       q.set('locale', String(locale).trim().toLowerCase());
     }
-    const docUrl = fetchContext?.forwardDocumentUrl;
-    if (docUrl && String(docUrl).trim() !== '') {
-      try {
-        const path = new URL(String(docUrl), 'http://local.invalid').pathname;
-        if (path) q.set('path', path);
-      } catch {
-        /* ignore */
-      }
-    }
+    const docPath = shellDocumentPath(fetchContext?.forwardDocumentUrl);
+    if (docPath) q.set('path', docPath);
     const themeCtx = fetchContext?.themeContext;
     if (themeCtx && String(themeCtx).trim() !== '') {
       q.set('theme_context', String(themeCtx).trim().toLowerCase());
