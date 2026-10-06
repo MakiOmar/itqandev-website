@@ -88,6 +88,11 @@ const GROUP_LABEL: Record<string, string> = {
   custom: 'builder.style.groupCustom',
 };
 
+/** Group titles that read better per widget (the form Submit button has a single button group). */
+const WIDGET_GROUP_LABEL: Record<string, Partial<Record<string, string>>> = {
+  submit: { btn_primary: 'builder.style.groupButton' },
+};
+
 const KEY_LABEL: Record<string, string> = {
   type_role: 'builder.style.typeRole',
   font_size: 'builder.style.fontSize',
@@ -1298,7 +1303,10 @@ export const BuilderStylePanel = component$<{
         {visibleGroups.map((group, index) => (
           <InspectorAccordion
             key={group}
-            title={translateApp(props.lang, GROUP_LABEL[group] || group)}
+            title={translateApp(
+              props.lang,
+              WIDGET_GROUP_LABEL[props.widgetType]?.[group] || GROUP_LABEL[group] || group,
+            )}
             group={STYLE_ACCORDION_GROUP}
             open={index === 0 && props.openFirst !== false}
           >

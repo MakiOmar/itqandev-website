@@ -14,6 +14,13 @@ function newId(): string {
   return `f_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
 }
 
+/** Types that post no value (mirror `collects => false` in backend `FormFieldRegistry`). */
+const DISPLAY_ONLY_FIELD_TYPES = new Set(['html', 'submit']);
+
+export function fieldCollectsInput(type: string): boolean {
+  return !DISPLAY_ONLY_FIELD_TYPES.has(type);
+}
+
 export function normalizeSpan(span: unknown): FormFieldSpan {
   if (typeof span === 'number') {
     const n = Math.min(12, Math.max(1, Math.round(span) || 12));

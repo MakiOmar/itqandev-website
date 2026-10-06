@@ -36,7 +36,41 @@ function fieldOptions(settings: Record<string, unknown>): string[] {
 const inputClass =
   'mt-1 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500 dark:border-gray-600 dark:bg-slate-900 dark:text-gray-100';
 
-export function renderFieldControl(field: FormFieldNode) {
+const SUBMIT_ALIGN: Record<string, string> = {
+  start: 'justify-start',
+  center: 'justify-center',
+  end: 'justify-end',
+  full: '',
+};
+
+/** Colours, sizes and borders come from hero-buttons.css (`btn_primary_*` in the Style tab); callers load it. */
+const submitButtonClass =
+  'hb-btn hb-primary inline-flex items-center justify-center focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 disabled:cursor-wait disabled:opacity-60';
+
+function renderSubmitControl(settings: Record<string, unknown>, submitting: boolean) {
+  const align = String(settings.align ?? 'start');
+  const label = String(settings.label ?? '').trim() || 'Submit';
+  const loadingLabel = String(settings.loading_label ?? '').trim() || '…';
+  return (
+    <div class={['flex', SUBMIT_ALIGN[align] ?? 'justify-start'].join(' ')}>
+      <button
+        type="submit"
+        disabled={submitting}
+        aria-busy={submitting ? 'true' : undefined}
+        class={[submitButtonClass, align === 'full' ? 'w-full' : ''].join(' ')}
+      >
+        {submitting ? loadingLabel : label}
+      </button>
+    </div>
+  );
+}
+
+export type FieldControlOptions = {
+  /** Public renderer only: disables the Submit button widget while posting. */
+  submitting?: boolean;
+};
+
+export function renderFieldControl(field: FormFieldNode, opts: FieldControlOptions = {}) {
   const s = field.settings || {};
   const label = String(s.label ?? field.type);
   const placeholder = String(s.placeholder ?? '');
@@ -44,6 +78,10 @@ export function renderFieldControl(field: FormFieldNode) {
   const help = String(s.help ?? '');
   const name = field.id;
   const options = fieldOptions(s);
+
+  if (field.type === 'submit') {
+    return renderSubmitControl(s, Boolean(opts.submitting));
+  }
 
   if (field.type === 'hidden') {
     return <input type="hidden" name={name} value={String(s.value ?? '')} />;

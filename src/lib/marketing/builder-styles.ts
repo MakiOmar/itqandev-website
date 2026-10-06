@@ -127,6 +127,8 @@ export const WIDGET_STYLE_GROUPS: Record<string, readonly StyleGroupId[]> = {
     'nav_buttons', 'layout', 'spacing', 'border', 'custom',
   ],
   form: ['typography', 'layout', 'spacing', 'border', 'custom'],
+  /** Form builder Submit button; `btn_primary_*` drives `.hb-btn.hb-primary` (hero-buttons.css). */
+  submit: ['btn_primary', 'layout', 'spacing', 'custom'],
   theme_switch: ['toggle', 'layout', 'spacing', 'custom'],
   contact_float: ['launcher', 'panel', 'whatsapp', 'custom'],
 };

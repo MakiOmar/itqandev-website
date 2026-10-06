@@ -1535,6 +1535,7 @@
       "groupTitle": "Title",
       "groupSubtitle": "Subtitle",
       "groupBtnPrimary": "Primary button",
+      "groupButton": "Button",
       "groupBtnSecondary": "Secondary button",
       "groupCardBox": "Card",
       "groupRating": "Rating stars",

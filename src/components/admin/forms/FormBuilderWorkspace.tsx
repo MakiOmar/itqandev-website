@@ -1,4 +1,5 @@
-import { component$, useSignal, useTask$, useVisibleTask$, $, type QRL, type Signal } from '@builder.io/qwik';
+import { component$, useSignal, useStyles$, useTask$, useVisibleTask$, $, type QRL, type Signal } from '@builder.io/qwik';
+import heroButtonStyles from '~/components/marketing/widgets/hero-buttons.css?inline';
 import { followAdminTheme, type ThemeMode } from '~/lib/theme/theme-scope';
 import { BuilderThemeToggle } from '~/components/admin/BuilderThemeToggle';
 import { Link } from '@builder.io/qwik-city';
@@ -15,6 +16,7 @@ import {
   ensureFormActions,
   ensureFormLayout,
   ensureFormSettings,
+  fieldCollectsInput,
   previewFieldSpanClass,
 } from '~/lib/admin/form-layout';
 import { mergeBlogPostFieldsForUiLocale, primaryLocaleForContent } from '~/lib/content-display-locale';
@@ -53,7 +55,7 @@ import { FormMergeTagPicker } from '~/components/admin/forms/FormMergeTagPicker'
 const FIELD_DND = 'application/x-credocode-form-field';
 
 const FORM_GENERAL_SETTING_FIELDS: AppearanceSettingField[] = [
-  { key: 'submit_label', type: 'text', label: 'Submit button label', translatable: true },
+  { key: 'submit_label', type: 'text', label: 'Default submit label (when no Submit button widget)', translatable: true },
   { key: 'success_message', type: 'textarea', label: 'Success message', translatable: true },
   { key: 'error_message', type: 'textarea', label: 'Error message', translatable: true },
   { key: 'success_mode', type: 'select', label: 'Success mode', translatable: false, options: [
@@ -155,6 +157,7 @@ export type FormBuilderWorkspaceProps = {
 };
 
 export const FormBuilderWorkspace = component$<FormBuilderWorkspaceProps>((props) => {
+  useStyles$(heroButtonStyles);
   const device = useSignal<Device>('desktop');
   const previewTheme = useSignal<ThemeMode>('light');
   const designKit = useBuilderDesignKit();
@@ -1070,7 +1073,9 @@ export const FormBuilderWorkspace = component$<FormBuilderWorkspaceProps>((props
                   );
                 })()}
                 <FormMergeTagPicker
-                  fieldIds={ensureFormLayout(props.layout.value).rows.flatMap((r) => r.fields.map((f) => f.id))}
+                  fieldIds={ensureFormLayout(props.layout.value).rows.flatMap((r) =>
+                    r.fields.filter((f) => fieldCollectsInput(f.type)).map((f) => f.id),
+                  )}
                   onInsert$={$(async (token) => {
                     const { actionIndex } = selection.value as { actionIndex: number };
                     const next = ensureFormActions(props.actions.value).map((a, i) => {

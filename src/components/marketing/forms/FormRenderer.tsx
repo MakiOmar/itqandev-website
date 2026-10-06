@@ -1,4 +1,5 @@
-import { component$, useSignal, useVisibleTask$, $ } from '@builder.io/qwik';
+import { component$, Fragment, useSignal, useStyles$, useVisibleTask$, $ } from '@builder.io/qwik';
+import heroButtonStyles from '~/components/marketing/widgets/hero-buttons.css?inline';
 import { getApiClient } from '~/lib/api/client';
 import { API_ENDPOINTS } from '~/lib/api/endpoints';
 import {
@@ -118,6 +119,7 @@ function mapPublicForm(raw: Record<string, unknown>): PublicFormDefinition {
  * Public form renderer: loads definition by slug and posts submissions to the API.
  */
 export const FormRenderer = component$<FormRendererProps>((props) => {
+  useStyles$(heroButtonStyles);
   const def = useSignal<PublicFormDefinition | null>(null);
   const loading = useSignal(true);
   const error = useSignal('');
@@ -306,6 +308,41 @@ export const FormRenderer = component$<FormRendererProps>((props) => {
   const heading = props.title?.trim() || def.value.title;
   const intro = props.subtitle?.trim() || '';
   const captchaProvider = def.value.captcha?.provider || settings.captcha || 'none';
+  const visibleRows = layout.rows
+    .filter((row) => !isHiddenOnDevice(row.hide_on, layoutDevice))
+    .map((row) => ({
+      row,
+      fields: row.fields.filter(
+        (field) =>
+          !isHiddenOnDevice(field.hide_on, layoutDevice) &&
+          isFormFieldVisible(field.settings?.conditions, fieldValues.value),
+      ),
+    }))
+    .filter((entry) => entry.fields.length > 0);
+  // Without a visible Submit widget the default button keeps the form submittable.
+  const submitRowIndex = visibleRows.findIndex((entry) =>
+    entry.fields.some((field) => field.type === 'submit'),
+  );
+
+  const statusBlock = (
+    <>
+      {captchaProvider !== 'none' ? (
+        <div class="space-y-2">
+          <input type="hidden" id="form-captcha-token" name="captcha_token" value="" />
+          <div id="form-captcha-mount" class="min-h-[1.5rem]" />
+          {!captchaReady.value ? (
+            <p class="text-xs text-slate-500">Loading captcha…</p>
+          ) : null}
+        </div>
+      ) : null}
+
+      {error.value ? (
+        <p class="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800 dark:border-red-900 dark:bg-red-950/40 dark:text-red-200">
+          {error.value}
+        </p>
+      ) : null}
+    </>
+  );
 
   if (successMsg.value && settings.success_mode !== 'redirect') {
     return (
@@ -337,30 +374,25 @@ export const FormRenderer = component$<FormRendererProps>((props) => {
           fieldValues.value = { ...fieldValues.value, [name]: t.value };
         }}
       >
-        {layout.rows.map((row) => {
-          if (isHiddenOnDevice(row.hide_on, layoutDevice)) return null;
-          const visibleFields = row.fields.filter(
-            (field) =>
-              !isHiddenOnDevice(field.hide_on, layoutDevice) &&
-              isFormFieldVisible(field.settings?.conditions, fieldValues.value),
-          );
-          if (visibleFields.length === 0) return null;
-          return (
-          <div key={row.id} class="grid grid-cols-12 gap-4">
-            {visibleFields.map((field) => (
-              <div key={field.id} class={fieldSpanClass(field.span)}>
-                {hasAnyStyles(field.styles) ? (
-                  <StyledBuilderLeaf id={field.id} styles={field.styles} settings={field.settings}>
-                    {renderFieldControl(field)}
-                  </StyledBuilderLeaf>
-                ) : (
-                  renderFieldControl(field)
-                )}
-              </div>
-            ))}
-          </div>
-          );
-        })}
+        {visibleRows.map(({ row, fields }, rowIndex) => (
+          <Fragment key={row.id}>
+            {/* Captcha + errors sit directly above the row holding the Submit widget. */}
+            {rowIndex === submitRowIndex ? statusBlock : null}
+            <div class="grid grid-cols-12 gap-4">
+              {fields.map((field) => (
+                <div key={field.id} class={fieldSpanClass(field.span)}>
+                  {hasAnyStyles(field.styles) ? (
+                    <StyledBuilderLeaf id={field.id} styles={field.styles} settings={field.settings}>
+                      {renderFieldControl(field, { submitting: submitting.value })}
+                    </StyledBuilderLeaf>
+                  ) : (
+                    renderFieldControl(field, { submitting: submitting.value })
+                  )}
+                </div>
+              ))}
+            </div>
+          </Fragment>
+        ))}
 
         {/* Honeypot — off-screen, not display:none. Always posted so bots cannot skip it. */}
         <div class="absolute -left-[9999px] h-0 w-0 overflow-hidden opacity-0" aria-hidden="true">
@@ -374,29 +406,18 @@ export const FormRenderer = component$<FormRendererProps>((props) => {
           </label>
         </div>
 
-        {captchaProvider !== 'none' ? (
-          <div class="space-y-2">
-            <input type="hidden" id="form-captcha-token" name="captcha_token" value="" />
-            <div id="form-captcha-mount" class="min-h-[1.5rem]" />
-            {!captchaReady.value ? (
-              <p class="text-xs text-slate-500">Loading captcha…</p>
-            ) : null}
-          </div>
+        {submitRowIndex < 0 ? (
+          <>
+            {statusBlock}
+            <button
+              type="submit"
+              disabled={submitting.value}
+              class="inline-flex items-center justify-center rounded-lg border border-primary-300 bg-primary-100 px-5 py-2.5 text-sm font-semibold text-primary-900 transition hover:bg-primary-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 disabled:opacity-60 dark:border-primary-400 dark:bg-primary-100 dark:text-primary-900 dark:hover:bg-primary-200"
+            >
+              {submitting.value ? '…' : settings.submit_label || 'Submit'}
+            </button>
+          </>
         ) : null}
-
-        {error.value ? (
-          <p class="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800 dark:border-red-900 dark:bg-red-950/40 dark:text-red-200">
-            {error.value}
-          </p>
-        ) : null}
-
-        <button
-          type="submit"
-          disabled={submitting.value}
-          class="inline-flex items-center justify-center rounded-lg border border-primary-300 bg-primary-100 px-5 py-2.5 text-sm font-semibold text-primary-900 transition hover:bg-primary-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 disabled:opacity-60 dark:border-primary-400 dark:bg-primary-100 dark:text-primary-900 dark:hover:bg-primary-200"
-        >
-          {submitting.value ? '…' : settings.submit_label || 'Submit'}
-        </button>
       </form>
     </div>
   );
