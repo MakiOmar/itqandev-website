@@ -3,6 +3,7 @@
  */
 @import './foundation.css';
 @import 'tailwindcss';
+@import './kit-primary-scale.css';
 @config '../../tailwind.site.config.js';
 @source not '../routes/[lang]/(public)/blog/[slug]';
 @source not '../routes/[lang]/(public)/work/[slug]';

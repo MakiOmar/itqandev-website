@@ -1,0 +1,26 @@
+/*
+ * Design kit Primary → Tailwind `primary-*` (tailwind.shared.js emits `var(--kit-primary-N, <hex>)`).
+ * Set on marketing surfaces only: the public layout / builder preview (`data-public-page`) and the
+ * admin builder frame (`data-builder-canvas`). Never `:root`, so the dashboard keeps its hex palette.
+ * Re-declared on nested theme scopes so `.dark` kit values recompute. Builder Style colours are
+ * more specific and still win.
+ */
+[data-public-page],
+[data-public-page] .light,
+[data-public-page] .dark,
+[data-builder-canvas],
+[data-builder-canvas] .light,
+[data-builder-canvas] .dark {
+  --kit-primary-base: var(--kit-color-primary, #0389a1);
+  --kit-primary-50: color-mix(in oklab, var(--kit-primary-base) 8%, white);
+  --kit-primary-100: color-mix(in oklab, var(--kit-primary-base) 16%, white);
+  --kit-primary-200: color-mix(in oklab, var(--kit-primary-base) 32%, white);
+  --kit-primary-300: color-mix(in oklab, var(--kit-primary-base) 52%, white);
+  --kit-primary-400: color-mix(in oklab, var(--kit-primary-base) 74%, white);
+  --kit-primary-500: var(--kit-primary-base);
+  --kit-primary-600: color-mix(in oklab, var(--kit-primary-base) 86%, black);
+  --kit-primary-700: color-mix(in oklab, var(--kit-primary-base) 72%, black);
+  --kit-primary-800: color-mix(in oklab, var(--kit-primary-base) 58%, black);
+  --kit-primary-900: color-mix(in oklab, var(--kit-primary-base) 45%, black);
+  --kit-primary-950: color-mix(in oklab, var(--kit-primary-base) 30%, black);
+}

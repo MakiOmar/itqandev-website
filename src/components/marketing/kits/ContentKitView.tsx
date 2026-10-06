@@ -373,7 +373,7 @@ export const ContentKitView = component$<ContentKitProps>((props) => {
       const copy = (
         <div class={copyClass}>
           {str(s, 'eyebrow') ? (
-            <p class="text-xs font-semibold uppercase tracking-widest text-primary-600 dark:text-primary-400">
+            <p class="text-xs font-semibold uppercase tracking-widest text-[color:var(--kit-color-accent)]">
               {str(s, 'eyebrow')}
             </p>
           ) : null}
@@ -477,7 +477,7 @@ export const ContentKitView = component$<ContentKitProps>((props) => {
                         <span class="h-2.5 w-2.5 rounded-full bg-primary-500 shadow shadow-primary-500/40" />
                       </span>
                       {year ? (
-                        <p class="mb-1.5 text-xs font-semibold uppercase tracking-[0.2em] text-primary-600 dark:text-primary-400">
+                        <p class="mb-1.5 text-xs font-semibold uppercase tracking-[0.2em] text-[color:var(--kit-color-accent)]">
                           {year}
                         </p>
                       ) : null}
@@ -753,7 +753,7 @@ export const ContentKitView = component$<ContentKitProps>((props) => {
       const headingBlock = (
         <>
           {eyebrow ? (
-            <p class="mb-3 text-xs font-semibold uppercase tracking-widest text-primary-600 dark:text-primary-400">
+            <p class="mb-3 text-xs font-semibold uppercase tracking-widest text-[color:var(--kit-color-accent)]">
               {eyebrow}
             </p>
           ) : null}

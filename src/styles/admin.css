@@ -3,6 +3,7 @@
  */
 @import './site.css' reference;
 @import 'tailwindcss/utilities';
+@import './kit-primary-scale.css';
 @config '../../tailwind.admin.config.js';
 @plugin '@tailwindcss/forms';
 @plugin '@tailwindcss/typography';

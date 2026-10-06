@@ -1,24 +1,37 @@
 /**
  * Shared Tailwind theme (marketing + admin). Content paths live in tailwind.site.config.js / tailwind.admin.config.js.
  */
+
+const PRIMARY_HEX = {
+  50: '#f0f9ff',
+  100: '#e0f2fe',
+  200: '#bae6fd',
+  300: '#7dd3fc',
+  400: '#38bdf8',
+  500: '#0ea5e9',
+  600: '#0284c7',
+  700: '#0369a1',
+  800: '#075985',
+  900: '#0c4a6e',
+  950: '#082f49',
+};
+
+/**
+ * `--kit-primary-*` is set from the design kit on marketing surfaces only (src/styles/kit-primary-scale.css);
+ * everywhere else (dashboard UI) the hex fallback applies.
+ */
+const primaryScale = Object.fromEntries(
+  Object.entries(PRIMARY_HEX).map(([shade, hex]) => [shade, `var(--kit-primary-${shade}, ${hex})`]),
+);
+
 export const sharedTailwindTheme = {
   darkMode: 'class',
   theme: {
     extend: {
       colors: {
         primary: {
-          50: '#f0f9ff',
-          100: '#e0f2fe',
-          200: '#bae6fd',
-          300: '#7dd3fc',
-          400: '#38bdf8',
-          500: '#0ea5e9',
-          600: '#0284c7',
-          700: '#0369a1',
-          800: '#075985',
-          900: '#0c4a6e',
-          950: '#082f49',
-          DEFAULT: '#0ea5e9',
+          ...primaryScale,
+          DEFAULT: primaryScale[500],
           foreground: '#ffffff',
         },
         elegant: {
