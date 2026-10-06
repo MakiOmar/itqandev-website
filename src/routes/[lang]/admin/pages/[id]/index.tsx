@@ -391,10 +391,15 @@ export default component$(() => {
                     };
                   }}
                 >
-                  <option class={ADMIN_NATIVE_OPTION_CLASS} value="draft">
+                  {/* `selected` on options: SSR HTML ignores `value` on <select> until the field changes */}
+                  <option class={ADMIN_NATIVE_OPTION_CLASS} value="draft" selected={formData.value.status === 'draft'}>
                     {translateApp(lang, 'pages.statusDraft')}
                   </option>
-                  <option class={ADMIN_NATIVE_OPTION_CLASS} value="published">
+                  <option
+                    class={ADMIN_NATIVE_OPTION_CLASS}
+                    value="published"
+                    selected={formData.value.status === 'published'}
+                  >
                     {translateApp(lang, 'pages.statusPublished')}
                   </option>
                 </select>
