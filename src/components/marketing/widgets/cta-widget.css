@@ -4,6 +4,8 @@
  * resolved per breakpoint (base = mobile, -md = tablet, -lg = desktop). Title/subtitle colours fall
  * back to the Typography text colour saved before these groups existed. `--cta-d-*` are theme
  * defaults matching the former primary-600 / primary-700 box with white text and button.
+ * The optional WhatsApp button keeps the primary button's size and takes colours / radius from
+ * the WhatsApp group (`--s-whatsapp-*`), defaulting to WhatsApp green.
  */
 .cta-box {
   --cta-d-bg: #0284c7;
@@ -57,6 +59,42 @@
 .hb-primary.cta-btn:where(.dark, .dark *):not(:where(.dark .light, .dark .light *)) {
   --hb-d-color: #0369a1;
   --hb-d-hover-bg: #e0f2fe;
+}
+
+.hb-btn.cta-wa {
+  --hb-color: var(--s-whatsapp-color, #ffffff);
+  --hb-bg: var(--s-whatsapp-bg, #25d366);
+  --hb-border: transparent;
+  --hb-hover-color: var(--hb-color);
+  --hb-hover-bg: var(--s-whatsapp-hover-bg, #1ebe5a);
+  --hb-hover-border: transparent;
+  --hb-radius: var(--s-whatsapp-radius, var(--s-btn-primary-radius, 0.5rem));
+  gap: 0.5rem;
+}
+.cta-wa svg {
+  width: 1.25em;
+  height: 1.25em;
+}
+
+@media (min-width: 768px) {
+  .hb-btn.cta-wa {
+    --hb-color: var(--s-whatsapp-color-md, var(--s-whatsapp-color, #ffffff));
+    --hb-bg: var(--s-whatsapp-bg-md, var(--s-whatsapp-bg, #25d366));
+    --hb-hover-bg: var(--s-whatsapp-hover-bg-md, var(--s-whatsapp-hover-bg, #1ebe5a));
+    --hb-radius: var(--s-whatsapp-radius-md, var(--s-whatsapp-radius, var(--s-btn-primary-radius-md, 0.5rem)));
+  }
+}
+
+@media (min-width: 1024px) {
+  .hb-btn.cta-wa {
+    --hb-color: var(--s-whatsapp-color-lg, var(--s-whatsapp-color-md, var(--s-whatsapp-color, #ffffff)));
+    --hb-bg: var(--s-whatsapp-bg-lg, var(--s-whatsapp-bg-md, var(--s-whatsapp-bg, #25d366)));
+    --hb-hover-bg: var(--s-whatsapp-hover-bg-lg, var(--s-whatsapp-hover-bg-md, var(--s-whatsapp-hover-bg, #1ebe5a)));
+    --hb-radius: var(
+      --s-whatsapp-radius-lg,
+      var(--s-whatsapp-radius-md, var(--s-whatsapp-radius, var(--s-btn-primary-radius-lg, 0.5rem)))
+    );
+  }
 }
 
 @media (min-width: 640px) {

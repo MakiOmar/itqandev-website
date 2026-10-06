@@ -104,7 +104,8 @@
     "viewCaseStudy": "View case study",
     "worksEmptyTab": "No projects in this category yet.",
     "tabsPrev": "Previous categories",
-    "tabsNext": "Next categories"
+    "tabsNext": "Next categories",
+    "ctaWhatsapp": "WhatsApp us"
   },
   "portfolioPage": {
     "title": "Portfolio",
@@ -1162,7 +1163,8 @@
       "whatsapp_label": "WhatsApp button label",
       "whatsapp_message": "Pre-filled message",
       "message_enabled": "Show \"leave a message\"",
-      "message_label": "Message button label"
+      "message_label": "Message button label",
+      "button_url": "Button URL"
     },
     "categoryMultiHint": "Check categories to show as filter tabs/sidebar. Leave all unchecked to show every category with published projects.",
     "categoriesLoading": "Loading categories…",

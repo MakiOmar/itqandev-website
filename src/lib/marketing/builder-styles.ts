@@ -108,7 +108,7 @@ export const WIDGET_STYLE_GROUPS: Record<string, readonly StyleGroupId[]> = {
   trust_badges: ['typography', 'icon', 'spacing', 'border', 'custom'],
   text_logo: ['logo_mark', 'logo_name', 'highlight', 'logo_tagline', 'layout', 'spacing', 'border', 'custom'],
   button: ['typography', 'layout', 'spacing', 'border', 'hover', 'custom'],
-  cta: ['card_box', 'title', 'subtitle', 'btn_primary', 'layout', 'spacing', 'border', 'custom'],
+  cta: ['card_box', 'title', 'subtitle', 'btn_primary', 'whatsapp', 'layout', 'spacing', 'border', 'custom'],
   case_studies: [
     'title', 'subtitle', 'tabs', 'nav_buttons', 'link',
     'card_box', 'card_category', 'card_title', 'card_summary', 'card_chips', 'btn_card',

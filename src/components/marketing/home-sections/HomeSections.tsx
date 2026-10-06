@@ -38,6 +38,8 @@ import heroButtonStyles from '~/components/marketing/widgets/hero-buttons.css?in
 import heroGlowStyles from '~/components/marketing/widgets/hero-glow.css?inline';
 import heroPartsStyles from '~/components/marketing/widgets/hero-parts.css?inline';
 import ctaWidgetStyles from '~/components/marketing/widgets/cta-widget.css?inline';
+import { whatsappHref } from '~/components/marketing/widgets/floating-widget-settings';
+import { WHATSAPP_SVG } from '~/components/marketing/widgets/whatsapp-icon';
 import atomicWidgetStyles from '~/components/marketing/widgets/atomic-widgets.css?inline';
 
 function settingString(settings: Record<string, unknown> | undefined, key: string, fallback: string): string {
@@ -631,6 +633,10 @@ export const CtaHomeSection = component$<HomeSectionSharedProps>(({ settings, ui
   );
   const buttonLabel = settingString(settings, 'button_label', 'Get in touch');
   const buttonUrl = settingString(settings, 'button_url', '').trim() || routes.contact;
+  const waHref = settingBool(settings, 'whatsapp_enabled')
+    ? whatsappHref(settings?.whatsapp_number, settingOptionalString(settings, 'whatsapp_message'))
+    : null;
+  const waLabel = settingString(settings, 'whatsapp_label', translateApp(uiLocale, 'homePage.ctaWhatsapp'));
 
   return (
     <Section flush={Boolean(embedded)}>
@@ -639,10 +645,22 @@ export const CtaHomeSection = component$<HomeSectionSharedProps>(({ settings, ui
           <div class="cta-box">
             <h2 class="cta-title">{title}</h2>
             <p class="cta-subtitle">{subtitle}</p>
-            <div class="mt-8">
+            {/* Main button, plus the WhatsApp chat link when enabled with a valid number. */}
+            <div class="mt-8 flex flex-wrap items-center justify-center gap-3">
               <a href={buttonUrl} class={`${HERO_BTN_BASE} hb-primary cta-btn`}>
                 {buttonLabel}
               </a>
+              {waHref ? (
+                <a
+                  href={waHref}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  class={`${HERO_BTN_BASE} hb-primary cta-btn cta-wa`}
+                >
+                  <span class="inline-flex" aria-hidden="true" dangerouslySetInnerHTML={WHATSAPP_SVG} />
+                  {waLabel}
+                </a>
+              ) : null}
             </div>
           </div>
         </AnimatedReveal>
