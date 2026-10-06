@@ -123,7 +123,8 @@ export default component$(() => {
                     <div class="flex items-center gap-2">
                       {row.editableLight ? (
                         <ColorPickerField
-                          value={row.light}
+                          /* Read from the signal: a prop taken from the mapped row is frozen by the optimizer */
+                          value={kit.value!.colors[row.id as KitBaseColor]}
                           alpha={false}
                           lang={lang}
                           label={`${row.name} (${translateApp(lang, 'builder.style.modeLight')})`}
@@ -138,7 +139,7 @@ export default component$(() => {
                   <td class="py-3">
                     <div class="flex flex-wrap items-center gap-2">
                       <ColorPickerField
-                        value={darkValue}
+                        value={kit.value!.colors_dark?.[row.id] || ''}
                         fallback={row.light}
                         alpha={false}
                         lang={lang}
