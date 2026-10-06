@@ -362,6 +362,7 @@ function renderBlock(
           initialSkillSlug={props.portfolioSkillSlug ?? null}
           showFilters={showFilters}
           filterCategoryIds={filterCategoryIds}
+          cardStyle={settings.card_style === 'detailed' ? 'detailed' : 'overlay'}
         />
       );
       if (embedded) {

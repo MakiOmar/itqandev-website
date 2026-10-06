@@ -10,6 +10,7 @@ import { uiLangFromUrlPathname, withUiLocale } from '~/lib/i18n/ui-locale-path';
 import { translateApp } from '~/lib/i18n/useTranslate';
 import { AnimatedReveal } from '~/components/marketing/AnimatedReveal';
 import { CaseStudyCard } from '~/components/marketing/CaseStudyCard';
+import { CaseStudyDetailedCard } from '~/components/marketing/CaseStudyDetailedCard';
 import type { CaseStudy } from '~/lib/marketing/types';
 
 export const PORTFOLIO_PER_PAGE = 12;
@@ -50,6 +51,8 @@ export type PortfolioProjectsListProps = {
    * Empty = show every category that has published projects.
    */
   filterCategoryIds?: number[];
+  /** Kit setting: `overlay` (default) or `detailed`, same as the case studies kit. */
+  cardStyle?: 'overlay' | 'detailed';
   class?: string;
 };
 
@@ -78,6 +81,7 @@ export const PortfolioProjectsList = component$<PortfolioProjectsListProps>((pro
   const activeCategory = useSignal<string | null>(props.initialCategorySlug ?? null);
   const skillSlug = useSignal<string | null>(props.initialSkillSlug ?? null);
   const showFilters = props.showFilters !== false;
+  const detailedCards = props.cardStyle === 'detailed';
   const filterCategoryIds = normalizeFilterCategoryIds(props.filterCategoryIds);
   const uiLocale = props.uiLocale || uiLangFromUrlPathname(loc.url.pathname);
 
@@ -94,7 +98,7 @@ export const PortfolioProjectsList = component$<PortfolioProjectsListProps>((pro
     activeCategory.value = props.initialCategorySlug ?? null;
     skillSlug.value = props.initialSkillSlug ?? null;
 
-    if (props.initialList.items.length > 0 || props.initialCategories.length > 0) {
+    if (props.initialList.items.length > 0) {
       return;
     }
 
@@ -111,7 +115,9 @@ export const PortfolioProjectsList = component$<PortfolioProjectsListProps>((pro
         { categorySlug, skillSlug: skill, page, perPage: PORTFOLIO_PER_PAGE },
         fetchContext,
       ),
-      getPortfolioCategories(lang, fetchContext),
+      props.initialCategories.length > 0
+        ? Promise.resolve(props.initialCategories)
+        : getPortfolioCategories(lang, fetchContext),
     ]);
     listState.value = list;
     categoriesState.value = categories;
@@ -153,8 +159,8 @@ export const PortfolioProjectsList = component$<PortfolioProjectsListProps>((pro
         <ul class="grid gap-8 sm:grid-cols-2 xl:grid-cols-3" role="list">
           {items.map((cs: CaseStudy, i: number) => (
             <li key={cs.id}>
-              <AnimatedReveal delay={i * 40}>
-                <CaseStudyCard caseStudy={cs} />
+              <AnimatedReveal delay={i * 40} class="h-full">
+                {detailedCards ? <CaseStudyDetailedCard caseStudy={cs} /> : <CaseStudyCard caseStudy={cs} />}
               </AnimatedReveal>
             </li>
           ))}
