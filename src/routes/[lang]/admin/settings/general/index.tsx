@@ -211,7 +211,7 @@ export default component$(() => {
                 </option>
                 {pageOptions.value.map((page) => (
                   <option key={page.id} class={ADMIN_NATIVE_OPTION_CLASS} value={String(page.id)}>
-                    {page.title} ({page.slug})
+                    {`${page.title} (${page.slug})`}
                   </option>
                 ))}
               </select>

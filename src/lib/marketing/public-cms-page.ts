@@ -20,7 +20,7 @@ export function parsePublicPageDetail(json: PublicPageDetail & { data?: unknown 
 
 export async function fetchPublicCmsPage(
   slug: string,
-  uiLocale: string,
+  uiLocale: string | undefined,
   cookie: string,
   requestUrl: string,
 ): Promise<PublicPageDetail | null> {

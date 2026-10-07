@@ -1,23 +1,12 @@
 import { $, component$, useSignal, useTask$, useVisibleTask$ } from '@builder.io/qwik';
 import type { QRL } from '@builder.io/qwik';
-import { loadTinyMce, TINYMCE_PLUGIN_LIST } from '../../lib/admin/tinymce-loader';
-
-type TinyMceEditor = {
-  getContent: () => string;
-  setContent: (html: string) => void;
-  remove: () => void;
-  getBody: () => HTMLElement;
-  getDoc: () => Document;
-};
-
-type TinyMceApi = {
-  get: (id: string) => TinyMceEditor | undefined;
-  init: (options: Record<string, unknown>) => Promise<unknown>;
-};
-
-function getGlobalTinyMce(): TinyMceApi | undefined {
-  return (globalThis as unknown as { tinymce?: TinyMceApi }).tinymce;
-}
+import {
+  getGlobalTinyMce,
+  loadTinyMce,
+  TINYMCE_PLUGIN_LIST,
+  type TinyMceApi,
+  type TinyMceEditor,
+} from '../../lib/admin/tinymce-loader';
 
 /** Prefer explicit prop; otherwise match the page (`body` / `html`) direction. */
 function resolveEditorDir(propDir: 'ltr' | 'rtl' | undefined): 'ltr' | 'rtl' {

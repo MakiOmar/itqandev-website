@@ -187,8 +187,12 @@ export const useUpdateProject = routeAction$(
       };
       const headerRaw = String((data as { header_layout_id?: string }).header_layout_id || '').trim();
       const footerRaw = String((data as { footer_layout_id?: string }).footer_layout_id || '').trim();
-      (payload as Record<string, unknown>).header_layout_id = headerRaw ? Number(headerRaw) : null;
-      (payload as Record<string, unknown>).footer_layout_id = footerRaw ? Number(footerRaw) : null;
+      const layoutPayload = payload as ProjectUpdateInput & {
+        header_layout_id?: number | null;
+        footer_layout_id?: number | null;
+      };
+      layoutPayload.header_layout_id = headerRaw ? Number(headerRaw) : null;
+      layoutPayload.footer_layout_id = footerRaw ? Number(footerRaw) : null;
       const rawContentLocale = (data as { content_locale?: string }).content_locale?.trim();
       (payload as ProjectUpdateInput & { content_locale?: string | null }).content_locale =
         rawContentLocale && rawContentLocale.length > 0 ? rawContentLocale : null;

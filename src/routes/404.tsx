@@ -57,8 +57,13 @@ export default component$(() => {
               sections={themeBody}
               layoutAware={true}
               allowDefaultSections={false}
-              uiLocale={uiLocale}
+              uiLocale={uiLocale ?? uiLangFromUrlPathname(loc.url.pathname)}
               branding={shell.branding}
+              services={shell.siteContent?.services ?? []}
+              caseStudies={[]}
+              testimonials={[]}
+              blogPosts={[]}
+              techStack={shell.siteContent?.techStack ?? []}
             />
           ) : (
             <div class="flex min-h-[50vh] flex-col items-center justify-center px-4 py-16">

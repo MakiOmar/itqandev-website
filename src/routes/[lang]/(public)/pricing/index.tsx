@@ -40,7 +40,7 @@ export const usePricingCmsPage = routeLoader$(async ({ request, params, error, r
     const res = await fetch(`${base}${API_ENDPOINTS.PUBLIC_PAGES.GET(PRICING_PAGE_SLUG)}`, {
       headers: {
         Accept: 'application/json',
-        'X-Content-Locale': uiLocale,
+        'X-Content-Locale': uiLocale || 'en',
         Cookie: cookie,
       },
     });

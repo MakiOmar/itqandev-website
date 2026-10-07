@@ -68,7 +68,7 @@ function mapPublicProjectToCaseStudy(raw: Record<string, unknown>): CaseStudy {
           const name = String(c.name ?? '').trim();
           const slug = String(c.slug ?? '').trim();
           if (!id || !name) return null;
-          return { id, name, slug: slug || undefined };
+          return slug ? { id, name, slug } : { id, name };
         })
         .filter((c): c is { id: number; name: string; slug?: string } => c !== null)
     : undefined;

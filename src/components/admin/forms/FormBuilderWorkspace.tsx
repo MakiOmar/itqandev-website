@@ -4,6 +4,7 @@ import { followAdminTheme, type ThemeMode } from '~/lib/theme/theme-scope';
 import { BuilderThemeToggle } from '~/components/admin/BuilderThemeToggle';
 import { Link } from '@builder.io/qwik-city';
 import { AppearanceSettingsFields } from '~/components/admin/appearance/AppearanceSettingsFields';
+import type { AppearanceSettingField } from '~/lib/marketing/appearance-types';
 import {
   AdminContentLanguageFields,
   ADMIN_CONTENT_FIELDS_GRID_CLASS,

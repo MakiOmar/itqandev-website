@@ -2,13 +2,15 @@
  * TinyMCE loads only when an admin rich-text field mounts (separate Rollup chunk).
  */
 
-type TinyMceEditor = {
+export type TinyMceEditor = {
   remove: () => void;
   getContent: () => string;
   setContent: (html: string) => void;
+  getBody: () => HTMLElement;
+  getDoc: () => Document;
 };
 
-type TinyMceApi = {
+export type TinyMceApi = {
   init: (config: Record<string, unknown>) => Promise<unknown>;
   get: (id: string) => TinyMceEditor | undefined;
 };
@@ -25,7 +27,7 @@ const tinymcePlugins = [
   'wordcount',
 ] as const;
 
-function getGlobalTinyMce(): TinyMceApi | undefined {
+export function getGlobalTinyMce(): TinyMceApi | undefined {
   return (globalThis as unknown as { tinymce?: TinyMceApi }).tinymce;
 }
 

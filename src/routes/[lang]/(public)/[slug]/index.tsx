@@ -40,6 +40,11 @@ export default component$(() => {
         allowDefaultSections={false}
         uiLocale={uiLocale}
         branding={shell.value.branding}
+        services={shell.value.siteContent?.services ?? []}
+        caseStudies={[]}
+        testimonials={[]}
+        blogPosts={[]}
+        techStack={shell.value.siteContent?.techStack ?? []}
       />
     );
   }

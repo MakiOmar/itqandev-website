@@ -52,7 +52,7 @@ export const ResponsiveColumnsField = component$<ResponsiveColumnsFieldProps>((p
             >
               {GRID_COLUMN_OPTIONS.map((n) => (
                 <option key={n} class={ADMIN_NATIVE_OPTION_CLASS} value={String(n)}>
-                  {n}
+                  {String(n)}
                 </option>
               ))}
             </select>

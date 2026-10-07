@@ -72,7 +72,7 @@ export const usePublicPageDetail = routeLoader$(async ({ params, request, fail, 
     const res = await fetch(`${base}${API_ENDPOINTS.PUBLIC_PAGES.GET(slug)}`, {
       headers: {
         Accept: 'application/json',
-        'X-Content-Locale': uiLocale,
+        'X-Content-Locale': uiLocale || 'en',
         Cookie: cookie,
       },
     });

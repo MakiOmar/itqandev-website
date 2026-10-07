@@ -22,9 +22,13 @@ export const LottiePlayer = component$<{
       return;
     }
     try {
-      const mod = await import('lottie-web');
-      const lottie = (mod as { default?: typeof import('lottie-web') }).default || mod;
-      const anim = (lottie as { loadAnimation: (opts: Record<string, unknown>) => { destroy: () => void; setSpeed: (n: number) => void } }).loadAnimation({
+      type LottieApi = {
+        loadAnimation: (opts: Record<string, unknown>) => { destroy: () => void; setSpeed: (n: number) => void };
+      };
+      // CJS interop: the API is on `default` in some bundles and on the namespace in others.
+      const mod = (await import('lottie-web')) as unknown as LottieApi & { default?: LottieApi };
+      const lottie = mod.default ?? mod;
+      const anim = lottie.loadAnimation({
         container: el,
         renderer: 'svg',
         loop: props.loop !== false,

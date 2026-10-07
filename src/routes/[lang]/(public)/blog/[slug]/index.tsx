@@ -48,7 +48,7 @@ export default component$(() => {
         blogPosts: [],
         techStack: shell.value.siteContent?.techStack ?? [],
         siteContact: shell.value.siteContent?.contact,
-        pageContext: { title: post.title, slug: String((post as { slug?: string }).slug || '') },
+        pageContext: { title: post.title ?? '', slug: String((post as { slug?: string }).slug || '') },
       }}
     >
     <>

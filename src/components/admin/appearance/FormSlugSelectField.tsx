@@ -91,16 +91,16 @@ export const FormSlugSelectField = component$<FormSlugSelectFieldProps>((props) 
           </option>
           {missingCurrent ? (
             <option value={current} class={ADMIN_NATIVE_OPTION_CLASS}>
-              {current} ({translateApp(props.lang, 'appearance.formUnavailable')})
+              {`${current} (${translateApp(props.lang, 'appearance.formUnavailable')})`}
             </option>
           ) : null}
           {list.map((f) => (
             <option key={f.id || f.slug} value={f.slug} class={ADMIN_NATIVE_OPTION_CLASS}>
-              {f.title}
-              {f.slug ? ` (${f.slug})` : ''}
-              {f.status !== 'published'
-                ? ` — ${translateApp(props.lang, 'appearance.formNotPublished')}`
-                : ''}
+              {`${f.title}${f.slug ? ` (${f.slug})` : ''}${
+                f.status !== 'published'
+                  ? ` — ${translateApp(props.lang, 'appearance.formNotPublished')}`
+                  : ''
+              }`}
             </option>
           ))}
         </select>
