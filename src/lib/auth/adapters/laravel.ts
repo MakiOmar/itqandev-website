@@ -5,7 +5,11 @@ import { getConfig } from '../../config';
 import { LaravelApiClient } from '../../api/laravel-client';
 import { extractCookieHeader } from '../../api/client';
 import { resolveMarketingApiBaseUrl } from '../../marketing/resolve-api-base';
-import { authSessionCookieOptions, sessionExpiresAt } from '../session-lifetime';
+import {
+  authSessionCookieDeleteOptions,
+  authSessionCookieOptions,
+  sessionExpiresAt,
+} from '../session-lifetime';
 
 const COOKIE_TOKEN_PLACEHOLDER = 'sanctum_cookie';
 
@@ -171,7 +175,7 @@ export class LaravelAuthAdapter implements AuthAdapter {
     // Server-side: use Qwik cookie API to delete HttpOnly cookie
     // This is the only way to delete HttpOnly cookies (cannot be done from JavaScript)
     if (cookie && typeof cookie.delete === 'function') {
-      (cookie as Cookie).delete(this.config.auth.cookieName, { path: '/' });
+      (cookie as Cookie).delete(this.config.auth.cookieName, authSessionCookieDeleteOptions());
     }
     // Client-side: clear localStorage
     // This is handled in UserDropdown before calling the route action

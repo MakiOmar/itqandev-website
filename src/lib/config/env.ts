@@ -60,6 +60,7 @@ export function loadEnvConfig(): Partial<DashboardConfig> {
       refreshToken: getEnvBool('VITE_AUTH_REFRESH_TOKEN', false),
       sessionStorage: (getEnv('VITE_AUTH_STORAGE', 'cookie') as 'cookie' | 'localStorage' | 'sessionStorage') || 'cookie',
       rememberDays: Number(getEnv('VITE_AUTH_REMEMBER_DAYS', '30')) || 30,
+      cookieDomain: getEnv('VITE_AUTH_COOKIE_DOMAIN', '') || '',
     },
     branding: {
       // NOTE: These env vars are Qwik-side fallback defaults only.

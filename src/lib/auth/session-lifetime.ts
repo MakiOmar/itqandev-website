@@ -18,11 +18,40 @@ export function sessionExpiresAt(remember: boolean | undefined): number {
  * browser drops the cookie when it closes.
  */
 export function authSessionCookieOptions(remember: boolean | undefined): CookieOptions {
+  const domain = authSessionCookieDomain();
   return {
     path: '/',
     httpOnly: true,
     sameSite: 'lax',
     secure: import.meta.env.PROD,
+    ...(domain ? { domain } : {}),
     ...(remember ? { maxAge: [rememberDays(), 'days'] as [number, 'days'] } : {}),
   };
+}
+
+/** `VITE_AUTH_COOKIE_DOMAIN`, or empty for a host-only cookie. */
+export function authSessionCookieDomain(): string {
+  return (getConfig().auth.cookieDomain ?? '').trim();
+}
+
+/** Options for `cookie.delete()` that match the cookie written by `authSessionCookieOptions`. */
+export function authSessionCookieDeleteOptions(): { path: string; domain?: string } {
+  const domain = authSessionCookieDomain();
+  return domain ? { path: '/', domain } : { path: '/' };
+}
+
+/**
+ * With a cookie domain set, also expire any older host-only `auth_session`. Qwik keys `cookie.*` by name,
+ * so both variants cannot be written through it; a leftover host-only copy is sent first and would shadow
+ * the fresh domain cookie with a revoked token.
+ */
+export function expireHostOnlyAuthSessionCookie(headers: Headers): void {
+  if (!authSessionCookieDomain()) {
+    return;
+  }
+  const secure = import.meta.env.PROD ? '; Secure' : '';
+  headers.append(
+    'Set-Cookie',
+    `${getConfig().auth.cookieName}=; Path=/; Max-Age=0; Expires=Thu, 01 Jan 1970 00:00:00 GMT; HttpOnly; SameSite=Lax${secure}`,
+  );
 }

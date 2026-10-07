@@ -32,6 +32,11 @@ export interface AuthConfig {
   sessionStorage?: 'cookie' | 'localStorage' | 'sessionStorage';
   /** Lifetime of the `auth_session` cookie when "Remember me" is checked. */
   rememberDays?: number;
+  /**
+   * Cookie `Domain` for `auth_session` (e.g. `.example.com`). Needed when the browser calls the API on a
+   * sibling subdomain, otherwise the host-only cookie never reaches Laravel. Empty = host-only.
+   */
+  cookieDomain?: string;
 }
 
 /**

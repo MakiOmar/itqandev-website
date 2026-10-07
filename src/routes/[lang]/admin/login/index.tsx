@@ -5,7 +5,10 @@ import { LoginForm } from '../../../../components/auth/LoginForm';
 import { auth } from '../../../../lib/auth';
 import { redirectSignedInFromLogin } from '../../../../lib/loaders/admin-auth';
 import { getConfig } from '../../../../lib/config';
-import { authSessionCookieOptions } from '../../../../lib/auth/session-lifetime';
+import {
+  authSessionCookieOptions,
+  expireHostOnlyAuthSessionCookie,
+} from '../../../../lib/auth/session-lifetime';
 import { routesFromPreferredCookie, useAppRoutes } from '../../../../lib/constants/routes';
 
 export const onGet: RequestHandler = async ({ cookie, redirect: redirectFn }) => {
@@ -54,7 +57,7 @@ export const useSyncAuthSessionAction = routeAction$(
  * Login route action - must be in route file for Qwik to create endpoint
  */
 export const useLoginAction = routeAction$(
-  async (data, { cookie, redirect: redirectFn, fail }) => {
+  async (data, { cookie, headers, redirect: redirectFn, fail }) => {
     let session: Awaited<ReturnType<typeof auth.login>>;
     try {
       session = await auth.login(
@@ -88,6 +91,8 @@ export const useLoginAction = routeAction$(
         error: 'Invalid email or password',
       });
     }
+
+    expireHostOnlyAuthSessionCookie(headers);
 
     // Outside the try: Qwik's RedirectMessage has no fields to detect, and swallowing it leaves the q-data request unanswered (404).
     throw redirectFn(302, routesFromPreferredCookie(cookie).ADMIN.HOME);
