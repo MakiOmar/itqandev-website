@@ -34,12 +34,11 @@ import {
 } from '../../../../../types/content-seo';
 
 export const useSkillForEdit = routeLoader$(async ({ params, cookie, request, fail, redirect: redirectFn }) => {
-  const R = routesFromPreferredCookie(cookie);
+  const id = params.id;
+  if (id === 'new') {
+    throw redirectFn(302, routesFromPreferredCookie(cookie).ADMIN.SKILLS_NEW);
+  }
   try {
-    const id = params.id;
-    if (id === 'new') {
-      throw redirectFn(302, R.ADMIN.SKILLS_NEW);
-    }
     if (!id) {
       return fail(404, { message: 'Skill not found' });
     }
@@ -51,10 +50,7 @@ export const useSkillForEdit = routeLoader$(async ({ params, cookie, request, fa
       return fail(404, { message: 'Skill not found' });
     }
     return mapSkillFromApi(raw as Record<string, unknown>);
-  } catch (error: unknown) {
-    if (error && typeof error === 'object' && 'status' in error && 'location' in error) {
-      throw error;
-    }
+  } catch {
     return fail(404, { message: 'Skill not found' });
   }
 });

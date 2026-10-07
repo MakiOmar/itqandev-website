@@ -55,8 +55,9 @@ export const useSyncAuthSessionAction = routeAction$(
  */
 export const useLoginAction = routeAction$(
   async (data, { cookie, redirect: redirectFn, fail }) => {
+    let session: Awaited<ReturnType<typeof auth.login>>;
     try {
-      const session = await auth.login(
+      session = await auth.login(
         {
           email: data.email,
           password: data.password,
@@ -64,21 +65,7 @@ export const useLoginAction = routeAction$(
         },
         cookie,
       );
-
-      if (!session) {
-        return fail(401, {
-          error: 'Invalid email or password',
-        });
-      }
-
-      const R = routesFromPreferredCookie(cookie);
-      throw redirectFn(302, R.ADMIN.HOME);
     } catch (error: any) {
-      // Re-throw redirects
-      if (error && typeof error === 'object' && 'status' in error && 'location' in error) {
-        throw error;
-      }
-
       // Surface backend validation errors in the same shape the form already renders.
       const fieldErrors =
         error?.errors && typeof error.errors === 'object'
@@ -95,6 +82,15 @@ export const useLoginAction = routeAction$(
         fieldErrors,
       });
     }
+
+    if (!session) {
+      return fail(401, {
+        error: 'Invalid email or password',
+      });
+    }
+
+    // Outside the try: Qwik's RedirectMessage has no fields to detect, and swallowing it leaves the q-data request unanswered (404).
+    throw redirectFn(302, routesFromPreferredCookie(cookie).ADMIN.HOME);
   },
   zod$(loginSchema),
 );

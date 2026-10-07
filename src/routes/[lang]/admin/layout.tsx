@@ -67,17 +67,15 @@ export const useAdminFeatureModuleGuard = routeLoader$(async ({ cookie, request,
     return null;
   }
 
+  let enabled = true;
   try {
-    const cookieHeader = extractCookieHeader(cookie, request);
-    const settings = await loadAdminSettings(cookieHeader);
-    const features = settings?.features;
-    if (!isFeatureModuleEnabled(features, module)) {
-      throw redirectFn(302, R.ADMIN.HOME);
-    }
-  } catch (error: unknown) {
-    if (error && typeof error === 'object' && 'status' in error && 'location' in error) {
-      throw error;
-    }
+    const settings = await loadAdminSettings(extractCookieHeader(cookie, request));
+    enabled = isFeatureModuleEnabled(settings?.features, module);
+  } catch {
+    // Settings unavailable: let the page load and surface its own errors.
+  }
+  if (!enabled) {
+    throw redirectFn(302, R.ADMIN.HOME);
   }
 
   return null;

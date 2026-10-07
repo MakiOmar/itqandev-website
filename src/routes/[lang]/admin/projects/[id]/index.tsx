@@ -316,14 +316,6 @@ export const useUpdateProject = routeAction$(
         projectId: Number(projectId),
       };
     } catch (error: any) {
-      // Re-throw redirects (Qwik redirects are thrown as errors with status and location)
-      if (error && typeof error === 'object' && 'status' in error && 'location' in error) {
-        throw error;
-      }
-      if (error?.status === 302 || error?.statusCode === 302) {
-        throw error; // Re-throw redirects
-      }
-      // Return error response instead of throwing
       return {
         success: false,
         error: error?.message || (typeof error === 'string' ? error : 'Failed to update project'),

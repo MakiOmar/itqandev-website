@@ -25,23 +25,17 @@ export async function loadAdminAuthSession(
     logicalPath === '/admin/login' ||
     normalizedPath.endsWith('/admin/login');
 
+  let session: AuthSession | null = null;
   try {
-    const session = await auth.getSession(cookie);
-
-    if (!isLoginPage && !session) {
-      throw redirectFn(302, R.ADMIN.LOGIN);
-    }
-
-    return session;
-  } catch (error: unknown) {
-    if (error && typeof error === 'object' && 'status' in error && 'location' in error) {
-      throw error;
-    }
-    if (!isLoginPage) {
-      throw redirectFn(302, R.ADMIN.LOGIN);
-    }
-    return null;
+    session = await auth.getSession(cookie);
+  } catch {
+    session = null;
   }
+
+  if (!isLoginPage && !session) {
+    throw redirectFn(302, R.ADMIN.LOGIN);
+  }
+  return session;
 }
 
 /**

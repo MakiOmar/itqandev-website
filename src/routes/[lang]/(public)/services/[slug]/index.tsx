@@ -13,6 +13,7 @@ import { marketingRoutes } from '~/lib/marketing/constants';
 import { uiLangFromUrlPathname } from '~/lib/i18n/ui-locale-path';
 import { resolveServiceIconUrl } from '~/lib/marketing/service-icons';
 import { marketingEntityDetailHead } from '~/lib/marketing/marketing-entity-document-head';
+import { AnimatedReveal } from '~/components/marketing/AnimatedReveal';
 import { Container } from '~/components/marketing/Container';
 import { Section } from '~/components/marketing/Section';
 import { ThemeBodyOrFallback } from '~/components/marketing/theme/ThemeBodyOrFallback';

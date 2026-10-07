@@ -25,12 +25,11 @@ import { loadTestimonialProjectsContext } from '../../../../../lib/admin/testimo
 import type { Testimonial } from '../../../../../types';
 
 export const useTestimonialForEdit = routeLoader$(async ({ params, cookie, request, fail, redirect: redirectFn }) => {
-  const R = routesFromPreferredCookie(cookie);
+  const id = params.id;
+  if (id === 'new') {
+    throw redirectFn(302, routesFromPreferredCookie(cookie).ADMIN.TESTIMONIALS_NEW);
+  }
   try {
-    const id = params.id;
-    if (id === 'new') {
-      throw redirectFn(302, R.ADMIN.TESTIMONIALS_NEW);
-    }
     if (!id) {
       return fail(404, { message: 'Not found' });
     }
@@ -42,10 +41,7 @@ export const useTestimonialForEdit = routeLoader$(async ({ params, cookie, reque
       return fail(404, { message: 'Not found' });
     }
     return mapTestimonialFromApi(raw as Record<string, unknown>);
-  } catch (error: unknown) {
-    if (error && typeof error === 'object' && 'status' in error && 'location' in error) {
-      throw error;
-    }
+  } catch {
     return fail(404, { message: 'Not found' });
   }
 });
