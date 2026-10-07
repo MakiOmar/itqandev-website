@@ -13,6 +13,7 @@ import { routesFromPreferredCookie, useAppRoutes } from '../../../../lib/constan
 
 export const onGet: RequestHandler = async ({ cookie, redirect: redirectFn }) => {
   await redirectSignedInFromLogin(cookie, redirectFn);
+  expireHostOnlyAuthSessionCookie(cookie);
 };
 
 /**
@@ -57,7 +58,7 @@ export const useSyncAuthSessionAction = routeAction$(
  * Login route action - must be in route file for Qwik to create endpoint
  */
 export const useLoginAction = routeAction$(
-  async (data, { cookie, headers, redirect: redirectFn, fail }) => {
+  async (data, { cookie, redirect: redirectFn, fail }) => {
     let session: Awaited<ReturnType<typeof auth.login>>;
     try {
       session = await auth.login(
@@ -91,8 +92,6 @@ export const useLoginAction = routeAction$(
         error: 'Invalid email or password',
       });
     }
-
-    expireHostOnlyAuthSessionCookie(headers);
 
     // Outside the try: Qwik's RedirectMessage has no fields to detect, and swallowing it leaves the q-data request unanswered (404).
     throw redirectFn(302, routesFromPreferredCookie(cookie).ADMIN.HOME);

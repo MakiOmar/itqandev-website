@@ -2,10 +2,7 @@ import { component$ } from '@builder.io/qwik';
 import { routeLoader$ } from '@builder.io/qwik-city';
 import { auth } from '../../../../lib/auth';
 import { getConfig } from '../../../../lib/config';
-import {
-  authSessionCookieDeleteOptions,
-  expireHostOnlyAuthSessionCookie,
-} from '../../../../lib/auth/session-lifetime';
+import { authSessionCookieDeleteOptions } from '../../../../lib/auth/session-lifetime';
 import { routesFromPreferredCookie } from '../../../../lib/constants/routes';
 
 /**
@@ -18,7 +15,7 @@ import { routesFromPreferredCookie } from '../../../../lib/constants/routes';
  * - Clear the cookie (server-side for HttpOnly cookies)
  * - Redirect to login page
  */
-export const useLogoutLoader = routeLoader$(async ({ cookie, headers, redirect: redirectFn, request }) => {
+export const useLogoutLoader = routeLoader$(async ({ cookie, redirect: redirectFn, request }) => {
   const config = getConfig();
   
   try {
@@ -39,8 +36,6 @@ export const useLogoutLoader = routeLoader$(async ({ cookie, headers, redirect: 
   if (cookie) {
     cookie.delete(config.auth.cookieName, authSessionCookieDeleteOptions());
   }
-  expireHostOnlyAuthSessionCookie(headers);
-  
   const R = routesFromPreferredCookie(cookie);
   throw redirectFn(302, R.ADMIN.LOGIN);
 });

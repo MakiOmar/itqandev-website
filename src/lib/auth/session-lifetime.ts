@@ -1,4 +1,4 @@
-import type { CookieOptions } from '@builder.io/qwik-city';
+import type { Cookie, CookieOptions } from '@builder.io/qwik-city';
 import { getConfig } from '../config';
 
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -41,17 +41,13 @@ export function authSessionCookieDeleteOptions(): { path: string; domain?: strin
 }
 
 /**
- * With a cookie domain set, also expire any older host-only `auth_session`. Qwik keys `cookie.*` by name,
- * so both variants cannot be written through it; a leftover host-only copy is sent first and would shadow
- * the fresh domain cookie with a revoked token.
+ * With a cookie domain set, expire any older host-only `auth_session` (from before the domain was set).
+ * It is sent ahead of the domain cookie and would shadow it with a revoked token. Qwik emits one
+ * Set-Cookie per name per response, so call this only where the domain cookie is not also written.
  */
-export function expireHostOnlyAuthSessionCookie(headers: Headers): void {
-  if (!authSessionCookieDomain()) {
-    return;
+export function expireHostOnlyAuthSessionCookie(cookie: Cookie): void {
+  const name = getConfig().auth.cookieName;
+  if (authSessionCookieDomain() && cookie.has(name)) {
+    cookie.delete(name, { path: '/' });
   }
-  const secure = import.meta.env.PROD ? '; Secure' : '';
-  headers.append(
-    'Set-Cookie',
-    `${getConfig().auth.cookieName}=; Path=/; Max-Age=0; Expires=Thu, 01 Jan 1970 00:00:00 GMT; HttpOnly; SameSite=Lax${secure}`,
-  );
 }
