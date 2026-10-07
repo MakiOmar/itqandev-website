@@ -40,14 +40,18 @@ export const onRequest: RequestHandler = ({ headers }) => {
 
 export const head: DocumentHead = ({ resolveValue }) => {
   let icon: ReturnType<typeof faviconLink> = null;
+  let defaultTheme: string | undefined;
   try {
-    icon = faviconLink(resolveValue(usePublicSiteMeta).favicon);
+    const meta = resolveValue(usePublicSiteMeta);
+    icon = faviconLink(meta.favicon);
+    defaultTheme = meta.default_theme;
   } catch {
     icon = null;
   }
   return {
     meta: [{ name: 'robots', content: 'noindex, nofollow' }],
     ...(icon ? { links: [icon] } : {}),
+    frontmatter: { defaultTheme },
   };
 };
 

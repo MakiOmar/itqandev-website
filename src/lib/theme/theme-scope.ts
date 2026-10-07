@@ -8,6 +8,19 @@ export const DARK_SCOPE_SELECTOR = ':where(.dark, .dark *):not(:where(.dark .lig
 
 export type ThemeMode = 'light' | 'dark';
 
+/** Settings → Branding: theme for visitors who never toggled; `system` follows `prefers-color-scheme`. */
+export type SiteDefaultTheme = ThemeMode | 'system';
+
+/**
+ * Only an explicit toggle is stored here, so a changed site default still reaches visitors who never chose.
+ * (The older `theme` key also held auto-detected values, so it is ignored.)
+ */
+export const THEME_PREFERENCE_KEY = 'theme-preference';
+
+export function parseSiteDefaultTheme(raw: unknown): SiteDefaultTheme {
+  return raw === 'light' || raw === 'dark' ? raw : 'system';
+}
+
 /** True when the nearest theme scope of `el` (or `<html>`) is dark. Browser only. */
 export function isDarkScope(el: Element | null | undefined): boolean {
   if (typeof document === 'undefined') return false;
@@ -28,7 +41,7 @@ export function toggleDocumentTheme(): ThemeMode {
   root.classList.remove('light', 'dark');
   root.classList.add(next);
   try {
-    localStorage.setItem('theme', next);
+    localStorage.setItem(THEME_PREFERENCE_KEY, next);
   } catch {
     /* storage blocked (private mode): the class change still applies for this page */
   }

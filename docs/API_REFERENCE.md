@@ -547,7 +547,7 @@ Also available: `GET /api/health` (minimal `{ "status": "ok" }`) and Laravel’s
 
 ### GET `/api/public/site-meta`
 
-Returns **locale-resolved** branding, `site_languages`, resolved **`typography`**, and **`search_engine_indexing`** (boolean, default `true`) for the marketing shell (see `SettingsController::publicMeta`, `SiteSettingsPresenter`, and `TypographyResolver`).
+Returns **locale-resolved** branding, `site_languages`, resolved **`typography`**, **`search_engine_indexing`** (boolean, default `true`), and **`default_theme`** (`system` | `light` | `dark`, default `system`; set via `PUT /api/settings`) for the marketing shell (see `SettingsController::publicMeta`, `SiteSettingsPresenter`, and `TypographyResolver`).
 
 It also returns **`favicon`** (Settings → Branding favicon URL, or `null`). Public and dashboard layouts add it as `<link rel="icon">`; the bundled `/favicon.svg` is used only when it is empty.
 

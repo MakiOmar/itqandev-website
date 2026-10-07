@@ -208,6 +208,8 @@ export const head: DocumentHead = ({ resolveValue }) => {
     return {
       ...(robots ? { meta: [{ name: 'robots', content: robots }] } : {}),
       ...(icon ? { links: [icon] } : {}),
+      // RouterHead's theme bootstrap reads this before first paint
+      frontmatter: { defaultTheme: shell.branding?.default_theme },
     };
   } catch {
     return {};

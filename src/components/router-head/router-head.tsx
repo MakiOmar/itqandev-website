@@ -6,6 +6,7 @@ import { INLINE_CRITICAL_CSS } from "~/lib/perf/critical-css";
 import { buildDocumentBootstrapScript } from "~/lib/perf/document-bootstrap-script";
 import { collectPreconnectHints, type ResourceHintLink } from "~/lib/perf/resource-hints";
 import { buildCanonicalHref } from "~/lib/seo/canonical-url";
+import { parseSiteDefaultTheme } from "~/lib/theme/theme-scope";
 
 function preconnectLinkProps(hint: ResourceHintLink) {
   return {
@@ -27,6 +28,7 @@ export const RouterHead = component$(() => {
   const fallbackCanonical = buildCanonicalHref(loc.url.pathname, loc.url.origin);
   const uiLocaleBootstrap = uiLocaleBootstrapJson();
   const preconnectHints = collectPreconnectHints(loc.url.origin, loc.url.pathname);
+  const defaultTheme = parseSiteDefaultTheme(head.frontmatter.defaultTheme);
 
   return (
     <>
@@ -59,7 +61,7 @@ export const RouterHead = component$(() => {
       
       {/* Initialize theme and direction before page render to prevent flash */}
       <script
-        dangerouslySetInnerHTML={buildDocumentBootstrapScript(uiLocaleBootstrap)}
+        dangerouslySetInnerHTML={buildDocumentBootstrapScript(uiLocaleBootstrap, defaultTheme)}
       />
 
       {head.meta.map((m) => (

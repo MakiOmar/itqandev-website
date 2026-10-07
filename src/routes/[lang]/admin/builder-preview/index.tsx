@@ -53,7 +53,7 @@ export default component$(() => {
       payload.value = e.data.payload;
       const theme = e.data.payload.theme;
       if (theme === 'light' || theme === 'dark') {
-        // Preview only: unlike the toggles, never write localStorage.theme.
+        // Preview only: unlike the toggles, never write the stored theme preference.
         document.documentElement.classList.remove('light', 'dark');
         document.documentElement.classList.add(theme);
       }

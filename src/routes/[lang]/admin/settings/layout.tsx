@@ -14,6 +14,7 @@ import {
   type SettingsTranslationsMap,
 } from '../../../../lib/admin/settings-translations';
 import type { SiteLanguageRow } from '../../../../types/site-language';
+import { parseSiteDefaultTheme, type SiteDefaultTheme } from '../../../../lib/theme/theme-scope';
 
 export interface SettingsFormData {
   site_name: string;
@@ -28,6 +29,7 @@ export interface SettingsFormData {
   upload_max_size: number;
   media_convert_to_webp: boolean;
   search_engine_indexing: boolean;
+  default_theme: SiteDefaultTheme;
   show_on_front: 'builder' | 'page';
   page_on_front: number | null;
   logo: string;
@@ -58,6 +60,7 @@ export const defaultSettings: SettingsFormData = {
   upload_max_size: 100,
   media_convert_to_webp: true,
   search_engine_indexing: true,
+  default_theme: 'system',
   show_on_front: 'builder',
   page_on_front: null,
   logo: '',
@@ -121,6 +124,7 @@ function normalizeSettings(input: Partial<SettingsFormData> | undefined | null):
       (input as any)?.search_engine_indexing,
       defaultSettings.search_engine_indexing,
     ),
+    default_theme: parseSiteDefaultTheme((input as any)?.default_theme),
     show_on_front: String((input as any)?.show_on_front || '').trim().toLowerCase() === 'page' ? 'page' : 'builder',
     page_on_front: normalizeFontId((input as any)?.page_on_front),
     logo: (input as any)?.logo || (input as any)?.site_logo || defaultSettings.logo,
@@ -272,6 +276,10 @@ export const useUpdateSettings = routeAction$(
         );
       }
 
+      if (has('default_theme')) {
+        payload.default_theme = parseSiteDefaultTheme((data as any).default_theme);
+      }
+
       if (has('show_on_front')) {
         payload.show_on_front =
           String((data as any).show_on_front || '').trim().toLowerCase() === 'page' ? 'page' : 'builder';
@@ -401,6 +409,7 @@ export const useUpdateSettings = routeAction$(
     upload_max_size: z.union([z.string(), z.number()]).optional(),
     media_convert_to_webp: z.union([z.string(), z.boolean(), z.number()]).optional(),
     search_engine_indexing: z.union([z.string(), z.boolean(), z.number()]).optional(),
+    default_theme: z.enum(['system', 'light', 'dark']).optional(),
     show_on_front: z.string().optional(),
     page_on_front: z.union([z.string(), z.number()]).optional(),
     logo: z.string().optional(),

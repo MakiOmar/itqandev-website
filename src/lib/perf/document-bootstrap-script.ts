@@ -1,25 +1,23 @@
+import { parseSiteDefaultTheme, THEME_PREFERENCE_KEY, type SiteDefaultTheme } from '~/lib/theme/theme-scope';
+
 /**
  * Inline head bootstrap (theme, locale dir/lang, async fonts, body visibility).
  * Kept as a string builder so router-head stays small and we avoid read→write layout thrash.
+ * Theme order: the visitor's own toggle, then the site default, then `prefers-color-scheme`.
  */
-export function buildDocumentBootstrapScript(uiLocaleBootstrapJson: string): string {
+export function buildDocumentBootstrapScript(uiLocaleBootstrapJson: string, defaultTheme: SiteDefaultTheme): string {
   return `
 (function() {
-  function setTheme(theme) {
-    var root = document.documentElement;
-    root.classList.remove('light', 'dark');
-    root.classList.add(theme);
-    try { localStorage.setItem('theme', theme); } catch (e) {}
-  }
   var stored = null;
-  try { stored = localStorage.getItem('theme'); } catch (e) {}
-  if (stored) {
-    setTheme(stored);
-  } else if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
-    setTheme('dark');
-  } else {
-    setTheme('light');
-  }
+  try { stored = localStorage.getItem(${JSON.stringify(THEME_PREFERENCE_KEY)}); } catch (e) {}
+  var siteDefault = ${JSON.stringify(parseSiteDefaultTheme(defaultTheme))};
+  var theme = (stored === 'light' || stored === 'dark')
+    ? stored
+    : siteDefault !== 'system'
+      ? siteDefault
+      : (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+  document.documentElement.classList.remove('light', 'dark');
+  document.documentElement.classList.add(theme);
 
   var __uiLocales = ${uiLocaleBootstrapJson};
   window.__uiLocales = __uiLocales;

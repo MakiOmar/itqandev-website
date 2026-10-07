@@ -23,6 +23,7 @@ import {
 } from './appearance-types';
 import { defaultFooterSections, defaultHeaderSections } from './chrome-defaults';
 import { isSearchEngineIndexingEnabled } from '~/lib/seo/search-engine-indexing';
+import { parseSiteDefaultTheme, type SiteDefaultTheme } from '~/lib/theme/theme-scope';
 import {
   parsePublicFrontPageMeta,
   type PublicFrontPageMeta,
@@ -43,6 +44,7 @@ export type PublicBrandingState = {
   /** When false, public pages send noindex and robots.txt disallows crawling. */
   search_engine_indexing?: boolean;
   design_kit_css?: string;
+  default_theme?: SiteDefaultTheme;
 };
 
 export type { PublicFrontPageMeta };
@@ -135,6 +137,7 @@ function brandingFromSiteMeta(
     typography: parseSiteTypography(settings?.typography),
     search_engine_indexing: isSearchEngineIndexingEnabled(settings?.search_engine_indexing),
     design_kit_css: typeof settings?.design_kit_css === 'string' ? settings.design_kit_css : undefined,
+    default_theme: parseSiteDefaultTheme(settings?.default_theme),
   };
 }
 

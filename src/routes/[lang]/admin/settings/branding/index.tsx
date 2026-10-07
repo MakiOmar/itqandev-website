@@ -10,6 +10,18 @@ import {
   useUpdateSettings,
 } from '../layout';
 import type { Media } from '../../../../../types';
+import {
+  ADMIN_FORM_LABEL_CLASS,
+  ADMIN_NATIVE_OPTION_CLASS,
+  ADMIN_NATIVE_SELECT_CLASS,
+} from '../../../../../lib/admin/native-select-classes';
+import type { SiteDefaultTheme } from '../../../../../lib/theme/theme-scope';
+
+const DEFAULT_THEME_OPTIONS: Array<{ value: SiteDefaultTheme; labelKey: string }> = [
+  { value: 'system', labelKey: 'settings.defaultThemeSystem' },
+  { value: 'light', labelKey: 'common.lightMode' },
+  { value: 'dark', labelKey: 'common.darkMode' },
+];
 
 export default component$(() => {
   const { lang } = useTranslate();
@@ -264,6 +276,26 @@ export default component$(() => {
                 </button>
               </div>
             </div>
+          </div>
+
+          {/* Theme for first-time visitors; their own toggle still wins afterwards */}
+          <div>
+            <label for="default_theme" class={ADMIN_FORM_LABEL_CLASS}>
+              {translateApp(lang, 'settings.defaultTheme')}
+            </label>
+            <select id="default_theme" name="default_theme" class={`${ADMIN_NATIVE_SELECT_CLASS} md:max-w-xs`}>
+              {DEFAULT_THEME_OPTIONS.map((opt) => (
+                <option
+                  key={opt.value}
+                  value={opt.value}
+                  selected={settings.value.default_theme === opt.value}
+                  class={ADMIN_NATIVE_OPTION_CLASS}
+                >
+                  {translateApp(lang, opt.labelKey)}
+                </option>
+              ))}
+            </select>
+            <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">{translateApp(lang, 'settings.defaultThemeHint')}</p>
           </div>
 
           <div class="grid gap-4 md:grid-cols-2">
