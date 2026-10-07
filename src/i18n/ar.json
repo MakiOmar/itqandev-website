@@ -1441,6 +1441,8 @@
       "alignLeft": "يسار",
       "alignCenter": "وسط",
       "alignRight": "يمين",
+      "alignStart": "البداية",
+      "alignEnd": "النهاية",
       "width": "العرض",
       "maxWidth": "أقصى عرض",
       "height": "الارتفاع",

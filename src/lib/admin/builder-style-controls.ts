@@ -209,9 +209,9 @@ const LOGO_PART_CONTROLS: StyleControl[] = [
     group: 'logo_name',
     type: 'choose',
     options: [
-      { value: 'left', labelKey: 'builder.style.alignLeft' },
+      { value: 'start', labelKey: 'builder.style.alignStart' },
       { value: 'center', labelKey: 'builder.style.alignCenter' },
-      { value: 'right', labelKey: 'builder.style.alignRight' },
+      { value: 'end', labelKey: 'builder.style.alignEnd' },
     ],
   },
   { key: 'logo_name_font_size', group: 'logo_name', type: 'length', min: 8, max: 96 },

@@ -204,7 +204,10 @@
   text-decoration: none;
   color: inherit;
 }
-/* Grid, not flex: `justify-items` takes left / center / right, so the mark lines up with the text in RTL too. */
+/*
+ * Grid, not flex: `justify-items` takes the same values as `text-align`, so the mark lines up with the text.
+ * `start` / `end` (Style tab) flip with the page direction; saved `left` / `right` stay physical.
+ */
 .tl[data-layout='stacked'] {
   display: inline-grid;
   justify-items: var(--tl-align);
