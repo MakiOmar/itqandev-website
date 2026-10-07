@@ -319,7 +319,7 @@ Shared tokens and reset live in **`src/styles/foundation.css`**. Critical first 
 
 Configs: `tailwind.site.config.js`, `tailwind.admin.config.js` (theme in `tailwind.shared.js`).
 
-**Browser baseline:** `browserslist` in `package.json` (Chrome/Edge 111+, Firefox 128+, Safari/iOS 16.4+) matches Tailwind v4's minimum and drives `autoprefixer`, so no prefixes are emitted for browsers the site cannot run on anyway. `-webkit-text-size-adjust` (iOS Safari) and `-moz-osx-font-smoothing` (macOS Firefox) stay on purpose; other Firefox builds log them as ignored, which is harmless.
+**Browser baseline:** `browserslist` in `package.json` (Chrome/Edge 111+, Firefox 128+, Safari/iOS 16.4+) matches Tailwind v4's minimum and drives `autoprefixer`, so no prefixes are emitted for browsers the site cannot run on anyway. `-webkit-text-size-adjust: 100%` (stops iOS Safari enlarging text in landscape) stays on purpose; Firefox logs it as dropped, which is harmless. Use `-webkit-line-clamp` only (no unprefixed `line-clamp`) — every supported browser handles the prefixed form.
 
 ### Static asset browser cache (Apache)
 
