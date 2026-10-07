@@ -321,6 +321,8 @@ Configs: `tailwind.site.config.js`, `tailwind.admin.config.js` (theme in `tailwi
 
 **Browser baseline:** `browserslist` in `package.json` (Chrome/Edge 111+, Firefox 128+, Safari/iOS 16.4+) matches Tailwind v4's minimum and drives `autoprefixer`, so no prefixes are emitted for browsers the site cannot run on anyway. `-webkit-text-size-adjust: 100%` (stops iOS Safari enlarging text in landscape) stays on purpose; Firefox logs it as dropped, which is harmless. Use `-webkit-line-clamp` only (no unprefixed `line-clamp`) — every supported browser handles the prefixed form.
 
+**Language flags:** switchers render `LanguageFlag` (`src/components/common/LanguageFlag.tsx`), which loads same-origin SVGs from `public/flags/{country}.svg` — not emoji, because Windows has no flag glyphs (Chrome/Edge show "GB" instead). The language → country map lives in `src/lib/i18n/language-flags.ts`; after adding a row run **`npm run flags:sync`** to extract the matching 4:3 flag from the `@iconify-json/flag` dev dependency (flag-icons, MIT) and commit the new file.
+
 ### Static asset browser cache (Apache)
 
 Production static deploys use **`public/.htaccess`** (copied into `dist/` on build). Fingerprinted `/build/*` and `/assets/*` get `Cache-Control: public, max-age=31536000, immutable`; root images (hero, icons) get 7-day cache with `stale-while-revalidate`. HTML document caching for SSR is set in `src/routes/layout.tsx` (`onGet` → `cacheControl()`). Full stack table: **[docs/CONFIGURATION.md](../../docs/CONFIGURATION.md)** (HTTP browser caching).

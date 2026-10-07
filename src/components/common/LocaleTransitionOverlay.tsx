@@ -11,7 +11,7 @@ import {
   LocaleTransitionContext,
   type LocaleTransitionState,
 } from '~/lib/i18n/locale-transition';
-import { getLanguageFlagEmoji } from '~/lib/i18n/language-flags';
+import { LanguageFlag } from '~/components/common/LanguageFlag';
 
 const SWITCHING_MESSAGE: Record<string, string> = {
   en: 'Switching language…',
@@ -68,7 +68,7 @@ const LocaleTransitionOverlayView = component$<{ state: LocaleTransitionState }>
     >
       <div class="locale-transition-overlay__panel">
         <span class="locale-transition-overlay__flag" aria-hidden="true">
-          {getLanguageFlagEmoji(targetLang || 'en')}
+          <LanguageFlag lang={targetLang || 'en'} class="h-10 w-[3.333rem]" />
         </span>
         <div class="locale-transition-overlay__spinner" aria-hidden="true" />
         <p class="locale-transition-overlay__message">{message}</p>

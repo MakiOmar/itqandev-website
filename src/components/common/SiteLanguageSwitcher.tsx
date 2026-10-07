@@ -2,7 +2,7 @@ import { component$, useContext, useSignal, $ } from '@builder.io/qwik';
 import { useLocation, useNavigate } from '@builder.io/qwik-city';
 import { useSpeakLocale } from 'qwik-speak';
 import { persistPreferredLocale } from '~/lib/i18n/preferred-locale-persist';
-import { getLanguageFlagEmoji } from '~/lib/i18n/language-flags';
+import { LanguageFlag } from '~/components/common/LanguageFlag';
 import { isUiLocaleRtl } from '~/lib/i18n/ui-locale-segments';
 import { beginLocaleTransition, LocaleTransitionContext } from '~/lib/i18n/locale-transition';
 import { publicHeaderLanguageOptions } from '~/lib/i18n/public-site-languages';
@@ -71,9 +71,7 @@ export const SiteLanguageSwitcher = component$<{
         aria-label="Change language"
       >
         {showFlag ? (
-          <span class="text-lg leading-none" aria-hidden="true">
-            {getLanguageFlagEmoji(current.code)}
-          </span>
+          <LanguageFlag lang={current.code} />
         ) : null}
         {showLabel ? (
           <>
@@ -117,9 +115,7 @@ export const SiteLanguageSwitcher = component$<{
                       : 'light:text-slate-800 light:hover:bg-slate-50 dark:text-slate-200 dark:hover:bg-slate-800'
                   }`}
                 >
-                  <span class="text-xl leading-none" aria-hidden="true">
-                    {getLanguageFlagEmoji(row.code)}
-                  </span>
+                  <LanguageFlag lang={row.code} class="h-4 w-[1.333rem]" />
                   <span>{row.native_label || row.label || row.code}</span>
                   {active ? (
                     <svg

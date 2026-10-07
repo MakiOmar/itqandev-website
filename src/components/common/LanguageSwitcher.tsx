@@ -2,7 +2,7 @@ import { component$, useSignal, $ } from '@builder.io/qwik';
 import { useLocation, useNavigate } from '@builder.io/qwik-city';
 import { useSpeakLocale, useSpeakConfig } from 'qwik-speak';
 import { persistPreferredLocale } from '../../lib/i18n/preferred-locale-persist';
-import { getLanguageFlagEmoji } from '../../lib/i18n/language-flags';
+import { LanguageFlag } from './LanguageFlag';
 import { isUiLocaleRtl } from '../../lib/i18n/ui-locale-segments';
 import { swapUiLocaleInPathname } from '../../lib/i18n/ui-locale-path';
 
@@ -62,7 +62,7 @@ export const LanguageSwitcher = component$(() => {
           class="flex items-center gap-2 px-3 py-2 text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors"
           aria-label="Change language"
         >
-          <span class="text-lg">{getLanguageFlagEmoji(locale.lang)}</span>
+          <LanguageFlag lang={locale.lang} />
           <span class="hidden sm:inline">{getLanguageName(locale.lang)}</span>
           <svg
             class={`w-4 h-4 transition-transform ${isOpen.value ? 'rotate-180' : ''}`}
@@ -100,7 +100,7 @@ export const LanguageSwitcher = component$(() => {
                       : 'text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700'
                   }`}
                 >
-                  <span class="text-xl">{getLanguageFlagEmoji(supportedLocale.lang)}</span>
+                  <LanguageFlag lang={supportedLocale.lang} class="h-4 w-[1.333rem]" />
                   <span>{getLanguageName(supportedLocale.lang)}</span>
                   {locale.lang === supportedLocale.lang && (
                     <svg
