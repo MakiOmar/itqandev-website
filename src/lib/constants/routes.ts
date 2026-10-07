@@ -15,6 +15,7 @@ export function getLocalizedRoutes(lang: string) {
       LOGIN: L(config.routes.admin.login),
       PROFILE: L(`${p}/profile`),
       USERS: L(`${p}/users`),
+      USERS_NEW: L(`${p}/users/new`),
       SETTINGS: L(`${p}/settings`),
       SETTINGS_GENERAL: L(`${p}/settings/general`),
       SETTINGS_SOCIAL: L(`${p}/settings/social`),
@@ -115,6 +116,12 @@ export function adminServiceEditHref(lang: string, id: string | number): string 
   const config = getConfig();
   const p = config.routes.admin.prefix;
   return withUiLocale(lang, `${p}/services/${id}`);
+}
+
+export function adminUserEditHref(lang: string, id: string | number): string {
+  const config = getConfig();
+  const p = config.routes.admin.prefix;
+  return withUiLocale(lang, `${p}/users/${id}`);
 }
 
 export function adminTestimonialEditHref(lang: string, id: string | number): string {

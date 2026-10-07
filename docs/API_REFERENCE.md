@@ -251,6 +251,38 @@ Admin **create/update** for pages, projects, blog posts, services, categories, s
 }
 ```
 
+Deleting your own account returns **403**.
+
+### Account status (`active` / `inactive`)
+
+The Laravel routes live under `/api/v1/users` (same `feature.module:users` gate). Every user has `status`, which is `active` (the default) or `inactive`. `POST` and `PUT` accept an optional `status`.
+
+- An **inactive** user cannot log in. `POST /api/login` returns 422 with an error on `email`.
+- Setting a user inactive deletes all of their Sanctum tokens. Any request that still arrives with an old token gets **403** `{ "message": "This account is inactive." }` (`active.user` middleware on the `auth:sanctum` group).
+- You cannot deactivate your own account (`PUT` returns 422).
+
+### POST `/api/v1/users/bulk-status`
+
+Throttled with `throttle:bulk`. Requires the `bulkUpdate` ability on users.
+
+```json
+{ "ids": [2, 3], "status": "inactive" }
+```
+
+**Success (200):** `{ "updated": 2, "status": "inactive", "message": "..." }`. When deactivating, the acting user's own id is skipped.
+
+### POST `/api/v1/users/bulk-delete`
+
+Throttled with `throttle:bulk`. Requires the `bulkDelete` ability on users.
+
+```json
+{ "ids": [2, 3] }
+```
+
+**Success (200):** `{ "deleted": 2, "message": "..." }`. The acting user's own id is always skipped, and role assignments are detached.
+
+`ids` must contain 1–500 distinct, existing user ids. Anything else returns 422.
+
 ---
 
 ## Response Formats

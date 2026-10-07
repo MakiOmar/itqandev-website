@@ -16,6 +16,9 @@ export const API_ENDPOINTS = {
     CREATE: '/v1/users',
     UPDATE: (id: string) => `/v1/users/${id}`,
     DELETE: (id: string) => `/v1/users/${id}`,
+    BULK_DELETE: '/v1/users/bulk-delete',
+    BULK_STATUS: '/v1/users/bulk-status',
+    ROLES: '/v1/roles',
   },
   // Settings
   SETTINGS: {

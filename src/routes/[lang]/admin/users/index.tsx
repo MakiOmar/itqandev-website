@@ -1,434 +1,298 @@
-import { component$, useSignal, $ } from '@builder.io/qwik';
+import { component$, useSignal, useComputed$, $ } from '@builder.io/qwik';
 import type { DocumentHead } from '@builder.io/qwik-city';
-import { routeLoader$, routeAction$, Form, zod$, z, useNavigate } from '@builder.io/qwik-city';
+import { Link, routeLoader$ } from '@builder.io/qwik-city';
 import { PageHeader } from '../../../../components/common/PageHeader';
-import { LoadingSpinner } from '../../../../components/common/LoadingSpinner';
+import { EmptyState } from '../../../../components/common/EmptyState';
 import { useTranslate, translateApp } from '../../../../lib/i18n/useTranslate';
 import { useSwal } from '../../../../lib/hooks/useSwal';
-import { getApiClient, extractCookieHeader } from '../../../../lib/api/client';
-import { API_ENDPOINTS } from '../../../../lib/api/endpoints';
-import type { User } from '../../../../lib/auth/types';
+import { adminApiClient } from '../../../../lib/admin/admin-api-client';
+import { adminUserEditHref, useAppRoutes } from '../../../../lib/constants/routes';
+import { showError as showErrorToast, showSuccess as showSuccessToast } from '../../../../lib/utils/toast';
+import {
+  loadUsers,
+  runUserBulkDeleteFromBrowser,
+  runUserBulkStatusFromBrowser,
+  runUserDeleteFromBrowser,
+  type AdminUser,
+  type AdminUserStatus,
+} from '../../../../lib/admin/user-actions';
+import { ADMIN_CHECKBOX_CLASS } from '../../../../lib/admin/native-select-classes';
+import { useAdminAuth } from '../layout';
 
-/**
- * Role interface
- */
-interface Role {
-  id: number;
-  name: string;
-}
-
-/**
- * Users route loader
- */
-export const useUsers = routeLoader$(async ({ cookie, request }) => {
+export const useUsersList = routeLoader$(async ({ cookie, request, params }) => {
   try {
-    const cookieHeader = extractCookieHeader(cookie, request);
-    const apiClient = getApiClient(cookieHeader);
-    const response = await apiClient.get<User[]>(API_ENDPOINTS.USERS.LIST);
-    
-    // Handle paginated response
-    if (response && 'data' in response && response.data) {
-      const data = response.data as any;
-      if (Array.isArray(data)) {
-        return data as User[];
-      } else if (data && typeof data === 'object' && 'data' in data && Array.isArray(data.data)) {
-        return data.data as User[];
-      }
-    }
-    
-    return [];
-  } catch (error: any) {
-    console.error('Failed to load users:', error);
-    return [];
+    return { users: await loadUsers(adminApiClient(cookie, request, params.lang)), error: null as string | null };
+  } catch (err: unknown) {
+    console.error('Failed to load users:', err);
+    return { users: [] as AdminUser[], error: (err as Error)?.message || 'Failed to load users' };
   }
 });
 
-/**
- * Roles route loader
- */
-export const useRoles = routeLoader$(async ({ cookie, request }) => {
-  try {
-    const cookieHeader = extractCookieHeader(cookie, request);
-    const apiClient = getApiClient(cookieHeader);
-    // Try /v1/roles endpoint (from Laravel API)
-    const response = await apiClient.get<Role[]>('/v1/roles').catch(() => ({ data: [] }));
-    
-    // Handle paginated response
-    if (response && 'data' in response && response.data) {
-      const data = response.data as any;
-      if (Array.isArray(data)) {
-        return data as Role[];
-      } else if (data && typeof data === 'object' && 'data' in data && Array.isArray(data.data)) {
-        return data.data as Role[];
-      }
-    }
-    
-    return [];
-  } catch (error: any) {
-    console.error('Failed to load roles:', error);
-    return [];
-  }
-});
+const BTN_SECONDARY =
+  'rounded border border-gray-300 px-2 py-1 text-gray-700 hover:bg-gray-50 disabled:opacity-60 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-800';
 
 /**
- * User schema
- */
-const userSchema = z.object({
-  name: z.string().min(1, 'Name is required'),
-  email: z.string().email('Please enter a valid email address'),
-  password: z.string().optional(),
-  role_ids: z.union([z.array(z.number()), z.string()]).optional(),
-});
-
-/**
- * Create/Update user action
- */
-export const useSaveUser = routeAction$(
-  async (data) => {
-    try {
-      const apiClient = getApiClient();
-      
-      // Handle role_ids - can be array or string
-      const roleIds = Array.isArray(data.role_ids) 
-        ? data.role_ids 
-        : typeof data.role_ids === 'string' 
-          ? data.role_ids.split(',').map(id => Number(id)).filter(id => !isNaN(id))
-          : [];
-
-      const payload: any = {
-        name: data.name,
-        email: data.email,
-        role_ids: roleIds,
-      };
-      
-      // Only include password if provided
-      if (data.password) {
-        payload.password = data.password;
-      }
-
-      const id = typeof data.id === 'string' ? Number(data.id) : data.id;
-      if (id) {
-        // Update existing user
-        await apiClient.put(API_ENDPOINTS.USERS.UPDATE(String(id)), payload);
-      } else {
-        // Create new user
-        await apiClient.post(API_ENDPOINTS.USERS.CREATE, payload);
-      }
-
-      return { success: true };
-    } catch (error: any) {
-      return {
-        success: false,
-        error: error.message || 'Failed to save user',
-      };
-    }
-  },
-  zod$(userSchema.extend({ id: z.union([z.string(), z.number()]).optional() })),
-);
-
-/**
- * Delete user action
- */
-export const useDeleteUser = routeAction$(
-  async (data, { fail }) => {
-    try {
-      const apiClient = getApiClient();
-      await apiClient.delete(API_ENDPOINTS.USERS.DELETE(data.userId as string));
-      return { success: true };
-    } catch (error: any) {
-      return fail(500, { message: error.message || 'Failed to delete user' });
-    }
-  },
-  zod$({
-    userId: z.string(),
-  }),
-);
-
-/**
- * User management page (Admin only) - Matching Vue Dashboard
+ * Users list (Admin only). Create and edit live on `users/new` and `users/[id]`.
  */
 export default component$(() => {
   const { lang } = useTranslate();
-  const { confirm, error: showError, success } = useSwal();
-  const usersLoader = useUsers();
-  const rolesLoader = useRoles();
-  const saveAction = useSaveUser();
-  const deleteAction = useDeleteUser();
-  const navigate = useNavigate();
+  const R = useAppRoutes();
+  const { confirm } = useSwal();
+  const listLoader = useUsersList();
+  const session = useAdminAuth();
+  const currentUserId = Number(session.value?.user?.id ?? 0);
 
-  const users = useSignal(usersLoader.value);
-  const roles = useSignal(rolesLoader.value);
-  const loading = useSignal(false);
-  const showForm = useSignal(false);
-  const editingUserId = useSignal<number | null>(null);
-  
-  const formUser = useSignal({
-    id: null as number | null,
-    name: '',
-    email: '',
-    password: '',
-    role_ids: [] as number[],
+  const users = useSignal<AdminUser[]>(listLoader.value.users);
+  const searchQuery = useSignal('');
+  const selectedItems = useSignal<string[]>([]);
+  const bulkRunning = useSignal(false);
+
+  const filteredUsers = useComputed$(() => {
+    const q = searchQuery.value.trim().toLowerCase();
+    if (!q) return users.value;
+    return users.value.filter(
+      (u) =>
+        u.name.toLowerCase().includes(q) ||
+        u.email.toLowerCase().includes(q) ||
+        u.roles.some((r) => r.name.toLowerCase().includes(q)),
+    );
   });
 
-  const resetForm = $(() => {
-    formUser.value = {
-      id: null,
-      name: '',
-      email: '',
-      password: '',
-      role_ids: [],
-    };
-    editingUserId.value = null;
-    showForm.value = false;
-  });
-
-  const editUser = $((user: any) => {
-    const userId = typeof user.id === 'string' ? Number(user.id) : user.id;
-    formUser.value = {
-      id: userId,
-      name: user.name || '',
-      email: user.email || '',
-      password: '',
-      role_ids: (user.roles as any)?.map((r: any) => typeof r.id === 'string' ? Number(r.id) : r.id) ?? [],
-    };
-    editingUserId.value = userId;
-    showForm.value = true;
-  });
-
-  // Pre-compute translation strings to avoid serialization issues
-  const saveTranslations = {
-    successTitle: String(translateApp(lang, 'common.success')),
-    updatedText: String(translateApp(lang, 'common.updated')),
-    createdText: String(translateApp(lang, 'common.created')),
-  };
-  const deleteTranslations = {
-    confirmText: String(translateApp(lang, 'users.deleteConfirm')),
-    title: String(translateApp(lang, 'common.delete')),
-    successTitle: String(translateApp(lang, 'common.success')),
-    deletedText: String(translateApp(lang, 'common.deleted')),
-    failedText: String(translateApp(lang, 'users.deleteFailed')),
+  const text = {
+    deleteConfirm: String(translateApp(lang, 'users.deleteConfirm')),
+    bulkDeleteConfirm: String(translateApp(lang, 'users.bulkDeleteConfirm')),
+    deleteTitle: String(translateApp(lang, 'common.delete')),
+    deleted: String(translateApp(lang, 'common.deleted')),
+    bulkDeleted: String(translateApp(lang, 'users.bulkDeleted')),
+    activated: String(translateApp(lang, 'users.bulkActivated')),
+    deactivated: String(translateApp(lang, 'users.bulkDeactivated')),
+    deleteSelf: String(translateApp(lang, 'users.deleteSelfError')),
   };
 
-  const handleSave = $(async () => {
-    const formData = new FormData();
-    formData.append('name', formUser.value.name);
-    formData.append('email', formUser.value.email);
-    if (formUser.value.password) {
-      formData.append('password', formUser.value.password);
-    }
-    if (formUser.value.id) {
-      formData.append('id', formUser.value.id.toString());
-    }
-    formUser.value.role_ids.forEach(id => {
-      formData.append('role_ids[]', id.toString());
-    });
-    
-    const response = await saveAction.submit(formData);
-    if (response.value?.success) {
-      await success(saveTranslations.successTitle, { text: formUser.value.id ? saveTranslations.updatedText : saveTranslations.createdText });
-      resetForm();
-      navigate(window.location.pathname);
-    } else {
-      await showError((response.value as any)?.error || 'Failed to save user');
-    }
+  const toggleSelect = $((id: string) => {
+    const set = new Set(selectedItems.value);
+    if (set.has(id)) set.delete(id);
+    else set.add(id);
+    selectedItems.value = [...set];
   });
 
-  const handleDelete = $(async (id: string | number) => {
-    const user = users.value.find((u: any) => u.id === id);
-    if (!user) return;
+  const selectAll = $(() => {
+    selectedItems.value = filteredUsers.value.filter((u) => u.id !== currentUserId).map((u) => String(u.id));
+  });
 
-    const result = await confirm(deleteTranslations.confirmText, { icon: 'warning', title: deleteTranslations.title });
+  const deselectAll = $(() => {
+    selectedItems.value = [];
+  });
+
+  const handleDelete = $(async (user: AdminUser) => {
+    if (user.id === currentUserId) {
+      showErrorToast(text.deleteSelf);
+      return;
+    }
+    const result = await confirm(text.deleteConfirm, { icon: 'warning', title: text.deleteTitle });
     if (!result.isConfirmed) return;
 
-    const response = await deleteAction.submit({ userId: id.toString() });
-    if (response.value?.success) {
-      await success(deleteTranslations.successTitle, { text: deleteTranslations.deletedText });
-      navigate(window.location.pathname);
-    } else {
-      await showError((response.value as any)?.message || deleteTranslations.failedText);
+    const deleted = await runUserDeleteFromBrowser(user.id);
+    if (!deleted.ok) {
+      showErrorToast(deleted.message);
+      return;
     }
+    users.value = users.value.filter((u) => u.id !== user.id);
+    selectedItems.value = selectedItems.value.filter((id) => id !== String(user.id));
+    showSuccessToast(text.deleted);
+  });
+
+  const handleBulkDelete = $(async () => {
+    if (selectedItems.value.length === 0 || bulkRunning.value) return;
+    const result = await confirm(text.bulkDeleteConfirm.replace('{count}', String(selectedItems.value.length)), {
+      icon: 'warning',
+      title: text.deleteTitle,
+    });
+    if (!result.isConfirmed) return;
+
+    bulkRunning.value = true;
+    const ids = [...selectedItems.value];
+    const deleted = await runUserBulkDeleteFromBrowser(ids);
+    bulkRunning.value = false;
+    if (!deleted.ok) {
+      showErrorToast(deleted.message);
+      return;
+    }
+    // The API never deletes the acting user, so keep that row even if it was selected.
+    const removed = new Set(ids.filter((id) => Number(id) !== currentUserId));
+    users.value = users.value.filter((u) => !removed.has(String(u.id)));
+    selectedItems.value = [];
+    showSuccessToast(text.bulkDeleted.replace('{count}', String(deleted.count)));
+  });
+
+  const handleBulkStatus = $(async (status: AdminUserStatus) => {
+    if (selectedItems.value.length === 0 || bulkRunning.value) return;
+    bulkRunning.value = true;
+    const ids = [...selectedItems.value];
+    const res = await runUserBulkStatusFromBrowser(ids, status);
+    bulkRunning.value = false;
+    if (!res.ok) {
+      showErrorToast(res.message);
+      return;
+    }
+    const changed = new Set(ids.filter((id) => status === 'active' || Number(id) !== currentUserId));
+    users.value = users.value.map((u) => (changed.has(String(u.id)) ? { ...u, status } : u));
+    selectedItems.value = [];
+    showSuccessToast((status === 'active' ? text.activated : text.deactivated).replace('{count}', String(res.count)));
   });
 
   return (
     <>
-      {/* Component: UsersPage */}
-      <div>
-        <PageHeader
-          title={translateApp(lang, 'users.title')}
-          description={translateApp(lang, 'users.subtitle')}
-        >
-          <div class="flex gap-2">
-            {!showForm.value ? (
+      {/* Component: UsersListPage */}
+      <PageHeader title={translateApp(lang, 'users.title')} description={translateApp(lang, 'users.subtitle')}>
+        <div class="flex flex-wrap gap-2">
+          <button
+            type="button"
+            onClick$={selectAll}
+            class="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm transition hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 dark:hover:bg-gray-700"
+          >
+            {translateApp(lang, 'common.selectAll')}
+          </button>
+          <Link
+            href={R.ADMIN.USERS_NEW}
+            class="inline-flex items-center justify-center rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-primary-700"
+          >
+            {translateApp(lang, 'users.addNew')}
+          </Link>
+        </div>
+      </PageHeader>
+
+      <div class="rounded-lg border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-800 dark:bg-gray-800">
+        {/* List header + bulk bar */}
+        <div class="mb-4 flex flex-wrap items-center justify-between gap-2">
+          <h2 class="text-lg font-semibold text-gray-900 dark:text-gray-100">{translateApp(lang, 'users.list')}</h2>
+          {selectedItems.value.length > 0 && (
+            <div class="flex flex-wrap items-center gap-2 rounded-lg border border-red-200 bg-red-50 px-3 py-1.5 text-xs text-red-700 dark:border-red-800 dark:bg-red-900/20 dark:text-red-100">
+              <span>
+                {selectedItems.value.length} {translateApp(lang, 'common.selected')}
+              </span>
               <button
-                onClick$={() => (showForm.value = true)}
-                class="rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-primary-700"
+                type="button"
+                disabled={bulkRunning.value}
+                onClick$={() => handleBulkStatus('active')}
+                class="rounded bg-green-600 px-2 py-1 text-white hover:bg-green-700 disabled:opacity-60"
               >
-                {translateApp(lang, 'users.addNew')}
+                {translateApp(lang, 'users.bulkActivate')}
               </button>
-            ) : (
               <button
-                onClick$={resetForm}
-                class="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm transition hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 dark:hover:bg-gray-700"
+                type="button"
+                disabled={bulkRunning.value}
+                onClick$={() => handleBulkStatus('inactive')}
+                class={`${BTN_SECONDARY} bg-white dark:bg-gray-800`}
               >
+                {translateApp(lang, 'users.bulkDeactivate')}
+              </button>
+              <button
+                type="button"
+                disabled={bulkRunning.value}
+                onClick$={handleBulkDelete}
+                class="rounded bg-red-600 px-2 py-1 text-white hover:bg-red-700 disabled:opacity-60"
+              >
+                {translateApp(lang, 'common.delete')}
+              </button>
+              <button type="button" onClick$={selectAll} class={BTN_SECONDARY}>
+                {translateApp(lang, 'common.selectAll')}
+              </button>
+              <button type="button" onClick$={deselectAll} class={BTN_SECONDARY}>
                 {translateApp(lang, 'common.cancel')}
               </button>
-            )}
-          </div>
-        </PageHeader>
-
-        {/* Form */}
-        {showForm.value && (
-          <div class="mb-6 rounded-lg border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-800 dark:bg-gray-800">
-            <h2 class="mb-4 text-lg font-semibold">
-              {editingUserId.value ? translateApp(lang, 'users.edit') : translateApp(lang, 'users.addNew')}
-            </h2>
-            <Form action={saveAction} class="space-y-4">
-              <input type="hidden" name="id" value={formUser.value.id || ''} />
-              <div class="grid gap-4 md:grid-cols-2">
-                <div>
-                  <label class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-200">
-                    {translateApp(lang, 'users.name')}
-                  </label>
-                  <input
-                    name="name"
-                    type="text"
-                    value={formUser.value.name}
-                    onInput$={(e: any) => (formUser.value.name = e.target.value)}
-                    required
-                    class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-primary-500 focus:outline-none focus:ring focus:ring-primary-200 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:focus:ring-primary-700/40"
-                  />
-                </div>
-                <div>
-                  <label class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-200">
-                    {translateApp(lang, 'users.email')}
-                  </label>
-                  <input
-                    name="email"
-                    type="email"
-                    value={formUser.value.email}
-                    onInput$={(e: any) => (formUser.value.email = e.target.value)}
-                    required
-                    class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-primary-500 focus:outline-none focus:ring focus:ring-primary-200 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:focus:ring-primary-700/40"
-                  />
-                </div>
-              </div>
-              <div>
-                <label class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-200">
-                  {translateApp(lang, 'users.password')} {editingUserId.value ? translateApp(lang, 'users.passwordHint') : ''}
-                </label>
-                <input
-                  name="password"
-                  type="password"
-                  value={formUser.value.password}
-                  onInput$={(e: any) => (formUser.value.password = e.target.value)}
-                  required={!editingUserId.value}
-                  class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-primary-500 focus:outline-none focus:ring focus:ring-primary-200 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:focus:ring-primary-700/40"
-                />
-              </div>
-              <div>
-                <label class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-200">
-                  {translateApp(lang, 'users.roles')}
-                </label>
-                <select
-                  name="role_ids[]"
-                  multiple
-                  value={formUser.value.role_ids.map(String)}
-                  onChange$={(e: any) => {
-                    const selected = Array.from(e.target.selectedOptions, (opt: any) => {
-                      const val = Number(opt.value);
-                      return isNaN(val) ? 0 : val;
-                    }).filter(id => id > 0);
-                    formUser.value.role_ids = selected;
-                  }}
-                  class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-primary-500 focus:outline-none focus:ring focus:ring-primary-200 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:focus:ring-primary-700/40"
-                >
-                  {roles.value.map((role) => (
-                    <option key={role.id} value={String(role.id)}>
-                      {role.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div class="flex gap-2">
-                <button
-                  type="submit"
-                  onClick$={handleSave}
-                  disabled={saveAction.isRunning}
-                  class="rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-primary-700 disabled:opacity-50"
-                >
-                  {editingUserId.value ? translateApp(lang, 'common.update') : translateApp(lang, 'common.add')}
-                </button>
-                <button
-                  type="button"
-                  onClick$={resetForm}
-                  class="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm transition hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 dark:hover:bg-gray-700"
-                >
-                  {translateApp(lang, 'common.cancel')}
-                </button>
-              </div>
-            </Form>
-          </div>
-        )}
-
-        {/* Users List */}
-        <div class="rounded-lg border border-gray-200 bg-white shadow-sm dark:border-gray-800 dark:bg-gray-800">
-          <div class="border-b border-gray-200 p-4 dark:border-gray-700">
-            <h2 class="text-lg font-semibold">{translateApp(lang, 'users.list')}</h2>
-          </div>
-          {loading.value ? (
-            <div class="py-8 text-center text-gray-500 dark:text-gray-400">
-              <LoadingSpinner />
-            </div>
-          ) : users.value.length === 0 ? (
-            <div class="py-8 text-center text-gray-500 dark:text-gray-400">{translateApp(lang, 'users.noUsers')}</div>
-          ) : (
-            <div class="divide-y divide-gray-200 dark:divide-gray-700">
-              {users.value.map((user: any) => (
-                <div
-                  key={user.id}
-                  class="flex items-center justify-between p-4 transition-colors hover:bg-gray-50 dark:hover:bg-gray-700/50"
-                >
-                  <div class="flex-1">
-                    <h3 class="font-semibold text-gray-900 dark:text-gray-100">{user.name}</h3>
-                    <p class="text-sm text-gray-600 dark:text-gray-300">{user.email}</p>
-                    {(user.roles || (user as any).role) && (
-                      <div class="mt-2 flex flex-wrap gap-2">
-                        {Array.isArray(user.roles) && user.roles.length > 0 ? (
-                          user.roles.map((role: any) => (
-                            <span
-                              key={role.id || role}
-                              class="rounded-full bg-primary-100 px-2 py-1 text-xs font-medium text-primary-800 dark:bg-primary-900/20 dark:text-primary-400"
-                            >
-                              {role.name || role}
-                            </span>
-                          ))
-                        ) : (user as any).role ? (
-                          <span class="rounded-full bg-primary-100 px-2 py-1 text-xs font-medium text-primary-800 dark:bg-primary-900/20 dark:text-primary-400">
-                            {(user as any).role}
-                          </span>
-                        ) : null}
-                      </div>
-                    )}
-                  </div>
-                  <div class="flex gap-2">
-                    <button
-                      onClick$={() => editUser(user)}
-                      class="rounded-lg px-3 py-1 text-xs font-medium text-primary-600 hover:bg-primary-50 dark:text-primary-400 dark:hover:bg-primary-900/20"
-                    >
-                      {translateApp(lang, 'common.edit')}
-                    </button>
-                    <button
-                      onClick$={() => handleDelete(user.id)}
-                      class="rounded-lg px-3 py-1 text-xs font-medium text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/20"
-                    >
-                      {translateApp(lang, 'common.delete')}
-                    </button>
-                  </div>
-                </div>
-              ))}
             </div>
           )}
         </div>
+
+        {/* Search */}
+        <div class="mb-4">
+          <input
+            type="text"
+            value={searchQuery.value}
+            onInput$={(e) => (searchQuery.value = (e.target as HTMLInputElement).value)}
+            placeholder={translateApp(lang, 'common.search')}
+            class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-primary-500 focus:outline-none focus:ring focus:ring-primary-200 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:focus:ring-primary-700/40"
+          />
+        </div>
+
+        {listLoader.value.error && (
+          <p class="mb-4 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700 dark:border-red-800 dark:bg-red-900/20 dark:text-red-200">
+            {listLoader.value.error}
+          </p>
+        )}
+
+        {/* Rows */}
+        {filteredUsers.value.length === 0 ? (
+          <EmptyState title={translateApp(lang, 'users.noUsers')} />
+        ) : (
+          <ul class="divide-y divide-gray-200 dark:divide-gray-700">
+            {filteredUsers.value.map((user) => {
+              const isSelf = user.id === currentUserId;
+              return (
+                <li key={user.id} class="flex items-center justify-between gap-3 py-4">
+                  <div class="flex min-w-0 flex-1 items-start gap-3">
+                    <input
+                      type="checkbox"
+                      disabled={isSelf}
+                      aria-label={user.name}
+                      checked={selectedItems.value.includes(String(user.id))}
+                      onChange$={() => toggleSelect(String(user.id))}
+                      class={`${ADMIN_CHECKBOX_CLASS} mt-1 shrink-0 disabled:opacity-40`}
+                    />
+                    <div class="min-w-0 flex-1">
+                      <div class="flex flex-wrap items-center gap-2">
+                        <h3 class="font-semibold text-gray-900 dark:text-gray-100">{user.name}</h3>
+                        <span
+                          class={
+                            user.status === 'active'
+                              ? 'rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-800 dark:bg-green-900/20 dark:text-green-400'
+                              : 'rounded-full bg-gray-200 px-2 py-0.5 text-xs font-medium text-gray-700 dark:bg-gray-700 dark:text-gray-300'
+                          }
+                        >
+                          {translateApp(lang, user.status === 'active' ? 'users.statusActive' : 'users.statusInactive')}
+                        </span>
+                        {isSelf && (
+                          <span class="text-xs text-gray-500 dark:text-gray-400">({translateApp(lang, 'users.you')})</span>
+                        )}
+                      </div>
+                      <p class="text-sm text-gray-600 dark:text-gray-300">{user.email}</p>
+                      {user.roles.length > 0 && (
+                        <div class="mt-2 flex flex-wrap gap-2">
+                          {user.roles.map((role) => (
+                            <span
+                              key={role.id}
+                              class="rounded-full bg-primary-100 px-2 py-1 text-xs font-medium text-primary-800 dark:bg-primary-900/20 dark:text-primary-400"
+                            >
+                              {role.name}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                  <div class="flex shrink-0 gap-2">
+                    <Link
+                      href={adminUserEditHref(lang, user.id)}
+                      class="rounded-lg bg-primary-600 px-3 py-1.5 text-xs font-medium text-white transition hover:bg-primary-700"
+                    >
+                      {translateApp(lang, 'common.edit')}
+                    </Link>
+                    {!isSelf && (
+                      <button
+                        type="button"
+                        onClick$={() => handleDelete(user)}
+                        class="rounded-lg border border-red-300 px-3 py-1.5 text-xs font-medium text-red-600 transition hover:bg-red-50 dark:border-red-700 dark:text-red-400 dark:hover:bg-red-900/20"
+                      >
+                        {translateApp(lang, 'common.delete')}
+                      </button>
+                    )}
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
+        )}
       </div>
     </>
   );
@@ -436,10 +300,5 @@ export default component$(() => {
 
 export const head: DocumentHead = {
   title: 'Users - Dashboard',
-  meta: [
-    {
-      name: 'description',
-      content: 'Manage system users',
-    },
-  ],
+  meta: [{ name: 'description', content: 'Manage system users' }],
 };
