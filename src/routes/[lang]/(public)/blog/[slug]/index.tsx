@@ -12,6 +12,7 @@ import { Container } from '~/components/marketing/Container';
 import { Section } from '~/components/marketing/Section';
 import { AnimatedReveal } from '~/components/marketing/AnimatedReveal';
 import { ContentImage } from '~/components/marketing/ContentImage';
+import { MarketingImageLightbox } from '~/components/marketing/MarketingImageLightbox';
 import { ThemeBodyOrFallback } from '~/components/marketing/theme/ThemeBodyOrFallback';
 import { entityEditTarget, useAdminEditTarget } from '~/lib/marketing/admin-edit-target';
 

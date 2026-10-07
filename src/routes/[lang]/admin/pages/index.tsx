@@ -143,7 +143,7 @@ export default component$(() => {
       return;
     }
     await success(String(translateApp(lang, 'common.deleted')));
-    await refetch();
+    await refetch(lang);
   });
 
   const onBulkDelete$ = $(async () => {
@@ -162,7 +162,7 @@ export default component$(() => {
     selected.value = [];
     selectedForExport.value = new Set();
     await success(String(translateApp(lang, 'common.deleted')));
-    await refetch();
+    await refetch(lang);
   });
 
   return (
@@ -180,7 +180,7 @@ export default component$(() => {
             selectedIds={selectedForExport}
             busy={exportImportBusy}
             onRefetch$={$(async () => {
-              await refetch();
+              await refetch(lang);
             })}
           />
           <Link
