@@ -15,6 +15,7 @@ import {
   getLocalizedRoutes,
 } from '../constants/routes';
 import { translateApp } from '../i18n/translate-app';
+import { withBuilderLocale } from './builder-locale';
 import type { AdminEditTarget } from '../marketing/admin-edit-target';
 
 export type QuickLinkIcon =
@@ -88,7 +89,13 @@ function currentPageLinks(input: QuickLinksInput): QuickLink[] {
 
   if (target?.kind === 'page' && hasAccess(input, PAGES_RULE)) {
     links.push(
-      { id: 'page-builder', label: t('openBuilder'), href: adminPageBuilderHref(lang, target.id), icon: 'builder', hint },
+      {
+        id: 'page-builder',
+        label: t('openBuilder'),
+        href: withBuilderLocale(adminPageBuilderHref(lang, target.id), lang),
+        icon: 'builder',
+        hint,
+      },
       { id: 'page-edit', label: t('editPage'), href: adminPageEditHref(lang, target.id), icon: 'edit' },
     );
   } else if (target?.kind === 'blog' && hasAccess(input, { permission: 'manage blog', feature: 'blog' })) {
@@ -98,7 +105,12 @@ function currentPageLinks(input: QuickLinksInput): QuickLink[] {
   } else if (target?.kind === 'service' && hasAccess(input, { permission: 'manage services', feature: 'services' })) {
     links.push({ id: 'service-edit', label: t('editService'), href: adminServiceEditHref(lang, target.id), icon: 'edit', hint });
   } else if (target?.kind === 'homepage' && !input.themeTemplateId && hasAccess(input, APPEARANCE_RULE)) {
-    links.push({ id: 'homepage', label: t('editHomepage'), href: getLocalizedRoutes(lang).ADMIN.APPEARANCE_HOMEPAGE, icon: 'home' });
+    links.push({
+      id: 'homepage',
+      label: t('editHomepage'),
+      href: withBuilderLocale(getLocalizedRoutes(lang).ADMIN.APPEARANCE_HOMEPAGE, lang),
+      icon: 'home',
+    });
   }
 
   if (input.themeTemplateId && hasAccess(input, APPEARANCE_RULE)) {

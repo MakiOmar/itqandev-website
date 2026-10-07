@@ -78,6 +78,53 @@ export function readAppearanceSettingValue(
   return (bag as Record<string, unknown>)[key] ?? '';
 }
 
+function nonEmptyTranslation(value: unknown): boolean {
+  return value !== null && value !== undefined && !(typeof value === 'string' && value.trim() === '');
+}
+
+function isPlainObject(value: unknown): value is Record<string, unknown> {
+  return !!value && typeof value === 'object' && !Array.isArray(value);
+}
+
+function overlaySharedRepeaterRows(rows: unknown[], bag: SharedRepeaterBag): unknown[] {
+  return rows.map((row) => {
+    if (!isPlainObject(row)) return row;
+    const translated = bag[String(row.id ?? '')];
+    if (!isPlainObject(translated)) return row;
+    const next = { ...row };
+    for (const [itemKey, value] of Object.entries(translated)) {
+      if (nonEmptyTranslation(value)) next[itemKey] = value;
+    }
+    return next;
+  });
+}
+
+/**
+ * Flattens `settings.translations.{locale}` over the primary values, as the public API does
+ * (backend `AppearanceLocalizedSettings::resolveForLocale`): empty translations keep the primary.
+ * Saved bags only hold translatable keys, so no field registry is needed; a row-id map over a
+ * primary array is a shared repeater bag.
+ */
+export function resolveAppearanceSettingsForLocale(
+  settings: Record<string, unknown>,
+  locale: string,
+  defaultLocale: string,
+): Record<string, unknown> {
+  const loc = locale.toLowerCase();
+  const { translations, ...flat } = settings;
+  if (!loc || loc === defaultLocale.toLowerCase() || !isPlainObject(translations)) return flat;
+  const bag = translations[loc];
+  if (!isPlainObject(bag)) return flat;
+  for (const [key, value] of Object.entries(bag)) {
+    if (!nonEmptyTranslation(value)) continue;
+    const primary = flat[key];
+    flat[key] = Array.isArray(primary) && isPlainObject(value)
+      ? overlaySharedRepeaterRows(primary, value as SharedRepeaterBag)
+      : value;
+  }
+  return flat;
+}
+
 export function writeAppearanceSettingValue(
   settings: Record<string, unknown>,
   key: string,

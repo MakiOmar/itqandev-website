@@ -118,6 +118,7 @@ import {
   withBuilderMediaPreview,
   type MediaUrlMap,
 } from '~/lib/admin/builder-media-preview';
+import { bandsWithBuilderLocalePreview, withBuilderLocalePreview } from '~/lib/admin/builder-locale-preview';
 import { API_ENDPOINTS } from '~/lib/api/endpoints';
 import type { PageBuilderDocument } from '~/lib/admin/builder-import-export';
 import type {
@@ -2247,7 +2248,11 @@ export const PageBuilderWorkspace = component$<PageBuilderWorkspaceProps>((props
             ctx={previewCtx}
             theme={previewTheme.value}
             onTheme$={setPreviewTheme$}
-            bands={bandsWithBuilderMediaPreview(resolvedBands ?? bands, props.registry.value, mediaPreviewById.value)}
+            bands={bandsWithBuilderLocalePreview(
+              bandsWithBuilderMediaPreview(resolvedBands ?? bands, props.registry.value, mediaPreviewById.value),
+              previewCtx.uiLocale,
+              props.defaultLocale,
+            )}
             chromeKind={
               props.exportBuilderKind === 'header' || props.exportBuilderKind === 'footer'
                 ? props.exportBuilderKind
@@ -2963,7 +2968,11 @@ export const PageBuilderWorkspace = component$<PageBuilderWorkspaceProps>((props
                                                     class="[&_iframe]:pointer-events-none [&_video]:pointer-events-none empty:flex empty:min-h-10 empty:items-center empty:justify-center empty:rounded empty:border empty:border-dashed empty:border-gray-300 empty:text-xs empty:text-gray-400 empty:before:content-[attr(data-label)] dark:empty:border-gray-600"
                                                   >
                                                     <PageBuilderCanvasBlock
-                                                      block={withBuilderMediaPreview(shown, props.registry.value, mediaPreviewById.value)}
+                                                      block={withBuilderLocalePreview(
+                                                        withBuilderMediaPreview(shown, props.registry.value, mediaPreviewById.value),
+                                                        previewCtx.uiLocale,
+                                                        props.defaultLocale,
+                                                      )}
                                                       ctx={previewCtx}
                                                     />
                                                   </div>

@@ -1,5 +1,10 @@
 import { component$, useSignal, useVisibleTask$, $ } from '@builder.io/qwik';
-import type { DocumentHead } from '@builder.io/qwik-city';
+import { useLocation, type DocumentHead } from '@builder.io/qwik-city';
+import {
+  BUILDER_LOCALE_PARAM,
+  builderPrimaryLocale,
+  resolveBuilderInitialLocale,
+} from '~/lib/admin/builder-locale';
 import { PageBuilderWorkspace } from '~/components/admin/pages/PageBuilderWorkspace';
 import { useTranslate, translateApp } from '~/lib/i18n/useTranslate';
 import { useSwal } from '~/lib/hooks/useSwal';
@@ -28,12 +33,11 @@ export default component$(() => {
   const sections = useSignal<PageSectionNode[]>([]);
   const registry = useSignal<AppearanceRegistryEntry[]>([]);
   const dynamicTags = useSignal<BuilderDynamicTag[]>([]);
-  const defaultLocale = (
-    langConfig.value.content_editing_locale ||
-    langConfig.value.default_locale ||
-    'en'
-  ).toLowerCase();
-  const activeLocale = useSignal(defaultLocale);
+  const loc = useLocation();
+  const defaultLocale = builderPrimaryLocale(langConfig.value);
+  const activeLocale = useSignal(
+    resolveBuilderInitialLocale(langConfig.value, loc.url.searchParams.get(BUILDER_LOCALE_PARAM)),
+  );
 
   // eslint-disable-next-line qwik/no-use-visible-task
   useVisibleTask$(async () => {

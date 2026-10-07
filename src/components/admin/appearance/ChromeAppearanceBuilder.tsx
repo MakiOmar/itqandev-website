@@ -2,7 +2,13 @@
  * Shared fullscreen layout builder for Appearance → Header / Footer / Body (by layout id).
  */
 import { component$, useSignal, useTask$, useVisibleTask$, $ } from '@builder.io/qwik';
+import { useLocation } from '@builder.io/qwik-city';
 import { PageBuilderWorkspace } from '~/components/admin/pages/PageBuilderWorkspace';
+import {
+  BUILDER_LOCALE_PARAM,
+  builderPrimaryLocale,
+  resolveBuilderInitialLocale,
+} from '~/lib/admin/builder-locale';
 import { usePublicSiteMeta } from '../../../routes/[lang]/admin/layout';
 import { useTranslate, translateApp } from '~/lib/i18n/useTranslate';
 import { useSwal } from '~/lib/hooks/useSwal';
@@ -87,12 +93,11 @@ export const ChromeAppearanceBuilder = component$<ChromeAppearanceBuilderProps>(
     logoDark: '',
     logoLight: '',
   });
-  const defaultLocale = (
-    langConfig.value.content_editing_locale ||
-    langConfig.value.default_locale ||
-    'en'
-  ).toLowerCase();
-  const activeLocale = useSignal(defaultLocale);
+  const loc = useLocation();
+  const defaultLocale = builderPrimaryLocale(langConfig.value);
+  const activeLocale = useSignal(
+    resolveBuilderInitialLocale(langConfig.value, loc.url.searchParams.get(BUILDER_LOCALE_PARAM)),
+  );
   const pageTitle =
     kind === 'header'
       ? translateApp(lang, 'sidebar.appearanceHeader')

@@ -1,6 +1,6 @@
 import { component$, useSignal, $, useVisibleTask$ } from '@builder.io/qwik';
 import type { DocumentHead } from '@builder.io/qwik-city';
-import { routeLoader$ } from '@builder.io/qwik-city';
+import { routeLoader$, useLocation } from '@builder.io/qwik-city';
 import { PageBuilderWorkspace } from '../../../../../../components/admin/pages/PageBuilderWorkspace';
 import { useTranslate, translateApp } from '../../../../../../lib/i18n/useTranslate';
 import { useSwal } from '../../../../../../lib/hooks/useSwal';
@@ -17,6 +17,7 @@ import { uiLocaleFromPublicRoute } from '../../../../../../lib/i18n/ui-locale-pa
 import type { AppearanceRegistryEntry, PageSectionNode } from '../../../../../../lib/marketing/appearance-types';
 import type { AdminPage } from '../../../../../../types/page';
 import { primaryLocaleForContent } from '../../../../../../lib/content-display-locale';
+import { BUILDER_LOCALE_PARAM, resolveBuilderInitialLocale } from '../../../../../../lib/admin/builder-locale';
 
 function mapPageFromApi(raw: Record<string, unknown>): AdminPage {
   return {
@@ -71,7 +72,10 @@ export default component$(() => {
   const sections = useSignal<PageSectionNode[]>(page.sections || []);
   const registry = useSignal<AppearanceRegistryEntry[]>([]);
   const dynamicTags = useSignal<BuilderDynamicTag[]>([]);
-  const activeLocale = useSignal(langConfig.value.default_locale || 'en');
+  const loc = useLocation();
+  const activeLocale = useSignal(
+    resolveBuilderInitialLocale(langConfig.value, loc.url.searchParams.get(BUILDER_LOCALE_PARAM)),
+  );
   const saving = useSignal(false);
 
   // eslint-disable-next-line qwik/no-use-visible-task
