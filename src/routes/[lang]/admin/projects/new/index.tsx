@@ -242,13 +242,8 @@ export default component$(() => {
   /** Sync public “view page” link with slug on this uncontrolled form */
   const slugLiveForPublicLink = useSignal('');
 
-  // Extract submit method reference to avoid serialization issues
-  const submitMethod = createAction.submit.bind(createAction);
-  
-  // Extract submit function to avoid serialization issues with createAction.value
   const submitProject = $((formData: FormData) => {
-    // Use extracted submit method instead of createAction.submit
-    return submitMethod(formData as any).then((response) => {
+    return createAction.submit(formData as any).then((response) => {
       // Extract only serializable properties to avoid .data access
       const val = response.value as any;
       if (val) {
