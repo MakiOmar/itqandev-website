@@ -11,12 +11,11 @@ export const API_ENDPOINTS = {
   },
   // Users
   USERS: {
-    LIST: '/users',
-    GET: (id: string) => `/users/${id}`,
-    CREATE: '/users',
-    UPDATE: (id: string) => `/users/${id}`,
-    DELETE: (id: string) => `/users/${id}`,
-    BULK_DELETE: '/users/bulk-delete',
+    LIST: '/v1/users',
+    GET: (id: string) => `/v1/users/${id}`,
+    CREATE: '/v1/users',
+    UPDATE: (id: string) => `/v1/users/${id}`,
+    DELETE: (id: string) => `/v1/users/${id}`,
   },
   // Settings
   SETTINGS: {
