@@ -55,28 +55,25 @@ export async function loadTinyMce(): Promise<TinyMceApi> {
 }
 
 /**
- * Skin is linked as a separate hashed asset (skin: false in init). A plain CSS import gets merged
- * into the shared admin stylesheet and ships to every admin page. The unminified skin is used
- * because TinyMCE's skin.min.css contains an invalid `:nth-child(2of…)` selector.
+ * Skin is injected as text (skin: false in init). Qwik's Vite plugin adds every emitted CSS asset
+ * (plain or `?url` imports) to the global head, so the skin would ship to every admin page.
+ * The unminified skin is used because TinyMCE's skin.min.css contains an invalid
+ * `:nth-child(2of…)` selector.
  */
 async function loadTinyMceSkin(): Promise<void> {
   if (typeof document === 'undefined') return;
-  const isDark = document.documentElement.classList.contains('dark');
-  const { default: href } = isDark
-    ? await import('tinymce/skins/ui/oxide-dark/skin.css?url')
-    : await import('tinymce/skins/ui/oxide/skin.css?url');
+  const variant = document.documentElement.classList.contains('dark') ? 'oxide-dark' : 'oxide';
+  if (document.querySelector(`style[data-tinymce-skin="${variant}"]`)) return;
 
-  if (document.querySelector(`link[data-tinymce-skin][href="${href}"]`)) return;
+  const { default: css } =
+    variant === 'oxide-dark'
+      ? await import('tinymce/skins/ui/oxide-dark/skin.css?raw')
+      : await import('tinymce/skins/ui/oxide/skin.css?raw');
 
-  await new Promise<void>((resolve) => {
-    const link = document.createElement('link');
-    link.rel = 'stylesheet';
-    link.href = href;
-    link.dataset.tinymceSkin = '';
-    link.onload = () => resolve();
-    link.onerror = () => resolve();
-    document.head.appendChild(link);
-  });
+  const style = document.createElement('style');
+  style.dataset.tinymceSkin = variant;
+  style.textContent = css;
+  document.head.appendChild(style);
 }
 
 export const TINYMCE_PLUGIN_LIST = tinymcePlugins.join(' ');
