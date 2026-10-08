@@ -11,6 +11,7 @@ import { getPublicSiteBaseUrl } from '~/lib/seo/canonical-url';
 import { resolveMarketingApiBaseUrl } from '~/lib/marketing/resolve-api-base';
 import { mapMarketingSeoMetaFromApi } from '~/lib/marketing/seo-snippet';
 import { API_ENDPOINTS } from '~/lib/api/endpoints';
+import { withLocaleQuery } from '~/lib/marketing/locale-cache-url';
 import type { PageSectionNode } from '~/lib/marketing/appearance-types';
 import { mergeThemeBodyWithContent } from '~/lib/marketing/theme-body-content';
 import type { PublicPageDetail } from '~/types/page';
@@ -69,7 +70,7 @@ export const usePublicPageDetail = routeLoader$(async ({ params, request, fail, 
   const uiLocale = uiLocaleFromPublicRoute(cookie, params.lang, request.url);
   const base = resolveMarketingApiBaseUrl(request.url);
   try {
-    const res = await fetch(`${base}${API_ENDPOINTS.PUBLIC_PAGES.GET(slug)}`, {
+    const res = await fetch(withLocaleQuery(`${base}${API_ENDPOINTS.PUBLIC_PAGES.GET(slug)}`, uiLocale || 'en'), {
       headers: {
         Accept: 'application/json',
         'X-Content-Locale': uiLocale || 'en',

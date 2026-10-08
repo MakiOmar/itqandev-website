@@ -9,6 +9,7 @@ import { resolveMarketingApiBaseUrl } from './resolve-api-base';
 import { ensureSsrIpv4First } from './ssr-dns';
 import { shouldSkipSsrMarketingApi } from './ssr-api-reachability';
 import { ssrFetch } from './ssr-fetch';
+import { withLocaleQuery } from './locale-cache-url';
 
 export function getMarketingApiBaseUrl(forwardDocumentUrl?: string | null): string {
   return resolveMarketingApiBaseUrl(forwardDocumentUrl);
@@ -150,6 +151,7 @@ export async function marketingFetch<T>(
 
   if (locale && String(locale).trim() !== '') {
     headers['X-Content-Locale'] = String(locale).trim().toLowerCase();
+    url = withLocaleQuery(url, locale);
   }
 
   if (typeof window === 'undefined') {

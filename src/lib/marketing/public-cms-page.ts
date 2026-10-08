@@ -1,4 +1,5 @@
 import { API_ENDPOINTS } from '~/lib/api/endpoints';
+import { withLocaleQuery } from '~/lib/marketing/locale-cache-url';
 import { isFeatureModuleEnabled } from '~/lib/api/project-settings';
 import { resolveMarketingApiBaseUrl } from '~/lib/marketing/resolve-api-base';
 import { mergeThemeBodyWithContent } from '~/lib/marketing/theme-body-content';
@@ -30,7 +31,7 @@ export async function fetchPublicCmsPage(
   }
   const base = resolveMarketingApiBaseUrl(requestUrl);
   try {
-    const res = await fetch(`${base}${API_ENDPOINTS.PUBLIC_PAGES.GET(trimmed)}`, {
+    const res = await fetch(withLocaleQuery(`${base}${API_ENDPOINTS.PUBLIC_PAGES.GET(trimmed)}`, uiLocale || 'en'), {
       headers: {
         Accept: 'application/json',
         'X-Content-Locale': uiLocale || 'en',

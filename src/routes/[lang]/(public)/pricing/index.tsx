@@ -8,6 +8,7 @@ import { uiLocaleFromPublicRoute, uiLangFromUrlPathname } from '~/lib/i18n/ui-lo
 import { getPageBuilderMarketingSupport } from '~/lib/marketing/content-layer';
 import { resolveMarketingApiBaseUrl } from '~/lib/marketing/resolve-api-base';
 import { API_ENDPOINTS } from '~/lib/api/endpoints';
+import { withLocaleQuery } from '~/lib/marketing/locale-cache-url';
 import { isFeatureModuleEnabled } from '~/lib/api/project-settings';
 import type { PageSectionNode } from '~/lib/marketing/appearance-types';
 import { mergeThemeBodyWithContent } from '~/lib/marketing/theme-body-content';
@@ -37,7 +38,7 @@ export const usePricingCmsPage = routeLoader$(async ({ request, params, error, r
   const base = resolveMarketingApiBaseUrl(request.url);
   let page: PublicPageDetail | null = null;
   try {
-    const res = await fetch(`${base}${API_ENDPOINTS.PUBLIC_PAGES.GET(PRICING_PAGE_SLUG)}`, {
+    const res = await fetch(withLocaleQuery(`${base}${API_ENDPOINTS.PUBLIC_PAGES.GET(PRICING_PAGE_SLUG)}`, uiLocale || 'en'), {
       headers: {
         Accept: 'application/json',
         'X-Content-Locale': uiLocale || 'en',
