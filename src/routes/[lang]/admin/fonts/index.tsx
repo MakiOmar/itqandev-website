@@ -10,6 +10,11 @@ import { API_ENDPOINTS } from '../../../../lib/api/endpoints';
 import { adminFontEditHref, useAppRoutes } from '../../../../lib/constants/routes';
 import { extractFontsList, deleteFont } from '../../../../lib/admin/font-api';
 import { presentFontFormats, type SiteFont } from '../../../../types/font';
+import {
+  AdminRowActionsMenu,
+  ADMIN_ROW_ACTION_DANGER_CLASS,
+  ADMIN_ROW_ACTION_ITEM_CLASS,
+} from '../../../../components/admin/AdminRowActionsMenu';
 
 export const useFontsList = routeLoader$(async ({ cookie, request, params }) => {
   try {
@@ -100,7 +105,7 @@ export default component$(() => {
                 <th class="px-4 py-3 text-start text-xs font-medium uppercase text-gray-500">{translateApp(lang, 'fonts.name')}</th>
                 <th class="px-4 py-3 text-start text-xs font-medium uppercase text-gray-500">{translateApp(lang, 'fonts.cssFamily')}</th>
                 <th class="px-4 py-3 text-start text-xs font-medium uppercase text-gray-500">{translateApp(lang, 'fonts.formats')}</th>
-                <th class="px-4 py-3 text-right text-xs font-medium uppercase text-gray-500">{translateApp(lang, 'common.actions')}</th>
+                <th class="px-4 py-3 text-end text-xs font-medium uppercase text-gray-500">{translateApp(lang, 'common.actions')}</th>
               </tr>
             </thead>
             <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
@@ -111,20 +116,22 @@ export default component$(() => {
                   <td class="px-4 py-3 text-sm text-gray-600 dark:text-gray-300">
                     {presentFontFormats(font).join(', ') || '—'}
                   </td>
-                  <td class="px-4 py-3 text-right text-sm">
-                    <Link
-                      href={adminFontEditHref(lang, font.id)}
-                      class="mr-3 text-primary-600 hover:underline dark:text-primary-400"
-                    >
-                      {translateApp(lang, 'common.edit')}
-                    </Link>
-                    <button
-                      type="button"
-                      class="text-red-600 hover:underline dark:text-red-400"
-                      onClick$={() => handleDelete(font)}
-                    >
-                      {translateApp(lang, 'common.delete')}
-                    </button>
+                  <td class="px-4 py-3 text-end text-sm">
+                    {/* Row actions dropdown */}
+                    <AdminRowActionsMenu label={`${translateApp(lang, 'common.actions')}: ${font.name}`}>
+                      <Link role="menuitem" href={adminFontEditHref(lang, font.id)} class={ADMIN_ROW_ACTION_ITEM_CLASS}>
+                        {translateApp(lang, 'common.edit')}
+                      </Link>
+                      <div class="my-1 border-t border-gray-100 dark:border-gray-700" role="separator" />
+                      <button
+                        type="button"
+                        role="menuitem"
+                        class={ADMIN_ROW_ACTION_DANGER_CLASS}
+                        onClick$={() => handleDelete(font)}
+                      >
+                        {translateApp(lang, 'common.delete')}
+                      </button>
+                    </AdminRowActionsMenu>
                   </td>
                 </tr>
               ))}

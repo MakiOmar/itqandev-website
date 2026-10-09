@@ -14,6 +14,11 @@ import {
   adminFormEditHref,
   useAppRoutes,
 } from '../../../../lib/constants/routes';
+import {
+  AdminRowActionsMenu,
+  ADMIN_ROW_ACTION_DANGER_CLASS,
+  ADMIN_ROW_ACTION_ITEM_CLASS,
+} from '../../../../components/admin/AdminRowActionsMenu';
 import type { AdminForm } from '../../../../types/form';
 import { useLocaleAwareList } from '../../../../lib/hooks/useLocaleAwareList';
 import { useDeleteForm, useBulkDeleteForms } from '../../../../lib/admin/form-actions';
@@ -171,7 +176,7 @@ export default component$(() => {
                   <th class="px-3 py-2">{translateApp(lang, 'forms.fields.slug')}</th>
                   <th class="px-3 py-2">{translateApp(lang, 'forms.fields.status')}</th>
                   <th class="px-3 py-2">{translateApp(lang, 'forms.submissions')}</th>
-                  <th class="px-3 py-2" />
+                  <th class="px-3 py-2 text-end">{translateApp(lang, 'common.actions')}</th>
                 </tr>
               </thead>
               <tbody>
@@ -204,21 +209,24 @@ export default component$(() => {
                     <td class="px-3 py-2">{form.status}</td>
                     <td class="px-3 py-2">{form.submissions_count ?? 0}</td>
                     <td class="px-3 py-2 text-end">
-                      <div class="inline-flex gap-2">
-                        <Link
-                          href={adminFormBuilderHref(lang, form.id)}
-                          class="text-xs text-primary-700 hover:underline"
-                        >
+                      {/* Row actions dropdown */}
+                      <AdminRowActionsMenu label={`${translateApp(lang, 'common.actions')}: ${form.title}`}>
+                        <Link role="menuitem" href={adminFormEditHref(lang, form.id)} class={ADMIN_ROW_ACTION_ITEM_CLASS}>
+                          {translateApp(lang, 'common.edit')}
+                        </Link>
+                        <Link role="menuitem" href={adminFormBuilderHref(lang, form.id)} class={ADMIN_ROW_ACTION_ITEM_CLASS}>
                           {translateApp(lang, 'forms.openBuilder')}
                         </Link>
+                        <div class="my-1 border-t border-gray-100 dark:border-gray-700" role="separator" />
                         <button
                           type="button"
-                          class="text-xs text-red-600"
+                          role="menuitem"
+                          class={ADMIN_ROW_ACTION_DANGER_CLASS}
                           onClick$={() => onDelete$(form.id)}
                         >
                           {translateApp(lang, 'common.delete')}
                         </button>
-                      </div>
+                      </AdminRowActionsMenu>
                     </td>
                   </tr>
                 ))}

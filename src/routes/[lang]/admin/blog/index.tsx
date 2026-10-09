@@ -16,6 +16,11 @@ import { uiLangFromUrlPathname } from '../../../../lib/i18n/ui-locale-path';
 import { useContentSlugAutosuggestForm } from '../../../../lib/slug/content-slug-auto';
 import { AdminPublicPageLink } from '../../../../components/admin/AdminPublicPageLink';
 import { AdminContentImportExportButtons } from '../../../../components/admin/AdminContentImportExportButtons';
+import {
+  AdminRowActionsMenu,
+  ADMIN_ROW_ACTION_DANGER_CLASS,
+  ADMIN_ROW_ACTION_ITEM_CLASS,
+} from '../../../../components/admin/AdminRowActionsMenu';
 
 function blogSeoRowHasData(row: ContentSeoMetaRow | Record<string, unknown>): boolean {
   const nonempty = (v: unknown) => typeof v === 'string' && v.trim().length > 0;
@@ -574,7 +579,8 @@ export default component$(() => {
                   key={post.id}
                   class="p-4 transition-colors hover:bg-gray-50 dark:hover:bg-gray-700/50"
                 >
-                  <div class="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+                  <div class="flex items-start gap-3">
+                  <div class="flex min-w-0 flex-1 flex-col gap-4 md:flex-row md:items-start md:justify-between">
                     <div class="flex-1">
                       <div class="flex items-start justify-between">
                         <div>
@@ -638,20 +644,6 @@ export default component$(() => {
                       </div>
                     </div>
                     <div class="flex flex-col gap-2 md:w-64">
-                      <div class="flex gap-2">
-                        <button
-                          onClick$={() => editPost(post)}
-                          class="flex-1 rounded-lg bg-primary-600 px-3 py-1.5 text-xs font-medium text-white transition hover:bg-primary-700"
-                        >
-                          {translateApp(lang, 'common.edit')}
-                        </button>
-                        <button
-                          onClick$={() => deletePost(post.id)}
-                          class="flex-1 rounded-lg border border-red-300 px-3 py-1.5 text-xs font-medium text-red-600 transition hover:bg-red-50 dark:border-red-700 dark:text-red-400 dark:hover:bg-red-900/20"
-                        >
-                          {translateApp(lang, 'common.delete')}
-                        </button>
-                      </div>
                       <div class="flex flex-col gap-2">
                         <label class="text-sm font-medium text-gray-700 dark:text-gray-200">
                           {translateApp(lang, 'blog.featuredImage')}
@@ -706,6 +698,29 @@ export default component$(() => {
                         </button>
                       </div>
                     </div>
+                  </div>
+                  {/* Row actions dropdown */}
+                  <div class="shrink-0">
+                    <AdminRowActionsMenu label={`${translateApp(lang, 'common.actions')}: ${post.title}`}>
+                      <button
+                        type="button"
+                        role="menuitem"
+                        class={ADMIN_ROW_ACTION_ITEM_CLASS}
+                        onClick$={() => editPost(post)}
+                      >
+                        {translateApp(lang, 'common.edit')}
+                      </button>
+                      <div class="my-1 border-t border-gray-100 dark:border-gray-700" role="separator" />
+                      <button
+                        type="button"
+                        role="menuitem"
+                        class={ADMIN_ROW_ACTION_DANGER_CLASS}
+                        onClick$={() => deletePost(post.id)}
+                      >
+                        {translateApp(lang, 'common.delete')}
+                      </button>
+                    </AdminRowActionsMenu>
+                  </div>
                   </div>
                 </div>
               );

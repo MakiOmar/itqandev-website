@@ -9,6 +9,11 @@ import { API_ENDPOINTS } from '../../../../lib/api/endpoints';
 import { getProjectSettings } from '../../../../lib/api/project-settings';
 import { formatFileSize } from '../../../../lib/utils/formatters';
 import type { Media } from '../../../../types';
+import {
+  AdminRowActionsMenu,
+  ADMIN_ROW_ACTION_DANGER_CLASS,
+  ADMIN_ROW_ACTION_ITEM_CLASS,
+} from '../../../../components/admin/AdminRowActionsMenu';
 import { usePublicSiteMeta } from '../layout';
 
 function readEditingMediaMeta(
@@ -1100,56 +1105,41 @@ export default component$(() => {
                         <span class="text-4xl">📄</span>
                       </div>
                     )}
-                    {/* Action Buttons - Show on Hover */}
-                    {!isSelectionMode && (
-                      <div class="absolute inset-0 flex items-center justify-center gap-2 bg-black/50 opacity-0 transition-opacity group-hover:opacity-100">
+                  </div>
+                  {/* Row actions dropdown (card top-end corner; hidden in picker selection mode) */}
+                  {!isSelectionMode && (
+                    <div class="absolute end-2 top-2 z-10 rounded-lg bg-white/90 shadow dark:bg-gray-800/90">
+                      <AdminRowActionsMenu label={`${translateApp(lang, 'common.actions')}: ${item.name}`}>
                         <button
+                          type="button"
+                          role="menuitem"
+                          class={ADMIN_ROW_ACTION_ITEM_CLASS}
                           onClick$={() => editMedia(item)}
-                          class="rounded-lg bg-white/90 p-2 text-primary-600 shadow-lg transition hover:bg-white hover:text-primary-700 dark:bg-gray-800/90 dark:text-primary-400 dark:hover:bg-gray-800"
-                          title={translateApp(lang, 'common.edit')}
                         >
-                          <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path
-                              stroke-linecap="round"
-                              stroke-linejoin="round"
-                              stroke-width="2"
-                              d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-                            />
-                          </svg>
+                          {translateApp(lang, 'common.edit')}
                         </button>
                         <button
+                          type="button"
+                          role="menuitem"
+                          class={ADMIN_ROW_ACTION_ITEM_CLASS}
                           onClick$={() => {
                             window.open(item.url, '_blank');
                           }}
-                          class="rounded-lg bg-white/90 p-2 text-primary-600 shadow-lg transition hover:bg-white hover:text-primary-700 dark:bg-gray-800/90 dark:text-primary-400 dark:hover:bg-gray-800"
-                          title={translateApp(lang, 'media.download')}
                         >
-                          <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path
-                              stroke-linecap="round"
-                              stroke-linejoin="round"
-                              stroke-width="2"
-                              d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5m0 0l5-5m-5 5V4"
-                            />
-                          </svg>
+                          {translateApp(lang, 'media.download')}
                         </button>
+                        <div class="my-1 border-t border-gray-100 dark:border-gray-700" role="separator" />
                         <button
+                          type="button"
+                          role="menuitem"
+                          class={ADMIN_ROW_ACTION_DANGER_CLASS}
                           onClick$={() => deleteMedia(item.id)}
-                          class="rounded-lg bg-white/90 p-2 text-red-600 shadow-lg transition hover:bg-white hover:text-red-700 dark:bg-gray-800/90 dark:text-red-400 dark:hover:bg-gray-800"
-                          title={translateApp(lang, 'common.delete')}
                         >
-                          <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path
-                              stroke-linecap="round"
-                              stroke-linejoin="round"
-                              stroke-width="2"
-                              d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                            />
-                          </svg>
+                          {translateApp(lang, 'common.delete')}
                         </button>
-                      </div>
-                    )}
-                  </div>
+                      </AdminRowActionsMenu>
+                    </div>
+                  )}
                 </div>
                 <div class="p-3">
                   <p class="truncate text-sm font-medium text-gray-900 dark:text-gray-100">

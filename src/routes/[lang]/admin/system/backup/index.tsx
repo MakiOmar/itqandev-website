@@ -7,6 +7,11 @@ import { auth } from '../../../../../lib/auth';
 import { getLocalizedRoutes, routesFromPreferredCookie } from '../../../../../lib/constants/routes';
 import { useSwal } from '../../../../../lib/hooks/useSwal';
 import {
+  AdminRowActionsMenu,
+  ADMIN_ROW_ACTION_DANGER_CLASS,
+  ADMIN_ROW_ACTION_ITEM_CLASS,
+} from '../../../../../components/admin/AdminRowActionsMenu';
+import {
   ADMIN_FORM_LABEL_CLASS,
   ADMIN_PRIMARY_BUTTON_CLASS,
   ADMIN_BACK_BUTTON_CLASS,
@@ -283,7 +288,7 @@ export default component$(() => {
                   <th class="px-2 py-2 font-medium">{translateApp(lang, 'system.backupFilename')}</th>
                   <th class="px-2 py-2 font-medium">{translateApp(lang, 'system.backupSize')}</th>
                   <th class="px-2 py-2 font-medium">{translateApp(lang, 'system.backupCreatedAt')}</th>
-                  <th class="px-2 py-2 font-medium">{translateApp(lang, 'common.actions')}</th>
+                  <th class="px-2 py-2 text-end font-medium">{translateApp(lang, 'common.actions')}</th>
                 </tr>
               </thead>
               <tbody>
@@ -301,20 +306,24 @@ export default component$(() => {
                     <td class="px-2 py-2 text-gray-700 dark:text-gray-300">
                       {new Date(item.created_at).toLocaleString()}
                     </td>
-                    <td class="px-2 py-2">
-                      <div class="flex flex-wrap gap-2">
+                    <td class="px-2 py-2 text-end">
+                      {/* Row actions dropdown; restore overwrites live data so it sits with delete */}
+                      <AdminRowActionsMenu label={`${translateApp(lang, 'common.actions')}: ${item.filename}`}>
                         <button
                           type="button"
-                          class="rounded-lg border border-gray-300 px-2 py-1 text-xs font-medium hover:bg-gray-50 dark:border-gray-600 dark:hover:bg-gray-700"
+                          role="menuitem"
+                          class={`${ADMIN_ROW_ACTION_ITEM_CLASS} disabled:opacity-60`}
                           disabled={busy.value}
                           data-filename={item.filename}
                           onClick$={onDownload$}
                         >
                           {translateApp(lang, 'system.backupDownload')}
                         </button>
+                        <div class="my-1 border-t border-gray-100 dark:border-gray-700" role="separator" />
                         <button
                           type="button"
-                          class="rounded-lg border border-amber-400 px-2 py-1 text-xs font-medium text-amber-800 hover:bg-amber-50 dark:text-amber-200 dark:hover:bg-amber-950/40"
+                          role="menuitem"
+                          class={`${ADMIN_ROW_ACTION_DANGER_CLASS} disabled:opacity-60`}
                           disabled={busy.value}
                           data-filename={item.filename}
                           onClick$={onRestoreStored$}
@@ -323,14 +332,15 @@ export default component$(() => {
                         </button>
                         <button
                           type="button"
-                          class="rounded-lg border border-red-300 px-2 py-1 text-xs font-medium text-red-700 hover:bg-red-50 dark:border-red-800 dark:text-red-300 dark:hover:bg-red-950/40"
+                          role="menuitem"
+                          class={`${ADMIN_ROW_ACTION_DANGER_CLASS} disabled:opacity-60`}
                           disabled={busy.value}
                           data-filename={item.filename}
                           onClick$={onDelete$}
                         >
                           {translateApp(lang, 'common.delete')}
                         </button>
-                      </div>
+                      </AdminRowActionsMenu>
                     </td>
                   </tr>
                 ))}

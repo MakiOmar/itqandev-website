@@ -1,8 +1,13 @@
 import { component$, useSignal, $ } from '@builder.io/qwik';
 import type { DocumentHead } from '@builder.io/qwik-city';
-import { routeLoader$, useNavigate, Link } from '@builder.io/qwik-city';
+import { routeLoader$, Link } from '@builder.io/qwik-city';
 import { PageHeader } from '../../../../components/common/PageHeader';
 import { AdminContentImportExportButtons } from '../../../../components/admin/AdminContentImportExportButtons';
+import {
+  AdminRowActionsMenu,
+  ADMIN_ROW_ACTION_DANGER_CLASS,
+  ADMIN_ROW_ACTION_ITEM_CLASS,
+} from '../../../../components/admin/AdminRowActionsMenu';
 import { LoadingSpinner } from '../../../../components/common/LoadingSpinner';
 import { useTranslate, translateApp } from '../../../../lib/i18n/useTranslate';
 import { useSwal } from '../../../../lib/hooks/useSwal';
@@ -62,7 +67,6 @@ export default component$(() => {
   const { lang } = useTranslate();
   const R = useAppRoutes();
   const { confirm, success, error: showError } = useSwal();
-  const navigate = useNavigate();
   const projectsLoader = useProjects();
   const langConfig = usePublicSiteMeta();
 
@@ -188,10 +192,6 @@ export default component$(() => {
     selectedItems.value = new Set();
   });
 
-  const goToEdit = $((id: string | number) => {
-    navigate(adminProjectEditHref(lang, id));
-  });
-
   const refetchList = $((locale: string) => refetch(locale));
 
   return (
@@ -298,20 +298,21 @@ export default component$(() => {
                         )}
                       </div>
                     </div>
-                    <div class="flex items-center gap-2">
-                      <button
-                        onClick$={() => goToEdit(proj.id)}
-                        class="rounded-lg bg-primary-600 px-3 py-1.5 text-xs font-medium text-white transition hover:bg-primary-700"
-                      >
+                    {/* Row actions dropdown */}
+                    <AdminRowActionsMenu label={`${translateApp(lang, 'common.actions')}: ${proj.title}`}>
+                      <Link role="menuitem" href={adminProjectEditHref(lang, proj.id)} class={ADMIN_ROW_ACTION_ITEM_CLASS}>
                         {translateApp(lang, 'common.edit')}
-                      </button>
+                      </Link>
+                      <div class="my-1 border-t border-gray-100 dark:border-gray-700" role="separator" />
                       <button
+                        type="button"
+                        role="menuitem"
+                        class={ADMIN_ROW_ACTION_DANGER_CLASS}
                         onClick$={() => deleteProject(proj.id)}
-                        class="rounded-lg border border-red-300 px-3 py-1.5 text-xs font-medium text-red-600 transition hover:bg-red-50 dark:border-red-700 dark:text-red-400 dark:hover:bg-red-900/20"
                       >
                         {translateApp(lang, 'common.delete')}
                       </button>
-                    </div>
+                    </AdminRowActionsMenu>
                   </div>
                 </div>
               ))}

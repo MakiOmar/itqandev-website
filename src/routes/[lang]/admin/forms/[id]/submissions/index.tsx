@@ -4,6 +4,11 @@ import { Link, routeLoader$ } from '@builder.io/qwik-city';
 import { PageHeader } from '../../../../../../components/common/PageHeader';
 import { EmptyState } from '../../../../../../components/common/EmptyState';
 import { SubmissionPayloadView } from '../../../../../../components/admin/forms/SubmissionPayloadView';
+import {
+  AdminRowActionsMenu,
+  ADMIN_ROW_ACTION_DANGER_CLASS,
+  ADMIN_ROW_ACTION_ITEM_CLASS,
+} from '../../../../../../components/admin/AdminRowActionsMenu';
 import { useTranslate, translateApp } from '../../../../../../lib/i18n/useTranslate';
 import { useSwal } from '../../../../../../lib/hooks/useSwal';
 import { getApiClient } from '../../../../../../lib/api/client';
@@ -231,24 +236,28 @@ export default component$(() => {
                   <td class="px-3 py-2 text-gray-500">{row.locale || '—'}</td>
                   <td class="px-3 py-2 text-gray-500 whitespace-nowrap">{row.created_at}</td>
                   <td class="px-3 py-2 text-end">
-                    <div class="flex flex-wrap items-center justify-end gap-3">
+                    {/* Row actions dropdown */}
+                    <AdminRowActionsMenu label={`${translateApp(lang, 'common.actions')}: #${row.id}`}>
                       <button
                         type="button"
-                        class="text-xs font-medium text-blue-600 hover:underline dark:text-blue-400"
+                        role="menuitem"
+                        class={ADMIN_ROW_ACTION_ITEM_CLASS}
                         onClick$={() => {
                           viewing.value = row;
                         }}
                       >
                         {translateApp(lang, 'forms.viewSubmission')}
                       </button>
+                      <div class="my-1 border-t border-gray-100 dark:border-gray-700" role="separator" />
                       <button
                         type="button"
-                        class="text-xs text-red-600"
+                        role="menuitem"
+                        class={ADMIN_ROW_ACTION_DANGER_CLASS}
                         onClick$={() => onDelete$(row.id)}
                       >
                         {translateApp(lang, 'common.delete')}
                       </button>
-                    </div>
+                    </AdminRowActionsMenu>
                   </td>
                 </tr>
               ))}

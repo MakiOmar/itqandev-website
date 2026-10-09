@@ -17,6 +17,11 @@ import {
   type AdminUserStatus,
 } from '../../../../lib/admin/user-actions';
 import { ADMIN_CHECKBOX_CLASS } from '../../../../lib/admin/native-select-classes';
+import {
+  AdminRowActionsMenu,
+  ADMIN_ROW_ACTION_DANGER_CLASS,
+  ADMIN_ROW_ACTION_ITEM_CLASS,
+} from '../../../../components/admin/AdminRowActionsMenu';
 import { useAdminAuth } from '../layout';
 
 export const useUsersList = routeLoader$(async ({ cookie, request, params }) => {
@@ -271,22 +276,26 @@ export default component$(() => {
                       )}
                     </div>
                   </div>
-                  <div class="flex shrink-0 gap-2">
-                    <Link
-                      href={adminUserEditHref(lang, user.id)}
-                      class="rounded-lg bg-primary-600 px-3 py-1.5 text-xs font-medium text-white transition hover:bg-primary-700"
-                    >
-                      {translateApp(lang, 'common.edit')}
-                    </Link>
-                    {!isSelf && (
-                      <button
-                        type="button"
-                        onClick$={() => handleDelete(user)}
-                        class="rounded-lg border border-red-300 px-3 py-1.5 text-xs font-medium text-red-600 transition hover:bg-red-50 dark:border-red-700 dark:text-red-400 dark:hover:bg-red-900/20"
-                      >
-                        {translateApp(lang, 'common.delete')}
-                      </button>
-                    )}
+                  <div class="shrink-0">
+                    {/* Row actions dropdown */}
+                    <AdminRowActionsMenu label={`${translateApp(lang, 'common.actions')}: ${user.name}`}>
+                      <Link role="menuitem" href={adminUserEditHref(lang, user.id)} class={ADMIN_ROW_ACTION_ITEM_CLASS}>
+                        {translateApp(lang, 'common.edit')}
+                      </Link>
+                      {!isSelf && (
+                        <>
+                          <div class="my-1 border-t border-gray-100 dark:border-gray-700" role="separator" />
+                          <button
+                            type="button"
+                            role="menuitem"
+                            onClick$={() => handleDelete(user)}
+                            class={ADMIN_ROW_ACTION_DANGER_CLASS}
+                          >
+                            {translateApp(lang, 'common.delete')}
+                          </button>
+                        </>
+                      )}
+                    </AdminRowActionsMenu>
                   </div>
                 </li>
               );

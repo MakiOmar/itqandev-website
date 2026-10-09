@@ -12,6 +12,11 @@ import {
 } from '~/lib/admin/theme-template-actions';
 import type { ThemeTemplateMeta } from '~/types/chrome-layout';
 import {
+  AdminRowActionsMenu,
+  ADMIN_ROW_ACTION_DANGER_CLASS,
+  ADMIN_ROW_ACTION_ITEM_CLASS,
+} from '~/components/admin/AdminRowActionsMenu';
+import {
   ADMIN_PRIMARY_BUTTON_CLASS,
 } from '~/lib/admin/native-select-classes';
 
@@ -52,16 +57,49 @@ export const ThemeTemplateListPage = component$<{
                   <h3 class="font-semibold text-gray-900 dark:text-gray-100">{row.name}</h3>
                   <p class="mt-1 text-xs capitalize text-gray-500">{row.status}</p>
                 </div>
-                <span
-                  class={[
-                    'rounded px-2 py-0.5 text-xs font-medium',
-                    row.status === 'published'
-                      ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-200'
-                      : 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-300',
-                  ].join(' ')}
-                >
-                  {row.status}
-                </span>
+                <div class="flex shrink-0 items-center gap-1">
+                  <span
+                    class={[
+                      'rounded px-2 py-0.5 text-xs font-medium',
+                      row.status === 'published'
+                        ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-200'
+                        : 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-300',
+                    ].join(' ')}
+                  >
+                    {row.status}
+                  </span>
+                  {/* Row actions dropdown */}
+                  <AdminRowActionsMenu label={`${translateApp(lang, 'common.actions')}: ${row.name}`}>
+                    <Link
+                      role="menuitem"
+                      href={adminThemeTemplateEditHref(lang, row.id)}
+                      class={ADMIN_ROW_ACTION_ITEM_CLASS}
+                    >
+                      {translateApp(lang, 'common.edit')}
+                    </Link>
+                    <div class="my-1 border-t border-gray-100 dark:border-gray-700" role="separator" />
+                    <button
+                      type="button"
+                      role="menuitem"
+                      class={ADMIN_ROW_ACTION_DANGER_CLASS}
+                      onClick$={async () => {
+                        const swal = await confirm(translateApp(lang, 'themeBuilder.deleteConfirm'), {
+                          title: translateApp(lang, 'common.delete'),
+                        });
+                        if (!(swal as { isConfirmed?: boolean })?.isConfirmed) return;
+                        const res = await deleteThemeTemplateFromBrowser(row.id);
+                        if (!res.success) {
+                          await showError(res.error || translateApp(lang, 'common.error'));
+                          return;
+                        }
+                        await success(translateApp(lang, 'common.deleted'));
+                        await refetch$();
+                      }}
+                    >
+                      {translateApp(lang, 'common.delete')}
+                    </button>
+                  </AdminRowActionsMenu>
+                </div>
               </div>
               <p class="mt-3 line-clamp-3 text-xs text-gray-600 dark:text-gray-400">
                 {summarizeThemeConditions(row.conditions)}
@@ -70,33 +108,6 @@ export const ThemeTemplateListPage = component$<{
                 <span>{translateApp(lang, 'themeBuilder.slotHeader')}: {row.header_layout_id ?? '—'}</span>
                 <span>{translateApp(lang, 'themeBuilder.slotBody')}: {row.body_layout_id ?? '—'}</span>
                 <span>{translateApp(lang, 'themeBuilder.slotFooter')}: {row.footer_layout_id ?? '—'}</span>
-              </div>
-              <div class="mt-4 flex flex-wrap gap-3">
-                <Link
-                  href={adminThemeTemplateEditHref(lang, row.id)}
-                  class="text-sm text-primary-600 hover:underline"
-                >
-                  {translateApp(lang, 'common.edit')}
-                </Link>
-                <button
-                  type="button"
-                  class="text-sm text-red-600 hover:underline"
-                  onClick$={async () => {
-                    const swal = await confirm(translateApp(lang, 'themeBuilder.deleteConfirm'), {
-                      title: translateApp(lang, 'common.delete'),
-                    });
-                    if (!(swal as { isConfirmed?: boolean })?.isConfirmed) return;
-                    const res = await deleteThemeTemplateFromBrowser(row.id);
-                    if (!res.success) {
-                      await showError(res.error || translateApp(lang, 'common.error'));
-                      return;
-                    }
-                    await success(translateApp(lang, 'common.deleted'));
-                    await refetch$();
-                  }}
-                >
-                  {translateApp(lang, 'common.delete')}
-                </button>
               </div>
             </div>
           ))}

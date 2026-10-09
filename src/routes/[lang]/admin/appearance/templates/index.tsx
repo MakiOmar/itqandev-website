@@ -22,6 +22,11 @@ import {
   ADMIN_NATIVE_OPTION_CLASS,
   ADMIN_NATIVE_SELECT_CLASS,
 } from '~/lib/admin/native-select-classes';
+import {
+  AdminRowActionsMenu,
+  ADMIN_ROW_ACTION_DANGER_CLASS,
+  ADMIN_ROW_ACTION_ITEM_CLASS,
+} from '~/components/admin/AdminRowActionsMenu';
 
 const KIND_FILTERS: readonly BuilderTemplateKind[] = ['band', 'row', 'column', 'block'];
 
@@ -235,23 +240,27 @@ export default component$(() => {
                     <td class="hidden px-4 py-3 text-gray-500 dark:text-gray-400 sm:table-cell">
                       {row.updated_at ? new Date(row.updated_at).toLocaleDateString(lang) : '—'}
                     </td>
-                    <td class="px-4 py-3">
-                      <div class="flex justify-end gap-2">
+                    <td class="px-4 py-3 text-end">
+                      {/* Row actions dropdown */}
+                      <AdminRowActionsMenu label={`${translateApp(lang, 'common.actions')}: ${row.name}`}>
                         <Link
+                          role="menuitem"
                           href={adminBuilderTemplateEditHref(lang, row.id)}
-                          class="rounded-lg bg-primary-600 px-3 py-1.5 text-xs font-medium text-white transition hover:bg-primary-700"
+                          class={ADMIN_ROW_ACTION_ITEM_CLASS}
                         >
                           {translateApp(lang, 'builderTemplates.rename')}
                         </Link>
+                        <div class="my-1 border-t border-gray-100 dark:border-gray-700" role="separator" />
                         <button
                           type="button"
+                          role="menuitem"
                           disabled={busy.value}
                           onClick$={() => handleDelete(row)}
-                          class="rounded-lg border border-red-300 px-3 py-1.5 text-xs font-medium text-red-600 transition hover:bg-red-50 disabled:opacity-60 dark:border-red-700 dark:text-red-400 dark:hover:bg-red-900/20"
+                          class={`${ADMIN_ROW_ACTION_DANGER_CLASS} disabled:opacity-60`}
                         >
                           {translateApp(lang, 'common.delete')}
                         </button>
-                      </div>
+                      </AdminRowActionsMenu>
                     </td>
                   </tr>
                 ))}

@@ -4,6 +4,11 @@ import { Link } from '@builder.io/qwik-city';
 import { routeLoader$ } from '@builder.io/qwik-city';
 import { PageHeader } from '../../../../components/common/PageHeader';
 import { AdminContentImportExportButtons } from '../../../../components/admin/AdminContentImportExportButtons';
+import {
+  AdminRowActionsMenu,
+  ADMIN_ROW_ACTION_DANGER_CLASS,
+  ADMIN_ROW_ACTION_ITEM_CLASS,
+} from '../../../../components/admin/AdminRowActionsMenu';
 import { EmptyState } from '../../../../components/common/EmptyState';
 import { useTranslate, translateApp } from '../../../../lib/i18n/useTranslate';
 import { useSwal } from '../../../../lib/hooks/useSwal';
@@ -278,20 +283,21 @@ export default component$(() => {
                     {translateApp(lang, 'skills.projectsCount', { count: skill.projectsCount ?? 0 })}
                   </span>
 
-                  <Link
-                    href={adminSkillEditHref(lang, skill.id)}
-                    class="rounded-lg px-3 py-1 text-xs text-primary-600 hover:bg-primary-50 dark:text-primary-400 dark:hover:bg-primary-900/20"
-                  >
-                    {translateApp(lang, 'common.edit')}
-                  </Link>
-
-                  <button
-                    type="button"
-                    onClick$={() => handleDelete(skill)}
-                    class="rounded-lg px-3 py-1 text-xs text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/20"
-                  >
-                    {translateApp(lang, 'common.delete')}
-                  </button>
+                  {/* Row actions dropdown */}
+                  <AdminRowActionsMenu label={`${translateApp(lang, 'common.actions')}: ${skill.name}`}>
+                    <Link role="menuitem" href={adminSkillEditHref(lang, skill.id)} class={ADMIN_ROW_ACTION_ITEM_CLASS}>
+                      {translateApp(lang, 'common.edit')}
+                    </Link>
+                    <div class="my-1 border-t border-gray-100 dark:border-gray-700" role="separator" />
+                    <button
+                      type="button"
+                      role="menuitem"
+                      class={ADMIN_ROW_ACTION_DANGER_CLASS}
+                      onClick$={() => handleDelete(skill)}
+                    >
+                      {translateApp(lang, 'common.delete')}
+                    </button>
+                  </AdminRowActionsMenu>
                 </div>
               </li>
             ))}
