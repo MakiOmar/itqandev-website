@@ -657,6 +657,10 @@ Require `Authorization: Bearer` and the `manageSettings` gate (`admin` / `super_
 | `GET/POST/…` | `/api/appearance/footers…` | Same for footers |
 | `GET/POST/…` | `/api/appearance/bodies…` | Same for body layouts (`kind=body`; no set-site-default) |
 | `GET/POST/…` | `/api/appearance/singles…` `/archives…` `/loop-items…` `/overlays…` | Theme document kinds on `chrome_layouts` |
+| `GET` | `/api/appearance/{kind}/export` | `{kind}` = `headers\|footers\|bodies\|singles\|archives\|loop-items\|overlays`. Optional `?ids[]=…`. Returns `{format: "credocode.chrome-layouts-export", version: 1, kind, exported_at, items: [{name, slug, status, document}]}` |
+| `POST` | `/api/appearance/{kind}/import` | Body = export envelope (same `kind`, ≤ 200 items). Upserts by `slug`; existing layouts keep their `status`. Returns `{created, updated, skipped, errors: [{slug, message}]}` |
+| `POST` | `/api/appearance/{kind}/bulk-delete` | `{ids: int[]}` (1–500, same kind). Site-default / in-use layouts are skipped. Returns `{deleted, skipped, errors: [{id, name, message}]}` |
+| `POST` | `/api/appearance/{kind}/bulk-status` | `{ids, status: "draft"\|"published"}`. In-use layouts are not unpublished. Returns `{updated, skipped, errors, status}` |
 | `GET/POST` | `/api/appearance/globals` | Global widgets (`manageSettings`) |
 | `GET/PUT/DELETE` | `/api/appearance/globals/{id}` | Show / update / delete a global leaf |
 | `GET/POST` | `/api/appearance/templates` | Builder templates (admin/super_admin). `GET` takes optional `?kind=band\|row\|column\|block` and returns rows without `document`. `POST {name, kind, document}` returns 201 with `document` |

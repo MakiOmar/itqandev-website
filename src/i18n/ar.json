@@ -68,7 +68,20 @@
     "typePage": "الصفحات",
     "typeProject": "المشاريع",
     "typeBlogPost": "مقالات المدونة",
-    "typeService": "الخدمات"
+    "typeService": "الخدمات",
+    "statusPublished": "منشور",
+    "statusDraft": "مسودة",
+    "publishSelected": "نشر",
+    "draftSelected": "تحويل إلى مسودة",
+    "exportOne": "تصدير JSON",
+    "bulkDeleteConfirm": "حذف {{count}} من التخطيطات المحددة؟",
+    "bulkDeleted": "تم حذف {{count}} من التخطيطات.",
+    "bulkUpdated": "تم تحديث {{count}} من التخطيطات.",
+    "bulkSkipped": "تم تخطي {{count}}: {{details}}",
+    "importTitle": "استيراد التخطيطات",
+    "importConfirmText": "سيتم تحديث التخطيطات ذات المعرّف (slug) نفسه دون تغيير حالتها، وإنشاء الجديدة. المتابعة؟",
+    "importInvalidFile": "هذا الملف ليس تصديراً لتخطيطات هذا النوع.",
+    "importDone": "اكتمل الاستيراد: {{created}} جديد، {{updated}} محدَّث، {{skipped}} متخطى."
   },
   "themeBuilder": {
     "emptyTitle": "لا توجد قوالب سمة بعد",

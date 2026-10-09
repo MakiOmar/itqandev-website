@@ -62,7 +62,7 @@ async function contentLocaleFetch(
   });
 }
 
-function triggerJsonDownload(filename: string, data: unknown): void {
+export function triggerJsonDownload(filename: string, data: unknown): void {
   const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json;charset=utf-8' });
   const objectUrl = URL.createObjectURL(blob);
   const anchor = document.createElement('a');

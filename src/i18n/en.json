@@ -68,7 +68,20 @@
     "typePage": "Pages",
     "typeProject": "Projects",
     "typeBlogPost": "Blog posts",
-    "typeService": "Services"
+    "typeService": "Services",
+    "statusPublished": "Published",
+    "statusDraft": "Draft",
+    "publishSelected": "Publish",
+    "draftSelected": "Move to draft",
+    "exportOne": "Export JSON",
+    "bulkDeleteConfirm": "Delete {{count}} selected layouts?",
+    "bulkDeleted": "{{count}} layouts deleted.",
+    "bulkUpdated": "{{count}} layouts updated.",
+    "bulkSkipped": "{{count}} skipped: {{details}}",
+    "importTitle": "Import layouts",
+    "importConfirmText": "Layouts with the same slug are updated (their status is kept); new ones are created. Continue?",
+    "importInvalidFile": "This file is not a layouts export for this type.",
+    "importDone": "Import complete: {{created}} created, {{updated}} updated, {{skipped}} skipped."
   },
   "themeBuilder": {
     "emptyTitle": "No theme templates yet",
