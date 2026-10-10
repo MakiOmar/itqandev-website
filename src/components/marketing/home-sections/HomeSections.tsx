@@ -424,7 +424,7 @@ export const CaseStudiesHomeSection = component$<
   const routes = marketingRoutes(uiLocale);
   const title = settingString(settings, 'title', 'Selected portfolio');
   const subtitle = settingString(settings, 'subtitle', 'Recent projects we are proud of.');
-  const allLabel = translateApp(uiLocale, 'homePage.worksAll');
+  const allLabel = settingString(settings, 'all_label', translateApp(uiLocale, 'homePage.worksAll'));
   const detailedCards = settingString(settings, 'card_style', 'overlay') === 'detailed';
 
   const tabCategories = (() => {

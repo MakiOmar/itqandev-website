@@ -1169,6 +1169,7 @@
       "floating_icons_enabled": "Show floating icons",
       "floating_icons": "Icons",
       "category_ids": "Categories in filter",
+      "all_label": "\"All\" tab label",
       "columns": "Grid columns",
       "layout": "Layout",
       "card_style": "Card style",
