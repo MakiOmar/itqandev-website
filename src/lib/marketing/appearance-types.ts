@@ -145,6 +145,7 @@ export type AppearanceSettingFieldType =
   | 'page'
   | 'menu'
   | 'category_multi'
+  | 'loop_item'
   | 'responsive_columns';
 
 export type AppearanceSettingField = {

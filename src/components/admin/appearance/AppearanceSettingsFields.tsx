@@ -1,6 +1,7 @@
 import { $, component$, useSignal, type QRL } from '@builder.io/qwik';
 import { AdminSwitch } from './AdminSwitch';
 import { FormSlugSelectField } from './FormSlugSelectField';
+import { LoopItemSelectField } from './LoopItemSelectField';
 import { CategoryMultiSelectField } from './CategoryMultiSelectField';
 import { ResponsiveColumnsField } from './ResponsiveColumnsField';
 import { HeroFloatingIconsEditor } from './HeroFloatingIconsEditor';
@@ -181,6 +182,21 @@ const AppearanceSettingFieldControl = component$<FieldControlProps>((props) => {
               props.defaultLocale,
               translatable,
             ),
+          );
+        }}
+      />
+    );
+  }
+
+  if (field.type === 'loop_item') {
+    return (
+      <LoopItemSelectField
+        lang={props.lang}
+        label={label}
+        value={Number(raw) || 0}
+        onChange$={async (id) => {
+          await props.onSettingsChange$(
+            writeAppearanceSettingValue(props.values, field.key, id, props.activeLocale, props.defaultLocale, false),
           );
         }}
       />

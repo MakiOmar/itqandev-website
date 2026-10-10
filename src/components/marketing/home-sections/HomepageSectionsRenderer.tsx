@@ -12,6 +12,13 @@ import { FormRenderer } from '~/components/marketing/forms/FormRenderer';
 import { BlogPostsList } from '~/components/marketing/blog/BlogPostsList';
 import { PortfolioProjectsList } from '~/components/marketing/portfolio/PortfolioProjectsList';
 import { AtomicWidgetView } from '~/components/marketing/widgets/AtomicWidgetView';
+import {
+  LoopGridCard,
+  loopGridCellClass,
+  loopGridClass,
+  loopGridItems,
+  loopItemBands,
+} from '~/components/marketing/widgets/loop-grid';
 import { TestimonialsWidget } from '~/components/marketing/widgets/TestimonialsWidget';
 import { ThemeSwitchWidget } from '~/components/marketing/widgets/ThemeSwitchWidget';
 import { ContactFloatWidget } from '~/components/marketing/widgets/ContactFloatWidget';
@@ -215,6 +222,25 @@ function renderBlock(
         formsEnabled={showFormsModule}
         editorPreview={props.editorPreview}
       />,
+    );
+  }
+  if (block.type === 'loop_grid') {
+    // Lives here (not AtomicWidgetView) because loop item layouts reuse the band renderer.
+    const mode = settings.mode;
+    const cellClass = loopGridCellClass(mode);
+    return wrap(
+      <div class={loopGridClass(mode)}>
+        {loopGridItems(settings).map((item, i) => {
+          const bands = loopItemBands(item);
+          return bands.length > 0 ? (
+            <div key={item.id ?? i} class={cellClass}>
+              {bands.map((band) => renderLayoutBand(band, props))}
+            </div>
+          ) : (
+            <LoopGridCard key={item.id ?? i} item={item} class={cellClass} />
+          );
+        })}
+      </div>,
     );
   }
   if (kind === 'widget' || WIDGET_TYPES.has(block.type)) {

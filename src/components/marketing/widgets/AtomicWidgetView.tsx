@@ -408,24 +408,6 @@ export const AtomicWidgetView = component$<AtomicWidgetProps>((props) => {
       );
     case 'archive_title':
       return <h1 class="aw-c aw-heading text-3xl font-bold">{str(s, 'text') || str(s, 'fallback', 'Archive')}</h1>;
-    case 'loop_grid': {
-      const items = Array.isArray(s.items) ? (s.items as Array<Record<string, unknown>>) : [];
-      const mode = str(s, 'mode', 'grid');
-      return (
-        <div class={mode === 'carousel' ? 'flex gap-4 overflow-x-auto' : 'grid gap-6 sm:grid-cols-2 lg:grid-cols-3'}>
-          {items.map((item, i) => (
-            <a
-              key={i}
-              href={String(item.url || '#')}
-              class="block rounded-xl border border-slate-200 p-4 hover:border-primary-400 dark:border-slate-700"
-            >
-              <h3 class="font-semibold text-slate-900 dark:text-white">{String(item.title || '')}</h3>
-              <p class="mt-1 text-sm text-slate-600 dark:text-slate-400">{String(item.excerpt || '')}</p>
-            </a>
-          ))}
-        </div>
-      );
-    }
     default:
       return null;
   }
