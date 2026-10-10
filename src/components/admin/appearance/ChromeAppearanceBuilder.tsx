@@ -2,6 +2,7 @@
  * Shared fullscreen layout builder for Appearance → Header / Footer / Body (by layout id).
  */
 import { component$, useSignal, useTask$, useVisibleTask$, $ } from '@builder.io/qwik';
+import { isServer } from '@builder.io/qwik/build';
 import { useLocation } from '@builder.io/qwik-city';
 import { PageBuilderWorkspace } from '~/components/admin/pages/PageBuilderWorkspace';
 import {
@@ -33,7 +34,6 @@ import { mapPublicBrandingFromApi } from '~/lib/marketing/resolve-laravel-media-
 import type { AppearanceRegistryEntry, PageSectionNode } from '~/lib/marketing/appearance-types';
 import type { ChromeLayoutKind } from '~/types/chrome-layout';
 import { dynamicTagCatalogForChromeKind, dynamicTagCatalogFromRegistries } from '~/lib/admin/builder-dynamic-tags';
-import { ADMIN_NATIVE_SELECT_COMPACT_CLASS } from '~/lib/admin/native-select-classes';
 import {
   CHROME_EXCLUDED_BLOCK_TYPES,
   chromeCategoryExcludedFrom,
@@ -44,17 +44,18 @@ import {
   fetchPreviewRecordsFromBrowser,
   type PreviewRecordOption,
 } from '~/lib/admin/content-types';
+import {
+  pickPreviewRecordId,
+  previewChromeDraftFromBrowser,
+  readBuilderPreviewSource,
+  writeBuilderPreviewSource,
+} from '~/lib/admin/builder-preview-source';
+import { BuilderPreviewSourceBar } from './BuilderPreviewSourceBar';
 
-function chromeKindSlug(kind: ChromeLayoutKind): string {
-  if (kind === 'header') return 'headers';
-  if (kind === 'footer') return 'footers';
-  if (kind === 'body') return 'bodies';
-  if (kind === 'single') return 'singles';
-  if (kind === 'archive') return 'archives';
-  if (kind === 'loop_item') return 'loop-items';
-  if (kind === 'overlay') return 'overlays';
-  return 'headers';
-}
+/** Layout kinds whose dynamic tags resolve against a record (single / archive / loop item). */
+const RECORD_PREVIEW_KINDS: ReadonlySet<ChromeLayoutKind> = new Set(['single', 'archive', 'loop_item']);
+/** Pause after the last edit before re-resolving the canvas with record data. */
+const PREVIEW_DEBOUNCE_MS = 400;
 
 const HEADER_CATEGORIES = new Set(['Header']);
 const FOOTER_CATEGORIES = new Set(['Footer']);
@@ -84,14 +85,17 @@ export const ChromeAppearanceBuilder = component$<ChromeAppearanceBuilderProps>(
   const sections = useSignal<PageSectionNode[]>([]);
   const registry = useSignal<AppearanceRegistryEntry[]>([]);
   const dynamicTags = useSignal<DynamicTagCatalog>(EMPTY_DYNAMIC_TAG_CATALOG);
+  const recordPreview = RECORD_PREVIEW_KINDS.has(kind);
   const previewTypes = useSignal<{ key: string; label: string }[]>([]);
   const previewType = useSignal('');
-  const previewRecordId = useSignal('');
+  /** 0 = show `{{tags}}`; otherwise the record whose data fills the canvas. */
+  const previewRecordId = useSignal(0);
   const previewRecords = useSignal<PreviewRecordOption[]>([]);
   const previewOverride = useSignal<PageSectionNode[] | null>(null);
-  /** Preview as was applied; re-resolved after each save so dynamic tags follow edits. */
-  const previewAsActive = useSignal(false);
-  const resolvedSectionsJson = useSignal('');
+  const previewBusy = useSignal(false);
+  const previewError = useSignal('');
+  /** Latest resolve request; older responses are dropped. */
+  const previewSeq = useSignal(0);
   const previewBranding = useSignal<PreviewBrandingState>({
     name: '',
     logo: '',
@@ -133,6 +137,22 @@ export const ChromeAppearanceBuilder = component$<ChromeAppearanceBuilderProps>(
                 : R.ADMIN.APPEARANCE_BODY;
   const classicHref = adminChromeEditHref(lang, kind, layoutId);
 
+  /** Lists a type's records and selects the remembered one (else the newest). */
+  const loadPreviewRecords$ = $(async (type: string, remembered: number | null) => {
+    previewType.value = type;
+    previewBusy.value = true;
+    previewError.value = '';
+    try {
+      previewRecords.value = await fetchPreviewRecordsFromBrowser(type);
+    } catch (e) {
+      previewRecords.value = [];
+      previewError.value = formatAppearanceError(e, translateApp(lang, 'pages.previewFailed'));
+    } finally {
+      previewBusy.value = false;
+    }
+    previewRecordId.value = pickPreviewRecordId(previewRecords.value, remembered);
+  });
+
   // eslint-disable-next-line qwik/no-use-visible-task
   useVisibleTask$(async () => {
     try {
@@ -167,13 +187,13 @@ export const ChromeAppearanceBuilder = component$<ChromeAppearanceBuilderProps>(
         String(settingsPayload.site_name || settingsPayload.name || layout.name || 'Preview'),
       );
       previewBranding.value = mapped;
-      if (kind === 'single' || kind === 'archive' || kind === 'loop_item') {
+      if (recordPreview) {
         previewTypes.value = (regs.content_types ?? []).map((ct) => ({ key: ct.key, label: contentTypeLabel(lang, ct) }));
-        // Prefill preview-as records for the first content type.
-        previewType.value = previewTypes.value[0]?.key ?? '';
-        previewRecords.value = previewType.value
-          ? await fetchPreviewRecordsFromBrowser(previewType.value).catch(() => [])
-          : [];
+        const remembered = readBuilderPreviewSource(kind, layoutId);
+        const type = previewTypes.value.some((t) => t.key === remembered?.type)
+          ? (remembered?.type ?? '')
+          : (previewTypes.value[0]?.key ?? '');
+        if (type) await loadPreviewRecords$(type, remembered?.type === type ? remembered.recordId : null);
       }
     } catch (e) {
       showError(translateApp(lang, 'common.error'), {
@@ -184,42 +204,50 @@ export const ChromeAppearanceBuilder = component$<ChromeAppearanceBuilderProps>(
     }
   });
 
-  const loadPreviewRecords$ = $(async (type: string) => {
-    previewType.value = type;
-    previewRecordId.value = '';
-    try {
-      previewRecords.value = await fetchPreviewRecordsFromBrowser(type);
-    } catch {
-      previewRecords.value = [];
-    }
+  const selectPreviewRecord$ = $((recordId: number) => {
+    previewRecordId.value = recordId;
+    writeBuilderPreviewSource(kind, layoutId, { type: previewType.value, recordId });
   });
 
-  const applyPreviewAs$ = $(async () => {
-    const id = Number(previewRecordId.value);
-    if (!Number.isInteger(id) || id < 1) return;
-    try {
-      const api = getApiClient(null);
-      const qs = `?content_type=${encodeURIComponent(previewType.value)}&record_id=${id}`;
-      const res = await api.get(`${API_ENDPOINTS.APPEARANCE.PREVIEW_AS(chromeKindSlug(kind), layoutId)}${qs}`);
-      const body = ((res as { data?: unknown })?.data ?? res) as { sections?: PageSectionNode[] };
-      if (Array.isArray(body.sections)) {
-        previewOverride.value = ensurePageLayoutBands(body.sections);
-        previewAsActive.value = true;
-        resolvedSectionsJson.value = JSON.stringify(sections.value);
-      }
-    } catch (e) {
-      showError(translateApp(lang, 'common.error'), {
-        text: formatAppearanceError(e, translateApp(lang, 'common.error')),
-      });
-    }
+  const changePreviewType$ = $(async (type: string) => {
+    await loadPreviewRecords$(type, null);
+    writeBuilderPreviewSource(kind, layoutId, { type, recordId: previewRecordId.value });
   });
 
-  // Resolved copy reflects the saved layout; show live blocks as soon as the editor diverges from it.
-  useTask$(({ track }) => {
-    const json = JSON.stringify(track(() => sections.value));
-    if (previewOverride.value && json !== resolvedSectionsJson.value) {
+  // Canvas shows the unsaved layout resolved with the chosen record; re-run after edits, record or language changes.
+  useTask$(({ track, cleanup }) => {
+    const recordId = track(() => previewRecordId.value);
+    const type = track(() => previewType.value);
+    const locale = track(() => activeLocale.value);
+    const current = track(() => sections.value);
+    if (isServer) return;
+    if (!recordPreview || recordId < 1 || !type) {
       previewOverride.value = null;
+      previewError.value = '';
+      return;
     }
+    const seq = previewSeq.value + 1;
+    previewSeq.value = seq;
+    const timer = setTimeout(async () => {
+      previewBusy.value = true;
+      try {
+        const resolved = await previewChromeDraftFromBrowser(kind, layoutId, {
+          contentType: type,
+          recordId,
+          locale,
+          sections: current,
+        });
+        if (seq !== previewSeq.value) return;
+        previewOverride.value = resolved;
+        previewError.value = '';
+      } catch (e) {
+        if (seq !== previewSeq.value) return;
+        previewError.value = formatAppearanceError(e, translateApp(lang, 'pages.previewFailed'));
+      } finally {
+        if (seq === previewSeq.value) previewBusy.value = false;
+      }
+    }, PREVIEW_DEBOUNCE_MS);
+    cleanup(() => clearTimeout(timer));
   });
 
   const handleSave$ = $(async () => {
@@ -236,9 +264,6 @@ export const ChromeAppearanceBuilder = component$<ChromeAppearanceBuilderProps>(
         sections.value = ensurePageLayoutBands(res.data.sections as PageSectionNode[]);
       }
       showSuccess(res.message || translateApp(lang, 'common.saved'));
-      if (previewAsActive.value && previewRecordId.value) {
-        await applyPreviewAs$();
-      }
       return true;
     } finally {
       saving.value = false;
@@ -255,44 +280,18 @@ export const ChromeAppearanceBuilder = component$<ChromeAppearanceBuilderProps>(
 
   return (
     <div class="flex h-full min-h-0 flex-col">
-      {kind === 'single' || kind === 'archive' || kind === 'loop_item' ? (
-        <div class="flex flex-wrap items-center gap-2 border-b border-gray-200 bg-slate-50 px-4 py-2 text-xs dark:border-gray-800 dark:bg-slate-950">
-          <span>{translateApp(lang, 'pages.previewAs')}</span>
-          <select
-            class={ADMIN_NATIVE_SELECT_COMPACT_CLASS}
-            value={previewType.value}
-            onChange$={(e) => {
-              void loadPreviewRecords$((e.target as HTMLSelectElement).value);
-            }}
-          >
-            {previewTypes.value.map((type) => (
-              <option key={type.key} value={type.key}>
-                {type.label}
-              </option>
-            ))}
-          </select>
-          <select
-            class={ADMIN_NATIVE_SELECT_COMPACT_CLASS}
-            value={previewRecordId.value}
-            onChange$={(e) => {
-              previewRecordId.value = (e.target as HTMLSelectElement).value;
-            }}
-          >
-            <option value="">—</option>
-            {previewRecords.value.map((row) => (
-              <option key={row.id} value={String(row.id)}>
-                {row.title}
-              </option>
-            ))}
-          </select>
-          <button
-            type="button"
-            class="rounded border border-gray-300 px-2 py-1 dark:border-gray-600"
-            onClick$={applyPreviewAs$}
-          >
-            {translateApp(lang, 'pages.applyPreview')}
-          </button>
-        </div>
+      {recordPreview ? (
+        <BuilderPreviewSourceBar
+          lang={lang}
+          types={previewTypes.value}
+          type={previewType.value}
+          records={previewRecords.value}
+          recordId={previewRecordId.value}
+          busy={previewBusy.value}
+          error={previewError.value}
+          onTypeChange$={changePreviewType$}
+          onRecordChange$={selectPreviewRecord$}
+        />
       ) : null}
     <PageBuilderWorkspace
       lang={lang}

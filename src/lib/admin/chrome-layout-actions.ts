@@ -31,6 +31,17 @@ function itemEndpoint(kind: ChromeLayoutKind, id: string | number): string {
   return API_ENDPOINTS.APPEARANCE.HEADER_GET(id);
 }
 
+/** `{kind}` route segment for per-kind appearance endpoints (`singles`, `loop-items`, …). */
+export function chromeKindRouteSegment(kind: ChromeLayoutKind): string {
+  if (kind === 'footer') return 'footers';
+  if (kind === 'body') return 'bodies';
+  if (kind === 'single') return 'singles';
+  if (kind === 'archive') return 'archives';
+  if (kind === 'loop_item') return 'loop-items';
+  if (kind === 'overlay') return 'overlays';
+  return 'headers';
+}
+
 function setDefaultEndpoint(kind: ChromeLayoutKind, id: string | number): string {
   if (kind === 'footer') return API_ENDPOINTS.APPEARANCE.FOOTER_SET_DEFAULT(id);
   return API_ENDPOINTS.APPEARANCE.HEADER_SET_DEFAULT(id);

@@ -675,6 +675,7 @@ Require `Authorization: Bearer` and the `manageSettings` gate (`admin` / `super_
 | `GET/PUT` | `/api/appearance/chrome-type-defaults` | Per content-type header/footer ids |
 | `GET` | `/api/appearance/preview-records/{contentType}` | Latest 50 records of an enabled content type for **Preview as**: `{success, data: [{id, title}]}`. 404 for an unknown or disabled type; `manageSettings` |
 | `GET` | `/api/appearance/{kind}/{id}/preview-as` | Resolve dynamic tags as a published record (`content_type`, `record_id`) |
+| `POST` | `/api/appearance/{kind}/{id}/preview-as` | Resolve dynamic tags in **unsaved** builder sections. Body `{content_type, record_id, sections, locale?}` (locale falls back to `X-Content-Locale`); returns the presented layout `{success, data: {sections, ...}}`. Nothing is saved. 422 invalid body, 404 layout of another kind or unknown record, 403 without `manageSettings` |
 | `GET` | `/api/public/overlays/{id}` | Published overlay document (`overlays` module) |
 
 **Dynamic tag and content type catalogs** (`GET /api/appearance/registries`; registered in `backend/config/content-types.php`, see `docs/CONFIGURATION.md` → *Content types and dynamic tags*):

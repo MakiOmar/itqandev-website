@@ -54,6 +54,11 @@ export type PreviewRecordOption = { id: number; title: string };
 /** Latest records of a content type for the builder "Preview as" picker. */
 export async function fetchPreviewRecordsFromBrowser(contentType: string): Promise<PreviewRecordOption[]> {
   const api = getApiClient(null);
-  const res = await api.get<PreviewRecordOption[]>(API_ENDPOINTS.APPEARANCE.PREVIEW_RECORDS(contentType));
-  return Array.isArray(res.data) ? res.data : [];
+  const res = await api.get<PreviewRecordOption[] | { data?: PreviewRecordOption[] }>(
+    API_ENDPOINTS.APPEARANCE.PREVIEW_RECORDS(contentType),
+  );
+  // The client only unwraps `{ data: {...} }` objects; array payloads arrive still enveloped.
+  const body = res.data;
+  if (Array.isArray(body)) return body;
+  return Array.isArray(body?.data) ? body.data : [];
 }
