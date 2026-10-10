@@ -46,6 +46,12 @@
   --ct-d-rail: #334155;
 }
 
+/* The rail carries a `dir` from the UI locale; site typography maps `[dir]` to a per-direction
+   font, which must not override the section's (content language) font. */
+.ct-root .ct-rail {
+  font-family: inherit;
+}
+
 .ct-rail {
   border-bottom: 1px solid var(--ct-d-rail);
 }
