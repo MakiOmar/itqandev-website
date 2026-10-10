@@ -643,7 +643,7 @@ Require `Authorization: Bearer` and the `manageSettings` gate (`admin` / `super_
 
 | Method | Path | Body / notes |
 |--------|------|----------------|
-| `GET` | `/api/appearance/registries` | Catalogs: `widgets`, `kits`, `homepage_sections`, `form_fields`, `form_actions`, `dynamic_tags`. |
+| `GET` | `/api/appearance/registries` | Catalogs: `widgets`, `kits`, `homepage_sections`, `form_fields`, `form_actions`, `dynamic_tags`, `dynamic_tag_groups`, `content_types` (shapes below). |
 | `GET` | `/api/appearance/homepage` | Full `homepage_builder` document (band tree) |
 | `PUT` | `/api/appearance/homepage` | `{ "sections": [ … ] }` |
 | `GET` | `/api/appearance/header` | Site-default header document (compat) |
@@ -673,8 +673,33 @@ Require `Authorization: Bearer` and the `manageSettings` gate (`admin` / `super_
 | `GET` | `/api/appearance/theme-templates/match` | Best match + `conflicts` for a context query (`context`, `content_type`, `record_id`) |
 | `GET/PUT/DELETE` | `/api/appearance/theme-templates/{id}` | Show / update / delete |
 | `GET/PUT` | `/api/appearance/chrome-type-defaults` | Per content-type header/footer ids |
+| `GET` | `/api/appearance/preview-records/{contentType}` | Latest 50 records of an enabled content type for **Preview as**: `{success, data: [{id, title}]}`. 404 for an unknown or disabled type; `manageSettings` |
 | `GET` | `/api/appearance/{kind}/{id}/preview-as` | Resolve dynamic tags as a published record (`content_type`, `record_id`) |
 | `GET` | `/api/public/overlays/{id}` | Published overlay document (`overlays` module) |
+
+**Dynamic tag and content type catalogs** (`GET /api/appearance/registries`; registered in `backend/config/content-types.php`, see `docs/CONFIGURATION.md` → *Content types and dynamic tags*):
+
+```json
+{
+  "dynamic_tags": [
+    { "id": "post.title", "group": "record", "label": "Title", "kind": "text" },
+    { "id": "project.categories.first.url", "group": "project.categories", "label": "First: URL", "kind": "url" }
+  ],
+  "dynamic_tag_groups": [
+    { "id": "record", "label": "Current item", "parent": null, "scope": "record", "content_type": null },
+    { "id": "project", "label": "Project", "parent": null, "scope": "record", "content_type": "project" },
+    { "id": "project.categories", "label": "Categories", "parent": "project", "scope": "record", "content_type": "project" }
+  ],
+  "content_types": [
+    {
+      "key": "project", "label": "Project", "plural_label": "Projects", "loop_source": "projects",
+      "archive": { "context": "portfolio_index", "page_slug": "portfolio", "label": "Portfolio" }
+    }
+  ]
+}
+```
+
+`kind` is one of `text`, `url`, `image`, `html`, `date`, `number`; `scope` is `site`, `record` or `archive`. Only enabled modules are listed. The `loop_grid` widget's `source` options come from the configured types' `loop_source`, and its `loop_item_id` setting (field type `loop_item`) picks a loop item layout: public `loop_grid` items then carry `layout: { sections }` presented for that record (node ids suffixed `-r{id}`).
 
 **Design kit shape** (`GET`/`PUT /api/appearance/design-kit`, also `design_kit` in `GET /api/public/site-meta`):
 
