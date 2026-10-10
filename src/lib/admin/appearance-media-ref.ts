@@ -20,12 +20,19 @@ export function appearanceMediaId(value: unknown): number | null {
   return typeof value === 'number' ? value : Number(String(value).trim());
 }
 
+/** Tag id when the field holds exactly one `{{tag}}` token (resolved to a URL on the server). */
+export function appearanceMediaDynamicTag(value: unknown): string | null {
+  if (typeof value !== 'string') return null;
+  const m = /^\{\{\s*([a-z0-9_.]+)\s*\}\}$/i.exec(value.trim());
+  return m ? m[1].toLowerCase() : null;
+}
+
 /** Preview src for admin UI (URL string or cached URL for a media id). */
 export function appearanceMediaPreviewSrc(
   value: unknown,
   urlById?: Record<string, string> | null,
 ): string {
-  if (value == null || value === '') {
+  if (value == null || value === '' || appearanceMediaDynamicTag(value) !== null) {
     return '';
   }
   const id = appearanceMediaId(value);
@@ -41,7 +48,7 @@ export function appearanceMediaPreviewSrc(
 
 /** Value shown in the optional paste-URL input (blank when value is a media id). */
 export function appearanceMediaUrlInputValue(value: unknown): string {
-  if (isAppearanceMediaId(value)) {
+  if (isAppearanceMediaId(value) || appearanceMediaDynamicTag(value) !== null) {
     return '';
   }
   return typeof value === 'string' ? value : '';

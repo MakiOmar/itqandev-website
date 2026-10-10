@@ -444,6 +444,8 @@ const AppearanceSettingFieldControl = component$<FieldControlProps>((props) => {
                         onPick$={() => props.onPickMedia$(`${field.key}.${rowIndex}.${sub.key}`, sub.accept)}
                         onClear$={() => setSub$(sub.key, '')}
                         compact
+                        tags={tags}
+                        onTagPick$={(token) => setSub$(sub.key, token)}
                       />
                     );
                   }
@@ -529,6 +531,8 @@ const AppearanceSettingFieldControl = component$<FieldControlProps>((props) => {
         onClear$={() => write$('')}
         urlValue={appearanceMediaUrlInputValue(raw)}
         onUrlInput$={write$}
+        tags={tags}
+        onTagPick$={write$}
       />
     );
   }

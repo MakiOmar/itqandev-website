@@ -2,6 +2,7 @@ import { component$, useSignal, type JSXOutput, type QRL } from '@builder.io/qwi
 import type { DynamicTagCatalog } from '~/lib/admin/appearance-actions';
 import { buildDynamicTagTree, type DynamicTagTreeNode } from '~/lib/admin/dynamic-tag-tree';
 import { translateApp } from '~/lib/i18n/useTranslate';
+import { DatabaseGlyph } from './InspectorGlyphs';
 
 /** Group heading: translated by the last id segment (`project.categories` → `categories`), else the API label. */
 function groupLabel(lang: string, node: DynamicTagTreeNode): string {
@@ -109,10 +110,7 @@ export const BuilderDynamicTagButton = component$<{
           query.value = '';
         }}
       >
-        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-          <ellipse cx="12" cy="5" rx="8" ry="3" />
-          <path d="M4 5v6c0 1.66 3.58 3 8 3s8-1.34 8-3V5M4 11v6c0 1.66 3.58 3 8 3s8-1.34 8-3v-6" />
-        </svg>
+        <DatabaseGlyph />
       </button>
       {open.value ? (
         <>

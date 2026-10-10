@@ -40,6 +40,11 @@ export function dynamicTagCatalogForChromeKind(catalog: DynamicTagCatalog, kind:
   return filterCatalog(catalog, (group) => scopes.includes(group.scope));
 }
 
+/** Media fields take a single image URL tag (`kind: image`), never text tags. */
+export function imageDynamicTagCatalog(catalog: DynamicTagCatalog): DynamicTagCatalog {
+  return { tags: catalog.tags.filter((tag) => tag.kind === 'image'), groups: catalog.groups };
+}
+
 /** Homepage sections render without a current record, so only site tags resolve. */
 export function dynamicTagCatalogForSite(catalog: DynamicTagCatalog): DynamicTagCatalog {
   return filterCatalog(catalog, (group) => group.scope === 'site');

@@ -1281,6 +1281,7 @@
       "service": "Service"
     },
     "chooseImage": "Choose image",
+    "dynamicImage": "Dynamic image",
     "changeImage": "Change image",
     "removeImage": "Remove image",
     "urlPlaceholder": "Type or paste your URL",

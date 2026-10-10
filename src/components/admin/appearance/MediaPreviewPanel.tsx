@@ -1,8 +1,11 @@
 import { component$, useSignal, type QRL } from '@builder.io/qwik';
-import { appearanceMediaId } from '~/lib/admin/appearance-media-ref';
+import type { DynamicTagCatalog } from '~/lib/admin/appearance-actions';
+import { appearanceMediaDynamicTag, appearanceMediaId } from '~/lib/admin/appearance-media-ref';
+import { imageDynamicTagCatalog } from '~/lib/admin/builder-dynamic-tags';
 import { translateApp } from '~/lib/i18n/useTranslate';
 import { resolveLaravelMediaUrl } from '~/lib/marketing/resolve-laravel-media-url';
-import { PlusGlyph, TrashGlyph } from './InspectorGlyphs';
+import { BuilderDynamicTagButton } from './BuilderDynamicTagButton';
+import { DatabaseGlyph, PlusGlyph, TrashGlyph } from './InspectorGlyphs';
 import {
   INSPECTOR_CHECKER_STYLE,
   INSPECTOR_INPUT,
@@ -23,6 +26,9 @@ export type MediaPreviewPanelProps = {
   onUrlInput$?: QRL<(url: string) => void>;
   /** Shorter preview for repeater rows. */
   compact?: boolean;
+  /** Builder tag catalog; only `image` tags are offered. Picking one stores the `{{tag}}` token. */
+  tags?: DynamicTagCatalog;
+  onTagPick$?: QRL<(token: string) => void>;
 };
 
 /** Elementor-style media control: large preview that opens the library, remove on the preview, optional URL. */
@@ -33,10 +39,22 @@ export const MediaPreviewPanel = component$<MediaPreviewPanelProps>((props) => {
   const src = props.previewSrc ? resolveLaravelMediaUrl(props.previewSrc) || props.previewSrc : '';
   const mediaId = appearanceMediaId(props.value);
   const pickLabel = hasValue ? t('changeImage') : t('chooseImage');
+  const imageTags = props.tags && props.onTagPick$ ? imageDynamicTagCatalog(props.tags) : null;
+  const dynamicTag = appearanceMediaDynamicTag(props.value);
+  const onUrlInput$ = props.onUrlInput$;
+  const dynamicLabel = dynamicTag
+    ? (props.tags?.tags.find((tag) => tag.id === dynamicTag)?.label ?? t('dynamicImage'))
+    : '';
 
   return (
     <div>
-      <span class={INSPECTOR_STACK_LABEL}>{props.label}</span>
+      {/* Label row; the dynamic-tag trigger sits at its end */}
+      <div class={['relative', imageTags?.tags.length ? 'pe-8' : ''].join(' ')}>
+        <span class={INSPECTOR_STACK_LABEL}>{props.label}</span>
+        {imageTags && props.onTagPick$ ? (
+          <BuilderDynamicTagButton catalog={imageTags} lang={props.lang} onInsert$={props.onTagPick$} />
+        ) : null}
+      </div>
       {/* Preview: click opens the media library */}
       <div
         class="group relative overflow-hidden rounded-md border border-gray-200 bg-gray-50 dark:border-gray-700 dark:bg-slate-950"
@@ -51,7 +69,13 @@ export const MediaPreviewPanel = component$<MediaPreviewPanelProps>((props) => {
           aria-label={pickLabel}
           onClick$={props.onPick$}
         >
-          {src ? (
+          {dynamicTag ? (
+            <span class="flex flex-col items-center gap-1 px-3 text-center text-xs font-medium text-primary-700 dark:text-primary-300">
+              <DatabaseGlyph size={18} />
+              {dynamicLabel}
+              <code class="text-[10px] font-normal text-gray-500" dir="ltr">{`{{${dynamicTag}}}`}</code>
+            </span>
+          ) : src ? (
             <img src={src} alt="" class="h-full w-full object-contain" />
           ) : mediaId !== null ? (
             <span class="text-xs text-gray-500">#{mediaId}</span>
@@ -103,7 +127,7 @@ export const MediaPreviewPanel = component$<MediaPreviewPanelProps>((props) => {
               aria-label={t('orPasteUrl')}
               value={props.urlValue ?? ''}
               onInput$={async (e) => {
-                await props.onUrlInput$?.((e.target as HTMLInputElement).value);
+                await onUrlInput$?.((e.target as HTMLInputElement).value);
               }}
             />
           ) : null}
