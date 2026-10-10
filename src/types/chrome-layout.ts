@@ -33,10 +33,12 @@ export type OverlayMeta = {
   sitewide: boolean;
 };
 
-export type ChromeTypeDefaults = Record<
-  'homepage' | 'page' | 'project' | 'blog_post' | 'service',
-  { header_id: number | null; footer_id: number | null }
->;
+/** `homepage` or a registry content type key (GET /appearance/registries → content_types). */
+export type ChromeContentType = string;
+
+export type ChromeTypeDefault = { header_id: number | null; footer_id: number | null };
+
+export type ChromeTypeDefaults = Record<ChromeContentType, ChromeTypeDefault>;
 
 export type ThemeTemplateStatus = 'draft' | 'published';
 

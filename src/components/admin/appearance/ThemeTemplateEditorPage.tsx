@@ -15,6 +15,14 @@ import {
 } from '~/lib/constants/routes';
 import { fetchPublishedChromeOptionsFromBrowser } from '~/lib/admin/chrome-layout-actions';
 import {
+  contentTypeArchiveLabel,
+  contentTypeLabel,
+  fetchContentTypesFromBrowser,
+  HOMEPAGE_CONTENT_TYPE,
+  homepageLabel,
+  type ContentTypeInfo,
+} from '~/lib/admin/content-types';
+import {
   createThemeTemplateFromBrowser,
   emptyThemeConditions,
   themeConditionsAllowBody,
@@ -40,27 +48,27 @@ import {
   ADMIN_PRIMARY_BUTTON_CLASS,
 } from '~/lib/admin/native-select-classes';
 
-const GROUP_KEYS: Record<string, { key: string; label: string }[]> = {
-  entire: [{ key: 'site', label: 'Entire site' }],
-  singular: [
-    { key: 'homepage', label: 'Homepage' },
-    { key: 'page', label: 'CMS page' },
-    { key: 'blog_post', label: 'Blog post' },
-    { key: 'project', label: 'Project' },
-    { key: 'service', label: 'Service' },
-    { key: 'not_found', label: '404' },
-  ],
-  archive: [
-    { key: 'blog_index', label: 'Blog index' },
-    { key: 'portfolio_index', label: 'Portfolio index' },
-    { key: 'services_index', label: 'Services index' },
-  ],
-  advanced: [
-    { key: 'device', label: 'Device' },
-    { key: 'role', label: 'Role' },
-    { key: 'url_param', label: 'URL parameter' },
-  ],
-};
+type ConditionKey = { key: string; label: string };
+
+/** Condition keys per rule group; singular and archive keys come from the content type registry. */
+function conditionGroupKeys(lang: string, contentTypes: ContentTypeInfo[]): Record<string, ConditionKey[]> {
+  return {
+    entire: [{ key: 'site', label: 'Entire site' }],
+    singular: [
+      { key: HOMEPAGE_CONTENT_TYPE, label: homepageLabel(lang) },
+      ...contentTypes.map((ct) => ({ key: ct.key, label: contentTypeLabel(lang, ct) })),
+      { key: 'not_found', label: '404' },
+    ],
+    archive: contentTypes.flatMap((ct) =>
+      ct.archive ? [{ key: ct.archive.context, label: contentTypeArchiveLabel(lang, ct.archive) }] : [],
+    ),
+    advanced: [
+      { key: 'device', label: 'Device' },
+      { key: 'role', label: 'Role' },
+      { key: 'url_param', label: 'URL parameter' },
+    ],
+  };
+}
 
 /** Layout kinds the backend accepts in the Body slot (ChromeLayoutService::assertAssignableId). */
 const BODY_SLOT_KINDS = ['single', 'archive', 'body'] as const satisfies readonly ChromeLayoutKind[];
@@ -93,17 +101,20 @@ export const ThemeTemplateEditorPage = component$<{
   const saving = useSignal(false);
   const loading = useSignal(true);
   const allowBody = useSignal(themeConditionsAllowBody(conditions.value));
+  const groupKeys = useSignal<Record<string, ConditionKey[]>>(conditionGroupKeys(lang, []));
 
   // eslint-disable-next-line qwik/no-use-visible-task
   useVisibleTask$(async () => {
     try {
-      const [h, f, ...bodyKinds] = await Promise.all([
+      const [h, f, contentTypes, ...bodyKinds] = await Promise.all([
         fetchPublishedChromeOptionsFromBrowser('header'),
         fetchPublishedChromeOptionsFromBrowser('footer'),
+        fetchContentTypesFromBrowser(),
         ...BODY_SLOT_KINDS.map((k) => fetchPublishedChromeOptionsFromBrowser(k)),
       ]);
       headers.value = h;
       footers.value = f;
+      groupKeys.value = conditionGroupKeys(lang, contentTypes);
       bodies.value = bodyKinds.flat();
     } catch (e) {
       await showError(String((e as Error)?.message || translateApp(lang, 'common.error')));
@@ -159,7 +170,7 @@ export const ThemeTemplateEditorPage = component$<{
     const next = { ...conditions.value, rules: [...conditions.value.rules] };
     next.rules[index] = { ...next.rules[index], ...patch };
     if (patch.group) {
-      const keys = GROUP_KEYS[patch.group] || GROUP_KEYS.entire;
+      const keys = groupKeys.value[patch.group] || groupKeys.value.entire;
       next.rules[index].key = keys[0]?.key || 'site';
       next.rules[index].value = null;
     }
@@ -278,7 +289,11 @@ export const ThemeTemplateEditorPage = component$<{
         </div>
 
         {conditions.value.rules.map((rule, index) => {
-          const keys = GROUP_KEYS[rule.group] || GROUP_KEYS.entire;
+          const groupOptions = groupKeys.value[rule.group] || groupKeys.value.entire;
+          // Keep a saved key selectable when its content type is currently disabled.
+          const keys = groupOptions.some((k) => k.key === rule.key)
+            ? groupOptions
+            : [...groupOptions, { key: rule.key, label: rule.key }];
           return (
             <div
               key={`rule-${index}`}

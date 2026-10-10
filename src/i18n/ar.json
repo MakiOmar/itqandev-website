@@ -49,6 +49,24 @@
     "viewSite": "عرض الموقع",
     "viewPublicPage": "عرض الصفحة العامة"
   },
+  "contentTypes": {
+    "homepage": "الرئيسية",
+    "page": "صفحة",
+    "project": "مشروع",
+    "blog_post": "مقال",
+    "service": "خدمة",
+    "plural": {
+      "page": "الصفحات",
+      "project": "المشاريع",
+      "blog_post": "مقالات المدونة",
+      "service": "الخدمات"
+    },
+    "archives": {
+      "blog_index": "فهرس المدونة",
+      "portfolio_index": "فهرس الأعمال",
+      "services_index": "فهرس الخدمات"
+    }
+  },
   "chromeLayouts": {
     "typeDefaults": "افتراضيات النوع",
     "siteDefault": "افتراضي الموقع",
@@ -64,11 +82,6 @@
     "footerLabel": "تخطيط التذييل",
     "useSiteDefault": "استخدام الافتراضي",
     "typeDefaultsHint": "تُستخدم عندما لا يكون للسجل ترويسة/تذييل خاص.",
-    "typeHomepage": "الرئيسية",
-    "typePage": "الصفحات",
-    "typeProject": "المشاريع",
-    "typeBlogPost": "مقالات المدونة",
-    "typeService": "الخدمات",
     "statusPublished": "منشور",
     "statusDraft": "مسودة",
     "publishSelected": "نشر",

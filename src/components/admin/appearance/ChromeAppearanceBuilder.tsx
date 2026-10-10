@@ -38,6 +38,11 @@ import {
   chromeCategoryExcludedFrom,
 } from '~/lib/marketing/chrome-blocks';
 import type { BuilderPreviewSupport } from '~/components/admin/pages/PageBuilderCanvasBlock';
+import {
+  contentTypeLabel,
+  fetchPreviewRecordsFromBrowser,
+  type PreviewRecordOption,
+} from '~/lib/admin/content-types';
 
 function chromeKindSlug(kind: ChromeLayoutKind): string {
   if (kind === 'header') return 'headers';
@@ -60,8 +65,6 @@ type ChromeAppearanceBuilderProps = {
   previewSupport?: BuilderPreviewSupport;
 };
 
-type PreviewRecordOption = { id: number; title: string };
-
 type PreviewBrandingState = {
   name: string;
   logo: string;
@@ -80,7 +83,8 @@ export const ChromeAppearanceBuilder = component$<ChromeAppearanceBuilderProps>(
   const sections = useSignal<PageSectionNode[]>([]);
   const registry = useSignal<AppearanceRegistryEntry[]>([]);
   const dynamicTags = useSignal<BuilderDynamicTag[]>([]);
-  const previewType = useSignal('blog_post');
+  const previewTypes = useSignal<{ key: string; label: string }[]>([]);
+  const previewType = useSignal('');
   const previewRecordId = useSignal('');
   const previewRecords = useSignal<PreviewRecordOption[]>([]);
   const previewOverride = useSignal<PageSectionNode[] | null>(null);
@@ -163,16 +167,12 @@ export const ChromeAppearanceBuilder = component$<ChromeAppearanceBuilderProps>(
       );
       previewBranding.value = mapped;
       if (kind === 'single' || kind === 'archive' || kind === 'loop_item') {
-        // Prefill preview-as records for the default content type.
-        const api = getApiClient(null);
-        const res = await api.get(API_ENDPOINTS.BLOG.LIST).catch(() => null);
-        const rows = res && Array.isArray((res as { data?: unknown }).data)
-          ? ((res as { data: unknown[] }).data)
+        previewTypes.value = (regs.content_types ?? []).map((ct) => ({ key: ct.key, label: contentTypeLabel(lang, ct) }));
+        // Prefill preview-as records for the first content type.
+        previewType.value = previewTypes.value[0]?.key ?? '';
+        previewRecords.value = previewType.value
+          ? await fetchPreviewRecordsFromBrowser(previewType.value).catch(() => [])
           : [];
-        previewRecords.value = rows.slice(0, 50).map((row) => {
-          const r = row as Record<string, unknown>;
-          return { id: Number(r.id), title: String(r.title || r.name || r.id) };
-        });
       }
     } catch (e) {
       showError(translateApp(lang, 'common.error'), {
@@ -187,28 +187,7 @@ export const ChromeAppearanceBuilder = component$<ChromeAppearanceBuilderProps>(
     previewType.value = type;
     previewRecordId.value = '';
     try {
-      const api = getApiClient(null);
-      const endpoint =
-        type === 'project'
-          ? API_ENDPOINTS.PROJECTS.LIST
-          : type === 'service'
-            ? API_ENDPOINTS.SERVICES.LIST
-            : type === 'page'
-              ? API_ENDPOINTS.PAGES.LIST
-              : API_ENDPOINTS.BLOG.LIST;
-      const res = await api.get(endpoint);
-      const rows = Array.isArray((res as { data?: unknown }).data)
-        ? ((res as { data: unknown[] }).data)
-        : Array.isArray(res)
-          ? res
-          : [];
-      previewRecords.value = rows.slice(0, 50).map((row) => {
-        const r = row as Record<string, unknown>;
-        return {
-          id: Number(r.id),
-          title: String(r.title || r.name || r.id),
-        };
-      });
+      previewRecords.value = await fetchPreviewRecordsFromBrowser(type);
     } catch {
       previewRecords.value = [];
     }
@@ -285,10 +264,11 @@ export const ChromeAppearanceBuilder = component$<ChromeAppearanceBuilderProps>(
               void loadPreviewRecords$((e.target as HTMLSelectElement).value);
             }}
           >
-            <option value="blog_post">Blog</option>
-            <option value="project">Project</option>
-            <option value="service">Service</option>
-            <option value="page">Page</option>
+            {previewTypes.value.map((type) => (
+              <option key={type.key} value={type.key}>
+                {type.label}
+              </option>
+            ))}
           </select>
           <select
             class={ADMIN_NATIVE_SELECT_COMPACT_CLASS}

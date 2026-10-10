@@ -49,6 +49,24 @@
     "viewSite": "View site",
     "viewPublicPage": "View public page"
   },
+  "contentTypes": {
+    "homepage": "Homepage",
+    "page": "Page",
+    "project": "Project",
+    "blog_post": "Blog post",
+    "service": "Service",
+    "plural": {
+      "page": "Pages",
+      "project": "Projects",
+      "blog_post": "Blog posts",
+      "service": "Services"
+    },
+    "archives": {
+      "blog_index": "Blog index",
+      "portfolio_index": "Portfolio index",
+      "services_index": "Services index"
+    }
+  },
   "chromeLayouts": {
     "typeDefaults": "Type defaults",
     "siteDefault": "Site default",
@@ -64,11 +82,6 @@
     "footerLabel": "Footer layout",
     "useSiteDefault": "Use default",
     "typeDefaultsHint": "Fallbacks when a record has no header/footer override.",
-    "typeHomepage": "Homepage",
-    "typePage": "Pages",
-    "typeProject": "Projects",
-    "typeBlogPost": "Blog posts",
-    "typeService": "Services",
     "statusPublished": "Published",
     "statusDraft": "Draft",
     "publishSelected": "Publish",

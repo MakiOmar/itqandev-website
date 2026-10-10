@@ -10,7 +10,13 @@ import {
   fetchPublishedChromeOptionsFromBrowser,
   saveChromeTypeDefaultsFromBrowser,
 } from '~/lib/admin/chrome-layout-actions';
-import type { ChromeLayoutMeta, ChromeTypeDefaults } from '~/types/chrome-layout';
+import type { ChromeLayoutMeta, ChromeTypeDefault, ChromeTypeDefaults } from '~/types/chrome-layout';
+import {
+  contentTypePluralLabel,
+  fetchContentTypesFromBrowser,
+  HOMEPAGE_CONTENT_TYPE,
+  homepageLabel,
+} from '~/lib/admin/content-types';
 import {
   ADMIN_BACK_BUTTON_CLASS,
   ADMIN_FORM_CARD_CLASS,
@@ -20,17 +26,9 @@ import {
   ADMIN_PRIMARY_BUTTON_CLASS,
 } from '~/lib/admin/native-select-classes';
 
-const TYPES = ['homepage', 'page', 'project', 'blog_post', 'service'] as const;
+type TypeRow = { key: string; label: string };
 
-function emptyDefaults(): ChromeTypeDefaults {
-  return {
-    homepage: { header_id: null, footer_id: null },
-    page: { header_id: null, footer_id: null },
-    project: { header_id: null, footer_id: null },
-    blog_post: { header_id: null, footer_id: null },
-    service: { header_id: null, footer_id: null },
-  };
-}
+const EMPTY_DEFAULT: ChromeTypeDefault = { header_id: null, footer_id: null };
 
 export default component$(() => {
   const { lang } = useTranslate();
@@ -38,19 +36,25 @@ export default component$(() => {
   const { success, error: showError } = useSwal();
   const loading = useSignal(true);
   const saving = useSignal(false);
-  const defaults = useSignal<ChromeTypeDefaults>(emptyDefaults());
+  const defaults = useSignal<ChromeTypeDefaults>({});
+  const types = useSignal<TypeRow[]>([]);
   const headers = useSignal<ChromeLayoutMeta[]>([]);
   const footers = useSignal<ChromeLayoutMeta[]>([]);
 
   // eslint-disable-next-line qwik/no-use-visible-task
   useVisibleTask$(async () => {
     try {
-      const [d, h, f] = await Promise.all([
+      const [d, h, f, contentTypes] = await Promise.all([
         fetchChromeTypeDefaultsFromBrowser(),
         fetchPublishedChromeOptionsFromBrowser('header'),
         fetchPublishedChromeOptionsFromBrowser('footer'),
+        fetchContentTypesFromBrowser(),
       ]);
-      defaults.value = { ...emptyDefaults(), ...d };
+      types.value = [
+        { key: HOMEPAGE_CONTENT_TYPE, label: homepageLabel(lang) },
+        ...contentTypes.map((ct) => ({ key: ct.key, label: contentTypePluralLabel(lang, ct) })),
+      ];
+      defaults.value = d;
       headers.value = h;
       footers.value = f;
     } catch (e) {
@@ -75,20 +79,7 @@ export default component$(() => {
     }
   });
 
-  const typeLabel = (type: (typeof TYPES)[number]) => {
-    switch (type) {
-      case 'homepage':
-        return translateApp(lang, 'chromeLayouts.typeHomepage');
-      case 'page':
-        return translateApp(lang, 'chromeLayouts.typePage');
-      case 'project':
-        return translateApp(lang, 'chromeLayouts.typeProject');
-      case 'blog_post':
-        return translateApp(lang, 'chromeLayouts.typeBlogPost');
-      case 'service':
-        return translateApp(lang, 'chromeLayouts.typeService');
-    }
-  };
+  const rowDefault = (key: string): ChromeTypeDefault => defaults.value[key] ?? EMPTY_DEFAULT;
 
   return (
     <div class="space-y-4">
@@ -105,20 +96,20 @@ export default component$(() => {
         <p class="text-sm text-gray-500">{translateApp(lang, 'common.loading')}</p>
       ) : (
         <div class={`${ADMIN_FORM_CARD_CLASS} space-y-6 p-4`}>
-          {TYPES.map((type) => (
+          {types.value.map(({ key: type, label }) => (
             <div key={type} class="grid gap-3 md:grid-cols-3 md:items-end">
-              <div class="font-medium text-gray-900 dark:text-gray-100">{typeLabel(type)}</div>
+              <div class="font-medium text-gray-900 dark:text-gray-100">{label}</div>
               <label class={ADMIN_FORM_LABEL_CLASS}>
                 {translateApp(lang, 'chromeLayouts.headerLabel')}
                 <select
                   class={ADMIN_NATIVE_SELECT_CLASS}
-                  value={defaults.value[type].header_id ?? ''}
+                  value={rowDefault(type).header_id ?? ''}
                   onChange$={(e) => {
                     const v = (e.target as HTMLSelectElement).value;
                     defaults.value = {
                       ...defaults.value,
                       [type]: {
-                        ...defaults.value[type],
+                        ...(defaults.value[type] ?? EMPTY_DEFAULT),
                         header_id: v ? Number(v) : null,
                       },
                     };
@@ -138,13 +129,13 @@ export default component$(() => {
                 {translateApp(lang, 'chromeLayouts.footerLabel')}
                 <select
                   class={ADMIN_NATIVE_SELECT_CLASS}
-                  value={defaults.value[type].footer_id ?? ''}
+                  value={rowDefault(type).footer_id ?? ''}
                   onChange$={(e) => {
                     const v = (e.target as HTMLSelectElement).value;
                     defaults.value = {
                       ...defaults.value,
                       [type]: {
-                        ...defaults.value[type],
+                        ...(defaults.value[type] ?? EMPTY_DEFAULT),
                         footer_id: v ? Number(v) : null,
                       },
                     };

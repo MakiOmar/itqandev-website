@@ -8,6 +8,7 @@ import type {
 } from '../marketing/appearance-types';
 import type { FormActionRegistryEntry, FormFieldRegistryEntry } from '../../types/form';
 import { appearanceMediaId } from './appearance-media-ref';
+import type { ContentTypeInfo } from './content-types';
 import { ensurePageLayoutBands } from './page-layout';
 
 /** Prefer Laravel/ApiError `.message` (plain objects), then Error, then fallback. */
@@ -26,23 +27,41 @@ function formatError(err: unknown): string {
   return formatAppearanceError(err);
 }
 
-export async function fetchAppearanceRegistriesFromBrowser(): Promise<{
+export type DynamicTagKind = 'text' | 'url' | 'image' | 'html' | 'date' | 'number';
+
+/** Allowlisted `{{id}}` token from DynamicTagRegistry. */
+export type DynamicTag = { id: string; group: string; label: string; kind?: DynamicTagKind };
+
+export type DynamicTagScope = 'site' | 'record' | 'archive';
+
+/** Dropdown heading; content type groups nest their relation subgroups via `parent`. */
+export type DynamicTagGroup = {
+  id: string;
+  label: string;
+  parent: string | null;
+  scope: DynamicTagScope;
+  content_type: string | null;
+};
+
+/** Tags plus the groups that organise them, as passed down to builder inputs. */
+export type DynamicTagCatalog = { tags: DynamicTag[]; groups: DynamicTagGroup[] };
+
+export const EMPTY_DYNAMIC_TAG_CATALOG: DynamicTagCatalog = { tags: [], groups: [] };
+
+type AppearanceRegistries = {
   widgets: AppearanceRegistryEntry[];
   kits: AppearanceRegistryEntry[];
   homepage_sections: AppearanceRegistryEntry[];
   form_fields: FormFieldRegistryEntry[];
   form_actions: FormActionRegistryEntry[];
-  dynamic_tags: Array<{ id: string; group?: string; label: string }>;
-}> {
+  dynamic_tags: DynamicTag[];
+  dynamic_tag_groups: DynamicTagGroup[];
+  content_types: ContentTypeInfo[];
+};
+
+export async function fetchAppearanceRegistriesFromBrowser(): Promise<AppearanceRegistries> {
   const api = getApiClient(null);
-  const res = await api.get<{
-    widgets?: AppearanceRegistryEntry[];
-    kits?: AppearanceRegistryEntry[];
-    homepage_sections: AppearanceRegistryEntry[];
-    form_fields: FormFieldRegistryEntry[];
-    form_actions: FormActionRegistryEntry[];
-    dynamic_tags?: Array<{ id: string; group?: string; label: string }>;
-  }>(API_ENDPOINTS.APPEARANCE.REGISTRIES);
+  const res = await api.get<Partial<AppearanceRegistries>>(API_ENDPOINTS.APPEARANCE.REGISTRIES);
   const kits = res.data?.kits ?? res.data?.homepage_sections ?? [];
   const widgets = res.data?.widgets ?? [];
   return {
@@ -52,6 +71,8 @@ export async function fetchAppearanceRegistriesFromBrowser(): Promise<{
     form_fields: res.data?.form_fields ?? [],
     form_actions: res.data?.form_actions ?? [],
     dynamic_tags: res.data?.dynamic_tags ?? [],
+    dynamic_tag_groups: res.data?.dynamic_tag_groups ?? [],
+    content_types: res.data?.content_types ?? [],
   };
 }
 
