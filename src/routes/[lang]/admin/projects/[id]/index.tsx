@@ -877,9 +877,16 @@ export default component$(() => {
                       }}
                       class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-primary-500 focus:outline-none focus:ring focus:ring-primary-200 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:focus:ring-primary-700/40"
                     >
-                      <option value="draft">{translations.statusDraft}</option>
-                      <option value="published">{translations.statusPublished}</option>
-                      <option value="archived">{translations.statusArchived}</option>
+                      {/* `selected` per option: SSR does not render a select's `value`, so the first option would show. */}
+                      <option value="draft" selected={statusValue.value === 'draft'}>
+                        {translations.statusDraft}
+                      </option>
+                      <option value="published" selected={statusValue.value === 'published'}>
+                        {translations.statusPublished}
+                      </option>
+                      <option value="archived" selected={statusValue.value === 'archived'}>
+                        {translations.statusArchived}
+                      </option>
                     </select>
                   </div>
 
