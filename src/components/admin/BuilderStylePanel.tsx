@@ -138,6 +138,7 @@ const KEY_LABEL: Record<string, string> = {
   caption_letter_spacing: 'builder.style.letterSpacing',
   caption_spacing: 'builder.style.captionSpacing',
   custom_css: 'builder.style.customCss',
+  tab_align: 'builder.style.tabsAlign',
   tab_font_size: 'builder.style.fontSize',
   tab_font_weight: 'builder.style.fontWeight',
   tab_color: 'builder.style.textColor',

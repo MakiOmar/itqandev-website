@@ -1600,6 +1600,7 @@
       "activeTextColor": "Active text colour",
       "activeBackground": "Active background",
       "activeIndicator": "Active bottom border colour",
+      "tabsAlign": "Tabs alignment",
       "buttonSize": "Button size",
       "iconSize": "Icon size",
       "iconColor": "Icon colour",

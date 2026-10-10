@@ -477,6 +477,15 @@ export const STYLE_CONTROLS: StyleControl[] = [
   ...sectionTextControls('subtitle', 64),
   ...buttonControls('btn_primary'),
   ...buttonControls('btn_secondary'),
+  {
+    key: 'tab_align',
+    group: 'tabs',
+    type: 'choose',
+    options: [
+      { value: 'start', labelKey: 'builder.style.alignStart' },
+      { value: 'center', labelKey: 'builder.style.alignCenter' },
+    ],
+  },
   { key: 'tab_font_size', group: 'tabs', type: 'length', min: 8, max: 48 },
   { key: 'tab_font_weight', group: 'tabs', type: 'select', options: WEIGHT_OPTIONS },
   { key: 'tab_color', group: 'tabs', type: 'color' },

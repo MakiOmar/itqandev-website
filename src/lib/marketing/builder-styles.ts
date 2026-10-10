@@ -367,6 +367,8 @@ function emitBagVars(bag: StyleBag, suffix: '' | '-md' | '-lg', out: Record<stri
   else if (anim === 'float') set('hover-transform', 'translateY(-8px)');
   else if (anim === 'sink') set('hover-transform', 'translateY(8px)');
   else if (anim === 'none') set('hover-transform', 'none');
+  if (bag.tab_align === 'center') set('tab-edge', 'auto');
+  else if (bag.tab_align === 'start') set('tab-edge', '0px');
   set('caption-align', typeof bag.caption_align === 'string' ? bag.caption_align : null);
   set('caption-color', typeof bag.caption_color === 'string' ? bag.caption_color : null);
   set('caption-font-size', lengthToCss(bag.caption_font_size));

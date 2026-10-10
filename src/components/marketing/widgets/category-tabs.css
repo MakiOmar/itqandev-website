@@ -25,6 +25,7 @@
   --ct-tab-active-bg: var(--s-tab-active-bg, var(--ct-tab-bg));
   --ct-indicator: var(--s-tab-indicator-color, var(--ct-d-indicator));
   --ct-tab-radius: var(--s-tab-radius, 0);
+  --ct-tab-edge: var(--s-tab-edge, 0px);
   --ct-nav-size: var(--s-nav-size, 2.25rem);
   --ct-nav-icon: var(--s-nav-icon-size, 1rem);
   --ct-nav-color: var(--s-nav-color, var(--ct-d-nav));
@@ -46,14 +47,21 @@
   --ct-d-rail: #334155;
 }
 
-/* The rail carries a `dir` from the UI locale; site typography maps `[dir]` to a per-direction
-   font, which must not override the section's (content language) font. */
-.ct-root .ct-rail {
-  font-family: inherit;
-}
-
 .ct-rail {
   border-bottom: 1px solid var(--ct-d-rail);
+}
+
+/* Alignment (Style tab → Filter tabs): auto edge margins centre the tabs while they fit and
+   collapse to 0 on overflow, so every tab stays reachable by scrolling (unlike justify-content). */
+.ct-rail > .ct-tab:first-child {
+  margin-inline-start: var(--ct-tab-edge);
+}
+.ct-rail > .ct-tab:last-child {
+  margin-inline-end: var(--ct-tab-edge);
+}
+
+.ct-root:dir(rtl) .ct-nav svg {
+  transform: scaleX(-1);
 }
 
 .ct-tab {
@@ -124,6 +132,7 @@
     --ct-tab-active-bg: var(--s-tab-active-bg-md, var(--ct-tab-bg));
     --ct-indicator: var(--s-tab-indicator-color-md, var(--ct-d-indicator));
     --ct-tab-radius: var(--s-tab-radius-md, 0);
+    --ct-tab-edge: var(--s-tab-edge-md, 0px);
     --ct-nav-size: var(--s-nav-size-md, 2.25rem);
     --ct-nav-icon: var(--s-nav-icon-size-md, 1rem);
     --ct-nav-color: var(--s-nav-color-md, var(--ct-d-nav));
@@ -147,6 +156,7 @@
     --ct-tab-active-bg: var(--s-tab-active-bg-lg, var(--ct-tab-bg));
     --ct-indicator: var(--s-tab-indicator-color-lg, var(--ct-d-indicator));
     --ct-tab-radius: var(--s-tab-radius-lg, 0);
+    --ct-tab-edge: var(--s-tab-edge-lg, 0px);
     --ct-nav-size: var(--s-nav-size-lg, 2.25rem);
     --ct-nav-icon: var(--s-nav-icon-size-lg, 1rem);
     --ct-nav-color: var(--s-nav-color-lg, var(--ct-d-nav));

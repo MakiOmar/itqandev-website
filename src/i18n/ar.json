@@ -1600,6 +1600,7 @@
       "activeTextColor": "لون النص النشط",
       "activeBackground": "الخلفية النشطة",
       "activeIndicator": "لون الحد السفلي للتبويب النشط",
+      "tabsAlign": "محاذاة التبويبات",
       "buttonSize": "حجم الزر",
       "iconSize": "حجم الأيقونة",
       "iconColor": "لون الأيقونة",

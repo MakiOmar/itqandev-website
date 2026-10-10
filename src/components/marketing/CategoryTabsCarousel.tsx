@@ -7,7 +7,6 @@ import {
   type QRL,
 } from '@builder.io/qwik';
 import styles from '~/components/marketing/widgets/category-tabs.css?inline';
-import { isUiLocaleRtl } from '~/lib/i18n/ui-locale-segments';
 import { translateApp } from '~/lib/i18n/useTranslate';
 
 export type CategoryTabItem = {
@@ -25,16 +24,21 @@ export type CategoryTabsCarouselProps = {
   onSelect$: QRL<(tab: 'all' | string) => void>;
 };
 
-/** Nav chevron; sized and coloured by `.ct-nav` (Style tab → Navigation buttons). */
-const Chevron = (props: { towardRight: boolean }) => (
+/** Nav chevron drawn for LTR; `.ct-root:dir(rtl)` mirrors it. Sized and coloured by `.ct-nav`. */
+const Chevron = (props: { towardEnd: boolean }) => (
   <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-    <path d={props.towardRight ? 'M9 6l6 6-6 6' : 'M15 6l-6 6 6 6'} />
+    <path d={props.towardEnd ? 'M9 6l6 6-6 6' : 'M15 6l-6 6 6 6'} />
   </svg>
 );
 
+function isRtlElement(el: HTMLElement): boolean {
+  return getComputedStyle(el).direction === 'rtl';
+}
+
 /**
  * Horizontal category tabs with prev/next controls (no native scrollbar).
- * Chevrons and scroll delta flip for RTL locales. Colours/sizes come from category-tabs.css,
+ * Direction follows the surrounding content (not the UI locale), so Arabic content starts at the
+ * right even under an English UI. Colours/sizes/alignment come from category-tabs.css,
  * overridable by the host widget's Style tab.
  */
 export const CategoryTabsCarousel = component$<CategoryTabsCarouselProps>((props) => {
@@ -42,7 +46,6 @@ export const CategoryTabsCarousel = component$<CategoryTabsCarouselProps>((props
   const scrollerRef = useSignal<HTMLDivElement>();
   const canPrev = useSignal(false);
   const canNext = useSignal(false);
-  const rtl = isUiLocaleRtl(props.uiLocale);
 
   const syncEdges$ = $(() => {
     const el = scrollerRef.value;
@@ -51,6 +54,7 @@ export const CategoryTabsCarousel = component$<CategoryTabsCarouselProps>((props
       canNext.value = false;
       return;
     }
+    const rtl = isRtlElement(el);
     const eps = 4;
     const overflow = el.scrollWidth - el.clientWidth > eps;
     if (!overflow) {
@@ -100,7 +104,7 @@ export const CategoryTabsCarousel = component$<CategoryTabsCarouselProps>((props
     if (!el) return;
     const amount = Math.max(160, Math.floor(el.clientWidth * 0.7));
     const forward = dir === 'next' ? 1 : -1;
-    const delta = rtl ? -forward * amount : forward * amount;
+    const delta = isRtlElement(el) ? -forward * amount : forward * amount;
     el.scrollBy({ left: delta, behavior: 'smooth' });
     window.setTimeout(() => {
       void syncEdges$();
@@ -118,15 +122,15 @@ export const CategoryTabsCarousel = component$<CategoryTabsCarouselProps>((props
           onClick$={() => scrollByDir$('prev')}
         >
           {/* Visual chevron: points toward start (leading side) */}
-          <Chevron towardRight={rtl} />
+          <Chevron towardEnd={false} />
         </button>
 
+        {/* No `dir` here: the rail inherits the content direction from its section */}
         <div
           ref={scrollerRef}
           class="ct-rail flex min-w-0 flex-1 gap-1 overflow-x-auto scroll-smooth pb-px [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden snap-x snap-mandatory"
           role="tablist"
           aria-label={props.label}
-          dir={rtl ? 'rtl' : 'ltr'}
         >
           <button
             type="button"
@@ -158,7 +162,7 @@ export const CategoryTabsCarousel = component$<CategoryTabsCarouselProps>((props
           disabled={!canNext.value}
           onClick$={() => scrollByDir$('next')}
         >
-          <Chevron towardRight={!rtl} />
+          <Chevron towardEnd={true} />
         </button>
       </div>
     </div>
