@@ -1264,10 +1264,21 @@
     "floatingSize": "الحجم (بكسل)",
     "noImage": "لا توجد صورة",
     "dynamicTagsInsert": "إدراج وسم ديناميكي",
+    "dynamicTagsSearch": "ابحث في الوسوم…",
+    "dynamicTagsNoMatch": "لا توجد وسوم مطابقة",
     "dynamicTagGroups": {
       "site": "الموقع",
       "record": "العنصر الحالي",
-      "archive": "الأرشيف"
+      "archive": "الأرشيف",
+      "page": "الصفحة",
+      "parent": "الصفحة الأم",
+      "project": "المشروع",
+      "categories": "التصنيفات",
+      "skills": "المهارات",
+      "testimonials": "آراء العملاء",
+      "blog_post": "المقال",
+      "author": "الكاتب",
+      "service": "الخدمة"
     },
     "chooseImage": "اختر صورة",
     "changeImage": "تغيير الصورة",

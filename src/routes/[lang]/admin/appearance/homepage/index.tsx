@@ -11,14 +11,16 @@ import { useSwal } from '~/lib/hooks/useSwal';
 import { usePublicSiteMeta } from '../../layout';
 import { getLocalizedRoutes } from '~/lib/constants/routes';
 import {
+  EMPTY_DYNAMIC_TAG_CATALOG,
   fetchAppearanceRegistriesFromBrowser,
   fetchHomepageBuilderFromBrowser,
   formatAppearanceError,
   saveHomepageBuilderFromBrowser,
+  type DynamicTagCatalog,
 } from '~/lib/admin/appearance-actions';
+import { dynamicTagCatalogForSite, dynamicTagCatalogFromRegistries } from '~/lib/admin/builder-dynamic-tags';
 import { ensurePageLayoutBands } from '~/lib/admin/page-layout';
 import type { AppearanceRegistryEntry, PageSectionNode } from '~/lib/marketing/appearance-types';
-import type { BuilderDynamicTag } from '~/components/admin/appearance/BuilderDynamicTagButton';
 
 /**
  * Homepage Appearance uses the same band workspace as CMS pages (legacy flat sections wrap).
@@ -32,7 +34,7 @@ export default component$(() => {
   const saving = useSignal(false);
   const sections = useSignal<PageSectionNode[]>([]);
   const registry = useSignal<AppearanceRegistryEntry[]>([]);
-  const dynamicTags = useSignal<BuilderDynamicTag[]>([]);
+  const dynamicTags = useSignal<DynamicTagCatalog>(EMPTY_DYNAMIC_TAG_CATALOG);
   const loc = useLocation();
   const defaultLocale = builderPrimaryLocale(langConfig.value);
   const activeLocale = useSignal(
@@ -47,7 +49,7 @@ export default component$(() => {
         fetchHomepageBuilderFromBrowser(),
       ]);
       registry.value = [...(regs.widgets ?? []), ...(regs.kits ?? [])];
-      dynamicTags.value = regs.dynamic_tags ?? [];
+      dynamicTags.value = dynamicTagCatalogForSite(dynamicTagCatalogFromRegistries(regs));
       sections.value = ensurePageLayoutBands((home.sections || []) as PageSectionNode[]);
     } catch (e) {
       showError(translateApp(lang, 'common.error'), {

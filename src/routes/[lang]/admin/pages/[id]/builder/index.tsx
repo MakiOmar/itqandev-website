@@ -9,9 +9,15 @@ import { runPageUpdateFromBrowser } from '../../../../../../lib/admin/page-actio
 import { adminApiClient } from '../../../../../../lib/admin/admin-api-client';
 import { API_ENDPOINTS } from '../../../../../../lib/api/endpoints';
 import { adminPageEditHref, useAppRoutes } from '../../../../../../lib/constants/routes';
-import { fetchAppearanceRegistriesFromBrowser } from '../../../../../../lib/admin/appearance-actions';
-import { dynamicTagsForCmsPage } from '../../../../../../lib/admin/builder-dynamic-tags';
-import type { BuilderDynamicTag } from '../../../../../../components/admin/appearance/BuilderDynamicTagButton';
+import {
+  EMPTY_DYNAMIC_TAG_CATALOG,
+  fetchAppearanceRegistriesFromBrowser,
+  type DynamicTagCatalog,
+} from '../../../../../../lib/admin/appearance-actions';
+import {
+  dynamicTagCatalogForCmsPage,
+  dynamicTagCatalogFromRegistries,
+} from '../../../../../../lib/admin/builder-dynamic-tags';
 import { getPageBuilderMarketingSupport } from '../../../../../../lib/marketing/content-layer';
 import { uiLocaleFromPublicRoute } from '../../../../../../lib/i18n/ui-locale-path';
 import type { AppearanceRegistryEntry, PageSectionNode } from '../../../../../../lib/marketing/appearance-types';
@@ -71,7 +77,7 @@ export default component$(() => {
 
   const sections = useSignal<PageSectionNode[]>(page.sections || []);
   const registry = useSignal<AppearanceRegistryEntry[]>([]);
-  const dynamicTags = useSignal<BuilderDynamicTag[]>([]);
+  const dynamicTags = useSignal<DynamicTagCatalog>(EMPTY_DYNAMIC_TAG_CATALOG);
   const loc = useLocation();
   const activeLocale = useSignal(
     resolveBuilderInitialLocale(langConfig.value, loc.url.searchParams.get(BUILDER_LOCALE_PARAM)),
@@ -83,7 +89,7 @@ export default component$(() => {
     try {
       const regs = await fetchAppearanceRegistriesFromBrowser();
       registry.value = [...(regs.widgets ?? []), ...(regs.kits ?? regs.homepage_sections ?? [])];
-      dynamicTags.value = dynamicTagsForCmsPage(regs.dynamic_tags ?? []);
+      dynamicTags.value = dynamicTagCatalogForCmsPage(dynamicTagCatalogFromRegistries(regs));
     } catch {
       registry.value = [];
     }

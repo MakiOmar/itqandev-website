@@ -138,7 +138,7 @@ import type { CaseStudy, Testimonial, BlogPost } from '~/lib/marketing/types';
 import type { PortfolioCategory } from '~/lib/marketing/content-layer';
 import { useBuilderTemplates } from '~/lib/admin/use-builder-templates';
 import { BuilderTemplatesPanel } from '~/components/admin/pages/BuilderTemplatesPanel';
-import type { BuilderDynamicTag } from '~/components/admin/appearance/BuilderDynamicTagButton';
+import type { DynamicTagCatalog } from '~/lib/admin/appearance-actions';
 
 const WIDGET_DND = 'application/x-credocode-widget';
 
@@ -248,7 +248,7 @@ export type PageBuilderWorkspaceProps = {
     techStack?: string[];
   };
   /** Allowlisted dynamic tags for inspector chips. */
-  dynamicTags?: BuilderDynamicTag[];
+  dynamicTags?: DynamicTagCatalog;
   /** Resolved tag preview (does not replace the editor document). */
   livePreviewOverride?: Signal<PageSectionNode[] | null>;
 };

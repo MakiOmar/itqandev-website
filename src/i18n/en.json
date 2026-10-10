@@ -1264,10 +1264,21 @@
     "floatingSize": "Size (px)",
     "noImage": "No image",
     "dynamicTagsInsert": "Insert dynamic tag",
+    "dynamicTagsSearch": "Search tags…",
+    "dynamicTagsNoMatch": "No matching tags",
     "dynamicTagGroups": {
       "site": "Site",
       "record": "Current item",
-      "archive": "Archive"
+      "archive": "Archive",
+      "page": "Page",
+      "parent": "Parent page",
+      "project": "Project",
+      "categories": "Categories",
+      "skills": "Skills",
+      "testimonials": "Testimonials",
+      "blog_post": "Blog post",
+      "author": "Author",
+      "service": "Service"
     },
     "chooseImage": "Choose image",
     "changeImage": "Change image",

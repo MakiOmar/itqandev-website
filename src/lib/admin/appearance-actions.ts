@@ -48,7 +48,7 @@ export type DynamicTagCatalog = { tags: DynamicTag[]; groups: DynamicTagGroup[] 
 
 export const EMPTY_DYNAMIC_TAG_CATALOG: DynamicTagCatalog = { tags: [], groups: [] };
 
-type AppearanceRegistries = {
+export type AppearanceRegistries = {
   widgets: AppearanceRegistryEntry[];
   kits: AppearanceRegistryEntry[];
   homepage_sections: AppearanceRegistryEntry[];

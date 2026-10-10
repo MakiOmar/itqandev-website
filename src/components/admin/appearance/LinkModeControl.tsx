@@ -2,7 +2,8 @@ import { component$, useSignal, type QRL } from '@builder.io/qwik';
 import { translateApp } from '~/lib/i18n/useTranslate';
 import { LINK_MODE_KEYS, linkModePatch, resolveLinkMode, type LinkMode } from '~/lib/admin/link-mode-fields';
 import { ADMIN_CHECKBOX_CLASS, ADMIN_CHECKBOX_LABEL_CLASS } from '~/lib/admin/native-select-classes';
-import { BuilderDynamicTagButton, type BuilderDynamicTag } from './BuilderDynamicTagButton';
+import type { DynamicTagCatalog } from '~/lib/admin/appearance-actions';
+import { BuilderDynamicTagButton } from './BuilderDynamicTagButton';
 import { INSPECTOR_INPUT, INSPECTOR_LABEL, INSPECTOR_ROW } from './inspector-classes';
 
 export type LinkModeControlProps = {
@@ -10,7 +11,7 @@ export type LinkModeControlProps = {
   url: string;
   newTab: boolean;
   lightbox: boolean;
-  tags: BuilderDynamicTag[];
+  catalog: DynamicTagCatalog;
   /** Writes several setting keys at once. */
   onPatch$: QRL<(patch: Record<string, unknown>) => void>;
 };
@@ -49,7 +50,7 @@ export const LinkModeControl = component$<LinkModeControlProps>((props) => {
             <input
               type="url"
               dir="ltr"
-              class={[INSPECTOR_INPUT, props.tags.length ? 'pe-8' : ''].join(' ')}
+              class={[INSPECTOR_INPUT, props.catalog.tags.length ? 'pe-8' : ''].join(' ')}
               placeholder={translateApp(props.lang, 'appearance.urlPlaceholder')}
               aria-label={t('url')}
               value={props.url}
@@ -58,7 +59,7 @@ export const LinkModeControl = component$<LinkModeControlProps>((props) => {
               }}
             />
             <BuilderDynamicTagButton
-              tags={props.tags}
+              catalog={props.catalog}
               lang={props.lang}
               onInsert$={async (token) => {
                 await props.onPatch$({ [LINK_MODE_KEYS.url]: `${props.url}${token}` });

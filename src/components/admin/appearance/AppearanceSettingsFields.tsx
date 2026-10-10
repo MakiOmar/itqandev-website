@@ -28,7 +28,8 @@ import type { AppearanceSettingField } from '~/lib/marketing/appearance-types';
 import { normalizeResponsiveColumns } from '~/lib/marketing/grid-columns';
 import type { SiteLanguageRow } from '~/types/site-language';
 import type { CategorySelectOption } from './CategoryMultiSelectField';
-import { BuilderDynamicTagButton, type BuilderDynamicTag } from './BuilderDynamicTagButton';
+import { BuilderDynamicTagButton } from './BuilderDynamicTagButton';
+import { EMPTY_DYNAMIC_TAG_CATALOG, type DynamicTagCatalog } from '~/lib/admin/appearance-actions';
 import {
   INSPECTOR_INPUT,
   INSPECTOR_LABEL,
@@ -64,7 +65,7 @@ export type AppearanceSettingsFieldsProps = {
   /** Prefill category checkboxes (page builder preview / public categories). */
   categoryOptions?: CategorySelectOption[];
   /** Allowlisted dynamic tags for text/URL fields (theme / loop documents). */
-  dynamicTags?: BuilderDynamicTag[];
+  dynamicTags?: DynamicTagCatalog;
 };
 
 type FieldControlProps = {
@@ -78,7 +79,7 @@ type FieldControlProps = {
   onMediaPreview$?: QRL<(mediaId: number, url: string) => void>;
   lang: string;
   categoryOptions?: CategorySelectOption[];
-  dynamicTags?: BuilderDynamicTag[];
+  dynamicTags?: DynamicTagCatalog;
   /** Fields include link URL + new tab + lightbox: show them as one Link control. */
   linkMode?: boolean;
 };
@@ -115,7 +116,7 @@ const AppearanceSettingFieldControl = component$<FieldControlProps>((props) => {
     );
     await write$(`${current}${token}`);
   });
-  const tags = props.dynamicTags ?? [];
+  const tags = props.dynamicTags ?? EMPTY_DYNAMIC_TAG_CATALOG;
 
   if (props.linkMode && field.key === LINK_MODE_KEYS.url) {
     const shared = (key: string) =>
@@ -126,7 +127,7 @@ const AppearanceSettingFieldControl = component$<FieldControlProps>((props) => {
         url={asString(raw)}
         newTab={isTruthySetting(shared(LINK_MODE_KEYS.newTab))}
         lightbox={isTruthySetting(shared(LINK_MODE_KEYS.lightbox))}
-        tags={tags}
+        catalog={tags}
         onPatch$={async (patch) => {
           let next = props.values;
           for (const [key, value] of Object.entries(patch)) {
@@ -287,7 +288,7 @@ const AppearanceSettingFieldControl = component$<FieldControlProps>((props) => {
           <input
             id={inputId}
             type="url"
-            class={[INSPECTOR_INPUT, tags.length ? 'pe-8' : ''].join(' ')}
+            class={[INSPECTOR_INPUT, tags.tags.length ? 'pe-8' : ''].join(' ')}
             value={asString(raw)}
             dir="ltr"
             placeholder={field.type === 'video' ? 'https://youtube.com/…' : translateApp(props.lang, 'appearance.urlPlaceholder')}
@@ -295,7 +296,7 @@ const AppearanceSettingFieldControl = component$<FieldControlProps>((props) => {
               await write$((e.target as HTMLInputElement).value);
             }}
           />
-          <BuilderDynamicTagButton tags={tags} lang={props.lang} onInsert$={insertTag$} />
+          <BuilderDynamicTagButton catalog={tags} lang={props.lang} onInsert$={insertTag$} />
         </div>
       </div>
     );
@@ -331,14 +332,14 @@ const AppearanceSettingFieldControl = component$<FieldControlProps>((props) => {
           <textarea
             class={[
               'min-h-[8rem] w-full rounded-md border border-gray-300 bg-white px-2 py-1.5 font-mono text-sm dark:border-gray-600 dark:bg-slate-900',
-              tags.length ? 'pe-8' : '',
+              tags.tags.length ? 'pe-8' : '',
             ].join(' ')}
             value={asString(raw)}
             onInput$={async (e) => {
               await write$((e.target as HTMLTextAreaElement).value);
             }}
           />
-          <BuilderDynamicTagButton tags={tags} lang={props.lang} onInsert$={insertTag$} top />
+          <BuilderDynamicTagButton catalog={tags} lang={props.lang} onInsert$={insertTag$} top />
         </div>
         <p class="mt-1 text-[11px] text-gray-500">{translateApp(props.lang, 'appearance.htmlAllowed')}</p>
       </div>
@@ -541,13 +542,13 @@ const AppearanceSettingFieldControl = component$<FieldControlProps>((props) => {
           <textarea
             id={inputId}
             rows={3}
-            class={[INSPECTOR_INPUT, tags.length ? 'pe-8' : ''].join(' ')}
+            class={[INSPECTOR_INPUT, tags.tags.length ? 'pe-8' : ''].join(' ')}
             value={asString(raw)}
             onInput$={async (e) => {
               await write$((e.target as HTMLTextAreaElement).value);
             }}
           />
-          <BuilderDynamicTagButton tags={tags} lang={props.lang} onInsert$={insertTag$} top />
+          <BuilderDynamicTagButton catalog={tags} lang={props.lang} onInsert$={insertTag$} top />
         </div>
       </div>
     );
@@ -698,13 +699,13 @@ const AppearanceSettingFieldControl = component$<FieldControlProps>((props) => {
         <input
           id={inputId}
           type="text"
-          class={[INSPECTOR_INPUT, tags.length ? 'pe-8' : ''].join(' ')}
+          class={[INSPECTOR_INPUT, tags.tags.length ? 'pe-8' : ''].join(' ')}
           value={asString(raw)}
           onInput$={async (e) => {
             await write$((e.target as HTMLInputElement).value);
           }}
         />
-        <BuilderDynamicTagButton tags={tags} lang={props.lang} onInsert$={insertTag$} />
+        <BuilderDynamicTagButton catalog={tags} lang={props.lang} onInsert$={insertTag$} />
       </div>
     </div>
   );

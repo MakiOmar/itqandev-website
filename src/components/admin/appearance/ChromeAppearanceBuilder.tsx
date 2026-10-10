@@ -17,8 +17,10 @@ import {
   getLocalizedRoutes,
 } from '~/lib/constants/routes';
 import {
+  EMPTY_DYNAMIC_TAG_CATALOG,
   fetchAppearanceRegistriesFromBrowser,
   formatAppearanceError,
+  type DynamicTagCatalog,
 } from '~/lib/admin/appearance-actions';
 import {
   fetchChromeLayoutFromBrowser,
@@ -30,8 +32,7 @@ import { API_ENDPOINTS } from '~/lib/api/endpoints';
 import { mapPublicBrandingFromApi } from '~/lib/marketing/resolve-laravel-media-url';
 import type { AppearanceRegistryEntry, PageSectionNode } from '~/lib/marketing/appearance-types';
 import type { ChromeLayoutKind } from '~/types/chrome-layout';
-import { dynamicTagsForChromeKind } from '~/lib/admin/builder-dynamic-tags';
-import type { BuilderDynamicTag } from '~/components/admin/appearance/BuilderDynamicTagButton';
+import { dynamicTagCatalogForChromeKind, dynamicTagCatalogFromRegistries } from '~/lib/admin/builder-dynamic-tags';
 import { ADMIN_NATIVE_SELECT_COMPACT_CLASS } from '~/lib/admin/native-select-classes';
 import {
   CHROME_EXCLUDED_BLOCK_TYPES,
@@ -82,7 +83,7 @@ export const ChromeAppearanceBuilder = component$<ChromeAppearanceBuilderProps>(
   const layoutName = useSignal('');
   const sections = useSignal<PageSectionNode[]>([]);
   const registry = useSignal<AppearanceRegistryEntry[]>([]);
-  const dynamicTags = useSignal<BuilderDynamicTag[]>([]);
+  const dynamicTags = useSignal<DynamicTagCatalog>(EMPTY_DYNAMIC_TAG_CATALOG);
   const previewTypes = useSignal<{ key: string; label: string }[]>([]);
   const previewType = useSignal('');
   const previewRecordId = useSignal('');
@@ -155,7 +156,7 @@ export const ChromeAppearanceBuilder = component$<ChromeAppearanceBuilderProps>(
       }
       layoutName.value = layout.name;
       sections.value = ensurePageLayoutBands((layout.sections || []) as PageSectionNode[]);
-      dynamicTags.value = dynamicTagsForChromeKind(regs.dynamic_tags ?? [], kind);
+      dynamicTags.value = dynamicTagCatalogForChromeKind(dynamicTagCatalogFromRegistries(regs), kind);
 
       const settingsPayload =
         (settingsRes as { data?: Record<string, unknown> } | null)?.data ??
