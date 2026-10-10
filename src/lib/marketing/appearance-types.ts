@@ -163,6 +163,8 @@ export type AppearanceSettingField = {
   group?: string;
   /** Key of a boolean setting that must be on for this field to be shown. */
   show_if?: string;
+  /** Key of a boolean setting that hides this field while on (e.g. manual items under a dynamic toggle). */
+  hide_if?: string;
   /** When true, edited per language tab into settings.translations.{locale}. */
   translatable?: boolean;
   options?: Array<{ value: string; label: string }>;

@@ -40,6 +40,15 @@ export function withUiLocale(lang: string, path: string): string {
   return `/${code}${raw}`;
 }
 
+/** Prefix in-app paths with the active UI locale; leave absolute/external URLs alone. */
+export function localizeInAppHref(uiLocale: string, href: string): string {
+  const trimmed = href.trim();
+  if (!trimmed || /^https?:\/\//i.test(trimmed) || trimmed.startsWith('mailto:') || trimmed.startsWith('tel:')) {
+    return trimmed;
+  }
+  return trimmed.startsWith('/') ? withUiLocale(uiLocale, trimmed) : trimmed;
+}
+
 /**
  * Replace the leading UI locale segment (`/en/...` → `/ar/...`).
  */

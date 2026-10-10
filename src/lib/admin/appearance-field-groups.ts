@@ -33,12 +33,16 @@ export function isAppearanceSettingOn(values: Record<string, unknown>, key: stri
   return value === true || value === 'true' || value === 1 || value === '1';
 }
 
-/** `show_if` names a boolean setting; dependents stay hidden while it (or any toggle it depends on) is off. */
+/**
+ * `show_if` names a boolean setting; dependents stay hidden while it (or any toggle it depends on) is off.
+ * `hide_if` is the inverse: the field is hidden while that toggle is on.
+ */
 export function isAppearanceFieldVisible(
   field: AppearanceSettingField,
   fields: AppearanceSettingField[],
   values: Record<string, unknown>,
 ): boolean {
+  if (field.hide_if && isAppearanceSettingOn(values, field.hide_if)) return false;
   const seen = new Set<string>();
   let current: AppearanceSettingField | undefined = field;
   while (current?.show_if && !seen.has(current.show_if)) {

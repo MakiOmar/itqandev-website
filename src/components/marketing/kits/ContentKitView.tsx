@@ -7,7 +7,7 @@ import { Container } from '~/components/marketing/Container';
 import { Section } from '~/components/marketing/Section';
 import { AnimatedReveal } from '~/components/marketing/AnimatedReveal';
 import { marketingRoutes } from '~/lib/marketing/constants';
-import { withUiLocale } from '~/lib/i18n/ui-locale-path';
+import { localizeInAppHref } from '~/lib/i18n/ui-locale-path';
 import type { ContactInfo } from '~/lib/marketing/types';
 import { translateApp } from '~/lib/i18n/useTranslate';
 
@@ -27,18 +27,6 @@ export type ContentKitProps = {
 function str(s: Record<string, unknown>, key: string, fallback = ''): string {
   const v = s[key];
   return typeof v === 'string' ? v : v != null ? String(v) : fallback;
-}
-
-/** Prefix in-app paths with the active UI locale; leave absolute/external URLs alone. */
-function localizeHref(uiLocale: string, href: string): string {
-  const trimmed = href.trim();
-  if (!trimmed || /^https?:\/\//i.test(trimmed) || trimmed.startsWith('mailto:') || trimmed.startsWith('tel:')) {
-    return trimmed;
-  }
-  if (trimmed.startsWith('/')) {
-    return withUiLocale(uiLocale, trimmed);
-  }
-  return trimmed;
 }
 
 function truthySetting(v: unknown, defaultTrue = false): boolean {
@@ -390,7 +378,7 @@ export const ContentKitView = component$<ContentKitProps>((props) => {
           />
           {str(s, 'button_label') && str(s, 'button_url') ? (
             <div class="mt-8">
-              <Button href={localizeHref(props.uiLocale, str(s, 'button_url'))} variant="primary">
+              <Button href={localizeInAppHref(props.uiLocale, str(s, 'button_url'))} variant="primary">
                 {str(s, 'button_label')}
               </Button>
             </div>

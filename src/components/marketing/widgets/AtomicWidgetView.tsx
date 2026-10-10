@@ -7,6 +7,7 @@ import { TrustBadgesWidget } from '~/components/marketing/widgets/TrustBadgesWid
 import { TextLogoWidget } from '~/components/marketing/widgets/TextLogoWidget';
 import { SvgIcon } from '~/components/marketing/SvgIcon';
 import { marketingRoutes } from '~/lib/marketing/constants';
+import { localizeInAppHref } from '~/lib/i18n/ui-locale-path';
 
 export type AtomicWidgetProps = {
   type: string;
@@ -99,13 +100,37 @@ export const AtomicWidgetView = component$<AtomicWidgetProps>((props) => {
         />
       );
     case 'list': {
-      const items = Array.isArray(s.items) ? (s.items as Array<{ text?: string }>) : [];
       const Tag = str(s, 'style', 'ul') === 'ol' ? 'ol' : 'ul';
+      const cls = Tag === 'ol' ? 'list-decimal space-y-1 ps-5' : 'list-disc space-y-1 ps-5';
+      // Dynamic items are filled server-side; unresolved (builder without a preview record) shows the source tag.
+      const dynamic = [true, 'true', 1, '1'].includes(s.dynamic_items as never);
+      if (dynamic && s.items_resolved !== true) {
+        const source = str(s, 'items_source').split(':')[0];
+        return (
+          <Tag class={cls}>
+            <li class="opacity-60">{`{{${source || '…'}}}`}</li>
+          </Tag>
+        );
+      }
+      const items = Array.isArray(s.items) ? (s.items as Array<{ text?: string; url?: string }>) : [];
+      if (items.length === 0) return null;
       return (
-        <Tag class={Tag === 'ol' ? 'list-decimal space-y-1 ps-5' : 'list-disc space-y-1 ps-5'}>
-          {items.map((it, i) => (
-            <li key={i}>{String(it.text ?? '')}</li>
-          ))}
+        <Tag class={cls}>
+          {items.map((it, i) => {
+            const text = String(it.text ?? '');
+            const href = it.url ? localizeInAppHref(props.uiLocale, String(it.url)) : '';
+            return (
+              <li key={i}>
+                {href ? (
+                  <a href={href} class="hover:text-primary-600 dark:hover:text-primary-400">
+                    {text}
+                  </a>
+                ) : (
+                  text
+                )}
+              </li>
+            );
+          })}
         </Tag>
       );
     }

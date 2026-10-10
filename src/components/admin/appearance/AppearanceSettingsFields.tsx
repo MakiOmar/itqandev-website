@@ -724,8 +724,10 @@ export const AppearanceSettingsFields = component$<AppearanceSettingsFieldsProps
   const showTabs = languages.length > 1;
 
   const linkMode = hasLinkModeFields(props.fields);
+  const isShown = (f: AppearanceSettingField) =>
+    !isFoldedLinkModeField(f, linkMode) && isAppearanceFieldVisible(f, props.fields, props.values);
   const sharedFields = props.fields
-    .filter((f) => !isAppearanceFieldTranslatable(f) && !isFoldedLinkModeField(f, linkMode))
+    .filter((f) => !isAppearanceFieldTranslatable(f) && isShown(f))
     // Card style first, then the category picker, so neither is buried under long lists.
     .slice()
     .sort((a, b) => {
@@ -733,9 +735,7 @@ export const AppearanceSettingsFields = component$<AppearanceSettingsFieldsProps
         f.key === 'card_style' ? -1 : f.type === 'category_multi' ? 0 : f.type === 'responsive_columns' ? 2 : 1;
       return rank(a) - rank(b);
     });
-  const localizedFields = props.fields.filter(
-    (f) => isAppearanceFieldTranslatable(f) && !isFoldedLinkModeField(f, linkMode),
-  );
+  const localizedFields = props.fields.filter((f) => isAppearanceFieldTranslatable(f) && isShown(f));
   const grouped = hasAppearanceFieldGroups(props.fields);
   const groups = grouped ? groupAppearanceFields(props.fields) : [];
   const groupIds = groups.map((g) => g.id);
