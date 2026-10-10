@@ -1,0 +1,229 @@
+/*
+ * List widget: stacked or inline items, CSS markers (or a marker icon), per-item box and hover state.
+ * Style tab values arrive as `--s-list-*` vars (base = mobile, -md / -lg up); enum settings are mapped to
+ * CSS values in `emitListEnumVars` (builder-styles.ts). `--awl-d-*` are the theme defaults.
+ */
+.awl {
+  --awl-d-border: #e2e8f0;
+  --awl-d-link-hover: #0284c7;
+  --awl-d-marker: '\2022';
+  --awl-rtl: 1;
+}
+ol.awl {
+  --awl-d-marker: counter(list-item) '.';
+}
+.awl:where(.dark, .dark *):not(:where(.dark .light, .dark .light *)) {
+  --awl-d-border: #334155;
+  --awl-d-link-hover: #38bdf8;
+}
+[dir='rtl'] .awl {
+  --awl-rtl: -1;
+}
+.awl > li {
+  --awl-d-hover-bg: var(--awl-item-bg);
+  --awl-d-hover-color: var(--awl-item-color);
+  --awl-d-hover-bc: var(--awl-item-bc);
+  --awl-d-hover-shadow: var(--awl-item-shadow);
+}
+.awl > li:has(> a) {
+  --awl-d-hover-color: var(--awl-d-link-hover);
+}
+
+.awl {
+  --awl-gap-y: var(--s-list-gap, 0.25rem);
+  --awl-gap-x: var(--s-list-gap, 1rem);
+  --awl-direction: var(--s-list-direction, column);
+  --awl-wrap: var(--s-list-wrap, nowrap);
+  --awl-justify: var(--s-list-justify, flex-start);
+  --awl-items: var(--s-list-items, stretch);
+}
+.awl > li {
+  --awl-div-x: var(--s-list-div-x, 0);
+  --awl-div-y: var(--s-list-div-y, 1);
+  --awl-divider-width: var(--s-list-divider-width, 0px);
+  --awl-divider-color: var(--s-list-divider-color, var(--awl-d-border));
+  --awl-marker: var(--s-list-marker, var(--awl-d-marker));
+  --awl-marker-color: var(--s-list-marker-color, currentColor);
+  --awl-marker-size: var(--s-list-marker-size, 1em);
+  --awl-marker-gap: var(--s-list-marker-gap, 0.5em);
+  --awl-item-color: var(--s-list-item-color, var(--s-text-color, currentColor));
+  --awl-item-bg: var(--s-list-item-bg, transparent);
+  --awl-item-py: var(--s-list-item-padding-y, 0px);
+  --awl-item-px: var(--s-list-item-padding-x, 0px);
+  --awl-item-radius: var(--s-list-item-radius, 0px);
+  --awl-item-bw: var(--s-list-item-border-width, 0px);
+  --awl-item-bc: var(--s-list-item-border-color, var(--awl-d-border));
+  --awl-item-shadow: var(--s-list-item-shadow, none);
+  --awl-item-hover-bg: var(--s-list-item-hover-bg, var(--awl-d-hover-bg));
+  --awl-item-hover-color: var(--s-list-item-hover-color, var(--awl-d-hover-color));
+  --awl-item-hover-bc: var(--s-list-item-hover-border-color, var(--awl-d-hover-bc));
+  --awl-item-hover-shadow: var(--s-list-item-hover-shadow, var(--awl-d-hover-shadow));
+  --awl-item-hover-x: var(--s-list-item-hover-x, 0px);
+  --awl-item-hover-y: var(--s-list-item-hover-y, 0px);
+  --awl-item-hover-scale: var(--s-list-item-hover-scale, 1);
+}
+@media (min-width: 768px) {
+  .awl {
+    --awl-gap-y: var(--s-list-gap-md, var(--s-list-gap, 0.25rem));
+    --awl-gap-x: var(--s-list-gap-md, var(--s-list-gap, 1rem));
+    --awl-direction: var(--s-list-direction-md, var(--s-list-direction, column));
+    --awl-wrap: var(--s-list-wrap-md, var(--s-list-wrap, nowrap));
+    --awl-justify: var(--s-list-justify-md, var(--s-list-justify, flex-start));
+    --awl-items: var(--s-list-items-md, var(--s-list-items, stretch));
+  }
+  .awl > li {
+    --awl-div-x: var(--s-list-div-x-md, var(--s-list-div-x, 0));
+    --awl-div-y: var(--s-list-div-y-md, var(--s-list-div-y, 1));
+    --awl-divider-width: var(--s-list-divider-width-md, var(--s-list-divider-width, 0px));
+    --awl-divider-color: var(--s-list-divider-color-md, var(--s-list-divider-color, var(--awl-d-border)));
+    --awl-marker: var(--s-list-marker-md, var(--s-list-marker, var(--awl-d-marker)));
+    --awl-marker-color: var(--s-list-marker-color-md, var(--s-list-marker-color, currentColor));
+    --awl-marker-size: var(--s-list-marker-size-md, var(--s-list-marker-size, 1em));
+    --awl-marker-gap: var(--s-list-marker-gap-md, var(--s-list-marker-gap, 0.5em));
+    --awl-item-color: var(--s-list-item-color-md, var(--s-list-item-color, var(--s-text-color-md, var(--s-text-color, currentColor))));
+    --awl-item-bg: var(--s-list-item-bg-md, var(--s-list-item-bg, transparent));
+    --awl-item-py: var(--s-list-item-padding-y-md, var(--s-list-item-padding-y, 0px));
+    --awl-item-px: var(--s-list-item-padding-x-md, var(--s-list-item-padding-x, 0px));
+    --awl-item-radius: var(--s-list-item-radius-md, var(--s-list-item-radius, 0px));
+    --awl-item-bw: var(--s-list-item-border-width-md, var(--s-list-item-border-width, 0px));
+    --awl-item-bc: var(--s-list-item-border-color-md, var(--s-list-item-border-color, var(--awl-d-border)));
+    --awl-item-shadow: var(--s-list-item-shadow-md, var(--s-list-item-shadow, none));
+    --awl-item-hover-bg: var(--s-list-item-hover-bg-md, var(--s-list-item-hover-bg, var(--awl-d-hover-bg)));
+    --awl-item-hover-color: var(--s-list-item-hover-color-md, var(--s-list-item-hover-color, var(--awl-d-hover-color)));
+    --awl-item-hover-bc: var(--s-list-item-hover-border-color-md, var(--s-list-item-hover-border-color, var(--awl-d-hover-bc)));
+    --awl-item-hover-shadow: var(--s-list-item-hover-shadow-md, var(--s-list-item-hover-shadow, var(--awl-d-hover-shadow)));
+    --awl-item-hover-x: var(--s-list-item-hover-x-md, var(--s-list-item-hover-x, 0px));
+    --awl-item-hover-y: var(--s-list-item-hover-y-md, var(--s-list-item-hover-y, 0px));
+    --awl-item-hover-scale: var(--s-list-item-hover-scale-md, var(--s-list-item-hover-scale, 1));
+  }
+}
+@media (min-width: 1024px) {
+  .awl {
+    --awl-gap-y: var(--s-list-gap-lg, var(--s-list-gap-md, var(--s-list-gap, 0.25rem)));
+    --awl-gap-x: var(--s-list-gap-lg, var(--s-list-gap-md, var(--s-list-gap, 1rem)));
+    --awl-direction: var(--s-list-direction-lg, var(--s-list-direction-md, var(--s-list-direction, column)));
+    --awl-wrap: var(--s-list-wrap-lg, var(--s-list-wrap-md, var(--s-list-wrap, nowrap)));
+    --awl-justify: var(--s-list-justify-lg, var(--s-list-justify-md, var(--s-list-justify, flex-start)));
+    --awl-items: var(--s-list-items-lg, var(--s-list-items-md, var(--s-list-items, stretch)));
+  }
+  .awl > li {
+    --awl-div-x: var(--s-list-div-x-lg, var(--s-list-div-x-md, var(--s-list-div-x, 0)));
+    --awl-div-y: var(--s-list-div-y-lg, var(--s-list-div-y-md, var(--s-list-div-y, 1)));
+    --awl-divider-width: var(--s-list-divider-width-lg, var(--s-list-divider-width-md, var(--s-list-divider-width, 0px)));
+    --awl-divider-color: var(--s-list-divider-color-lg, var(--s-list-divider-color-md, var(--s-list-divider-color, var(--awl-d-border))));
+    --awl-marker: var(--s-list-marker-lg, var(--s-list-marker-md, var(--s-list-marker, var(--awl-d-marker))));
+    --awl-marker-color: var(--s-list-marker-color-lg, var(--s-list-marker-color-md, var(--s-list-marker-color, currentColor)));
+    --awl-marker-size: var(--s-list-marker-size-lg, var(--s-list-marker-size-md, var(--s-list-marker-size, 1em)));
+    --awl-marker-gap: var(--s-list-marker-gap-lg, var(--s-list-marker-gap-md, var(--s-list-marker-gap, 0.5em)));
+    --awl-item-color: var(--s-list-item-color-lg, var(--s-list-item-color-md, var(--s-list-item-color, var(--s-text-color-lg, var(--s-text-color-md, var(--s-text-color, currentColor))))));
+    --awl-item-bg: var(--s-list-item-bg-lg, var(--s-list-item-bg-md, var(--s-list-item-bg, transparent)));
+    --awl-item-py: var(--s-list-item-padding-y-lg, var(--s-list-item-padding-y-md, var(--s-list-item-padding-y, 0px)));
+    --awl-item-px: var(--s-list-item-padding-x-lg, var(--s-list-item-padding-x-md, var(--s-list-item-padding-x, 0px)));
+    --awl-item-radius: var(--s-list-item-radius-lg, var(--s-list-item-radius-md, var(--s-list-item-radius, 0px)));
+    --awl-item-bw: var(--s-list-item-border-width-lg, var(--s-list-item-border-width-md, var(--s-list-item-border-width, 0px)));
+    --awl-item-bc: var(--s-list-item-border-color-lg, var(--s-list-item-border-color-md, var(--s-list-item-border-color, var(--awl-d-border))));
+    --awl-item-shadow: var(--s-list-item-shadow-lg, var(--s-list-item-shadow-md, var(--s-list-item-shadow, none)));
+    --awl-item-hover-bg: var(--s-list-item-hover-bg-lg, var(--s-list-item-hover-bg-md, var(--s-list-item-hover-bg, var(--awl-d-hover-bg))));
+    --awl-item-hover-color: var(--s-list-item-hover-color-lg, var(--s-list-item-hover-color-md, var(--s-list-item-hover-color, var(--awl-d-hover-color))));
+    --awl-item-hover-bc: var(--s-list-item-hover-border-color-lg, var(--s-list-item-hover-border-color-md, var(--s-list-item-hover-border-color, var(--awl-d-hover-bc))));
+    --awl-item-hover-shadow: var(--s-list-item-hover-shadow-lg, var(--s-list-item-hover-shadow-md, var(--s-list-item-hover-shadow, var(--awl-d-hover-shadow))));
+    --awl-item-hover-x: var(--s-list-item-hover-x-lg, var(--s-list-item-hover-x-md, var(--s-list-item-hover-x, 0px)));
+    --awl-item-hover-y: var(--s-list-item-hover-y-lg, var(--s-list-item-hover-y-md, var(--s-list-item-hover-y, 0px)));
+    --awl-item-hover-scale: var(--s-list-item-hover-scale-lg, var(--s-list-item-hover-scale-md, var(--s-list-item-hover-scale, 1)));
+  }
+}
+
+.awl {
+  display: flex;
+  flex-direction: var(--awl-direction);
+  flex-wrap: var(--awl-wrap);
+  justify-content: var(--awl-justify);
+  align-items: var(--awl-items);
+  gap: var(--awl-gap-y) var(--awl-gap-x);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  counter-reset: list-item;
+}
+/* Flex items are not `display: list-item`, so the numbering counter is advanced explicitly. */
+.awl > li {
+  position: relative;
+  display: flex;
+  align-items: baseline;
+  gap: var(--awl-marker-gap);
+  counter-increment: list-item;
+  padding: var(--awl-item-py) var(--awl-item-px);
+  border: var(--awl-item-bw) solid var(--awl-item-bc);
+  border-radius: var(--awl-item-radius);
+  background: var(--awl-item-bg);
+  color: var(--awl-item-color);
+  box-shadow: var(--awl-item-shadow);
+  transition: background-color 0.2s, color 0.2s, border-color 0.2s, box-shadow 0.2s, transform 0.2s;
+}
+.awl > li:hover {
+  background: var(--awl-item-hover-bg);
+  color: var(--awl-item-hover-color);
+  border-color: var(--awl-item-hover-bc);
+  box-shadow: var(--awl-item-hover-shadow);
+  transform: translate(calc(var(--awl-item-hover-x) * var(--awl-rtl)), var(--awl-item-hover-y))
+    scale(var(--awl-item-hover-scale));
+}
+.awl > li::before {
+  content: var(--awl-marker);
+  flex-shrink: 0;
+  color: var(--awl-marker-color);
+  font-size: var(--awl-marker-size);
+  line-height: 1;
+}
+.awl > li:has(> .awl-icon)::before {
+  content: none;
+}
+.awl-icon {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-self: flex-start;
+  margin-block-start: max(0px, calc((1lh - var(--awl-marker-size)) / 2));
+  color: var(--awl-marker-color);
+}
+.awl-icon svg,
+.awl-icon img {
+  width: var(--awl-marker-size);
+  height: var(--awl-marker-size);
+}
+/* Divider in the middle of the gap before every item but the first; horizontal or vertical by layout. */
+.awl > li + li::after {
+  content: '';
+  position: absolute;
+  pointer-events: none;
+  inset-block-start: calc(var(--awl-div-y) * (var(--awl-gap-y) + var(--awl-divider-width)) / -2 - var(--awl-item-bw));
+  inset-inline-start: calc(var(--awl-div-x) * (var(--awl-gap-x) + var(--awl-divider-width)) / -2 - var(--awl-item-bw));
+  width: calc(var(--awl-div-x) * var(--awl-divider-width) + var(--awl-div-y) * (100% + 2 * var(--awl-item-bw)));
+  height: calc(var(--awl-div-y) * var(--awl-divider-width) + var(--awl-div-x) * (100% + 2 * var(--awl-item-bw)));
+  background: var(--awl-divider-color);
+}
+/* The link covers the whole item, padding included. */
+.awl > li > a {
+  color: inherit;
+  text-decoration: none;
+}
+.awl > li > a::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+}
+.awl > li > a:focus-visible {
+  outline: none;
+}
+.awl > li:has(> a:focus-visible) {
+  outline: 2px solid var(--color-primary-500, #0ea5e9);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .awl > li {
+    transition: none;
+  }
+  .awl > li:hover {
+    transform: none;
+  }
+}

@@ -85,6 +85,9 @@ const GROUP_LABEL: Record<string, string> = {
   author_name: 'builder.style.groupAuthorName',
   author_meta: 'builder.style.groupAuthorMeta',
   avatar: 'builder.style.groupAvatar',
+  list_layout: 'builder.style.groupListLayout',
+  list_marker: 'builder.style.groupListMarker',
+  list_item: 'builder.style.groupListItem',
   custom: 'builder.style.groupCustom',
 };
 
@@ -297,6 +300,28 @@ const KEY_LABEL: Record<string, string> = {
   whatsapp_color: 'builder.style.textColor',
   whatsapp_bg: 'builder.style.background',
   whatsapp_hover_bg: 'builder.style.hoverBackground',
+  list_layout: 'builder.style.listLayout',
+  list_align: 'builder.style.align',
+  list_gap: 'builder.style.itemsGap',
+  list_divider_width: 'builder.style.dividerWidth',
+  list_divider_color: 'builder.style.dividerColor',
+  list_marker: 'builder.style.markerStyle',
+  list_marker_color: 'builder.style.markerColor',
+  list_marker_size: 'builder.style.markerSize',
+  list_marker_gap: 'builder.style.markerGap',
+  list_item_color: 'builder.style.textColor',
+  list_item_bg: 'builder.style.background',
+  list_item_padding_y: 'builder.style.paddingY',
+  list_item_padding_x: 'builder.style.paddingX',
+  list_item_radius: 'builder.style.radius',
+  list_item_border_width: 'builder.style.borderWidth',
+  list_item_border_color: 'builder.style.borderColor',
+  list_item_shadow: 'builder.style.boxShadow',
+  list_item_hover_color: 'builder.style.hoverTextColor',
+  list_item_hover_bg: 'builder.style.hoverBackground',
+  list_item_hover_border_color: 'builder.style.hoverBorderColor',
+  list_item_hover_shadow: 'builder.style.hoverShadow',
+  list_item_hover_effect: 'builder.style.hoverEffect',
 };
 
 function buttonLabels(part: ButtonPart): Record<string, string> {

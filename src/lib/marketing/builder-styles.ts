@@ -76,6 +76,9 @@ export const STYLE_GROUP_ORDER = [
   'author_name',
   'author_meta',
   'avatar',
+  'list_layout',
+  'list_marker',
+  'list_item',
   'custom',
 ] as const;
 
@@ -130,6 +133,7 @@ export const WIDGET_STYLE_GROUPS: Record<string, readonly StyleGroupId[]> = {
   /** Form builder Submit button; `btn_primary_*` drives `.hb-btn.hb-primary` (hero-buttons.css). */
   submit: ['btn_primary', 'layout', 'spacing', 'custom'],
   theme_switch: ['toggle', 'layout', 'spacing', 'custom'],
+  list: ['typography', 'list_layout', 'list_marker', 'list_item', 'layout', 'spacing', 'border', 'custom'],
   contact_float: ['launcher', 'panel', 'whatsapp', 'custom'],
 };
 
@@ -304,13 +308,65 @@ export const FLOATING_STYLE_KEYS = {
   whatsapp_color: 'color', whatsapp_bg: 'color', whatsapp_hover_bg: 'color', whatsapp_radius: 'length',
 } as const satisfies Record<string, 'color' | 'string' | 'length' | 'shadow'>;
 
+/**
+ * List widget container, markers and items. The enum keys (`list_layout`, `list_align`, `list_marker`,
+ * `list_item_hover_effect`) are not listed here: `emitListEnumVars` maps them to CSS values.
+ */
+export const LIST_STYLE_KEYS = {
+  list_gap: 'length', list_divider_width: 'length', list_divider_color: 'color',
+  list_marker_color: 'color', list_marker_size: 'length', list_marker_gap: 'length',
+  list_item_bg: 'color', list_item_color: 'color', list_item_padding_x: 'length', list_item_padding_y: 'length',
+  list_item_radius: 'length', list_item_border_width: 'length', list_item_border_color: 'color',
+  list_item_shadow: 'shadow',
+  list_item_hover_bg: 'color', list_item_hover_color: 'color', list_item_hover_border_color: 'color',
+  list_item_hover_shadow: 'shadow',
+} as const satisfies Record<string, 'color' | 'string' | 'length' | 'shadow'>;
+
 const PART_STYLE_KEYS: Record<string, 'color' | 'string' | 'length' | 'shadow'> = {
   ...CASE_CARD_STYLE_KEYS,
   ...TESTIMONIAL_STYLE_KEYS,
   ...HERO_STYLE_KEYS,
   ...LOGO_STYLE_KEYS,
   ...FLOATING_STYLE_KEYS,
+  ...LIST_STYLE_KEYS,
 };
+
+const LIST_FLEX_ALIGN: Record<string, string> = {
+  start: 'flex-start', center: 'center', end: 'flex-end', between: 'space-between',
+};
+/** CSS `content` for each marker; `default` emits nothing so `ul` keeps a bullet and `ol` a number. */
+const LIST_MARKER_CONTENT: Record<string, string> = {
+  disc: '"\\2022"', circle: '"\\25E6"', square: '"\\25AA"', decimal: 'counter(list-item) "."', none: 'none',
+};
+const LIST_HOVER_VARS: Record<string, Record<string, string>> = {
+  lift: { 'list-item-hover-y': '-3px' },
+  grow: { 'list-item-hover-scale': '1.04' },
+  slide: { 'list-item-hover-x': '6px' },
+  none: { 'list-item-hover-x': '0px', 'list-item-hover-y': '0px', 'list-item-hover-scale': '1' },
+};
+
+function emitListEnumVars(bag: StyleBag, set: (key: string, css: string | null | undefined) => void): void {
+  const layout = bag.list_layout;
+  const align = typeof bag.list_align === 'string' ? LIST_FLEX_ALIGN[bag.list_align] : undefined;
+  if (layout === 'inline') {
+    set('list-direction', 'row');
+    set('list-wrap', 'wrap');
+    set('list-items', 'center');
+    set('list-justify', align);
+    set('list-div-x', '1');
+    set('list-div-y', '0');
+  } else if (layout === 'stacked' || align) {
+    set('list-direction', 'column');
+    set('list-wrap', 'nowrap');
+    set('list-justify', 'flex-start');
+    set('list-items', align === undefined || align === 'space-between' ? 'stretch' : align);
+    set('list-div-x', '0');
+    set('list-div-y', '1');
+  }
+  if (typeof bag.list_marker === 'string') set('list-marker', LIST_MARKER_CONTENT[bag.list_marker]);
+  const hover = typeof bag.list_item_hover_effect === 'string' ? LIST_HOVER_VARS[bag.list_item_hover_effect] : undefined;
+  for (const [key, css] of Object.entries(hover ?? {})) set(key, css);
+}
 /** Button parts (`btn_primary_*`, `btn_secondary_*`, `btn_card_*`): hero CTAs and the case study card button. */
 export const BUTTON_PARTS = ['btn_primary', 'btn_secondary', 'btn_card'] as const;
 export type ButtonPart = (typeof BUTTON_PARTS)[number];
@@ -400,6 +456,7 @@ function emitBagVars(bag: StyleBag, suffix: '' | '-md' | '-lg', out: Record<stri
     else if (kind === 'shadow') set(key, shadowToCss(v));
     else set(key, typeof v === 'string' ? v : null);
   }
+  emitListEnumVars(bag, set);
   for (const part of BUTTON_PARTS) {
     for (const s of BUTTON_STRING_SUFFIXES) {
       const v = bag[`${part}_${s}`];

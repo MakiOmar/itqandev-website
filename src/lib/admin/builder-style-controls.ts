@@ -264,6 +264,72 @@ const FLOATING_PART_CONTROLS: StyleControl[] = [
   { key: 'whatsapp_hover_bg', group: 'whatsapp', type: 'color' },
 ];
 
+/** List widget: container layout, markers (or the marker icon) and per-item box with hover states. */
+const LIST_PART_CONTROLS: StyleControl[] = [
+  {
+    key: 'list_layout',
+    group: 'list_layout',
+    type: 'choose',
+    options: [
+      { value: 'stacked', labelKey: 'builder.style.listStacked' },
+      { value: 'inline', labelKey: 'builder.style.listInline' },
+    ],
+  },
+  {
+    key: 'list_align',
+    group: 'list_layout',
+    type: 'choose',
+    options: [
+      { value: 'start', labelKey: 'builder.style.alignStart' },
+      { value: 'center', labelKey: 'builder.style.alignCenter' },
+      { value: 'end', labelKey: 'builder.style.alignEnd' },
+      { value: 'between', labelKey: 'builder.style.alignBetween' },
+    ],
+  },
+  { key: 'list_gap', group: 'list_layout', type: 'length', min: 0, max: 80 },
+  { key: 'list_divider_width', group: 'list_layout', type: 'length', min: 0, max: 10 },
+  { key: 'list_divider_color', group: 'list_layout', type: 'color' },
+  {
+    key: 'list_marker',
+    group: 'list_marker',
+    type: 'select',
+    options: [
+      { value: 'default', labelKey: 'builder.style.markerDefault' },
+      { value: 'disc', labelKey: 'builder.style.markerDisc' },
+      { value: 'circle', labelKey: 'builder.style.markerCircle' },
+      { value: 'square', labelKey: 'builder.style.markerSquare' },
+      { value: 'decimal', labelKey: 'builder.style.markerDecimal' },
+      { value: 'none', labelKey: 'builder.style.markerNone' },
+    ],
+  },
+  { key: 'list_marker_color', group: 'list_marker', type: 'color' },
+  { key: 'list_marker_size', group: 'list_marker', type: 'length', min: 4, max: 64 },
+  { key: 'list_marker_gap', group: 'list_marker', type: 'length', min: 0, max: 40 },
+  { key: 'list_item_color', group: 'list_item', type: 'color' },
+  { key: 'list_item_bg', group: 'list_item', type: 'color' },
+  { key: 'list_item_padding_y', group: 'list_item', type: 'length', min: 0, max: 60 },
+  { key: 'list_item_padding_x', group: 'list_item', type: 'length', min: 0, max: 80 },
+  { key: 'list_item_radius', group: 'list_item', type: 'length', min: 0, max: 100 },
+  { key: 'list_item_border_width', group: 'list_item', type: 'length', min: 0, max: 10 },
+  { key: 'list_item_border_color', group: 'list_item', type: 'color' },
+  { key: 'list_item_shadow', group: 'list_item', type: 'shadow' },
+  { key: 'list_item_hover_color', group: 'list_item', type: 'color' },
+  { key: 'list_item_hover_bg', group: 'list_item', type: 'color' },
+  { key: 'list_item_hover_border_color', group: 'list_item', type: 'color' },
+  { key: 'list_item_hover_shadow', group: 'list_item', type: 'shadow' },
+  {
+    key: 'list_item_hover_effect',
+    group: 'list_item',
+    type: 'select',
+    options: [
+      { value: 'none', labelKey: 'builder.style.animNone' },
+      { value: 'lift', labelKey: 'builder.style.hoverLift' },
+      { value: 'grow', labelKey: 'builder.style.animGrow' },
+      { value: 'slide', labelKey: 'builder.style.hoverSlide' },
+    ],
+  },
+];
+
 /** Full button styling for a button part. The card button spans the card, so it has no min width. */
 function buttonControls(part: ButtonPart): StyleControl[] {
   const controls: StyleControl[] = [
@@ -516,6 +582,7 @@ export const STYLE_CONTROLS: StyleControl[] = [
   ...HERO_PART_CONTROLS,
   ...LOGO_PART_CONTROLS,
   ...FLOATING_PART_CONTROLS,
+  ...LIST_PART_CONTROLS,
   { key: 'custom_css', group: 'custom', type: 'textarea' },
 ];
 
