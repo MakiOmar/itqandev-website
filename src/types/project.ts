@@ -29,8 +29,19 @@ export interface Project {
   categories?: Category[];
   skills?: Skill[];
   heroImage?: Media;
+  /** Ordered media library ids of the project gallery. */
+  gallery_media_ids?: number[];
+  /** Gallery thumbnails; only on single-project responses. */
+  gallery_items?: ProjectGalleryItem[];
   translations?: ProjectTranslationRow[];
   seoMetas?: ProjectSeoMeta[];
+}
+
+export interface ProjectGalleryItem {
+  id: number;
+  url: string;
+  name: string;
+  alt_text?: string | null;
 }
 
 export interface ProjectCreateInput {
@@ -48,6 +59,7 @@ export interface ProjectCreateInput {
   category_ids?: number[];
   skill_ids?: number[];
   heroImageId?: number;
+  gallery_media_ids?: number[];
   translations?: ProjectTranslationRow[];
 }
 

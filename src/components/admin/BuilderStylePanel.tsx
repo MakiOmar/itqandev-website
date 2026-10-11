@@ -94,6 +94,8 @@ const GROUP_LABEL: Record<string, string> = {
 /** Group titles that read better per widget (the form Submit button has a single button group). */
 const WIDGET_GROUP_LABEL: Record<string, Partial<Record<string, string>>> = {
   submit: { btn_primary: 'builder.style.groupButton' },
+  button: { btn_primary: 'builder.style.groupButton' },
+  button_group: { btn_primary: 'builder.style.groupButtons' },
 };
 
 const KEY_LABEL: Record<string, string> = {

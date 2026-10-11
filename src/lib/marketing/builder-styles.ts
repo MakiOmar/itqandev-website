@@ -110,7 +110,9 @@ export const WIDGET_STYLE_GROUPS: Record<string, readonly StyleGroupId[]> = {
   flip_box: ['typography', 'layout', 'spacing', 'border', 'hover', 'custom'],
   trust_badges: ['typography', 'icon', 'spacing', 'border', 'custom'],
   text_logo: ['logo_mark', 'logo_name', 'highlight', 'logo_tagline', 'layout', 'spacing', 'border', 'custom'],
-  button: ['typography', 'layout', 'spacing', 'border', 'hover', 'custom'],
+  /** `btn_primary_*` drives `.awb` (button-widget.css) for every variant; button_group applies it to each button. */
+  button: ['btn_primary', 'layout', 'spacing', 'border', 'hover', 'custom'],
+  button_group: ['btn_primary', 'layout', 'spacing', 'border', 'hover', 'custom'],
   cta: ['card_box', 'title', 'subtitle', 'btn_primary', 'whatsapp', 'layout', 'spacing', 'border', 'custom'],
   case_studies: [
     'title', 'subtitle', 'tabs', 'nav_buttons', 'link',

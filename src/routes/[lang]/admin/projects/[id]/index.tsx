@@ -6,6 +6,8 @@ import { PageHeader } from '../../../../../components/common/PageHeader';
 import { TagInput } from '../../../../../components/common/TagInput';
 import { LoadingSpinner } from '../../../../../components/common/LoadingSpinner';
 import { MediaSelector } from '../../../../../components/common/MediaSelector';
+import { MediaGalleryField, type GalleryFieldItem } from '../../../../../components/admin/MediaGalleryField';
+import { parseGalleryIdsJson } from '../../../../../lib/admin/gallery-ids';
 import { useTranslate, translateApp } from '../../../../../lib/i18n/useTranslate';
 import { isUiLocaleRtl } from '../../../../../lib/i18n/ui-locale-segments';
 import { useSwal } from '../../../../../lib/hooks/useSwal';
@@ -184,6 +186,7 @@ export const useUpdateProject = routeAction$(
         repo_url: normalizeOptionalUrl(data.repo_url),
         demo_url: normalizeOptionalUrl(data.demo_url),
         published_at: data.published_at || undefined,
+        gallery_media_ids: parseGalleryIdsJson((data as { gallery_media_ids_json?: string }).gallery_media_ids_json),
       };
       const headerRaw = String((data as { header_layout_id?: string }).header_layout_id || '').trim();
       const footerRaw = String((data as { footer_layout_id?: string }).footer_layout_id || '').trim();
@@ -330,6 +333,7 @@ export const useUpdateProject = routeAction$(
     projectSchema.extend({
       heroMedia: z.any().optional(),
       videoMedia: z.any().optional(),
+      gallery_media_ids_json: z.string().optional(),
       translations_json: z.string().optional(),
       content_locale: z.string().optional(),
       editing_locale: z.string().optional(),
@@ -444,6 +448,11 @@ export default component$(() => {
 
   const heroMedia = useSignal<any>(normalizeMedia((project.value as any)?.media?.hero));
   const videoMedia = useSignal<any>(normalizeMedia((project.value as any)?.media?.video));
+  const galleryInitial: GalleryFieldItem[] = ((project.value as Project | null)?.gallery_items ?? []).map((g) => ({
+    id: g.id,
+    url: g.url,
+    name: g.name,
+  }));
   const showHeroSelector = useSignal(false);
   const showVideoSelector = useSignal(false);
   const showPreview = useSignal(false);
@@ -1182,6 +1191,8 @@ export default component$(() => {
                   </button>
                 </div>
               </div>
+
+              <MediaGalleryField name="gallery_media_ids_json" initial={galleryInitial} />
             </div>
           </div>
 

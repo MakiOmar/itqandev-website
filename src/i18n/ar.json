@@ -222,6 +222,15 @@
     "manageSkillsDesc": "إضافة أو تعديل المهارات"
   },
   "projects": {
+    "gallery": {
+      "title": "معرض الصور",
+      "help": "صور من مكتبة الوسائط بترتيب العرض. استخدم المصدر الديناميكي في عنصر المعرض لعرضها في صفحات المشاريع.",
+      "empty": "لا توجد صور في المعرض بعد.",
+      "add": "إضافة صورة",
+      "remove": "إزالة",
+      "moveEarlier": "نقل للأمام",
+      "moveLater": "نقل للخلف"
+    },
     "title": "المشاريع",
     "subtitle": "إدارة مشاريع الشركة",
     "addNew": "إضافة مشروع",
@@ -1177,6 +1186,8 @@
       "items_source": "المصدر",
       "link_items": "ربط العناصر",
       "marker_icon": "أيقونة العلامة (بدلاً من النقاط)",
+      "dynamic_images": "صور ديناميكية (من العنصر الحالي)",
+      "images_source": "المصدر",
       "full_viewport": "ارتفاع الشاشة بالكامل (100vh)",
       "nav_top_space": "مسافة علوية تحت الشريط (بكسل)",
       "watermark_enabled": "إظهار النص الباهت",
@@ -1617,6 +1628,7 @@
       "groupSubtitle": "العنوان الفرعي",
       "groupBtnPrimary": "الزر الأساسي",
       "groupButton": "الزر",
+      "groupButtons": "الأزرار",
       "groupBtnSecondary": "الزر الثانوي",
       "groupCardBox": "البطاقة",
       "groupRating": "نجوم التقييم",

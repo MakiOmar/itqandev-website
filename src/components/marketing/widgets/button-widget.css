@@ -1,0 +1,140 @@
+/*
+ * Button / Button group widgets. `--s-btn-primary-*` come from the widget's Style tab (Button group),
+ * resolved per breakpoint (base = mobile, -md = tablet, -lg = desktop) and override every variant.
+ * `--awb-d-*` are the variant defaults (light / dark), matching the marketing Button component.
+ */
+.awb-primary {
+  --awb-d-color: var(--kit-primary-900, #0c4a6e);
+  --awb-d-bg: var(--kit-primary-100, #e0f2fe);
+  --awb-d-border: var(--kit-primary-300, #7dd3fc);
+  --awb-d-hover-bg: var(--kit-primary-200, #bae6fd);
+  --awb-d-bw: 1px;
+}
+.awb-secondary {
+  --awb-d-color: #fff;
+  --awb-d-bg: #334155;
+  --awb-d-border: transparent;
+  --awb-d-hover-bg: #1e293b;
+  --awb-d-bw: 0px;
+}
+.awb-outline {
+  --awb-d-color: var(--kit-primary-800, #075985);
+  --awb-d-bg: transparent;
+  --awb-d-border: var(--kit-primary-600, #0284c7);
+  --awb-d-hover-bg: var(--kit-primary-50, #f0f9ff);
+  --awb-d-bw: 2px;
+}
+.awb-ghost {
+  --awb-d-color: #0f172a;
+  --awb-d-bg: transparent;
+  --awb-d-border: transparent;
+  --awb-d-hover-bg: #f1f5f9;
+  --awb-d-bw: 0px;
+}
+.awb-primary:where(.dark, .dark *):not(:where(.dark .light, .dark .light *)) {
+  --awb-d-border: var(--kit-primary-400, #38bdf8);
+}
+.awb-secondary:where(.dark, .dark *):not(:where(.dark .light, .dark .light *)) {
+  --awb-d-bg: #475569;
+  --awb-d-hover-bg: #334155;
+}
+.awb-outline:where(.dark, .dark *):not(:where(.dark .light, .dark .light *)) {
+  --awb-d-color: var(--kit-primary-100, #e0f2fe);
+  --awb-d-border: var(--kit-primary-300, #7dd3fc);
+  --awb-d-hover-bg: rgb(8 47 73 / 0.4);
+}
+.awb-ghost:where(.dark, .dark *):not(:where(.dark .light, .dark .light *)) {
+  --awb-d-color: #e2e8f0;
+  --awb-d-hover-bg: #1e293b;
+}
+
+.awb {
+  --awb-color: var(--s-btn-primary-color, var(--awb-d-color));
+  --awb-bg: var(--s-btn-primary-bg, var(--awb-d-bg));
+  --awb-border: var(--s-btn-primary-border-color, var(--awb-d-border));
+  --awb-hover-color: var(--s-btn-primary-hover-color, var(--awb-color));
+  --awb-hover-bg: var(--s-btn-primary-hover-bg, var(--awb-d-hover-bg));
+  --awb-hover-border: var(--s-btn-primary-hover-border-color, var(--awb-border));
+  --awb-bw: var(--s-btn-primary-border-width, var(--awb-d-bw));
+  --awb-radius: var(--s-btn-primary-radius, 0.5rem);
+  --awb-py: var(--s-btn-primary-padding-y, 0.625rem);
+  --awb-px: var(--s-btn-primary-padding-x, 1.25rem);
+  --awb-min-width: var(--s-btn-primary-min-width, 0px);
+  --awb-size: var(--s-btn-primary-font-size, 0.875rem);
+  --awb-weight: var(--s-btn-primary-font-weight, 500);
+  --awb-transform: var(--s-btn-primary-transform, none);
+  --awb-spacing: var(--s-btn-primary-letter-spacing, normal);
+  --awb-shadow: var(--s-btn-primary-shadow, none);
+  --awb-hover-shadow: var(--s-btn-primary-hover-shadow, var(--awb-shadow));
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--awb-color);
+  background-color: var(--awb-bg);
+  border: var(--awb-bw) solid var(--awb-border);
+  border-radius: var(--awb-radius);
+  padding: var(--awb-py) var(--awb-px);
+  min-width: var(--awb-min-width);
+  font-size: var(--awb-size);
+  font-weight: var(--awb-weight);
+  line-height: 1.43;
+  letter-spacing: var(--awb-spacing);
+  text-transform: var(--awb-transform);
+  box-shadow: var(--awb-shadow);
+  transition: color 150ms, background-color 150ms, border-color 150ms, box-shadow 150ms;
+}
+.awb:hover {
+  color: var(--awb-hover-color);
+  background-color: var(--awb-hover-bg);
+  border-color: var(--awb-hover-border);
+  box-shadow: var(--awb-hover-shadow);
+}
+.awb:focus-visible {
+  outline: 2px solid var(--kit-primary-500, #0ea5e9);
+  outline-offset: 2px;
+}
+
+@media (min-width: 768px) {
+  .awb {
+    --awb-color: var(--s-btn-primary-color-md, var(--awb-d-color));
+    --awb-bg: var(--s-btn-primary-bg-md, var(--awb-d-bg));
+    --awb-border: var(--s-btn-primary-border-color-md, var(--awb-d-border));
+    --awb-hover-color: var(--s-btn-primary-hover-color-md, var(--awb-color));
+    --awb-hover-bg: var(--s-btn-primary-hover-bg-md, var(--awb-d-hover-bg));
+    --awb-hover-border: var(--s-btn-primary-hover-border-color-md, var(--awb-border));
+    --awb-bw: var(--s-btn-primary-border-width-md, var(--awb-d-bw));
+    --awb-radius: var(--s-btn-primary-radius-md, 0.5rem);
+    --awb-py: var(--s-btn-primary-padding-y-md, 0.625rem);
+    --awb-px: var(--s-btn-primary-padding-x-md, 1.25rem);
+    --awb-min-width: var(--s-btn-primary-min-width-md, 0px);
+    --awb-size: var(--s-btn-primary-font-size-md, 0.875rem);
+    --awb-weight: var(--s-btn-primary-font-weight-md, 500);
+    --awb-transform: var(--s-btn-primary-transform-md, none);
+    --awb-spacing: var(--s-btn-primary-letter-spacing-md, normal);
+    --awb-shadow: var(--s-btn-primary-shadow-md, none);
+    --awb-hover-shadow: var(--s-btn-primary-hover-shadow-md, var(--awb-shadow));
+  }
+}
+
+@media (min-width: 1024px) {
+  .awb {
+    --awb-color: var(--s-btn-primary-color-lg, var(--awb-d-color));
+    --awb-bg: var(--s-btn-primary-bg-lg, var(--awb-d-bg));
+    --awb-border: var(--s-btn-primary-border-color-lg, var(--awb-d-border));
+    --awb-hover-color: var(--s-btn-primary-hover-color-lg, var(--awb-color));
+    --awb-hover-bg: var(--s-btn-primary-hover-bg-lg, var(--awb-d-hover-bg));
+    --awb-hover-border: var(--s-btn-primary-hover-border-color-lg, var(--awb-border));
+    --awb-bw: var(--s-btn-primary-border-width-lg, var(--awb-d-bw));
+    --awb-radius: var(--s-btn-primary-radius-lg, 0.5rem);
+    --awb-py: var(--s-btn-primary-padding-y-lg, 0.625rem);
+    --awb-px: var(--s-btn-primary-padding-x-lg, 1.25rem);
+    --awb-min-width: var(--s-btn-primary-min-width-lg, 0px);
+    --awb-size: var(--s-btn-primary-font-size-lg, 0.875rem);
+    --awb-weight: var(--s-btn-primary-font-weight-lg, 500);
+    --awb-transform: var(--s-btn-primary-transform-lg, none);
+    --awb-spacing: var(--s-btn-primary-letter-spacing-lg, normal);
+    --awb-shadow: var(--s-btn-primary-shadow-lg, none);
+    --awb-hover-shadow: var(--s-btn-primary-hover-shadow-lg, var(--awb-shadow));
+  }
+}

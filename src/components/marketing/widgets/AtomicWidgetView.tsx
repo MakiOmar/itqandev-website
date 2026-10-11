@@ -1,6 +1,5 @@
 import { component$, useStyles$ } from '@builder.io/qwik';
 import atomicStyles from './atomic-widgets.css?inline';
-import { Button } from '~/components/marketing/Button';
 import { MarketingImageLightbox } from '~/components/marketing/MarketingImageLightbox';
 import { LottiePlayer } from '~/components/marketing/widgets/LottiePlayer';
 import { TrustBadgesWidget } from '~/components/marketing/widgets/TrustBadgesWidget';
@@ -9,6 +8,7 @@ import { SvgIcon } from '~/components/marketing/SvgIcon';
 import { marketingRoutes } from '~/lib/marketing/constants';
 import { localizeInAppHref } from '~/lib/i18n/ui-locale-path';
 import { ListWidget } from '~/components/marketing/widgets/ListWidget';
+import { ButtonWidget } from '~/components/marketing/widgets/ButtonWidget';
 
 export type AtomicWidgetProps = {
   type: string;
@@ -28,6 +28,10 @@ function str(s: Record<string, unknown>, key: string, fallback = ''): string {
 function num(s: Record<string, unknown>, key: string, fallback: number): number {
   const v = Number(s[key]);
   return Number.isFinite(v) ? v : fallback;
+}
+
+function isOn(value: unknown): boolean {
+  return value === true || value === 'true' || value === 1 || value === '1';
 }
 
 function youtubeEmbed(url: string): string | null {
@@ -164,11 +168,27 @@ export const AtomicWidgetView = component$<AtomicWidgetProps>((props) => {
       );
     }
     case 'gallery': {
+      // Dynamic images are filled server-side; unresolved (builder without a preview record) shows the source tag.
+      if (isOn(s.dynamic_images) && s.images_resolved !== true) {
+        const source = str(s, 'images_source') || '…';
+        return (
+          <div class="grid grid-cols-2 gap-2 opacity-60 sm:grid-cols-3">
+            {[0, 1, 2].map((i) => (
+              <div
+                key={i}
+                class="flex h-40 items-center justify-center rounded-lg border border-dashed border-slate-300 text-xs text-slate-500 dark:border-slate-600"
+              >
+                {`{{${source}}}`}
+              </div>
+            ))}
+          </div>
+        );
+      }
       const images = Array.isArray(s.images) ? (s.images as Array<Record<string, unknown>>) : [];
       const urls = images
         .map((img) => ({
           src: String(img.image ?? img.url ?? ''),
-          alt: String(img.alt ?? ''),
+          alt: String(img.alt || img.image_alt || ''),
         }))
         .filter((x) => x.src);
       if (!urls.length) return null;
@@ -217,36 +237,9 @@ export const AtomicWidgetView = component$<AtomicWidgetProps>((props) => {
       if (!html || !/<iframe\b/i.test(html)) return null;
       return <div class="overflow-hidden rounded-lg" dangerouslySetInnerHTML={html} />;
     }
-    case 'button': {
-      const style = str(s, 'style', 'primary') as 'primary' | 'secondary' | 'outline' | 'ghost';
-      const overlayId = Number(s.overlay_id);
-      const href = localizeInAppHref(props.uiLocale, str(s, 'url')) || '#';
-      const extra =
-        Number.isInteger(overlayId) && overlayId > 0
-          ? { 'data-overlay-id': String(overlayId) }
-          : {};
-      return (
-        <Button href={href} variant={style} {...extra}>
-          {str(s, 'label', 'Button')}
-        </Button>
-      );
-    }
-    case 'button_group': {
-      const buttons = Array.isArray(s.buttons) ? (s.buttons as Array<Record<string, unknown>>) : [];
-      return (
-        <div class="flex flex-wrap gap-3">
-          {buttons.map((b, i) => (
-            <Button
-              key={i}
-              href={localizeInAppHref(props.uiLocale, String(b.url || '')) || '#'}
-              variant={(String(b.style || 'primary') as 'primary') || 'primary'}
-            >
-              {String(b.label || 'Button')}
-            </Button>
-          ))}
-        </div>
-      );
-    }
+    case 'button':
+    case 'button_group':
+      return <ButtonWidget type={props.type} settings={s} uiLocale={props.uiLocale} />;
     case 'spacer':
       return <div aria-hidden="true" style={{ height: `${num(s, 'height', 48)}px` }} />;
     case 'divider': {

@@ -4,6 +4,8 @@ import { routeLoader$, routeAction$, Form, zod$, z, useNavigate } from '@builder
 import { Link } from '@builder.io/qwik-city';
 import { PageHeader } from '../../../../../components/common/PageHeader';
 import { TagInput } from '../../../../../components/common/TagInput';
+import { MediaGalleryField } from '../../../../../components/admin/MediaGalleryField';
+import { parseGalleryIdsJson } from '../../../../../lib/admin/gallery-ids';
 import { useTranslate, translateApp } from '../../../../../lib/i18n/useTranslate';
 import { isUiLocaleRtl } from '../../../../../lib/i18n/ui-locale-segments';
 import { useSwal } from '../../../../../lib/hooks/useSwal';
@@ -108,6 +110,7 @@ export const useCreateProject = routeAction$(
         repo_url: normalizeOptionalUrl(data.repo_url),
         demo_url: normalizeOptionalUrl(data.demo_url),
         published_at : data.published_at || undefined,
+        gallery_media_ids: parseGalleryIdsJson((data as { gallery_media_ids_json?: string }).gallery_media_ids_json),
       };
 
       const rawContentLocale = (data as { content_locale?: string }).content_locale?.trim();
@@ -194,6 +197,7 @@ export const useCreateProject = routeAction$(
   zod$(projectSchema.extend({
     heroMedia: z.any().optional(),
     videoMedia: z.any().optional(),
+    gallery_media_ids_json: z.string().optional(),
     translations_json: z.string().optional(),
     content_locale: z.string().optional(),
     editing_locale: z.string().optional(),
@@ -844,6 +848,8 @@ export default component$(() => {
               </button>
             </div>
           </div>
+
+          <MediaGalleryField name="gallery_media_ids_json" />
 
           {createAction.value?.failed && (createAction.value as any).error && (
             <div class="rounded-md bg-red-50 dark:bg-red-900/20 p-3 text-sm text-red-800 dark:text-red-300">

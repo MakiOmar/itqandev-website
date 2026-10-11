@@ -222,6 +222,15 @@
     "manageSkillsDesc": "Add or edit skills"
   },
   "projects": {
+    "gallery": {
+      "title": "Gallery",
+      "help": "Images from the media library, in display order. Use the Gallery widget's dynamic source to show them on project pages.",
+      "empty": "No gallery images yet.",
+      "add": "Add image",
+      "remove": "Remove",
+      "moveEarlier": "Move earlier",
+      "moveLater": "Move later"
+    },
     "title": "Projects",
     "subtitle": "Manage company projects",
     "addNew": "Add Project",
@@ -1177,6 +1186,8 @@
       "items_source": "Source",
       "link_items": "Link items",
       "marker_icon": "Marker icon (replaces bullets)",
+      "dynamic_images": "Dynamic images (from the current item)",
+      "images_source": "Source",
       "full_viewport": "Full viewport height (100vh)",
       "nav_top_space": "Top space under nav (px)",
       "watermark_enabled": "Show faded text",
@@ -1617,6 +1628,7 @@
       "groupSubtitle": "Subtitle",
       "groupBtnPrimary": "Primary button",
       "groupButton": "Button",
+      "groupButtons": "Buttons",
       "groupBtnSecondary": "Secondary button",
       "groupCardBox": "Card",
       "groupRating": "Rating stars",
