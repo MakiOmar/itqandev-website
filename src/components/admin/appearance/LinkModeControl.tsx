@@ -4,6 +4,7 @@ import { LINK_MODE_KEYS, linkModePatch, resolveLinkMode, type LinkMode } from '~
 import { ADMIN_CHECKBOX_CLASS, ADMIN_CHECKBOX_LABEL_CLASS } from '~/lib/admin/native-select-classes';
 import type { DynamicTagCatalog } from '~/lib/admin/appearance-actions';
 import { BuilderDynamicTagButton } from './BuilderDynamicTagButton';
+import { BuilderLinkSearchButton } from './BuilderLinkSearchButton';
 import { INSPECTOR_INPUT, INSPECTOR_LABEL, INSPECTOR_ROW } from './inspector-classes';
 
 export type LinkModeControlProps = {
@@ -45,17 +46,24 @@ export const LinkModeControl = component$<LinkModeControlProps>((props) => {
       </div>
       {mode === 'custom' ? (
         <>
-          {/* Custom URL with the dynamic-tag trigger */}
+          {/* Custom URL with the content-link and dynamic-tag triggers */}
           <div class="relative">
             <input
               type="url"
               dir="ltr"
-              class={[INSPECTOR_INPUT, props.catalog.tags.length ? 'pe-8' : ''].join(' ')}
+              class={[INSPECTOR_INPUT, props.catalog.tags.length ? 'pe-14' : 'pe-8'].join(' ')}
               placeholder={translateApp(props.lang, 'appearance.urlPlaceholder')}
               aria-label={t('url')}
               value={props.url}
               onInput$={async (e) => {
                 await props.onPatch$({ [LINK_MODE_KEYS.url]: (e.target as HTMLInputElement).value });
+              }}
+            />
+            <BuilderLinkSearchButton
+              lang={props.lang}
+              shifted={props.catalog.tags.length > 0}
+              onPick$={async (path) => {
+                await props.onPatch$({ [LINK_MODE_KEYS.url]: path });
               }}
             />
             <BuilderDynamicTagButton

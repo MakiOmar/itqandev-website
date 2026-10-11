@@ -1305,6 +1305,13 @@
       "url": "Link URL",
       "newTab": "Open in new window"
     },
+    "linkSearch": {
+      "open": "Link to page or content",
+      "search": "Search pages, projects, posts…",
+      "loading": "Searching…",
+      "noMatch": "No published content matches",
+      "error": "Could not search content links"
+    },
     "selectFromLibrary": "Select from library",
     "selectForm": "Select a form…",
     "formsLoading": "Loading forms…",

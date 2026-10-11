@@ -657,7 +657,7 @@ export const ContentKitView = component$<ContentKitProps>((props) => {
                   ) : null}
                   {str(s, 'button_label') ? (
                     <div class="mt-6">
-                      <Button href={str(s, 'button_url', '/contact')} variant="primary">
+                      <Button href={localizeInAppHref(props.uiLocale, str(s, 'button_url', '/contact'))} variant="primary">
                         {str(s, 'button_label')}
                       </Button>
                     </div>

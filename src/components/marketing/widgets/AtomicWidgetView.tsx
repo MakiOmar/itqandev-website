@@ -7,6 +7,7 @@ import { TrustBadgesWidget } from '~/components/marketing/widgets/TrustBadgesWid
 import { TextLogoWidget } from '~/components/marketing/widgets/TextLogoWidget';
 import { SvgIcon } from '~/components/marketing/SvgIcon';
 import { marketingRoutes } from '~/lib/marketing/constants';
+import { localizeInAppHref } from '~/lib/i18n/ui-locale-path';
 import { ListWidget } from '~/components/marketing/widgets/ListWidget';
 
 export type AtomicWidgetProps = {
@@ -136,7 +137,7 @@ export const AtomicWidgetView = component$<AtomicWidgetProps>((props) => {
           loading="lazy"
         />
       );
-      const link = str(s, 'link_url');
+      const link = localizeInAppHref(props.uiLocale, str(s, 'link_url'));
       const lightbox = s.lightbox === true;
       const wrapped = lightbox ? <MarketingImageLightbox>{img}</MarketingImageLightbox> : img;
       return (
@@ -219,7 +220,7 @@ export const AtomicWidgetView = component$<AtomicWidgetProps>((props) => {
     case 'button': {
       const style = str(s, 'style', 'primary') as 'primary' | 'secondary' | 'outline' | 'ghost';
       const overlayId = Number(s.overlay_id);
-      const href = str(s, 'url') || '#';
+      const href = localizeInAppHref(props.uiLocale, str(s, 'url')) || '#';
       const extra =
         Number.isInteger(overlayId) && overlayId > 0
           ? { 'data-overlay-id': String(overlayId) }
@@ -237,7 +238,7 @@ export const AtomicWidgetView = component$<AtomicWidgetProps>((props) => {
           {buttons.map((b, i) => (
             <Button
               key={i}
-              href={String(b.url || '#')}
+              href={localizeInAppHref(props.uiLocale, String(b.url || '')) || '#'}
               variant={(String(b.style || 'primary') as 'primary') || 'primary'}
             >
               {String(b.label || 'Button')}
@@ -273,7 +274,7 @@ export const AtomicWidgetView = component$<AtomicWidgetProps>((props) => {
           .filter((c) => String(c.label || '').trim())
           .map((c) => ({
             label: String(c.label || ''),
-            href: String(c.url || '').trim() || undefined,
+            href: localizeInAppHref(props.uiLocale, String(c.url || '')) || undefined,
           })),
         ...(currentTitle ? [{ label: currentTitle }] : []),
       ];
@@ -368,7 +369,7 @@ export const AtomicWidgetView = component$<AtomicWidgetProps>((props) => {
               <p class="aw-c aw-heading text-lg font-semibold">{str(s, 'back_heading', 'Back')}</p>
               <p class="aw-c aw-text text-sm">{str(s, 'back_text')}</p>
               {str(s, 'back_url') ? (
-                <a class="text-sm font-medium text-primary-600" href={str(s, 'back_url')}>
+                <a class="text-sm font-medium text-primary-600" href={localizeInAppHref(props.uiLocale, str(s, 'back_url'))}>
                   {str(s, 'back_label', 'Learn more')}
                 </a>
               ) : null}

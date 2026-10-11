@@ -29,6 +29,7 @@ import { normalizeResponsiveColumns } from '~/lib/marketing/grid-columns';
 import type { SiteLanguageRow } from '~/types/site-language';
 import type { CategorySelectOption } from './CategoryMultiSelectField';
 import { BuilderDynamicTagButton } from './BuilderDynamicTagButton';
+import { BuilderLinkSearchButton } from './BuilderLinkSearchButton';
 import { EMPTY_DYNAMIC_TAG_CATALOG, type DynamicTagCatalog } from '~/lib/admin/appearance-actions';
 import {
   INSPECTOR_INPUT,
@@ -88,6 +89,12 @@ function asString(v: unknown): string {
   if (typeof v === 'string') return v;
   if (typeof v === 'number' || typeof v === 'boolean') return String(v);
   return '';
+}
+
+/** Room for the inline triggers (each ~1.75rem) at the input's end edge. */
+function urlInputEndPadding(linkSearch: boolean, dynamicTags: boolean): string {
+  const triggers = Number(linkSearch) + Number(dynamicTags);
+  return triggers === 2 ? 'pe-14' : triggers === 1 ? 'pe-8' : '';
 }
 
 function localeLabel(row: SiteLanguageRow): string {
@@ -280,15 +287,16 @@ const AppearanceSettingFieldControl = component$<FieldControlProps>((props) => {
 
   if (field.type === 'url' || field.type === 'video' || field.type === 'link') {
     const inputId = `setting-${field.key}`;
+    const linkSearch = field.type !== 'video';
     return (
       <div class={INSPECTOR_ROW}>
         <label for={inputId} class={INSPECTOR_LABEL}>{label}</label>
-        {/* URL input with the dynamic-tag trigger inside its end edge */}
+        {/* URL input with the content-link and dynamic-tag triggers inside its end edge */}
         <div class="relative">
           <input
             id={inputId}
             type="url"
-            class={[INSPECTOR_INPUT, tags.tags.length ? 'pe-8' : ''].join(' ')}
+            class={[INSPECTOR_INPUT, urlInputEndPadding(linkSearch, tags.tags.length > 0)].join(' ')}
             value={asString(raw)}
             dir="ltr"
             placeholder={field.type === 'video' ? 'https://youtube.com/…' : translateApp(props.lang, 'appearance.urlPlaceholder')}
@@ -296,6 +304,9 @@ const AppearanceSettingFieldControl = component$<FieldControlProps>((props) => {
               await write$((e.target as HTMLInputElement).value);
             }}
           />
+          {linkSearch ? (
+            <BuilderLinkSearchButton lang={props.lang} shifted={tags.tags.length > 0} onPick$={write$} />
+          ) : null}
           <BuilderDynamicTagButton catalog={tags} lang={props.lang} onInsert$={insertTag$} />
         </div>
       </div>
@@ -483,20 +494,28 @@ const AppearanceSettingFieldControl = component$<FieldControlProps>((props) => {
                     );
                   }
                   const isUrl = sub.type === 'url' || sub.type === 'video' || sub.type === 'link';
+                  const subLinkSearch = isUrl && sub.type !== 'video';
+                  const subKey = sub.key;
                   return (
                     <div key={sub.key} class={INSPECTOR_ROW}>
                       <label for={subId} class={INSPECTOR_LABEL}>{sub.label}</label>
-                      <input
-                        id={subId}
-                        type={sub.type === 'number' ? 'number' : isUrl ? 'url' : 'text'}
-                        dir={isUrl ? 'ltr' : undefined}
-                        class={INSPECTOR_INPUT}
-                        value={asString(subVal)}
-                        onInput$={(e) => {
-                          const value = (e.target as HTMLInputElement).value;
-                          return setSub$(sub.key, sub.type === 'number' ? Number(value) : value);
-                        }}
-                      />
+                      {/* Row input; link fields get the content-link trigger at the end edge */}
+                      <div class="relative">
+                        <input
+                          id={subId}
+                          type={sub.type === 'number' ? 'number' : isUrl ? 'url' : 'text'}
+                          dir={isUrl ? 'ltr' : undefined}
+                          class={[INSPECTOR_INPUT, urlInputEndPadding(subLinkSearch, false)].join(' ')}
+                          value={asString(subVal)}
+                          onInput$={(e) => {
+                            const value = (e.target as HTMLInputElement).value;
+                            return setSub$(sub.key, sub.type === 'number' ? Number(value) : value);
+                          }}
+                        />
+                        {subLinkSearch ? (
+                          <BuilderLinkSearchButton lang={props.lang} onPick$={(path) => setSub$(subKey, path)} />
+                        ) : null}
+                      </div>
                     </div>
                   );
                 })}

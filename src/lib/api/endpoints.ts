@@ -56,6 +56,7 @@ export const API_ENDPOINTS = {
     TEMPLATES_BULK_DELETE: '/appearance/templates/bulk-delete',
     DESIGN_KIT: '/appearance/design-kit',
     PREVIEW_AS: (kind: string, id: string | number) => `/appearance/${kind}/${id}/preview-as`,
+    LINK_SEARCH: (query: string) => `/appearance/link-search?q=${encodeURIComponent(query)}`,
     PREVIEW_RECORDS: (contentType: string) => `/appearance/preview-records/${encodeURIComponent(contentType)}`,
     THEME_TEMPLATE_MATCH: '/appearance/theme-templates/match',
   },

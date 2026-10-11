@@ -49,6 +49,18 @@ export async function fetchContentTypesFromBrowser(): Promise<ContentTypeInfo[]>
   return res.data?.content_types ?? [];
 }
 
+/** Published record with its public path (no UI locale) for builder URL fields. */
+export type BuilderLinkResult = { type: string; type_label: string; id: number; title: string; path: string };
+
+export async function searchBuilderLinksFromBrowser(query: string): Promise<BuilderLinkResult[]> {
+  const res = await getApiClient(null).get<BuilderLinkResult[] | { data?: BuilderLinkResult[] }>(
+    API_ENDPOINTS.APPEARANCE.LINK_SEARCH(query.trim()),
+  );
+  const body = res.data;
+  if (Array.isArray(body)) return body;
+  return Array.isArray(body?.data) ? body.data : [];
+}
+
 export type PreviewRecordOption = { id: number; title: string };
 
 /** Latest records of a content type for the builder "Preview as" picker. */
