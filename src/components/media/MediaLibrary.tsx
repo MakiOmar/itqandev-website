@@ -288,6 +288,7 @@ export const MediaLibrary = component$<MediaLibraryProps>((props) => {
             class="hidden"
           />
           <button
+            type="button"
             onClick$={() => fileInput.value?.click()}
             disabled={uploadLoading.value}
             class="rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed"
@@ -320,6 +321,7 @@ export const MediaLibrary = component$<MediaLibraryProps>((props) => {
             </span>
             <div class="flex items-center gap-2">
               <button
+                type="button"
                 onClick$={() => {
                   selectedItems.value.clear();
                   selectedItems.value = new Set();
@@ -329,6 +331,7 @@ export const MediaLibrary = component$<MediaLibraryProps>((props) => {
                 {translateApp(lang, 'media.deselectAll') || 'Deselect All'}
               </button>
               <button
+                type="button"
                 onClick$={handleApply}
                 class="rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-primary-700"
               >
@@ -482,6 +485,7 @@ export const MediaLibrary = component$<MediaLibraryProps>((props) => {
           {totalPages.value > 1 && (
             <div class="flex items-center justify-between mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
               <button
+                type="button"
                 onClick$={() => loadMedia(currentPage.value - 1)}
                 disabled={currentPage.value === 1}
                 class="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm transition hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 dark:hover:bg-gray-700"
@@ -492,6 +496,7 @@ export const MediaLibrary = component$<MediaLibraryProps>((props) => {
                 {translateApp(lang, 'common.page') || 'Page'} {currentPage.value} {translateApp(lang, 'common.of') || 'of'} {totalPages.value}
               </span>
               <button
+                type="button"
                 onClick$={() => loadMedia(currentPage.value + 1)}
                 disabled={currentPage.value >= totalPages.value}
                 class="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm transition hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 dark:hover:bg-gray-700"

@@ -49,6 +49,7 @@ export const MediaSelector = component$<MediaSelectorProps>((props) => {
             {props.title || translateApp(lang, 'media.selectMedia') || 'Select Media'}
           </h2>
           <button
+            type="button"
             onClick$={handleClose}
             class="rounded-lg p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 dark:hover:bg-gray-800 dark:hover:text-gray-300 transition-colors"
             aria-label="Close"
