@@ -13,6 +13,7 @@ import { BlogCard } from '~/components/marketing/BlogCard';
 import { resolveServiceIconUrl } from '~/lib/marketing/service-icons';
 import { resolveLaravelMediaUrl } from '~/lib/marketing/resolve-laravel-media-url';
 import { marketingRoutes } from '~/lib/marketing/constants';
+import { localizeInAppHref } from '~/lib/i18n/ui-locale-path';
 import { normalizeHeroFloatingIcons } from '~/lib/admin/hero-floating-icons';
 import { particlesConfigKey, resolveHeroParticlesConfig } from '~/lib/marketing/hero-particles';
 import { LazyParticlesBackground } from '~/components/marketing/LazyParticlesBackground';
@@ -632,7 +633,7 @@ export const CtaHomeSection = component$<HomeSectionSharedProps>(({ settings, ui
     "Tell us about your idea. We'll get back within 24 hours.",
   );
   const buttonLabel = settingString(settings, 'button_label', 'Get in touch');
-  const buttonUrl = settingString(settings, 'button_url', '').trim() || routes.contact;
+  const buttonUrl = localizeInAppHref(uiLocale, settingString(settings, 'button_url', '')) || routes.contact;
   const waHref = settingBool(settings, 'whatsapp_enabled')
     ? whatsappHref(settings?.whatsapp_number, settingOptionalString(settings, 'whatsapp_message'))
     : null;

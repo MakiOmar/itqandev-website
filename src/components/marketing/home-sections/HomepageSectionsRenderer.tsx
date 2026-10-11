@@ -181,9 +181,21 @@ function renderBlock(
   const kind = block.kind || (WIDGET_TYPES.has(block.type) ? 'widget' : 'kit');
   const wrapStyles = hasWidgetStyleControls(block.type) || hasAnyStyles(block.styles);
   const embedded = props.embedKits === true;
-  // Locals, not `block.styles` in JSX: the optimizer freezes member props of plain objects,
-  // so the builder canvas would keep the first styles it rendered.
+  // Locals, not `block.styles` / `props.uiLocale` in JSX: the optimizer freezes member props of plain
+  // objects, so the builder canvas would keep the first styles and a client-side language switch the old locale.
   const blockStyles = block.styles;
+  const {
+    uiLocale,
+    editorPreview,
+    pageContext,
+    siteContact,
+    services,
+    caseStudies,
+    testimonials,
+    techStack,
+    blogPosts,
+    portfolioCategories,
+  } = props;
   const wrap = (inner: JSXOutput) => {
     // Background sits inside the sized leaf so width/padding Style controls frame the fill.
     // No `styles` on the shell: the leaf's styles live on StyledBuilderLeaf; the id scopes background overrides.
@@ -205,22 +217,22 @@ function renderBlock(
     return wrap(
       <TestimonialsWidget
         settings={settings}
-        testimonials={props.testimonials}
-        uiLocale={props.uiLocale}
-        editorPreview={props.editorPreview}
+        testimonials={testimonials}
+        uiLocale={uiLocale}
+        editorPreview={editorPreview}
       />,
     );
   }
   if (block.type === 'theme_switch') {
-    return wrap(<ThemeSwitchWidget settings={settings} editorPreview={props.editorPreview} />);
+    return wrap(<ThemeSwitchWidget settings={settings} editorPreview={editorPreview} />);
   }
   if (block.type === 'contact_float') {
     return wrap(
       <ContactFloatWidget
         settings={settings}
-        uiLocale={props.uiLocale}
+        uiLocale={uiLocale}
         formsEnabled={showFormsModule}
-        editorPreview={props.editorPreview}
+        editorPreview={editorPreview}
       />,
     );
   }
@@ -248,9 +260,9 @@ function renderBlock(
       <AtomicWidgetView
         type={block.type}
         settings={settings}
-        uiLocale={props.uiLocale}
+        uiLocale={uiLocale}
         styled={wrapStyles}
-        pageContext={props.pageContext}
+        pageContext={pageContext}
       />,
     );
   }
@@ -259,10 +271,10 @@ function renderBlock(
       <ContentKitView
         type={block.type}
         settings={settings}
-        uiLocale={props.uiLocale}
-        pageContext={props.pageContext}
+        uiLocale={uiLocale}
+        pageContext={pageContext}
         embedded={embedded}
-        siteContact={props.siteContact}
+        siteContact={siteContact}
         styled={hasAnyStyles(block.styles)}
       />,
     );
@@ -273,15 +285,15 @@ function renderBlock(
   switch (block.type) {
     case 'hero':
       return wrap(
-        <HeroHomeSection settings={settings} uiLocale={props.uiLocale} embedded={embedded} />,
+        <HeroHomeSection settings={settings} uiLocale={uiLocale} embedded={embedded} />,
       );
     case 'services_teaser':
       if (!showServicesModule) return null;
       return wrap(
         <ServicesTeaserHomeSection
           settings={settings}
-          uiLocale={props.uiLocale}
-          services={props.services}
+          uiLocale={uiLocale}
+          services={services}
           embedded={embedded}
         />,
       );
@@ -290,9 +302,9 @@ function renderBlock(
       return wrap(
         <CaseStudiesHomeSection
           settings={settings}
-          uiLocale={props.uiLocale}
-          caseStudies={props.caseStudies}
-          portfolioCategories={props.portfolioCategories ?? []}
+          uiLocale={uiLocale}
+          caseStudies={caseStudies}
+          portfolioCategories={portfolioCategories ?? []}
           embedded={embedded}
         />,
       );
@@ -301,8 +313,8 @@ function renderBlock(
       return wrap(
         <TestimonialsHomeSection
           settings={settings}
-          testimonials={props.testimonials}
-          uiLocale={props.uiLocale}
+          testimonials={testimonials}
+          uiLocale={uiLocale}
           embedded={embedded}
         />,
       );
@@ -310,7 +322,7 @@ function renderBlock(
       return wrap(
         <TechStackHomeSection
           settings={settings}
-          techStack={props.techStack}
+          techStack={techStack}
           embedded={embedded}
         />,
       );
@@ -319,14 +331,14 @@ function renderBlock(
       return wrap(
         <BlogPreviewHomeSection
           settings={settings}
-          uiLocale={props.uiLocale}
-          blogPosts={props.blogPosts}
+          uiLocale={uiLocale}
+          blogPosts={blogPosts}
           embedded={embedded}
         />,
       );
     case 'cta':
       return wrap(
-        <CtaHomeSection settings={settings} uiLocale={props.uiLocale} embedded={embedded} />,
+        <CtaHomeSection settings={settings} uiLocale={uiLocale} embedded={embedded} />,
       );
     case 'form': {
       if (!showFormsModule) return null;
@@ -337,7 +349,7 @@ function renderBlock(
       const form = (
         <FormRenderer
           slug={formSlug}
-          contentLocale={props.uiLocale}
+          contentLocale={uiLocale}
           title={title || undefined}
           subtitle={subtitle || undefined}
           class="w-full"
@@ -381,7 +393,7 @@ function renderBlock(
       };
       const list = (
         <PortfolioProjectsList
-          uiLocale={props.uiLocale}
+          uiLocale={uiLocale}
           initialList={props.portfolioList ?? emptyList}
           initialCategories={props.portfolioCategories ?? []}
           initialCategorySlug={props.portfolioCategorySlug ?? null}
@@ -413,7 +425,7 @@ function renderBlock(
       };
       const blogList = (
         <BlogPostsList
-          uiLocale={props.uiLocale}
+          uiLocale={uiLocale}
           initialList={props.blogList ?? emptyBlogList}
           perPage={perPage}
         />
