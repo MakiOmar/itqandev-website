@@ -1,5 +1,5 @@
 import { component$, useContextProvider, useSignal } from '@builder.io/qwik';
-import type { DocumentHead } from '@builder.io/qwik-city';
+import type { DocumentHead, RequestHandler } from '@builder.io/qwik-city';
 import { routeLoader$, useLocation } from '@builder.io/qwik-city';
 import { PublicDocumentNavContext } from '../lib/marketing/public-document-nav-context';
 import { Header } from '~/components/marketing/Header';
@@ -7,7 +7,7 @@ import { Footer } from '~/components/marketing/Footer';
 import { HomepageSectionsRenderer } from '~/components/marketing/home-sections/HomepageSectionsRenderer';
 import { getLocalizedRoutes } from '../lib/constants/routes';
 import { uiLangFromUrlPathname, uiLocaleFromPublicRoute } from '../lib/i18n/ui-locale-path';
-import { fetchPublicShell } from '../lib/marketing/public-shell';
+import { guardPublicShell, readGuardedPublicShell } from '../lib/marketing/backend-unavailable';
 import { LayoutDeviceProvider } from '~/lib/marketing/layout-device-context';
 import { detectLayoutBreakpointFromUserAgent } from '~/lib/marketing/device-visibility';
 
@@ -18,14 +18,17 @@ import { detectLayoutBreakpointFromUserAgent } from '~/lib/marketing/device-visi
  * `not_found` chrome + body). Avoid `[...path]` under `(public)` — it breaks
  * `/[lang]/admin/…` route matching.
  */
-export const useNotFoundShell = routeLoader$(async ({ request, params, cookie }) => {
+/** Answers 503 instead of placeholder chrome when the API is down. */
+export const onRequest: RequestHandler = async (ev) => {
+  await guardPublicShell(ev, 'not_found');
+};
+
+export const useNotFoundShell = routeLoader$(async (ev) => {
+  const { request, params, cookie } = ev;
   const cookieHeader = request.headers.get('cookie') || cookie.toString() || '';
   const uiLocale = uiLocaleFromPublicRoute(cookieHeader, params.lang, request.url);
   const device = detectLayoutBreakpointFromUserAgent(request.headers.get('user-agent'));
-  const shell = await fetchPublicShell(uiLocale, {
-    forwardDocumentUrl: request.url,
-    themeContext: 'not_found',
-  });
+  const shell = await readGuardedPublicShell(ev, 'not_found');
   return { shell, device, uiLocale };
 });
 

@@ -1813,5 +1813,12 @@
     "emptyTitle": "No templates yet",
     "bulkDeleteConfirm": "Delete {{count}} selected template(s)? Pages that already use a copy are not affected.",
     "bulkDeleted": "{{count}} template(s) deleted"
+  },
+  "serviceUnavailable": {
+    "title": "Temporarily unavailable",
+    "heading": "We'll be right back",
+    "message": "We can't reach our servers right now. This is usually temporary, please try again in a moment.",
+    "retry": "Try again",
+    "code": "Error 503"
   }
 }

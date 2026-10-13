@@ -6,7 +6,12 @@ import { getPublicSiteBaseUrl } from '~/lib/seo/canonical-url';
 import { publicSiteName } from '~/lib/marketing/public-page-head';
 import { usePublicShell } from '../../layout';
 import { getServiceBySlug } from '~/lib/marketing/content-layer';
-import { fetchPublicShell, resolveServiceFromShell } from '~/lib/marketing/public-shell';
+import {
+  fetchPublicShell,
+  PublicBackendUnavailableError,
+  resolveServiceFromShell,
+} from '~/lib/marketing/public-shell';
+import { respondBackendUnavailable } from '~/lib/marketing/backend-unavailable';
 import type { Service as MarketingService } from '~/lib/marketing/types';
 import { uiLocaleFromPublicRoute } from '~/lib/i18n/ui-locale-path';
 import { marketingRoutes } from '~/lib/marketing/constants';
@@ -19,13 +24,17 @@ import { Section } from '~/components/marketing/Section';
 import { ThemeBodyOrFallback } from '~/components/marketing/theme/ThemeBodyOrFallback';
 import { entityEditTarget, useAdminEditTarget } from '~/lib/marketing/admin-edit-target';
 
-export const useServiceDetail = routeLoader$(async ({ params, request, fail }) => {
+export const useServiceDetail = routeLoader$(async (ev) => {
+  const { params, request, fail } = ev;
   const slug = decodeURIComponent(String(params.slug ?? '').trim());
   const cookie = request.headers.get('cookie') || '';
   const uiLocale = uiLocaleFromPublicRoute(cookie, params.lang, request.url);
   const shell = await fetchPublicShell(uiLocale, {
     forwardCookies: cookie,
     forwardDocumentUrl: request.url,
+  }).catch(async (e: unknown) => {
+    if (e instanceof PublicBackendUnavailableError) throw await respondBackendUnavailable(ev, uiLocale);
+    throw e;
   });
   const fromShell = resolveServiceFromShell(shell, slug);
   if (fromShell) {

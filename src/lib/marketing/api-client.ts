@@ -102,6 +102,18 @@ export interface MarketingApiResponse<T> {
   message?: string;
 }
 
+/** Failed marketing request; `status` is the HTTP status, or 0 when the API never answered (timeout, network). */
+export class MarketingApiError extends Error {
+  constructor(
+    message: string,
+    readonly status: number,
+    options?: { cause?: unknown },
+  ) {
+    super(message, options);
+    this.name = 'MarketingApiError';
+  }
+}
+
 function marketingFetchTimeoutMs(): number {
   const envMs = Number(import.meta.env?.VITE_API_TIMEOUT ?? 0);
   if (import.meta.env.DEV) {
@@ -201,9 +213,10 @@ export async function marketingFetch<T>(
     });
   } catch (e) {
     if (e instanceof Error && e.name === 'AbortError') {
-      throw new Error(`Marketing API request timed out after ${timeoutMs}ms: ${url}`);
+      throw new MarketingApiError(`Marketing API request timed out after ${timeoutMs}ms: ${url}`, 0, { cause: e });
     }
-    throw e;
+    const message = e instanceof Error ? e.message : String(e);
+    throw new MarketingApiError(message, 0, { cause: e });
   } finally {
     clearTimeout(timeoutId);
   }
@@ -212,8 +225,10 @@ export async function marketingFetch<T>(
   const isJson = contentType?.includes('application/json');
 
   if (!res.ok) {
-    const text = isJson ? (await res.json()).message : await res.text();
-    throw new Error(text || `Request failed: ${res.status}`);
+    const text = isJson
+      ? ((await res.json().catch(() => null)) as { message?: string } | null)?.message
+      : await res.text().catch(() => '');
+    throw new MarketingApiError(text || `Request failed: ${res.status}`, res.status);
   }
 
   if (res.status === 204) return undefined as T;

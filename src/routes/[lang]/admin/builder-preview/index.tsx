@@ -9,7 +9,7 @@ import { Footer } from '~/components/marketing/Footer';
 import { LocaleTransitionProvider } from '~/components/common/LocaleTransitionOverlay';
 import { PublicShellTypographyHead } from '~/components/perf/PublicShellTypographyHead';
 import { LayoutDeviceProvider } from '~/lib/marketing/layout-device-context';
-import { fetchPublicShell } from '~/lib/marketing/public-shell';
+import { fetchPublicShell, PublicBackendUnavailableError } from '~/lib/marketing/public-shell';
 import { defaultSystemTypography } from '~/lib/perf/typography';
 import {
   BUILDER_PREVIEW_DOCUMENT,
@@ -27,9 +27,14 @@ import {
  * builder "view page" mode so real mobile/tablet breakpoints apply. The document arrives
  * via same-origin postMessage; nothing is fetched or persisted from here.
  */
-export const useBuilderPreviewShell = routeLoader$(async ({ params, request }) =>
-  fetchPublicShell(params.lang, { forwardDocumentUrl: request.url }),
-);
+export const useBuilderPreviewShell = routeLoader$(async ({ params, request, error }) => {
+  try {
+    return await fetchPublicShell(params.lang, { forwardDocumentUrl: request.url });
+  } catch (e) {
+    if (e instanceof PublicBackendUnavailableError) throw error(503, 'Backend unavailable');
+    throw e;
+  }
+});
 
 export const onRequest: RequestHandler = ({ headers }) => {
   headers.set('Cache-Control', 'no-store');

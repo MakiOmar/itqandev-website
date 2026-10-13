@@ -26,9 +26,15 @@ export function useDevClientMarketingHydration(
     if (!import.meta.env.DEV) {
       return;
     }
-    const shell = await fetchPublicShell(uiLocale, {
-      forwardDocumentUrl: typeof window !== 'undefined' ? window.location.href : null,
-    });
+    let shell;
+    try {
+      shell = await fetchPublicShell(uiLocale, {
+        forwardDocumentUrl: typeof window !== 'undefined' ? window.location.href : null,
+      });
+    } catch {
+      // Keep the server-rendered shell; an outage is already answered with a 503 page on SSR.
+      return;
+    }
     branding.value = {
       ...shell.branding,
       site_languages: publicHeaderLanguageOptions(shell.branding.site_languages),

@@ -1,14 +1,15 @@
 import '~/styles/site.css';
 import { component$, Slot, useContextProvider, useSignal, useTask$ } from '@builder.io/qwik';
-import type { DocumentHead } from '@builder.io/qwik-city';
+import type { DocumentHead, RequestHandler } from '@builder.io/qwik-city';
 import { routeLoader$, useLocation } from '@builder.io/qwik-city';
+import { guardPublicShell, readGuardedPublicShell } from '~/lib/marketing/backend-unavailable';
 import {
   PublicDocumentNavContext,
   shouldUsePublicDocumentNav,
 } from '~/lib/marketing/public-document-nav-context';
 import { detectLayoutBreakpointFromUserAgent } from '~/lib/marketing/device-visibility';
 import { LayoutDeviceProvider } from '~/lib/marketing/layout-device-context';
-import { uiLocaleFromPublicRoute, uiLangFromUrlPathname, stripUiLocaleFromPathname } from '~/lib/i18n/ui-locale-path';
+import { uiLangFromUrlPathname, stripUiLocaleFromPathname } from '~/lib/i18n/ui-locale-path';
 import { LocaleTransitionProvider } from '~/components/common/LocaleTransitionOverlay';
 import { Header } from '~/components/marketing/Header';
 import { Footer } from '~/components/marketing/Footer';
@@ -23,11 +24,7 @@ import { PublicShellTypographyHead } from '~/components/perf/PublicShellTypograp
 import { defaultSystemTypography } from '~/lib/perf/typography';
 import { auth } from '~/lib/auth';
 import { useDevClientMarketingHydration } from '~/lib/marketing/dev-client-marketing';
-import {
-  fetchPublicShell,
-  type PublicBrandingState,
-  type PublicShellState,
-} from '~/lib/marketing/public-shell';
+import type { PublicBrandingState, PublicShellState } from '~/lib/marketing/public-shell';
 import { marketingRoutes } from '~/lib/marketing/constants';
 import type { PublicNavItem } from '~/lib/marketing/public-menu';
 import type { SiteContent } from '~/lib/marketing/types';
@@ -36,14 +33,15 @@ import { isSearchEngineIndexingEnabled, publicRobotsContent } from '~/lib/seo/se
 import { faviconLink } from '~/lib/seo/favicon';
 import { pathLooksLikeFrontPageAlias } from '~/lib/marketing/static-homepage';
 
+/** Loads the shell before any loader runs; answers 503 instead of placeholder content when the API is down. */
+export const onRequest: RequestHandler = async (ev) => {
+  await guardPublicShell(ev);
+};
+
 /**
  * One Laravel round-trip for branding, primary menu, and services merged into site content.
  */
-export const usePublicShell = routeLoader$(async ({ request, params }) => {
-  const cookie = request.headers.get('cookie') || '';
-  const uiLocale = uiLocaleFromPublicRoute(cookie, params.lang, request.url);
-  return fetchPublicShell(uiLocale, { forwardDocumentUrl: request.url });
-});
+export const usePublicShell = routeLoader$(async (ev) => readGuardedPublicShell(ev));
 
 /** Canonical `/` when a CMS page is assigned as the WordPress-style static homepage. */
 export const useFrontPageCanonicalRedirect = routeLoader$(async ({ url, params, redirect, resolveValue }) => {

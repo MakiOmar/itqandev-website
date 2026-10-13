@@ -13,7 +13,6 @@ import type { Service, SiteContent } from './types';
 import { parseSiteTypography } from '~/lib/perf/typography';
 import type { SiteTypography } from '~/types/typography';
 import { mapMarketingSeoMetaFromApi } from './seo-snippet';
-import { isDevSsrMarketingFetchFailure } from './ssr-api-reachability';
 import {
   defaultHomepageSections,
   type FooterPublicPayload,
@@ -230,9 +229,6 @@ function mapShellApiPayload(data: PublicShellApiData, fallbackName: string): Pub
     frontPage: parsePublicFrontPageMeta(siteMeta),
   };
 }
-/**
- * Fetch layout shell from Laravel (or local fallback when API base is unset).
- */
 /** Resolve a published service from an already-loaded shell (avoids duplicate API round-trip). */
 export function resolveServiceFromShell(shell: PublicShellState, slug: string): Service | null {
   const normalized = decodeURIComponent(String(slug ?? '').trim());
@@ -257,6 +253,21 @@ export function shellDocumentPath(documentUrl: string | null | undefined): strin
   }
 }
 
+/**
+ * The Laravel API did not deliver the shell (unreachable, timed out, 5xx or non-JSON).
+ * Public pages must show an outage notice instead of bundled placeholder content.
+ */
+export class PublicBackendUnavailableError extends Error {
+  constructor(options?: { cause?: unknown }) {
+    super('Public site backend is unavailable', options);
+    this.name = 'PublicBackendUnavailableError';
+  }
+}
+
+/**
+ * Loads the shell from Laravel. The bundled local fallback is used only when no API base
+ * is configured at all; any failure of a configured API throws `PublicBackendUnavailableError`.
+ */
 export async function fetchPublicShell(
   locale: string | null | undefined,
   fetchContext?: MarketingFetchContext,
@@ -267,6 +278,7 @@ export async function fetchPublicShell(
     return localShellFallback();
   }
 
+  let data: PublicShellApiData | undefined;
   try {
     const q = new URLSearchParams();
     if (locale && String(locale).trim() !== '') {
@@ -282,18 +294,14 @@ export async function fetchPublicShell(
       ? `${MARKETING_ENDPOINTS.shell}?${q.toString()}`
       : MARKETING_ENDPOINTS.shell;
 
-    const data = await marketingGet<PublicShellApiData>(path, locale ?? undefined, fetchContext);
-
-    if (!data || typeof data !== 'object') {
-      return localShellFallback();
-    }
-
-    const shell = mapShellApiPayload(data, fallbackName);
-    return shell;
+    data = await marketingGet<PublicShellApiData>(path, locale ?? undefined, fetchContext);
   } catch (e) {
-    if (!isDevSsrMarketingFetchFailure(e)) {
-      console.warn('[marketing] fetch public shell failed', e);
-    }
-    return localShellFallback();
+    throw new PublicBackendUnavailableError({ cause: e });
   }
+
+  if (!data || typeof data !== 'object') {
+    throw new PublicBackendUnavailableError({ cause: new Error('Shell response was empty or not JSON') });
+  }
+
+  return mapShellApiPayload(data, fallbackName);
 }

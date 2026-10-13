@@ -90,6 +90,8 @@ If the HTML URL and API URL differ by **hostname or scheme** (**localhost** vs a
 
 **Marketing API behavior in dev:** use `VITE_API_PROXY_TARGET` as the single proxy origin for `/api` and `/sanctum`. The **browser** uses the page origin + `/api` (Vite proxy). **Node SSR** calls `VITE_API_PROXY_TARGET` + `/api` directly (not the Vite dev server — fetching `:5173/api` from SSR stalls). Optional `VITE_SSR_API_BASE_URL` overrides the SSR base. Diagnostics: `/{lang}/api-check` and `GET /api/public/ping` (`server_ms`). `VITE_API_PROXY_HOST` and `VITE_DEV_SSR_SKIP_MARKETING_API` are not used.
 
+**Backend outage page:** every public page (and the root 404) loads `GET /api/public/shell` in an `onRequest` guard (`guardPublicShell` in `src/lib/marketing/backend-unavailable.ts`) before any loader runs. If the API is unreachable, times out (`VITE_API_TIMEOUT`), answers with an error status (for example a 500 while MySQL is down) or returns non-JSON, the site answers **HTTP 503** with a small translated "We'll be right back" page (`serviceUnavailable.*` in `src/i18n/*.json`, RTL for Arabic, a plain-link **Try again**) instead of rendering bundled placeholder content (`src/content/site.json`, default homepage sections, default header/footer). The response sends `Cache-Control: no-store`, `Retry-After: 60` and `X-Robots-Tag: noindex, nofollow`, so neither CDNs nor search engines keep the outage page. Client-side navigations get the same 503 for `q-data.json` and fall back to a full page load. The bundled local shell is used only when no API base is configured at all.
+
 ### Branding Configuration
 
 ```env
