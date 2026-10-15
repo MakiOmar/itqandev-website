@@ -1,0 +1,11 @@
+{
+  "name": "@fixture/sample-addon",
+  "version": "1.0.0",
+  "itqandev": {
+    "addon": {
+      "module": "sample_addon",
+      "widgets": "./widgets",
+      "admin": "./admin"
+    }
+  }
+}

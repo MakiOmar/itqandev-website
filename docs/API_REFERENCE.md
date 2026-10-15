@@ -637,6 +637,22 @@ When `mode` is `custom`, `google_css_href` is omitted and `sources` maps format 
 
 Cached server-side (~300s) per `locale` + presentation locale + path + theme_context key. Legacy endpoints remain available for tools and gradual migration.
 
+### Addons
+
+See [docs/ADDONS.md](../../docs/ADDONS.md). All endpoints only cover **enabled** addon modules.
+
+**GET `/api/public/content/{prefix}/{slug}`** (guest) — one published record of an addon content type, used by `/{lang}/{prefix}/{slug}/`. Sends `X-Content-Locale` for localized values. `404` for unknown prefixes, disabled modules or unpublished records.
+
+```json
+{ "success": true, "data": { "type": "product", "id": 12, "title": "Blue mug", "excerpt": "…", "image": "https://…", "path": "/products/blue-mug/" } }
+```
+
+**GET `/api/public/content-sitemap`** (guest) — `{ "success": true, "data": ["/products/blue-mug/", …] }`: locale-less paths of published addon records (max 5000 per type), merged into `sitemap.xml`.
+
+**GET `/api/me/addon-nav`** (authenticated) — dashboard links for the current user: `[{ "key": "shop.0", "module": "shop", "label": { "en": "Orders", "ar": "الطلبات" }, "href": "/admin/addons/shop/orders/", "permission": "manage orders" }]`. Admins get every item; other users only items whose `permission` is null or granted. `GET /api/settings` returns the unfiltered list as `addons`.
+
+Addon packages mount their own routes under `/api` (gated by `feature.module:{key}`); document them in the addon repo.
+
 ### Appearance builders (authenticated)
 
 Require `Authorization: Bearer` and the `manageSettings` gate (`admin` / `super_admin`).

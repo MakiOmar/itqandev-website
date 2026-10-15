@@ -37,6 +37,11 @@ export const MARKETING_ENDPOINTS = {
   pages: '/public/pages',
   /** GET one published CMS page by slug (still returns exclude_from_search pages) */
   page: (slug: string) => `/public/pages/${encodeURIComponent(slug)}`,
+  /** GET head data for a content-type single without its own route (addon types); 404 when missing */
+  contentSingle: (prefix: string, slug: string) =>
+    `/public/content/${encodeURIComponent(prefix)}/${encodeURIComponent(slug)}`,
+  /** GET published paths of enabled addon content types (sitemap) */
+  contentSitemap: '/public/content-sitemap',
   /** GET one overlay by id */
   overlay: (id: string | number) => `/public/overlays/${id}`,
 } as const;

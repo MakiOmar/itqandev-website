@@ -7,6 +7,9 @@ import { qwikVite } from "@builder.io/qwik/optimizer";
 import { qwikCity } from "@builder.io/qwik-city/vite";
 import tsconfigPaths from "vite-tsconfig-paths";
 import pkg from "./package.json";
+import { itqandevAddons } from "./scripts/vite-addons-plugin.mjs";
+
+const addonsPlugin = itqandevAddons({ root: process.cwd() });
 
 const VITE_CLIENT_TAG = '<script type="module" src="/@vite/client"></script>';
 
@@ -90,6 +93,11 @@ function manualVendorChunk(id: string): string | undefined {
   if (!id.includes("node_modules")) {
     return undefined;
   }
+  // Addon packages split per Qwik symbol; the shared vendor chunk is on every public page.
+  const normalizedId = id.replace(/\\/g, "/");
+  if (addonsPlugin.addonPackages.some((name) => normalizedId.includes(`/node_modules/${name}/`))) {
+    return undefined;
+  }
   if (id.includes("tinymce")) {
     return "tinymce";
   }
@@ -170,6 +178,7 @@ export default defineConfig(({ command, mode, isSsrBuild }): UserConfig => {
       dedupe: ["@builder.io/qwik", "@builder.io/qwik-city"],
     },
     plugins: [
+      addonsPlugin,
       qwikCity(),
       qwikVite({
         // Dev-only: skip Qwik City SPA bootstrap chunk (spaInit) — avoids flaky dynamic import on Windows/Vite 7.

@@ -90,6 +90,16 @@ async function getCmsPagesForSitemap(): Promise<{ loc: string; priority: string 
   }
 }
 
+/** Published singles of enabled addon content types (`/{prefix}/{slug}/`). */
+async function getAddonContentPathsForSitemap(): Promise<string[]> {
+  try {
+    const data = await marketingGet<unknown>(MARKETING_ENDPOINTS.contentSitemap);
+    return Array.isArray(data) ? data.filter((p): p is string => typeof p === 'string' && p.startsWith('/')) : [];
+  } catch {
+    return [];
+  }
+}
+
 function sitemapXml(urls: Array<{ loc: string; priority: string }>): string {
   return `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
@@ -127,10 +137,11 @@ export const onGet: RequestHandler = async ({ send }) => {
     { loc: '/blog', priority: '0.9' },
   ];
 
-  const [caseStudies, blogPosts, cmsPages, excludedPretty] = await Promise.all([
+  const [caseStudies, blogPosts, cmsPages, contentPaths, excludedPretty] = await Promise.all([
     getCaseStudies(),
     getBlogPosts(),
     getCmsPagesForSitemap(),
+    getAddonContentPathsForSitemap(),
     Promise.all(
       staticCandidates.map(async (row) =>
         row.loc === '/' ? false : prettyPathIsExcluded(row.loc),
@@ -151,6 +162,14 @@ export const onGet: RequestHandler = async ({ send }) => {
   }));
 
   const urls = [...staticPaths, ...portfolioUrls, ...blogUrls, ...cmsPages];
+  const emitted = new Set(urls.map((u) => u.loc.replace(/\/+$/, '')));
+  for (const path of contentPaths) {
+    const loc = path.replace(/\/+$/, '');
+    if (loc && !emitted.has(loc)) {
+      emitted.add(loc);
+      urls.push({ loc, priority: '0.7' });
+    }
+  }
   send(
     new Response(sitemapXml(urls), {
       status: 200,

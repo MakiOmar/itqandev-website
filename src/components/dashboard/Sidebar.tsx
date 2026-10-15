@@ -8,6 +8,9 @@ import { isFeatureModuleEnabled, type FeatureModuleKey } from '../../lib/api/pro
 import { getConfig } from '../../lib/config';
 import { isUiLocaleRtl } from '../../lib/i18n/ui-locale-segments';
 import { useTranslate, translateApp } from '../../lib/i18n/useTranslate';
+import { withUiLocale } from '../../lib/i18n/ui-locale-path';
+import { addonNavLabel, fetchAddonNavFromBrowser } from '../../lib/addons/nav';
+import type { AddonNavItem } from '../../lib/addons/types';
 import {
   DashboardIcon,
   ProfileIcon,
@@ -88,6 +91,17 @@ export const Sidebar = component$<SidebarProps>((props) => {
   const activeLogo = isDarkMode.value
     ? (projectDarkLogo || projectLightLogo || '')
     : (projectLightLogo || projectDarkLogo || '');
+  const settingsAddonNav = projectSettings.settings?.addons;
+  const addonNav = useSignal<AddonNavItem[]>(Array.isArray(settingsAddonNav) ? settingsAddonNav : []);
+
+  // Editors cannot read GET /api/settings, so their addon links come from the permission-filtered endpoint.
+  // eslint-disable-next-line qwik/no-use-visible-task
+  useVisibleTask$(async () => {
+    if (Array.isArray(projectSettings.settings?.addons)) {
+      return;
+    }
+    addonNav.value = await fetchAddonNavFromBrowser();
+  });
   
   // Track direction/theme from document and update immediately
   // eslint-disable-next-line qwik/no-use-visible-task
@@ -299,6 +313,21 @@ export const Sidebar = component$<SidebarProps>((props) => {
       ],
     },
   ];
+
+  // Addon links sit after the built-in content sections, before Profile.
+  const addonNavItems: NavItem[] = addonNav.value
+    .filter((item) => featureFlags?.[item.module] !== false)
+    .map((item) => ({
+      label: addonNavLabel(item, lang),
+      href: withUiLocale(lang, item.href),
+      icon: ToolsIcon,
+      activeOnChildPaths: true,
+      permission: item.permission ?? undefined,
+      menuManagementAccess: true,
+      menuManagementRoles: ['super_admin', 'admin'],
+    }));
+  const profileIndex = navItems.findIndex((item) => item.href === R.ADMIN.PROFILE);
+  navItems.splice(profileIndex < 0 ? navItems.length : profileIndex, 0, ...addonNavItems);
 
   const filteredNavItems = navItems
     .map((item) => {

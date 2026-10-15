@@ -24,6 +24,7 @@ import { ThemeSwitchWidget } from '~/components/marketing/widgets/ThemeSwitchWid
 import { ContactFloatWidget } from '~/components/marketing/widgets/ContactFloatWidget';
 import { StyledBuilderLeaf } from '~/components/marketing/widgets/StyledBuilderLeaf';
 import { ContentKitView } from '~/components/marketing/kits/ContentKitView';
+import { addonKits } from 'virtual:itqandev-addon-widgets';
 import { isFeatureModuleEnabled } from '~/lib/api/project-settings';
 import {
   columnSpanClassNames,
@@ -266,7 +267,7 @@ function renderBlock(
       />,
     );
   }
-  if (CONTENT_KITS.has(block.type)) {
+  if (CONTENT_KITS.has(block.type) || (kind === 'kit' && block.type in addonKits)) {
     return wrap(
       <ContentKitView
         type={block.type}

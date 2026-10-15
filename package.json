@@ -58,7 +58,8 @@
     "preview:prod": "npm run build.client && npm run build.preview && vite preview --host --port 4173",
     "serve": "node server/entry.node-server",
     "start": "vite --open --mode ssr",
-    "qwik": "qwik"
+    "qwik": "qwik",
+    "test.addons": "node --test scripts/vite-addons-plugin.test.mjs"
   },
   "devDependencies": {
     "@builder.io/qwik": "^1.20.0",

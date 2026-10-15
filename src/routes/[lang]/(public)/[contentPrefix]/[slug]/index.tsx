@@ -1,0 +1,113 @@
+import { component$ } from '@builder.io/qwik';
+import type { DocumentHead } from '@builder.io/qwik-city';
+import { routeLoader$, useLocation } from '@builder.io/qwik-city';
+import { usePublicShell } from '../../layout';
+import { Container } from '~/components/marketing/Container';
+import { Section } from '~/components/marketing/Section';
+import { ThemeBodyOrFallback } from '~/components/marketing/theme/ThemeBodyOrFallback';
+import { uiLangFromUrlPathname } from '~/lib/i18n/ui-locale-path';
+import { MARKETING_ENDPOINTS } from '~/lib/marketing/endpoints';
+import { marketingGet } from '~/lib/marketing/api-client';
+import { publicSiteName } from '~/lib/marketing/public-page-head';
+import { buildCanonicalHref } from '~/lib/seo/canonical-url';
+
+type PublicContentSingle = {
+  type: string;
+  id: number;
+  title: string;
+  excerpt: string;
+  image: string;
+  path: string;
+};
+
+/**
+ * Singles of registry content types without a dedicated folder (addon types), e.g. `/en/products/blue-mug/`.
+ * Static siblings (`blog`, `services`, `portfolio`, `forms`, `pages`, `admin`) are more specific and win.
+ * The body is the Theme Builder single the shell resolves for this path; there is no hardcoded template.
+ */
+export const useContentSingle = routeLoader$(async ({ params, url, fail }) => {
+  const prefix = String(params.contentPrefix ?? '').toLowerCase();
+  if (prefix === 'admin') {
+    return fail(404, { message: 'Not found' });
+  }
+  try {
+    const single = await marketingGet<PublicContentSingle>(
+      MARKETING_ENDPOINTS.contentSingle(prefix, String(params.slug ?? '')),
+      uiLangFromUrlPathname(url.pathname),
+    );
+    if (!single || typeof single.title !== 'string') {
+      return fail(404, { message: 'Not found' });
+    }
+    return single;
+  } catch {
+    return fail(404, { message: 'Not found' });
+  }
+});
+
+export default component$(() => {
+  const loc = useLocation();
+  const shell = usePublicShell();
+  const loaded = useContentSingle();
+  const uiLocale = uiLangFromUrlPathname(loc.url.pathname);
+  const single = 'failed' in loaded.value ? null : loaded.value;
+
+  if (!single) {
+    return (
+      <Section>
+        <Container size="narrow">
+          {/* Unknown prefix or unpublished record */}
+          <h1 class="text-center text-6xl font-bold text-slate-900 dark:text-white">404</h1>
+        </Container>
+      </Section>
+    );
+  }
+
+  return (
+    <ThemeBodyOrFallback
+      themeBody={shell.value.themeBody}
+      renderer={{
+        uiLocale,
+        branding: shell.value.branding,
+        services: shell.value.siteContent?.services ?? [],
+        caseStudies: [],
+        testimonials: [],
+        blogPosts: [],
+        techStack: shell.value.siteContent?.techStack ?? [],
+        siteContact: shell.value.siteContent?.contact,
+        pageContext: { title: single.title, slug: String(loc.params.slug ?? '') },
+      }}
+    >
+      {/* No Theme Builder single assigned yet: show the title so the URL is not blank */}
+      <Section>
+        <Container size="narrow">
+          <h1 class="text-3xl font-bold text-slate-900 dark:text-white sm:text-4xl">{single.title}</h1>
+          {single.excerpt ? <p class="mt-4 text-lg text-slate-600 dark:text-slate-300">{single.excerpt}</p> : null}
+        </Container>
+      </Section>
+    </ThemeBodyOrFallback>
+  );
+});
+
+export const head: DocumentHead = ({ resolveValue, url }) => {
+  const brandName = publicSiteName(resolveValue(usePublicShell).branding);
+  const loaded = resolveValue(useContentSingle);
+  if (!loaded || 'failed' in loaded) {
+    return {
+      title: `404 | ${brandName}`,
+      meta: [{ name: 'robots', content: 'noindex, nofollow' }],
+    };
+  }
+  const canonical = buildCanonicalHref(url.pathname, url.origin);
+  return {
+    title: `${loaded.title} | ${brandName}`,
+    meta: [
+      { name: 'description', content: loaded.excerpt },
+      { property: 'og:title', content: loaded.title },
+      { property: 'og:description', content: loaded.excerpt },
+      { property: 'og:type', content: 'website' },
+      { property: 'og:url', content: canonical },
+      ...(loaded.image ? [{ property: 'og:image', content: loaded.image }] : []),
+    ],
+    links: [{ rel: 'canonical', href: canonical }],
+  };
+};

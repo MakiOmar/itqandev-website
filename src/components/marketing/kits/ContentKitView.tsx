@@ -10,6 +10,7 @@ import { marketingRoutes } from '~/lib/marketing/constants';
 import { localizeInAppHref } from '~/lib/i18n/ui-locale-path';
 import type { ContactInfo } from '~/lib/marketing/types';
 import { translateApp } from '~/lib/i18n/useTranslate';
+import { addonKits } from 'virtual:itqandev-addon-widgets';
 
 export type ContentKitProps = {
   type: string;
@@ -790,7 +791,18 @@ export const ContentKitView = component$<ContentKitProps>((props) => {
         </Section>
       );
     }
-    default:
-      return null;
+    default: {
+      // Installed addon kit; the API only sends blocks whose module is enabled.
+      const AddonKit = addonKits[props.type];
+      return AddonKit ? (
+        <AddonKit
+          type={props.type}
+          settings={props.settings}
+          uiLocale={props.uiLocale}
+          styled={props.styled}
+          pageContext={props.pageContext}
+        />
+      ) : null;
+    }
   }
 });

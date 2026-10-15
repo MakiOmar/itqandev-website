@@ -1,0 +1,8 @@
+{
+  "name": "addon-host-fixture",
+  "private": true,
+  "dependencies": {
+    "@fixture/sample-addon": "1.0.0",
+    "plain-package": "1.0.0"
+  }
+}

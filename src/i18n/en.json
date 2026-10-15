@@ -1,4 +1,8 @@
 {
+  "addons": {
+    "unavailableTitle": "This addon is not available",
+    "unavailableBody": "The addon is not installed on this site, or its module is turned off in the server configuration."
+  },
   "common": {
     "loading": "Loading...",
     "save": "Save",

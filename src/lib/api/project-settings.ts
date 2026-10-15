@@ -1,6 +1,7 @@
 import type { ApiResponse } from './types';
 import { API_ENDPOINTS } from './endpoints';
 import { getApiClient } from './client';
+import type { AddonNavItem } from '../addons/types';
 
 /** Backend config/features.php module keys (GET /api/settings `features`). */
 export type FeatureModuleKey =
@@ -43,6 +44,11 @@ export function isFeatureModuleEnabled(
   return features[key] !== false;
 }
 
+/** Addon modules are off unless the API explicitly reports them on. */
+export function isAddonModuleEnabled(features: Record<string, boolean> | undefined, key: string): boolean {
+  return features?.[key] === true;
+}
+
 /**
  * Project settings interface
  * These are project-specific settings that come from Laravel
@@ -64,6 +70,9 @@ export interface ProjectSettings {
   
   /** Module toggles from Laravel config/features.php (not persisted). */
   features?: Partial<Record<FeatureModuleKey, boolean>> & Record<string, boolean>;
+
+  /** Dashboard links of enabled addons (GET /api/settings `addons`). Absent when settings are not readable. */
+  addons?: AddonNavItem[];
 
   /** Max upload file size in bytes (from server config). Used for client-side validation before submit. */
   max_file_size?: number;
@@ -94,11 +103,11 @@ function normalizeProjectSettings(raw: Record<string, any>): ProjectSettings {
           : uploadMaxSize
         : undefined;
 
-  const mergedFeatures: Record<FeatureModuleKey, boolean> = { ...DEFAULT_FEATURE_MODULES };
+  // Built-in keys default on; addon module keys are kept only when the API sends a boolean.
+  const mergedFeatures: Record<string, boolean> = { ...DEFAULT_FEATURE_MODULES };
   const rawFeatures = raw?.features;
   if (rawFeatures && typeof rawFeatures === 'object') {
-    for (const key of Object.keys(DEFAULT_FEATURE_MODULES) as FeatureModuleKey[]) {
-      const v = rawFeatures[key];
+    for (const [key, v] of Object.entries(rawFeatures as Record<string, unknown>)) {
       if (typeof v === 'boolean') {
         mergedFeatures[key] = v;
       }

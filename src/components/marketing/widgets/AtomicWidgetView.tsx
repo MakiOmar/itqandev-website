@@ -9,6 +9,7 @@ import { marketingRoutes } from '~/lib/marketing/constants';
 import { localizeInAppHref } from '~/lib/i18n/ui-locale-path';
 import { ListWidget } from '~/components/marketing/widgets/ListWidget';
 import { ButtonWidget } from '~/components/marketing/widgets/ButtonWidget';
+import { addonWidgets } from 'virtual:itqandev-addon-widgets';
 
 export type AtomicWidgetProps = {
   type: string;
@@ -394,7 +395,10 @@ export const AtomicWidgetView = component$<AtomicWidgetProps>((props) => {
       );
     case 'archive_title':
       return <h1 class="aw-c aw-heading text-3xl font-bold">{str(s, 'text') || str(s, 'fallback', 'Archive')}</h1>;
-    default:
-      return null;
+    default: {
+      // Installed addon widget; the API only sends blocks whose module is enabled.
+      const AddonWidget = addonWidgets[props.type];
+      return AddonWidget ? <AddonWidget {...props} /> : null;
+    }
   }
 });
