@@ -11,7 +11,11 @@ import { auth } from '../../../../lib/auth';
 import type { AuthSession } from '../../../../lib/auth/types';
 import { routesFromPreferredCookie } from '../../../../lib/constants/routes';
 import { uiLangFromUrlPathname } from '../../../../lib/i18n/ui-locale-path';
-import { ADMIN_NATIVE_SELECT_CLASS, ADMIN_CHECKBOX_CLASS } from '../../../../lib/admin/native-select-classes';
+import {
+  ADMIN_NATIVE_OPTION_CLASS,
+  ADMIN_NATIVE_SELECT_CLASS,
+  ADMIN_CHECKBOX_CLASS,
+} from '../../../../lib/admin/native-select-classes';
 
 interface MenuRow {
   id: number;
@@ -112,6 +116,48 @@ function collectMenuItemRefs(roots: MenuItemNode[]): Array<{ item_type: string; 
 function menuHasItemRef(roots: MenuItemNode[], itemType: string, refId: number): boolean {
   return collectMenuItemRefs(roots).some((r) => r.item_type === itemType && r.reference_id === refId);
 }
+
+function findMenuItem(nodes: MenuItemNode[], id: number): MenuItemNode | null {
+  for (const node of nodes) {
+    if (node.id === id) {
+      return node;
+    }
+    if (node.children?.length) {
+      const nested = findMenuItem(node.children, id);
+      if (nested) {
+        return nested;
+      }
+    }
+  }
+  return null;
+}
+
+/** Siblings that share a parent. `null` is the top-level list. */
+function findSiblings(roots: MenuItemNode[], parentId: number | null): MenuItemNode[] {
+  if (parentId == null) {
+    return roots;
+  }
+  return findMenuItem(roots, parentId)?.children ?? [];
+}
+
+type MenuRowView = {
+  item: MenuItemNode;
+  depth: number;
+  index: number;
+};
+
+function flattenMenuRows(nodes: MenuItemNode[], depth = 0): MenuRowView[] {
+  const rows: MenuRowView[] = [];
+  nodes.forEach((item, index) => {
+    rows.push({ item, depth, index });
+    if (item.children?.length) {
+      rows.push(...flattenMenuRows(item.children, depth + 1));
+    }
+  });
+  return rows;
+}
+
+const MENU_DEPTH_CLASS = ['', 'ps-6', 'ps-10'] as const;
 
 const MENU_SLUG_MAX = 64;
 
@@ -398,54 +444,32 @@ export default component$(() => {
     }
   });
 
-  const persistReorder$ = $(async (orderedRoots: MenuItemNode[]) => {
+  const moveSibling$ = $(async (parentId: number | null, index: number, direction: number) => {
     const mid = selectedMenuId.value;
-    if (!mid) {
+    const siblings = findSiblings(menuDetail.value?.items ?? [], parentId);
+    const next = index + direction;
+    if (!mid || next < 0 || next >= siblings.length) {
       return;
     }
-    const api = getApiClient();
-    await api.put(API_ENDPOINTS.MENUS.REORDER_ITEMS(mid), {
-      items: orderedRoots.map((item, index) => ({
-        id: item.id,
-        parent_id: null,
-        sort_order: index,
-      })),
-    });
-    await fetchDetail$(mid);
-  });
-
-  const moveUp$ = $(async (index: number) => {
-    const raw = menuDetail.value?.items ?? [];
-    const list = raw.length ? [...raw] : [];
-    if (index <= 0) {
+    const list = siblings.slice();
+    const current = list[index];
+    const swap = list[next];
+    if (!current || !swap) {
       return;
     }
+    list[index] = swap;
+    list[next] = current;
     saving.value = true;
     try {
-      const tmp = list[index - 1];
-      list[index - 1] = list[index];
-      list[index] = tmp;
-      await persistReorder$(list);
-      await success(String(translateApp(lang, 'menusPage.reordered')));
-    } catch {
-      await showError(String(translateApp(lang, 'menusPage.saveFailed')));
-    } finally {
-      saving.value = false;
-    }
-  });
-
-  const moveDown$ = $(async (index: number) => {
-    const raw = menuDetail.value?.items ?? [];
-    const list = raw.length ? [...raw] : [];
-    if (index >= list.length - 1) {
-      return;
-    }
-    saving.value = true;
-    try {
-      const tmp = list[index + 1];
-      list[index + 1] = list[index];
-      list[index] = tmp;
-      await persistReorder$(list);
+      const api = getApiClient();
+      await api.put(API_ENDPOINTS.MENUS.REORDER_ITEMS(mid), {
+        items: list.map((item, sortOrder) => ({
+          id: item.id,
+          parent_id: parentId,
+          sort_order: sortOrder,
+        })),
+      });
+      await fetchDetail$(mid);
       await success(String(translateApp(lang, 'menusPage.reordered')));
     } catch {
       await showError(String(translateApp(lang, 'menusPage.saveFailed')));
@@ -618,9 +642,8 @@ export default component$(() => {
   });
 
   const selectAllRootItems$ = $(() => {
-    const roots = menuDetail.value?.items ?? [];
-    for (const i of roots) {
-      bulkRowPick.m[i.id] = true;
+    for (const row of flattenMenuRows(menuDetail.value?.items ?? [])) {
+      bulkRowPick.m[row.item.id] = true;
     }
   });
 
@@ -840,6 +863,9 @@ export default component$(() => {
   const labelClass = 'mb-1 block text-sm font-medium text-gray-700 dark:text-gray-200';
 
   const menuRoots = menuDetail.value?.items ?? [];
+  const menuRows = flattenMenuRows(menuRoots);
+  const parentLocked =
+    form.id != null && (findMenuItem(menuRoots, form.id)?.children?.length ?? 0) > 0;
   let entityOptions: PickerOption[] = [];
   switch (form.item_type) {
     case 'page':
@@ -1028,19 +1054,25 @@ export default component$(() => {
                       </button>
                     </div>
                     <ul class="divide-y divide-gray-200 dark:divide-gray-700">
-                      {(menuDetail.value?.items ?? []).map((item, idx) => (
-                        <li key={item.id} class="flex flex-wrap items-center gap-2 py-3">
+                      {menuRows.map((row) => (
+                        <li
+                          key={row.item.id}
+                          class={[
+                            'flex flex-wrap items-center gap-2 py-3',
+                            MENU_DEPTH_CLASS[Math.min(row.depth, MENU_DEPTH_CLASS.length - 1)],
+                          ].join(' ')}
+                        >
                           <input
                             type="checkbox"
                             class="h-4 w-4 shrink-0 rounded border-gray-300 text-blue-600"
-                            checked={!!bulkRowPick.m[item.id]}
-                            onChange$={() => toggleRowBulk$(item.id)}
+                            checked={!!bulkRowPick.m[row.item.id]}
+                            onChange$={() => toggleRowBulk$(row.item.id)}
                             aria-label={String(translateApp(lang, 'menusPage.selectItem'))}
                           />
                           <div class="min-w-0 flex-1">
                             <RowLabel
                               text={rowLabelSync(
-                                item,
+                                row.item,
                                 projects.value,
                                 blogPosts.value,
                                 services.value,
@@ -1050,43 +1082,49 @@ export default component$(() => {
                                 lang,
                               )}
                             />
-                        <div class="text-xs text-gray-500 dark:text-gray-400">
-                          {item.item_type}
-                          {item.open_in_new_tab ? ` · ${String(translateApp(lang, 'menusPage.openNewTab'))}` : ''}
-                        </div>
-                      </div>
-                      <div class="flex shrink-0 flex-wrap gap-1">
-                        <button
-                          type="button"
-                          class="rounded border border-gray-300 px-2 py-1 text-xs dark:border-gray-600 disabled:opacity-50"
-                          disabled={idx === 0 || saving.value}
-                          onClick$={() => moveUp$(idx)}
-                        >
-                          {String(translateApp(lang, 'menusPage.moveUp'))}
-                        </button>
-                        <button
-                          type="button"
-                          class="rounded border border-gray-300 px-2 py-1 text-xs dark:border-gray-600 disabled:opacity-50"
-                          disabled={idx >= (menuDetail.value?.items ?? []).length - 1 || saving.value}
-                          onClick$={() => moveDown$(idx)}
-                        >
-                          {String(translateApp(lang, 'menusPage.moveDown'))}
-                        </button>
-                        <button
-                          type="button"
-                          class="rounded border border-gray-300 px-2 py-1 text-xs dark:border-gray-600"
-                          onClick$={() => editItem$(item)}
-                        >
-                          {String(translateApp(lang, 'common.edit'))}
-                        </button>
-                        <button
-                          type="button"
-                          class="rounded border border-red-200 px-2 py-1 text-xs text-red-700 dark:border-red-900"
-                          onClick$={() => deleteItem$(item)}
-                        >
-                          {String(translateApp(lang, 'menusPage.delete'))}
-                        </button>
-                      </div>
+                            <div class="text-xs text-gray-500 dark:text-gray-400">
+                              {row.item.item_type}
+                              {(row.item.children?.length ?? 0) > 0
+                                ? ` · ${String(translateApp(lang, 'menusPage.subitemCount', { count: row.item.children.length }))}`
+                                : ''}
+                              {row.item.open_in_new_tab ? ` · ${String(translateApp(lang, 'menusPage.openNewTab'))}` : ''}
+                            </div>
+                          </div>
+                          <div class="flex shrink-0 flex-wrap gap-1">
+                            <button
+                              type="button"
+                              class="rounded border border-gray-300 px-2 py-1 text-xs dark:border-gray-600 disabled:opacity-50"
+                              disabled={row.index === 0 || saving.value}
+                              onClick$={() => moveSibling$(row.item.parent_id, row.index, -1)}
+                            >
+                              {String(translateApp(lang, 'menusPage.moveUp'))}
+                            </button>
+                            <button
+                              type="button"
+                              class="rounded border border-gray-300 px-2 py-1 text-xs dark:border-gray-600 disabled:opacity-50"
+                              disabled={
+                                row.index >= findSiblings(menuRoots, row.item.parent_id).length - 1 ||
+                                saving.value
+                              }
+                              onClick$={() => moveSibling$(row.item.parent_id, row.index, 1)}
+                            >
+                              {String(translateApp(lang, 'menusPage.moveDown'))}
+                            </button>
+                            <button
+                              type="button"
+                              class="rounded border border-gray-300 px-2 py-1 text-xs dark:border-gray-600"
+                              onClick$={() => editItem$(row.item)}
+                            >
+                              {String(translateApp(lang, 'common.edit'))}
+                            </button>
+                            <button
+                              type="button"
+                              class="rounded border border-red-200 px-2 py-1 text-xs text-red-700 dark:border-red-900"
+                              onClick$={() => deleteItem$(row.item)}
+                            >
+                              {String(translateApp(lang, 'menusPage.delete'))}
+                            </button>
+                          </div>
                         </li>
                       ))}
                     </ul>
@@ -1102,6 +1140,48 @@ export default component$(() => {
               </h2>
 
               <div class="grid gap-3 md:grid-cols-2">
+                <div class="md:col-span-2">
+                  <label class={labelClass}>{String(translateApp(lang, 'menusPage.parent'))}</label>
+                  <select
+                    class={inputClass}
+                    value={form.parent_id == null ? '' : String(form.parent_id)}
+                    disabled={parentLocked || saving.value}
+                    onInput$={(e) => {
+                      const raw = (e.target as HTMLSelectElement).value;
+                      form.parent_id = raw === '' ? null : Number(raw);
+                    }}
+                  >
+                    <option class={ADMIN_NATIVE_OPTION_CLASS} value="" selected={form.parent_id == null}>
+                      {String(translateApp(lang, 'menusPage.parentNone'))}
+                    </option>
+                    {menuRoots
+                      .filter((item) => item.id !== form.id)
+                      .map((item) => (
+                        <option
+                          key={item.id}
+                          class={ADMIN_NATIVE_OPTION_CLASS}
+                          value={String(item.id)}
+                          selected={form.parent_id === item.id}
+                        >
+                          {rowLabelSync(
+                            item,
+                            projects.value,
+                            blogPosts.value,
+                            services.value,
+                            categories.value,
+                            skills.value,
+                            pages.value,
+                            lang,
+                          )}
+                        </option>
+                      ))}
+                  </select>
+                  <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                    {String(
+                      translateApp(lang, parentLocked ? 'menusPage.parentLocked' : 'menusPage.parentHint'),
+                    )}
+                  </p>
+                </div>
                 <div class="md:col-span-2">
                   <label class={labelClass}>{String(translateApp(lang, 'menusPage.linkType'))}</label>
                   <select

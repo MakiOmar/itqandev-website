@@ -827,7 +827,12 @@
     "nothingSelectedEntities": "Select one or more entities from the list.",
     "entitiesAdded": "Added {{count}} link(s) to the menu.",
     "entitiesAllSkipped": "All selected items are already on this menu.",
-    "addSelectedButton": "Add selected"
+    "addSelectedButton": "Add selected",
+    "parent": "Dropdown parent",
+    "parentNone": "Top level",
+    "parentHint": "Subitems open as a dropdown under this link in the header. The header menu block’s Desktop layout must be Dropdown (Mega menu uses a wide panel).",
+    "parentLocked": "This link already has subitems, so it stays at the top level.",
+    "subitemCount": "{{count}} in dropdown"
   },
   "users": {
     "title": "Users",

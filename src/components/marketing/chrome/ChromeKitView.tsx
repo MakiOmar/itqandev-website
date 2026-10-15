@@ -66,11 +66,16 @@ function filterNav(
   items: PublicNavItem[],
   features?: ChromeKitViewProps['features'],
 ): PublicNavItem[] {
-  return items.filter((item) => {
-    const mod = getFeatureModuleForPublicHref(item.href);
-    if (!mod) return true;
-    return isFeatureModuleEnabled(features, mod);
-  });
+  return items
+    .filter((item) => {
+      const mod = getFeatureModuleForPublicHref(item.href);
+      if (!mod) return true;
+      return isFeatureModuleEnabled(features, mod);
+    })
+    .map((item) => ({
+      ...item,
+      children: filterNav(item.children ?? [], features),
+    }));
 }
 
 function localeHref(uiLocale: string, url: string): string {
@@ -138,23 +143,61 @@ export const ChromeKitView = component$<ChromeKitViewProps>((props) => {
             }
             role="list"
           >
-            {items.map((item) => (
-              <li key={item.href + item.label} class={isMega && item.children?.length ? 'group relative' : undefined}>
+            {items.map((item) => {
+              const children = item.children ?? [];
+              const hasChildren = children.length > 0;
+              const showMega = isMega && hasChildren;
+              const showDropdown = props.type === 'header_menu' && !isMega && hasChildren;
+              return (
+              <li
+                key={item.href + item.label}
+                class={showMega || showDropdown ? 'group relative' : undefined}
+              >
                 <MarketingLink
                   href={item.href}
-                  class={linkClass}
+                  class={
+                    showDropdown
+                      ? `${linkClass} inline-flex items-center gap-1`
+                      : linkClass
+                  }
+                  aria-haspopup={hasChildren ? 'menu' : undefined}
                   {...(item.open_in_new_tab
                     ? { target: '_blank', rel: 'noopener noreferrer' }
                     : {})}
                 >
                   {item.label}
+                  {showDropdown ? (
+                    <svg viewBox="0 0 20 20" class="h-4 w-4 opacity-70" aria-hidden="true">
+                      <path fill="currentColor" d="M5.5 7.5 10 12l4.5-4.5" />
+                    </svg>
+                  ) : null}
                 </MarketingLink>
-                {isMega && item.children && item.children.length > 0 ? (
+                {showDropdown ? (
+                  <div
+                    class="invisible absolute start-0 top-full z-40 hidden min-w-[12rem] flex-col rounded-lg border border-slate-200 bg-white py-1 opacity-0 shadow-lg group-hover:visible group-hover:flex group-hover:opacity-100 group-focus-within:visible group-focus-within:flex group-focus-within:opacity-100 dark:border-slate-700 dark:bg-slate-900"
+                    role="menu"
+                  >
+                    {children.map((child) => (
+                      <MarketingLink
+                        key={child.href + child.label}
+                        href={child.href}
+                        role="menuitem"
+                        class="block px-3 py-2 text-sm text-slate-700 hover:bg-slate-50 dark:text-slate-200 dark:hover:bg-slate-800"
+                        {...(child.open_in_new_tab
+                          ? { target: '_blank', rel: 'noopener noreferrer' }
+                          : {})}
+                      >
+                        {child.label}
+                      </MarketingLink>
+                    ))}
+                  </div>
+                ) : null}
+                {showMega ? (
                   <div
                     class="b-mega invisible absolute start-0 top-full z-40 hidden min-w-[20rem] grid-cols-2 gap-3 rounded-xl border border-slate-200 bg-white p-4 opacity-0 shadow-lg group-hover:visible group-hover:grid group-hover:opacity-100 group-focus-within:visible group-focus-within:grid group-focus-within:opacity-100 dark:border-slate-700 dark:bg-slate-900 lg:grid-cols-3"
                     role="menu"
                   >
-                    {item.children.map((child) => (
+                    {children.map((child) => (
                       <MarketingLink
                         key={child.href + child.label}
                         href={child.href}
@@ -171,8 +214,26 @@ export const ChromeKitView = component$<ChromeKitViewProps>((props) => {
                     ))}
                   </div>
                 ) : null}
+                {props.type === 'footer_menu' && hasChildren ? (
+                  <ul class="mt-1 space-y-1 ps-3" role="list">
+                    {children.map((child) => (
+                      <li key={child.href + child.label}>
+                        <MarketingLink
+                          href={child.href}
+                          class={linkClass}
+                          {...(child.open_in_new_tab
+                            ? { target: '_blank', rel: 'noopener noreferrer' }
+                            : {})}
+                        >
+                          {child.label}
+                        </MarketingLink>
+                      </li>
+                    ))}
+                  </ul>
+                ) : null}
               </li>
-            ))}
+              );
+            })}
           </ul>
         </nav>
       );

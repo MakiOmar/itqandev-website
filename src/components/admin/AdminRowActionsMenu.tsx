@@ -1,4 +1,4 @@
-import { component$, Slot, useSignal, useOnDocument, useOnWindow, $ } from '@builder.io/qwik';
+import { component$, Slot, useSignal, useOnDocument, useOnWindow, useVisibleTask$, $ } from '@builder.io/qwik';
 
 /** Shared classes for items projected into `AdminRowActionsMenu` (links and buttons). */
 export const ADMIN_ROW_ACTION_ITEM_CLASS =
@@ -10,12 +10,52 @@ export const ADMIN_ROW_ACTION_DANGER_CLASS =
 const MENU_GAP = 4;
 
 /**
+ * Fixed-position menu box. Opens upward when the row sits too close to the viewport bottom
+ * (the last table row), and caps height so every item stays reachable.
+ */
+export function rowActionsMenuPosition(options: {
+  buttonTop: number;
+  buttonBottom: number;
+  buttonLeft: number;
+  buttonRight: number;
+  menuWidth: number;
+  menuHeight: number;
+  viewportWidth: number;
+  viewportHeight: number;
+  rtl: boolean;
+}): Record<string, string> {
+  const spaceBelow = options.viewportHeight - options.buttonBottom - MENU_GAP;
+  const spaceAbove = options.buttonTop - MENU_GAP;
+  const openUp = options.menuHeight > spaceBelow && spaceAbove >= spaceBelow;
+  const available = Math.max(0, openUp ? spaceAbove : spaceBelow);
+  const visibleHeight = Math.min(options.menuHeight, available);
+  let top = openUp ? options.buttonTop - MENU_GAP - visibleHeight : options.buttonBottom + MENU_GAP;
+  top = Math.max(MENU_GAP, Math.min(top, options.viewportHeight - visibleHeight - MENU_GAP));
+
+  const style: Record<string, string> = {
+    top: `${Math.round(top)}px`,
+    maxHeight: `${Math.max(0, Math.round(available))}px`,
+  };
+  if (options.rtl) {
+    const left = Math.max(
+      MENU_GAP,
+      Math.min(options.buttonLeft, options.viewportWidth - options.menuWidth - MENU_GAP),
+    );
+    style.left = `${Math.round(left)}px`;
+  } else {
+    style.right = `${Math.max(MENU_GAP, Math.round(options.viewportWidth - options.buttonRight))}px`;
+  }
+  return style;
+}
+
+/**
  * Vertical-dots button that opens a row actions menu. Project `<Link>` / `<a>` / `<button>` items
  * as children; any click inside the menu closes it. The menu is `position: fixed` so table
  * wrappers with `overflow-x-auto` do not clip it.
  */
 export const AdminRowActionsMenu = component$<{ label: string }>((props) => {
   const open = useSignal(false);
+  const placed = useSignal(false);
   const rootRef = useSignal<HTMLElement>();
   const buttonRef = useSignal<HTMLButtonElement>();
   const menuRef = useSignal<HTMLElement>();
@@ -23,35 +63,60 @@ export const AdminRowActionsMenu = component$<{ label: string }>((props) => {
 
   const close$ = $(() => {
     open.value = false;
+    placed.value = false;
   });
 
-  const placeMenu$ = $(() => {
-    const button = buttonRef.value;
-    const menu = menuRef.value;
-    if (!button || !menu) return;
-    const rect = button.getBoundingClientRect();
-    const rtl = getComputedStyle(button).direction === 'rtl';
-    const height = menu.offsetHeight;
-    const below = rect.bottom + MENU_GAP + height <= window.innerHeight;
-    position.value = {
-      top: `${below ? rect.bottom + MENU_GAP : Math.max(MENU_GAP, rect.top - MENU_GAP - height)}px`,
-      ...(rtl ? { left: `${rect.left}px` } : { right: `${document.documentElement.clientWidth - rect.right}px` }),
+  // Measure only after Qwik has painted the open menu. Measuring inside the click
+  // handler still sees `display: none` (height 0) and always drops the menu downward.
+  useVisibleTask$(({ track }) => {
+    const isOpen = track(() => open.value);
+    if (!isOpen) return;
+
+    let frames = 0;
+    const place = () => {
+      const button = buttonRef.value;
+      const menu = menuRef.value;
+      if (!button || !menu || !open.value) return;
+      if (menu.offsetHeight === 0 && frames < 4) {
+        frames += 1;
+        requestAnimationFrame(place);
+        return;
+      }
+      const rect = button.getBoundingClientRect();
+      position.value = rowActionsMenuPosition({
+        buttonTop: rect.top,
+        buttonBottom: rect.bottom,
+        buttonLeft: rect.left,
+        buttonRight: rect.right,
+        menuWidth: menu.offsetWidth,
+        menuHeight: menu.offsetHeight,
+        viewportWidth: document.documentElement.clientWidth,
+        viewportHeight: window.innerHeight,
+        rtl: getComputedStyle(button).direction === 'rtl',
+      });
+      placed.value = true;
+      menu.querySelector<HTMLElement>('a, button')?.focus();
     };
+    place();
   });
 
-  const toggle$ = $(async () => {
-    open.value = !open.value;
-    if (!open.value) return;
-    // Measure after the menu is visible so the flip-up check uses its real height.
-    await new Promise((resolve) => requestAnimationFrame(resolve));
-    await placeMenu$();
-    menuRef.value?.querySelector<HTMLElement>('a, button')?.focus();
+  const toggle$ = $(() => {
+    if (open.value) {
+      open.value = false;
+      placed.value = false;
+      return;
+    }
+    placed.value = false;
+    open.value = true;
   });
 
   useOnDocument(
     'click',
     $((event) => {
-      if (open.value && !rootRef.value?.contains(event.target as Node)) open.value = false;
+      if (open.value && !rootRef.value?.contains(event.target as Node)) {
+        open.value = false;
+        placed.value = false;
+      }
     }),
   );
   useOnDocument(
@@ -59,6 +124,7 @@ export const AdminRowActionsMenu = component$<{ label: string }>((props) => {
     $((event) => {
       if (!open.value || (event as KeyboardEvent).key !== 'Escape') return;
       open.value = false;
+      placed.value = false;
       buttonRef.value?.focus();
     }),
   );
@@ -89,8 +155,8 @@ export const AdminRowActionsMenu = component$<{ label: string }>((props) => {
         ref={menuRef}
         role="menu"
         class={[
-          'fixed z-50 min-w-[11rem] overflow-hidden rounded-lg border border-gray-200 bg-white py-1 shadow-lg dark:border-gray-700 dark:bg-gray-800',
-          open.value ? '' : 'hidden',
+          'fixed z-[60] min-w-[11rem] overflow-y-auto rounded-lg border border-gray-200 bg-white py-1 shadow-lg dark:border-gray-700 dark:bg-gray-800',
+          open.value ? (placed.value ? '' : 'invisible') : 'hidden',
         ].join(' ')}
         style={position.value}
         onClick$={close$}
