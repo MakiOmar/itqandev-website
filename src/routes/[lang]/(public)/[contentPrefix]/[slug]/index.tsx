@@ -10,6 +10,7 @@ import { MARKETING_ENDPOINTS } from '~/lib/marketing/endpoints';
 import { marketingGet } from '~/lib/marketing/api-client';
 import { publicSiteName } from '~/lib/marketing/public-page-head';
 import { buildCanonicalHref } from '~/lib/seo/canonical-url';
+import { jsonLdScript } from '~/lib/seo/json-ld';
 
 type PublicContentSingle = {
   type: string;
@@ -18,6 +19,8 @@ type PublicContentSingle = {
   excerpt: string;
   image: string;
   path: string;
+  /** From the content type's optional `seo()` hook; null fields fall back to the post fields. */
+  seo?: { title: string | null; description: string | null; image: string | null; json_ld: unknown };
 };
 
 /**
@@ -88,6 +91,16 @@ export default component$(() => {
   );
 });
 
+/** og:image must be absolute; media URLs may be site-relative. */
+function absoluteUrl(value: string, origin: string): string {
+  if (!value) return '';
+  try {
+    return new URL(value, origin).href;
+  } catch {
+    return '';
+  }
+}
+
 export const head: DocumentHead = ({ resolveValue, url }) => {
   const brandName = publicSiteName(resolveValue(usePublicShell).branding);
   const loaded = resolveValue(useContentSingle);
@@ -98,16 +111,23 @@ export const head: DocumentHead = ({ resolveValue, url }) => {
     };
   }
   const canonical = buildCanonicalHref(url.pathname, url.origin);
+  const title = loaded.seo?.title || loaded.title;
+  const description = loaded.seo?.description || loaded.excerpt;
+  const rawImage = loaded.seo?.image || loaded.image;
+  const image = absoluteUrl(rawImage, url.origin);
   return {
-    title: `${loaded.title} | ${brandName}`,
+    title: `${title} | ${brandName}`,
     meta: [
-      { name: 'description', content: loaded.excerpt },
-      { property: 'og:title', content: loaded.title },
-      { property: 'og:description', content: loaded.excerpt },
+      { name: 'description', content: description },
+      { property: 'og:title', content: title },
+      { property: 'og:description', content: description },
       { property: 'og:type', content: 'website' },
       { property: 'og:url', content: canonical },
-      ...(loaded.image ? [{ property: 'og:image', content: loaded.image }] : []),
+      ...(image ? [{ property: 'og:image', content: image }] : []),
     ],
     links: [{ rel: 'canonical', href: canonical }],
+    scripts: loaded.seo?.json_ld
+      ? [{ key: 'content-json-ld', script: jsonLdScript(loaded.seo.json_ld), props: { type: 'application/ld+json' } }]
+      : [],
   };
 };

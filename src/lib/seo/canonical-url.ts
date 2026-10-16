@@ -60,6 +60,22 @@ export function buildCanonicalHref(pathname: string, pageOrigin?: string): strin
   return `${base}${normalized}`;
 }
 
+/**
+ * `?a=1&b=2` built from the allowed keys only (sorted, first value, empties dropped), so filtered
+ * listing views get their own canonical while tracking, sort and search params still collapse.
+ */
+export function canonicalQuerySuffix(search: URLSearchParams, keys: readonly string[] | undefined): string {
+  const kept = new URLSearchParams();
+  for (const key of [...(keys ?? [])].sort()) {
+    const value = (search.get(key) ?? '').trim().slice(0, 100);
+    if (value !== '') {
+      kept.set(key, value);
+    }
+  }
+  const query = kept.toString();
+  return query ? `?${query}` : '';
+}
+
 /** CMS or editor value → absolute canonical URL. */
 export function resolveAbsoluteCanonicalUrl(raw: string, baseUrl: string): string {
   const trimmed = raw.trim();

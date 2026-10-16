@@ -169,6 +169,7 @@ export const head: DocumentHead = ({ resolveValue, url }) => {
         siteIndexingEnabled: isSearchEngineIndexingEnabled(shell.branding?.search_engine_indexing),
         pageExcluded: page.exclude_from_search === true,
       }),
+      canonicalQuery: page.canonical_query,
     });
     return result;
   } catch {

@@ -43,6 +43,8 @@ export type PublicPageDetail = {
   public_path?: string | null;
   exclude_from_search?: boolean;
   sections: PageSectionNode[];
+  /** Query keys the page's widgets list by (e.g. a catalog filter); the canonical keeps them. */
+  canonical_query?: string[];
   /** Localized SEO snippet from public API (`SeoMetaPresenter::toPublicSnippet`). */
   seo_meta?: unknown;
 };

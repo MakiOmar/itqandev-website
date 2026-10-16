@@ -1,4 +1,4 @@
-import { buildCanonicalHref, resolveAbsoluteCanonicalUrl } from '~/lib/seo/canonical-url';
+import { buildCanonicalHref, canonicalQuerySuffix, resolveAbsoluteCanonicalUrl } from '~/lib/seo/canonical-url';
 import type { MarketingPublicSeoMeta } from './types';
 
 /** Meta/link entries shared by marketing case study / service detail `<head>` (SSR). */
@@ -14,6 +14,8 @@ export function marketingEntityDetailHead(fields: {
   seo?: MarketingPublicSeoMeta | undefined;
   /** When set (e.g. exclude-from-search pages), emit robots meta. */
   robots?: string;
+  /** Query keys kept in the self canonical (listing filters); everything else is dropped. */
+  canonicalQuery?: readonly string[];
 }): { title: string; meta: { name?: string; property?: string; content: string }[]; links: { rel: string; href: string }[] } {
   const seo = fields.seo;
   const docTitle = (seo?.metaTitle?.trim() || fields.defaultTitle).trim();
@@ -21,7 +23,9 @@ export function marketingEntityDetailHead(fields: {
   const ogTitle = (seo?.ogTitle?.trim() || docTitle).trim();
   const ogDesc = (seo?.ogDescription?.trim() || docDesc).trim();
   // Self-referential canonical pointing at the actual locale-prefixed 200 URL; CMS value overrides.
-  const selfUrl = buildCanonicalHref(fields.pageUrl.pathname, fields.pageUrl.origin);
+  const selfUrl =
+    buildCanonicalHref(fields.pageUrl.pathname, fields.pageUrl.origin) +
+    canonicalQuerySuffix(fields.pageUrl.searchParams, fields.canonicalQuery);
   const canonical = resolveAbsoluteCanonicalUrl(
     (seo?.canonicalUrl?.trim() || selfUrl).trim(),
     fields.baseUrl,
