@@ -58,6 +58,12 @@ test('host modules resolve to the curated folder and nothing else', () => {
     resolveHostModule(root, '@itqandev/host/api'),
     join(root, 'src', 'lib', 'addons', 'host', 'api.ts').replaceAll('\\', '/'),
   );
+  for (const name of ['media', 'editor', 'config']) {
+    assert.equal(
+      resolveHostModule(root, `@itqandev/host/${name}`),
+      join(root, 'src', 'lib', 'addons', 'host', `${name}.ts`).replaceAll('\\', '/'),
+    );
+  }
   assert.equal(resolveHostModule(root, 'lodash'), undefined);
   assert.throws(() => resolveHostModule(root, '@itqandev/host/../client'), /unknown host module/);
   assert.throws(() => resolveHostModule(root, '@itqandev/host/missing'), /unknown host module/);
