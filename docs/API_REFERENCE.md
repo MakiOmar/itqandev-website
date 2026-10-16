@@ -644,8 +644,11 @@ See [docs/ADDONS.md](../../docs/ADDONS.md). All endpoints only cover **enabled**
 **GET `/api/public/content/{prefix}/{slug}`** (guest) — one published record of an addon content type, used by `/{lang}/{prefix}/{slug}/`. Sends `X-Content-Locale` for localized values. `404` for unknown prefixes, disabled modules or unpublished records.
 
 ```json
-{ "success": true, "data": { "type": "product", "id": 12, "title": "Blue mug", "excerpt": "…", "image": "https://…", "path": "/products/blue-mug/" } }
+{ "success": true, "data": { "type": "product", "id": 12, "title": "Blue mug", "excerpt": "…", "image": "https://…", "path": "/products/blue-mug/",
+  "seo": { "title": "Blue mug – 20% off", "description": "…", "image": "https://…", "json_ld": { "@context": "https://schema.org", "@type": "Product", "name": "Blue mug" } } } }
 ```
+
+`seo` comes from the content type's `seo()` hook, already in the requested locale. Every field may be `null`. `title` and `description` are plain text (tags stripped, capped at 190 and 320 characters). `image` is either an `http(s)` URL or a same-site path. `json_ld` is data only: the website escapes `<` before printing it in `<script type="application/ld+json">`.
 
 **GET `/api/public/content-sitemap`** (guest) — `{ "success": true, "data": ["/products/blue-mug/", …] }`: locale-less paths of published addon records (max 5000 per type), merged into `sitemap.xml`.
 
@@ -858,7 +861,7 @@ Requires permission **`manage pages`** for admin routes. Public routes are guest
 | DELETE | `/api/v1/pages/{id}` | Delete page |
 | POST | `/api/v1/pages/bulk-delete` | Bulk delete `{ "ids": [...] }` |
 | GET | `/api/public/pages` | Published pages for marketing (**omits** `exclude_from_search`); includes `path` / `public_path` |
-| GET | `/api/public/pages/{slug}` | Published page detail by unique slug (nested URLs still resolve by leaf slug). Includes `exclude_from_search` and the optional `subtitle` (also on the list). `{{post.*}}` tags in `sections` resolve against the page. Direct URL works even when excluded from the list. |
+| GET | `/api/public/pages/{slug}` | Published page detail by unique slug (nested URLs still resolve by leaf slug). Includes `exclude_from_search` and the optional `subtitle` (also on the list). `canonical_query` (sorted string list, usually `[]`) holds the query keys that widgets on the page declare as listing filters (e.g. a product catalog's `category`). The page canonical keeps only those. `{{post.*}}` tags in `sections` resolve against the page. Direct URL works even when excluded from the list. |
 
 Seeded slug **`contact`** (`ContactPageSeeder`) is the page-builder layout for the marketing contact experience. Public `/{lang}/contact/` loads that CMS page when the pages module is enabled; otherwise it uses the legacy hard-coded form + office card.
 
