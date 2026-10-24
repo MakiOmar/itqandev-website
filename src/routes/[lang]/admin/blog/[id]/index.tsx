@@ -25,6 +25,8 @@ import {
 } from '../../../../../lib/content-display-locale';
 import { usePublicSiteMeta } from '../../layout';
 import { getApiClient, extractCookieHeader } from '../../../../../lib/api/client';
+import { formatApiError } from '../../../../../lib/api/format-api-error';
+import { showError as showErrorToast } from '../../../../../lib/utils/toast';
 import { API_ENDPOINTS } from '../../../../../lib/api/endpoints';
 import { routesFromPreferredCookie, useAppRoutes } from '../../../../../lib/constants/routes';
 import type { BlogPost, BlogPostUpdateInput } from '../../../../../types';
@@ -84,9 +86,9 @@ export const useBlogPost = routeLoader$(async ({ params, fail, cookie, request }
  * Update blog post action
  */
 export const useUpdateBlogPost = routeAction$(
-  async (data, { params, cookie, request, redirect: redirectFn }) => {
+  async (data, { params, cookie, request, redirect: redirectFn, fail }) => {
+    const R = routesFromPreferredCookie(cookie);
     try {
-      const R = routesFromPreferredCookie(cookie);
       const cookieHeader = extractCookieHeader(cookie, request);
       const apiClient = getApiClient(cookieHeader, false);
       const ui = String((data as { editing_locale?: string }).editing_locale || 'en').toLowerCase();
@@ -134,33 +136,20 @@ export const useUpdateBlogPost = routeAction$(
       if (seoLocale !== '' && seoDraftRaw !== '') {
         const seoDraftParsed = parseContentSeoDraftFromJson(seoDraftRaw);
         if (!seoDraftParsed) {
-          return {
-            success: false,
-            error: 'Invalid SEO draft data',
-          };
+          return fail(400, { error: 'Invalid SEO draft data' });
         }
         try {
           await apiClient.put(`/v1/seo/blog-post/${params.id}`, buildSeoMorphPutBody(seoLocale, seoDraftParsed));
-        } catch (seoErr: any) {
-          return {
-            success: false,
-            error: seoErr?.message || 'Failed to save SEO',
-          };
+        } catch (seoErr: unknown) {
+          return fail(400, { error: formatApiError(seoErr, 'Failed to save SEO') });
         }
       }
 
-      // Redirect to blog list
-      throw redirectFn(302, R.ADMIN.BLOG);
-    } catch (error: any) {
-      if (error.status === 302 || error.statusCode === 302) {
-        throw error; // Re-throw redirects
-      }
-      // Return error response instead of throwing
-      return {
-        success: false,
-        error: error.message || 'Failed to update blog post',
-      };
+    } catch (error: unknown) {
+      return fail(400, { error: formatApiError(error, 'Failed to update blog post') });
     }
+    // Outside the try: Qwik's RedirectMessage carries no status to tell it apart from API errors.
+    throw redirectFn(302, R.ADMIN.BLOG);
   },
   zod$(
     blogPostSchema.extend({
@@ -208,7 +197,6 @@ export default component$(() => {
   const langConfig = usePublicSiteMeta();
   const updateAction = useUpdateBlogPost();
   const uploadImageAction = useUploadFeaturedImage();
-
   // Pre-compute translation strings to avoid serialization issues
   const successTitle = translateApp(lang, 'common.success');
 
@@ -404,7 +392,13 @@ export default component$(() => {
         </Link>
       </PageHeader>
 
-      <Form action={updateAction}>
+      <Form
+        action={updateAction}
+        onSubmitCompleted$={(ev) => {
+          const result = ev.detail.value;
+          if (result?.failed && result.error) showErrorToast(result.error);
+        }}
+      >
         <input
           type="hidden"
           name="editing_locale"
@@ -692,9 +686,9 @@ export default component$(() => {
               <ContentSeoFields lang={lang} idPrefix="blog-post" draft={seoDraft} />
             </div>
 
-            {updateAction.value?.failed && (updateAction.value as any).error && (
+            {updateAction.value?.failed && updateAction.value.error && (
               <div class="rounded-md bg-red-50 p-3 text-sm text-red-800 dark:bg-red-900/20 dark:text-red-300">
-                {(updateAction.value as any).error}
+                {updateAction.value.error}
               </div>
             )}
           </div>

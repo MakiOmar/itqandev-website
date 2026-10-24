@@ -19,6 +19,8 @@ import {
 } from '../../../../../lib/content-display-locale';
 import { usePublicSiteMeta } from '../../layout';
 import { getApiClient, extractCookieHeader } from '../../../../../lib/api/client';
+import { formatApiError } from '../../../../../lib/api/format-api-error';
+import { showError } from '../../../../../lib/utils/toast';
 import { PageHeader } from '../../../../../components/common/PageHeader';
 import { useTranslate, translateApp } from '../../../../../lib/i18n/useTranslate';
 import { API_ENDPOINTS } from '../../../../../lib/api/endpoints';
@@ -64,7 +66,8 @@ const blogPostSchema = z.object({
  * Create blog post action
  */
 export const useCreateBlogPost = routeAction$(
-  async (data, { cookie, request, redirect: redirectFn }) => {
+  async (data, { cookie, request, redirect: redirectFn, fail }) => {
+    let editHref: string;
     try {
       const cookieHeader = extractCookieHeader(cookie, request);
       const lang = uiLangFromPreferredCookie(cookie);
@@ -117,18 +120,12 @@ export const useCreateBlogPost = routeAction$(
         }
       }
 
-      // Redirect to edit page
-      throw redirectFn(302, withSeoSaveFailedFlag(adminBlogEditHref(lang, post.id), seoFailed));
-    } catch (error: any) {
-      if (error.status === 302 || error.statusCode === 302) {
-        throw error; // Re-throw redirects
-      }
-      // Return error response instead of throwing
-      return {
-        success: false,
-        error: error.message || 'Failed to create blog post',
-      };
+      editHref = withSeoSaveFailedFlag(adminBlogEditHref(lang, post.id), seoFailed);
+    } catch (error: unknown) {
+      return fail(400, { error: formatApiError(error, 'Failed to create blog post') });
     }
+    // Outside the try: Qwik's RedirectMessage carries no status to tell it apart from API errors.
+    throw redirectFn(302, editHref);
   },
   zod$(
     blogPostSchema.extend({
@@ -153,7 +150,6 @@ export default component$(() => {
   const contentLocaleDraft = useSignal('');
   const editingLocaleDraft = useSignal(langConfig.value.content_editing_locale);
   const seoDraft = useSignal<ContentSeoDraft>(emptyContentSeoDraft());
-
   const contentSlugDom = useContentSlugAutosuggestDom({ entity: 'blog_posts' });
   /** Keeps “view public page” URL in sync while typing slug on this uncontrolled form */
   const slugLiveForPublicLink = useSignal('');
@@ -176,7 +172,13 @@ export default component$(() => {
         </Link>
       </PageHeader>
 
-      <Form action={createAction}>
+      <Form
+        action={createAction}
+        onSubmitCompleted$={(ev) => {
+          const result = ev.detail.value;
+          if (result?.failed && result.error) showError(result.error);
+        }}
+      >
         <input
           type="hidden"
           name="editing_locale"
@@ -323,9 +325,9 @@ export default component$(() => {
             <input type="hidden" name="seo_draft_json" value={JSON.stringify(seoDraft.value)} />
             <ContentSeoCard class={ADMIN_FORM_CARD_CLASS} lang={lang} idPrefix="blog-new-seo" draft={seoDraft} />
 
-            {createAction.value?.failed && (createAction.value as any).error && (
+            {createAction.value?.failed && createAction.value.error && (
               <div class="rounded-md bg-red-50 p-3 text-sm text-red-800 dark:bg-red-900/20 dark:text-red-300">
-                {(createAction.value as any).error}
+                {createAction.value.error}
               </div>
             )}
           </div>
