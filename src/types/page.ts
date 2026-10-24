@@ -1,4 +1,5 @@
 import type { PageSectionNode } from '../lib/marketing/appearance-types';
+import type { ContentSeoMetaRow } from './content-seo';
 
 export type PageTranslationRow = {
   locale: string;
@@ -25,6 +26,8 @@ export type AdminPage = {
   translations: PageTranslationRow[];
   header_layout_id?: number | null;
   footer_layout_id?: number | null;
+  /** Per-locale SEO rows (`seo_metas`), edited on the create/edit screens. */
+  seoMetas?: ContentSeoMetaRow[];
   createdAt?: string;
   updatedAt?: string;
 };

@@ -1,8 +1,12 @@
 import type { DocumentHeadProps, DocumentHeadValue } from '@builder.io/qwik-city';
-import { buildCanonicalHref } from '~/lib/seo/canonical-url';
+import { buildCanonicalHref, getPublicSiteBaseUrl, resolveAbsoluteCanonicalUrl } from '~/lib/seo/canonical-url';
 import { getConfig } from '~/lib/config';
 import type { PublicBrandingState } from '~/lib/marketing/public-shell';
 import { isSearchEngineIndexingEnabled, publicRobotsContent } from '~/lib/seo/search-engine-indexing';
+import { applyTitleTemplate, resolveSeoDefaults } from '~/lib/seo/seo-defaults';
+import { jsonLdScript } from '~/lib/seo/json-ld';
+import { mapMarketingSeoMetaFromApi } from './seo-snippet';
+import type { PublicPageDetail } from '~/types/page';
 
 /** Internal Qwik dashboard label — not a public marketing site name. */
 const INTERNAL_DASHBOARD_LABEL = 'Dashboard';
@@ -43,11 +47,6 @@ export function publicSiteDescription(
   return fallback;
 }
 
-/** `Page title | Site name` using localized branding from the public shell. */
-export function publicPageTitle(page: string, branding?: PublicBrandingState | null): string {
-  return `${page} | ${publicSiteName(branding)}`;
-}
-
 /** Homepage `<title>` — site name first, then positioning line. */
 export function publicHomeTitle(branding?: PublicBrandingState | null): string {
   return `${publicSiteName(branding)} | Web, Android & iOS Development`;
@@ -55,6 +54,7 @@ export function publicHomeTitle(branding?: PublicBrandingState | null): string {
 
 export interface PublicListPageHeadInput {
   page: string;
+  /** Route fallback copy, used after the CMS page excerpt and the SEO defaults. */
   description: string;
   resolveValue: DocumentHeadProps['resolveValue'];
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -62,9 +62,11 @@ export interface PublicListPageHeadInput {
   url: URL;
   /** CMS `exclude_from_search` for pretty marketing URLs backed by a page. */
   pageExcluded?: boolean;
+  /** CMS page backing this URL; its SEO fields and the `page` type defaults apply. */
+  cmsPage?: PublicPageDetail | null;
 }
 
-/** Shared document head for public marketing list pages. */
+/** Shared document head for public marketing list pages and the static front page. */
 export function publicListPageHead({
   page,
   description,
@@ -72,19 +74,44 @@ export function publicListPageHead({
   usePublicShell,
   url,
   pageExcluded,
+  cmsPage,
 }: PublicListPageHeadInput): DocumentHeadValue {
   const shell = resolveValue(usePublicShell) as { branding?: PublicBrandingState | null };
-  const pageTitle = publicPageTitle(page, shell.branding);
-  const canonical = buildCanonicalHref(url.pathname, url.origin);
+  const branding = shell.branding;
+  const seo = cmsPage ? mapMarketingSeoMetaFromApi(cmsPage.seo_meta) : undefined;
+  const defaults = resolveSeoDefaults(branding?.seo_defaults, cmsPage ? 'page' : null);
+  const docTitle = seo?.metaTitle?.trim() || page;
+  const pageTitle = applyTitleTemplate(defaults.titleTemplate, {
+    title: docTitle,
+    section: '',
+    site: publicSiteName(branding),
+  });
+  const docDesc =
+    seo?.metaDescription?.trim() || cmsPage?.excerpt?.trim() || defaults.description || description;
+  const ogTitle = seo?.ogTitle?.trim() || pageTitle;
+  const ogDesc = seo?.ogDescription?.trim() || docDesc;
+  const selfUrl = buildCanonicalHref(url.pathname, url.origin);
+  const canonical = seo?.canonicalUrl?.trim()
+    ? resolveAbsoluteCanonicalUrl(seo.canonicalUrl.trim(), getPublicSiteBaseUrl(url.origin).replace(/\/$/, ''))
+    : selfUrl;
+  const ogImage = seo?.ogImage?.trim() || defaults.ogImage;
   const robots = publicRobotsContent({
-    siteIndexingEnabled: isSearchEngineIndexingEnabled(shell.branding?.search_engine_indexing),
+    siteIndexingEnabled: isSearchEngineIndexingEnabled(branding?.search_engine_indexing),
     pageExcluded,
   });
   const meta: { name?: string; property?: string; content: string }[] = [
-    { name: 'description', content: description },
-    { property: 'og:title', content: pageTitle },
-    { property: 'og:url', content: canonical },
+    { name: 'description', content: docDesc },
+    { property: 'og:title', content: ogTitle },
+    { property: 'og:description', content: ogDesc },
+    { property: 'og:url', content: selfUrl },
   ];
+  if (ogImage) {
+    meta.push({ property: 'og:image', content: ogImage });
+  }
+  meta.push({
+    name: 'twitter:card',
+    content: seo?.twitterCard?.trim() || defaults.twitterCard || (ogImage ? 'summary_large_image' : 'summary'),
+  });
   if (robots) {
     meta.push({ name: 'robots', content: robots });
   }
@@ -92,5 +119,9 @@ export function publicListPageHead({
     title: pageTitle,
     meta,
     links: [{ rel: 'canonical', href: canonical }],
+    scripts:
+      seo?.schema != null
+        ? [{ key: 'page-json-ld', script: jsonLdScript(seo.schema), props: { type: 'application/ld+json' } }]
+        : [],
   };
 }

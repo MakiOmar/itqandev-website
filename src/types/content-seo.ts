@@ -209,6 +209,34 @@ export function seoDraftToMetaRow(locale: string, draft: ContentSeoDraft): Conte
   };
 }
 
+/** True when no SEO field holds text (nothing worth storing as a new row). */
+export function isContentSeoDraftEmpty(draft: ContentSeoDraft): boolean {
+  return (Object.keys(draft) as Array<keyof ContentSeoDraft>).every((key) => !draft[key].trim());
+}
+
+/** `seoMetas` / `seo_metas` from an admin API record, with lower-cased locales. */
+export function seoMetaRowsFromApi(raw: Record<string, unknown>): ContentSeoMetaRow[] {
+  const rows = Array.isArray(raw.seoMetas) ? raw.seoMetas : Array.isArray(raw.seo_metas) ? raw.seo_metas : [];
+  return (rows as Array<Record<string, unknown>>)
+    .filter((r) => r && typeof r === 'object')
+    .map((r) => ({
+      ...(r as unknown as ContentSeoMetaRow),
+      id: typeof r.id === 'number' ? r.id : undefined,
+      locale: String(r.locale ?? '').toLowerCase().trim(),
+    }));
+}
+
+/** Replace (or add) the row for `locale` after a successful save. */
+export function upsertSeoMetaRow(
+  rows: ContentSeoMetaRow[],
+  locale: string,
+  draft: ContentSeoDraft,
+): ContentSeoMetaRow[] {
+  const row = seoDraftToMetaRow(locale, draft);
+  const rest = rows.filter((r) => String(r.locale).toLowerCase() !== row.locale);
+  return [...rest, row];
+}
+
 export function parseSchemaJsonField(raw: string): JsonValue | undefined {
   const t = raw.trim();
   if (!t) {

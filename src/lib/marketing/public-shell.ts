@@ -22,6 +22,7 @@ import {
 } from './appearance-types';
 import { defaultFooterSections, defaultHeaderSections } from './chrome-defaults';
 import { isSearchEngineIndexingEnabled } from '~/lib/seo/search-engine-indexing';
+import { parseSeoDefaults, type SeoDefaults } from '~/lib/seo/seo-defaults';
 import { parseSiteDefaultTheme, type SiteDefaultTheme } from '~/lib/theme/theme-scope';
 import {
   parsePublicFrontPageMeta,
@@ -44,6 +45,8 @@ export type PublicBrandingState = {
   search_engine_indexing?: boolean;
   design_kit_css?: string;
   default_theme?: SiteDefaultTheme;
+  /** Settings → SEO defaults, already localized for the presentation locale by the API. */
+  seo_defaults?: SeoDefaults;
 };
 
 export type { PublicFrontPageMeta };
@@ -137,6 +140,7 @@ function brandingFromSiteMeta(
     search_engine_indexing: isSearchEngineIndexingEnabled(settings?.search_engine_indexing),
     design_kit_css: typeof settings?.design_kit_css === 'string' ? settings.design_kit_css : undefined,
     default_theme: parseSiteDefaultTheme(settings?.default_theme),
+    seo_defaults: parseSeoDefaults(settings?.seo_defaults),
   };
 }
 

@@ -688,7 +688,7 @@ function mapPublicBlogPostRecord(raw: Record<string, unknown>): BlogPost {
     author,
     coverImage: cover,
     coverImageAlt: typeof raw.coverImageAlt === 'string' ? raw.coverImageAlt : undefined,
-    seoMeta: (raw.seoMeta ?? raw.seo_meta) as BlogPost['seoMeta'],
+    seoMeta: mapMarketingSeoMetaFromApi(raw.seo_meta ?? raw.seoMeta),
   });
 }
 
@@ -786,11 +786,19 @@ export async function getBlogPostsPage(
 }
 
 /** Get a single blog post by slug. */
-export async function getBlogPostBySlug(slug: string): Promise<BlogPost | null> {
+export async function getBlogPostBySlug(
+  slug: string,
+  locale?: string,
+  fetchContext?: MarketingFetchContext,
+): Promise<BlogPost | null> {
   if (contentSource === 'api') {
     try {
-      const data = await marketingGet<BlogPost>(MARKETING_ENDPOINTS.blogPost(slug));
-      return data ? normalizeBlogPost(data) : null;
+      const data = await marketingGet<Record<string, unknown>>(
+        MARKETING_ENDPOINTS.blogPost(slug),
+        locale,
+        fetchContext,
+      );
+      return data && typeof data === 'object' ? mapPublicBlogPostRecord(data) : null;
     } catch {
       return null;
     }

@@ -46,6 +46,18 @@ import {
 import { ChromeLayoutAssignmentFields } from '../../../../../components/admin/appearance/ChromeLayoutAssignmentFields';
 import { nestedPagePath, parentSelectOptions } from '../../../../../lib/admin/page-hierarchy';
 import { useContentSlugAutosuggestForm } from '../../../../../lib/slug/content-slug-auto';
+import { ContentSeoCard } from '../../../../../components/admin/ContentSeoFields';
+import { putContentSeo } from '../../../../../lib/admin/content-seo-put';
+import { getApiClient } from '../../../../../lib/api/client';
+import {
+  contentSeoDraftFromRow,
+  emptyContentSeoDraft,
+  isContentSeoDraftEmpty,
+  seoMetaRowsFromApi,
+  upsertSeoMetaRow,
+  type ContentSeoDraft,
+  type ContentSeoMetaRow,
+} from '../../../../../types/content-seo';
 
 function mapPageFromApi(raw: Record<string, unknown>): AdminPage {
   return {
@@ -68,6 +80,7 @@ function mapPageFromApi(raw: Record<string, unknown>): AdminPage {
     translations: Array.isArray(raw.translations)
       ? (raw.translations as AdminPage['translations'])
       : [],
+    seoMetas: seoMetaRowsFromApi(raw),
   };
 }
 
@@ -134,6 +147,22 @@ export default component$(() => {
   const excludeFromSearch = useSignal(Boolean(page.exclude_from_search));
   const sectionCount = Array.isArray(page.sections) ? page.sections.length : 0;
   const saving = useSignal(false);
+  const seoMetasDraft = useSignal<ContentSeoMetaRow[]>(page.seoMetas || []);
+  const seoDraft = useSignal<ContentSeoDraft>(emptyContentSeoDraft());
+
+  // SEO row follows the editing language (one row per locale).
+  useTask$(({ track }) => {
+    track(() => editingLocaleDraft.value);
+    track(() => contentLocaleDraft.value);
+    track(() => seoMetasDraft.value);
+    const primary = primaryLocaleForContent(
+      langConfig.value.site_languages,
+      langConfig.value.default_locale || 'en',
+      contentLocaleDraft.value.trim() || null,
+    );
+    const loc = (editingLocaleDraft.value || primary).toLowerCase();
+    seoDraft.value = contentSeoDraftFromRow(seoMetasDraft.value.find((r) => r.locale === loc));
+  });
 
   useTask$(({ track }) => {
     track(() => editingLocaleDraft.value);
@@ -217,6 +246,18 @@ export default component$(() => {
               subtitle: formData.value.subtitle,
             }),
           );
+        }
+        // Clearing an existing row must still be saved; an untouched empty form creates nothing.
+        const seoLocale = editingLocale.toLowerCase();
+        const hasSeoRow = seoMetasDraft.value.some((r) => r.locale === seoLocale);
+        if (hasSeoRow || !isContentSeoDraftEmpty(seoDraft.value)) {
+          try {
+            await putContentSeo(getApiClient(null), 'page', page.id, seoLocale, seoDraft.value);
+            seoMetasDraft.value = upsertSeoMetaRow(seoMetasDraft.value, seoLocale, seoDraft.value);
+          } catch (err) {
+            await showError((err as Error)?.message || translateApp(lang, 'seo.saveFailed'));
+            return;
+          }
         }
         await success(translateApp(lang, 'common.updated'));
       } else {
@@ -340,6 +381,18 @@ export default component$(() => {
             <div class={ADMIN_FORM_CARD_CLASS}>
               <ChromeLayoutAssignmentFields headerId={headerLayoutId} footerId={footerLayoutId} />
             </div>
+
+            {/* Document head SEO lives on this form, never in the builder */}
+            <ContentSeoCard
+              class={ADMIN_FORM_CARD_CLASS}
+              lang={lang}
+              idPrefix="page-edit-seo"
+              draft={seoDraft}
+              placeholders={{
+                meta_title: formData.value.title,
+                meta_description: formData.value.excerpt,
+              }}
+            />
 
             <div class={ADMIN_FORM_CARD_CLASS}>
               <div class="flex flex-wrap items-start justify-between gap-3 rounded-lg border border-primary-200 bg-primary-50/60 px-3 py-3 dark:border-primary-900 dark:bg-primary-950/30">

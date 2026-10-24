@@ -549,6 +549,8 @@ Also available: `GET /api/health` (minimal `{ "status": "ok" }`) and Laravel’s
 
 Returns **locale-resolved** branding, `site_languages`, resolved **`typography`**, **`search_engine_indexing`** (boolean, default `true`), and **`default_theme`** (`system` | `light` | `dark`, default `system`; set via `PUT /api/settings`) for the marketing shell (see `SettingsController::publicMeta`, `SiteSettingsPresenter`, and `TypographyResolver`).
 
+It also returns **`seo_defaults`** (`{ title_template, meta_description, og_image, twitter_card, types: { page, blog_post, project, service } }`, localized; `og_image` absolute or `null`). The marketing head applies it as the fallback cascade described in `docs/CONFIGURATION.md` → *SEO defaults*.
+
 It also returns **`favicon`** (Settings → Branding favicon URL, or `null`). Public and dashboard layouts add it as `<link rel="icon">`; the bundled `/favicon.svg` is used only when it is empty.
 
 When `search_engine_indexing` is `false`, the public sitefront must not advertise URLs to crawlers (`robots.txt` `Disallow: /`, empty sitemap, `noindex` on public HTML). Admin dashboard stays noindex in all cases.
@@ -874,6 +876,18 @@ Seeded slug **`articles`** (`ArticlesPageSeeder`) is the page-builder layout for
 | POST | `/api/public/forms/{slug}/submit` | Submit form field values (+ optional `captcha_token`); runs enabled actions in order; `throttle:form-submit` |
 
 Public marketing URLs: `/{lang}/pages/{slug}/` (nested: `/{lang}/pages/{parent}/{child}/`). Admin visual builder (fullscreen): `/{lang}/admin/pages/{id}/builder/` — classic metadata editor remains at `/{lang}/admin/pages/{id}/`. Set **Parent page** and **Exclude from search** on create/edit. Excluded pages stay reachable by URL, send `noindex`, and are omitted from `GET /api/public/pages` and `sitemap.xml`. Site-wide crawl blocking is **`search_engine_indexing`** on `PUT /api/settings` (Settings → General); per-page exclude still applies when that flag is on.
+
+### PUT `/api/v1/seo/{type}/{id}` (`feature.module:seo`)
+
+Upserts the per-locale SEO row of one item. `type`: `project`, `category`, `skill`, `service`, `blog-post`, `page`. Requires auth plus edit rights on the item (401 / 403 otherwise).
+
+```json
+{ "locale": "en", "meta_title": "…", "meta_description": "…", "canonical_url": "https://…", "og_title": "…", "og_description": "…", "og_image": "/storage/…", "twitter_card": "summary_large_image", "schema": { "@type": "WebPage" } }
+```
+
+`locale` must be an enabled site language (case-insensitive). `canonical_url` and `og_image` accept only `http(s)://` or same-site `/…` (422 for `javascript:`, `//host`, …). `twitter_card` is `summary` | `summary_large_image` or empty. Saving bumps the public cache so the head updates on the next request. Public detail endpoints (`/api/public/pages/{slug}`, `/api/public/blog-posts/{slug}`, `/api/public/projects/{slug}`, `/api/public/services/{slug}`) return `seo_meta` for the requested locale only, or `null`.
+
+The admin create screens (pages, blog, projects) send the SEO card after the item is created; when that second call fails the item stays saved and the edit screen shows a warning.
 
 ### Pages `sections` document (layout tree)
 

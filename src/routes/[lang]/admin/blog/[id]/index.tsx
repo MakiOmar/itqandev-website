@@ -40,6 +40,7 @@ import {
   type ContentSeoDraft,
   type ContentSeoMetaRow,
 } from '../../../../../types/content-seo';
+import { useSeoSaveFailedNotice } from '../../../../../lib/admin/seo-save-notice';
 import {
   ADMIN_BACK_BUTTON_CLASS,
   ADMIN_FORM_CARD_CLASS,
@@ -201,6 +202,7 @@ export default component$(() => {
   const { lang } = useTranslate();
   const R = useAppRoutes();
   const { success, error: showError } = useSwal();
+  useSeoSaveFailedNotice(translateApp(lang, 'seo.saveAfterCreateFailed'));
   const location = useLocation();
   const post = useBlogPost();
   const langConfig = usePublicSiteMeta();

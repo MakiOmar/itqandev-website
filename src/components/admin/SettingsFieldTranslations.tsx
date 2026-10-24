@@ -13,8 +13,8 @@ import type { SiteLanguageRow } from '../../types/site-language';
 import {
   parseSettingsTranslations,
   serializeSettingsTranslations,
-  scalarTranslation,
-  setScalarTranslation,
+  pathTranslation,
+  setPathTranslation,
   type SettingsScalarField,
   type SettingsTranslationsMap,
 } from '../../lib/admin/settings-translations';
@@ -73,15 +73,18 @@ export const SettingsTranslationsRoot = component$<{
 });
 
 export const SettingsFieldGlobe = component$<{
-  field: SettingsScalarField;
+  /** Top-level translated setting; use `path` for nested ones such as `seo_defaults`. */
+  field?: SettingsScalarField;
+  path?: string[];
   globeAriaLabel: string;
   fallbackText: string;
   multiline?: boolean;
 }>((props) => {
   const ctx = useContext(settingsTranslationsContext);
   const expanded = useSignal(false);
+  const path = props.path ?? (props.field ? [props.field] : []);
 
-  if (!ctx.locales.length) {
+  if (!ctx.locales.length || path.length === 0) {
     return <Slot />;
   }
 
@@ -132,11 +135,11 @@ export const SettingsFieldGlobe = component$<{
               {props.multiline ? (
                 <textarea
                   rows={3}
-                  value={scalarTranslation(ctx.store, loc.code, props.field)}
+                  value={pathTranslation(ctx.store, loc.code, path)}
                   placeholder={hintBase ? `${hintBase} — ${ctx.fallbackHintShort}` : ctx.fallbackHintShort}
                   onInput$={(e) => {
                     const el = e.target as HTMLTextAreaElement;
-                    const next = setScalarTranslation(ctx.store, loc.code, props.field, el.value);
+                    const next = setPathTranslation(ctx.store, loc.code, path, el.value);
                     Object.assign(ctx.store, next);
                     ctx.hiddenJson.value = serializeSettingsTranslations(ctx.store);
                   }}
@@ -145,11 +148,11 @@ export const SettingsFieldGlobe = component$<{
               ) : (
                 <input
                   type="text"
-                  value={scalarTranslation(ctx.store, loc.code, props.field)}
+                  value={pathTranslation(ctx.store, loc.code, path)}
                   placeholder={hintBase ? `${hintBase} — ${ctx.fallbackHintShort}` : ctx.fallbackHintShort}
                   onInput$={(e) => {
                     const el = e.target as HTMLInputElement;
-                    const next = setScalarTranslation(ctx.store, loc.code, props.field, el.value);
+                    const next = setPathTranslation(ctx.store, loc.code, path, el.value);
                     Object.assign(ctx.store, next);
                     ctx.hiddenJson.value = serializeSettingsTranslations(ctx.store);
                   }}

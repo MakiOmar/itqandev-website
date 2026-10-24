@@ -18,6 +18,7 @@ import { ContentImage } from '~/components/marketing/ContentImage';
 import { MarketingImageLightbox } from '~/components/marketing/MarketingImageLightbox';
 import { ThemeBodyOrFallback } from '~/components/marketing/theme/ThemeBodyOrFallback';
 import { marketingEntityDetailHead } from '~/lib/marketing/marketing-entity-document-head';
+import { jsonLdScript } from '~/lib/seo/json-ld';
 import { entityEditTarget, useAdminEditTarget } from '~/lib/marketing/admin-edit-target';
 
 /** SSR cannot forward cross-origin Laravel cookies; loaders return this marker for a client retry. */
@@ -316,7 +317,7 @@ export default component$(() => {
       {caseStudy.seoMeta?.schema != null ? (
         <script
           type="application/ld+json"
-          dangerouslySetInnerHTML={JSON.stringify(caseStudy.seoMeta.schema)}
+          dangerouslySetInnerHTML={jsonLdScript(caseStudy.seoMeta.schema)}
         />
       ) : null}
     </>
@@ -343,8 +344,12 @@ export const head: DocumentHead = ({ resolveValue, url }) => {
       sectionLabel: 'Portfolio',
       pageUrl: url,
       defaultTitle: caseStudy.title,
-      defaultDescription: caseStudy.summary,
+      defaultDescription: caseStudy.summary || '',
+      defaultImage: caseStudy.image,
       seo: caseStudy.seoMeta,
+      seoDefaults: shell.branding?.seo_defaults,
+      typeKey: 'project',
+      siteDescription: shell.branding?.site_description,
     });
   } catch {
     return {

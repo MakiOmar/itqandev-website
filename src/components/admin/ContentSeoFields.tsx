@@ -7,16 +7,24 @@ import { isFeatureModuleEnabled } from '../../lib/api/project-settings';
 const inputCls =
   'w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-primary-500 focus:outline-none focus:ring focus:ring-primary-200 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:focus:ring-primary-700/40';
 
+/** What an empty field falls back to on the public site (shown as the input placeholder). */
+export type ContentSeoPlaceholders = Partial<
+  Record<'meta_title' | 'meta_description' | 'og_title' | 'og_description' | 'og_image', string>
+>;
+
 export type ContentSeoFieldsProps = {
   lang: string;
   idPrefix: string;
   draft: Signal<ContentSeoDraft>;
+  placeholders?: ContentSeoPlaceholders;
 };
 
 /**
- * Full SEO morph fields (aligned with Laravel `seo_metas`).
+ * Full SEO morph fields (aligned with Laravel `seo_metas`). Head settings belong on create/edit
+ * screens only, never inside a builder. Every field is optional: empty ones fall back to the
+ * content and then to Settings → SEO defaults.
  */
-export const ContentSeoFields = component$<ContentSeoFieldsProps>(({ lang, idPrefix, draft }) => {
+export const ContentSeoFields = component$<ContentSeoFieldsProps>(({ lang, idPrefix, draft, placeholders }) => {
   const settings = useContext(ProjectSettingsContext);
   if (!isFeatureModuleEnabled(settings.settings?.features, 'seo')) {
     return <></>;
@@ -30,6 +38,8 @@ export const ContentSeoFields = component$<ContentSeoFieldsProps>(({ lang, idPre
 
   return (
     <div class="space-y-4">
+      {/* <!-- Empty fields are filled from the content and the SEO defaults --> */}
+      <p class="text-xs text-gray-600 dark:text-gray-400">{translateApp(lang, 'seo.fallbackHint')}</p>
       <div>
         <label for={`${p}meta-title`} class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-200">
           {translateApp(lang, 'seo.metaTitle')}
@@ -38,6 +48,7 @@ export const ContentSeoFields = component$<ContentSeoFieldsProps>(({ lang, idPre
         <input
           id={`${p}meta-title`}
           type="text"
+          placeholder={placeholders?.meta_title || undefined}
           value={draft.value.meta_title}
           onInput$={(e) => patch({ meta_title: (e.target as HTMLInputElement).value })}
           class={inputCls}
@@ -51,6 +62,7 @@ export const ContentSeoFields = component$<ContentSeoFieldsProps>(({ lang, idPre
         <textarea
           id={`${p}meta-description`}
           rows={3}
+          placeholder={placeholders?.meta_description || undefined}
           value={draft.value.meta_description}
           onInput$={(e) => patch({ meta_description: (e.target as HTMLTextAreaElement).value })}
           class={inputCls}
@@ -79,6 +91,7 @@ export const ContentSeoFields = component$<ContentSeoFieldsProps>(({ lang, idPre
           <input
             id={`${p}og-title`}
             type="text"
+            placeholder={placeholders?.og_title || placeholders?.meta_title || undefined}
             value={draft.value.og_title}
             onInput$={(e) => patch({ og_title: (e.target as HTMLInputElement).value })}
             class={inputCls}
@@ -108,6 +121,7 @@ export const ContentSeoFields = component$<ContentSeoFieldsProps>(({ lang, idPre
         <textarea
           id={`${p}og-description`}
           rows={2}
+          placeholder={placeholders?.og_description || placeholders?.meta_description || undefined}
           value={draft.value.og_description}
           onInput$={(e) => patch({ og_description: (e.target as HTMLTextAreaElement).value })}
           class={inputCls}
@@ -121,7 +135,7 @@ export const ContentSeoFields = component$<ContentSeoFieldsProps>(({ lang, idPre
         <input
           id={`${p}og-image`}
           type="url"
-          placeholder="https://..."
+          placeholder={placeholders?.og_image || 'https://...'}
           value={draft.value.og_image}
           onInput$={(e) => patch({ og_image: (e.target as HTMLInputElement).value })}
           class={inputCls}
@@ -143,5 +157,32 @@ export const ContentSeoFields = component$<ContentSeoFieldsProps>(({ lang, idPre
         />
       </div>
     </div>
+  );
+});
+
+export type ContentSeoCardProps = ContentSeoFieldsProps & {
+  /** Card wrapper classes (e.g. `ADMIN_FORM_CARD_CLASS`). */
+  class?: string;
+};
+
+/** Titled SEO card for create/edit screens; renders nothing when the `seo` module is off. */
+export const ContentSeoCard = component$<ContentSeoCardProps>((props) => {
+  const settings = useContext(ProjectSettingsContext);
+  if (!isFeatureModuleEnabled(settings.settings?.features, 'seo')) {
+    return <></>;
+  }
+
+  return (
+    <section class={props.class}>
+      <h3 class="mb-1 text-base font-semibold text-gray-900 dark:text-gray-100">{translateApp(props.lang, 'seo.title')}</h3>
+      {/* <!-- SEO row per editing locale --> */}
+      <p class="mb-3 text-xs text-gray-600 dark:text-gray-400">{translateApp(props.lang, 'seo.forEditingLocale')}</p>
+      <ContentSeoFields
+        lang={props.lang}
+        idPrefix={props.idPrefix}
+        draft={props.draft}
+        placeholders={props.placeholders}
+      />
+    </section>
   );
 });

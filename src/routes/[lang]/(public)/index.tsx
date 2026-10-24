@@ -3,7 +3,7 @@ import type { DocumentHead } from '@builder.io/qwik-city';
 import { useLocation } from '@builder.io/qwik-city';
 import { routeLoader$ } from '@builder.io/qwik-city';
 import { buildCanonicalHref } from '~/lib/seo/canonical-url';
-import { publicHomeTitle, publicSiteDescription } from '~/lib/marketing/public-page-head';
+import { publicHomeTitle, publicListPageHead, publicSiteDescription } from '~/lib/marketing/public-page-head';
 import { getPageBuilderMarketingSupport } from '~/lib/marketing/content-layer';
 import { uiLocaleFromPublicRoute } from '~/lib/i18n/ui-locale-path';
 import { uiLangFromUrlPathname } from '~/lib/i18n/ui-locale-path';
@@ -95,14 +95,21 @@ export const head: DocumentHead = ({ resolveValue, url }) => {
     const shell = resolveValue(usePublicShell);
     const home = resolveValue(useHomeData) as { cmsPage?: PublicPageDetail | null };
     const cms = home?.cmsPage;
-    const titleTag =
-      cms && typeof cms.title === 'string' && cms.title.trim()
-        ? cms.title.trim()
-        : publicHomeTitle(shell.branding);
-    const metaDescription =
-      cms && typeof cms.excerpt === 'string' && cms.excerpt.trim()
-        ? cms.excerpt.trim()
-        : publicSiteDescription(shell.branding, metaFallback);
+    if (cms && typeof cms.title === 'string' && cms.title.trim()) {
+      // Static front page: its SEO fields and the `page` SEO defaults drive the head.
+      const result = publicListPageHead({
+        page: cms.title.trim(),
+        description: publicSiteDescription(shell.branding, metaFallback),
+        resolveValue,
+        usePublicShell,
+        url,
+        pageExcluded: cms.exclude_from_search === true,
+        cmsPage: cms,
+      });
+      return { ...result, meta: [...(result.meta ?? []), { property: 'og:type', content: 'website' }] };
+    }
+    const titleTag = publicHomeTitle(shell.branding);
+    const metaDescription = publicSiteDescription(shell.branding, metaFallback);
     return {
       title: titleTag,
       meta: [

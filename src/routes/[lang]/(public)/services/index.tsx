@@ -70,10 +70,12 @@ export const head: DocumentHead = ({ resolveValue, url }) => {
   let description =
     'Web development, Android, iOS, cross-platform, UI/UX design, and API/backend services.';
   let pageExcluded = false;
+  let cmsPage: PublicPageDetail | null = null;
   try {
     const page = resolveValue(useServicesCmsPage) as PublicPageDetail;
     if (page && typeof page.title === 'string' && page.title.trim()) {
       pageTitle = page.title.trim();
+      cmsPage = page;
       if (typeof page.excerpt === 'string' && page.excerpt.trim()) {
         description = page.excerpt.trim();
       }
@@ -89,5 +91,6 @@ export const head: DocumentHead = ({ resolveValue, url }) => {
     usePublicShell,
     url,
     pageExcluded,
+    cmsPage,
   });
 };

@@ -27,6 +27,14 @@ import { uiLangFromPreferredCookie } from '../../../../../lib/i18n/ui-locale-pat
 import type { BlogPost, BlogPostCreateInput } from '../../../../../types';
 import { useContentSlugAutosuggestDom } from '../../../../../lib/slug/content-slug-auto';
 import { AdminPublicPageLink } from '../../../../../components/admin/AdminPublicPageLink';
+import { ContentSeoCard } from '../../../../../components/admin/ContentSeoFields';
+import { putContentSeoIfFilled } from '../../../../../lib/admin/content-seo-put';
+import { withSeoSaveFailedFlag } from '../../../../../lib/admin/seo-save-notice';
+import {
+  emptyContentSeoDraft,
+  parseContentSeoDraftFromJson,
+  type ContentSeoDraft,
+} from '../../../../../types/content-seo';
 import {
   ADMIN_BACK_BUTTON_CLASS,
   ADMIN_FORM_CARD_CLASS,
@@ -98,8 +106,19 @@ export const useCreateBlogPost = routeAction$(
       const response = await apiClient.post<BlogPost>(API_ENDPOINTS.BLOG.CREATE, payload);
       const post = (response?.data ?? response) as any;
 
+      // SEO for the new post (only when filled); a failure keeps the post and warns on the edit screen.
+      let seoFailed = false;
+      const seoDraft = parseContentSeoDraftFromJson(String((data as { seo_draft_json?: string }).seo_draft_json ?? ''));
+      if (seoDraft) {
+        try {
+          await putContentSeoIfFilled(apiClient, 'blog-post', Number(post.id), editingLocale.toLowerCase(), seoDraft);
+        } catch {
+          seoFailed = true;
+        }
+      }
+
       // Redirect to edit page
-      throw redirectFn(302, adminBlogEditHref(lang, post.id));
+      throw redirectFn(302, withSeoSaveFailedFlag(adminBlogEditHref(lang, post.id), seoFailed));
     } catch (error: any) {
       if (error.status === 302 || error.statusCode === 302) {
         throw error; // Re-throw redirects
@@ -118,6 +137,7 @@ export const useCreateBlogPost = routeAction$(
       editing_locale: z.string().optional(),
       form_site_default_locale: z.string().optional(),
       effective_primary_locale: z.string().optional(),
+      seo_draft_json: z.string().optional(),
     }),
   )
 );
@@ -132,6 +152,7 @@ export default component$(() => {
   const createAction = useCreateBlogPost();
   const contentLocaleDraft = useSignal('');
   const editingLocaleDraft = useSignal(langConfig.value.content_editing_locale);
+  const seoDraft = useSignal<ContentSeoDraft>(emptyContentSeoDraft());
 
   const contentSlugDom = useContentSlugAutosuggestDom({ entity: 'blog_posts' });
   /** Keeps “view public page” URL in sync while typing slug on this uncontrolled form */
@@ -297,6 +318,10 @@ export default component$(() => {
                 </TranslationsFormRoot>
               </div>
             </div>
+
+            {/* Document head SEO for the editing language, saved right after the post is created */}
+            <input type="hidden" name="seo_draft_json" value={JSON.stringify(seoDraft.value)} />
+            <ContentSeoCard class={ADMIN_FORM_CARD_CLASS} lang={lang} idPrefix="blog-new-seo" draft={seoDraft} />
 
             {createAction.value?.failed && (createAction.value as any).error && (
               <div class="rounded-md bg-red-50 p-3 text-sm text-red-800 dark:bg-red-900/20 dark:text-red-300">

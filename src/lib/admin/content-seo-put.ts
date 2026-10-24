@@ -1,7 +1,7 @@
 import type { ContentSeoDraft, JsonValue } from '../../types/content-seo';
-import { parseSchemaJsonField } from '../../types/content-seo';
+import { isContentSeoDraftEmpty, parseSchemaJsonField } from '../../types/content-seo';
 
-export type ContentSeoApiType = 'project' | 'blog-post' | 'category' | 'service' | 'skill';
+export type ContentSeoApiType = 'project' | 'blog-post' | 'category' | 'service' | 'skill' | 'page';
 
 /** Minimal API client surface (matches `getApiClient()` result). */
 type SeoPutClient = {
@@ -35,4 +35,24 @@ export async function putContentSeo(
   draft: ContentSeoDraft,
 ): Promise<void> {
   await apiClient.put(`/v1/seo/${type}/${id}`, buildSeoMorphPutBody(locale, draft));
+}
+
+/**
+ * Create screens: store SEO for the new record only when an editor filled something, so empty
+ * forms do not create blank rows (public heads then use the content and the SEO defaults).
+ *
+ * @returns whether a row was saved
+ */
+export async function putContentSeoIfFilled(
+  apiClient: SeoPutClient,
+  type: ContentSeoApiType,
+  id: number,
+  locale: string,
+  draft: ContentSeoDraft,
+): Promise<boolean> {
+  if (isContentSeoDraftEmpty(draft)) {
+    return false;
+  }
+  await putContentSeo(apiClient, type, id, locale, draft);
+  return true;
 }

@@ -1,10 +1,11 @@
-import { component$, Slot } from '@builder.io/qwik';
+import { component$, Slot, useContext } from '@builder.io/qwik';
 import { Link, routeAction$, routeLoader$, z, zod$, useLocation } from '@builder.io/qwik-city';
 import { useTranslate, translateApp } from '../../../../lib/i18n/useTranslate';
 import { getApiClient, extractCookieHeader } from '../../../../lib/api/client';
 import { API_ENDPOINTS } from '../../../../lib/api/endpoints';
 import { useAppRoutes } from '../../../../lib/constants/routes';
-import { clearProjectSettingsCache } from '../../../../lib/api/project-settings';
+import { clearProjectSettingsCache, isFeatureModuleEnabled } from '../../../../lib/api/project-settings';
+import { ProjectSettingsContext } from '../../../../stores/project-settings-store';
 import {
   parseMarketingSiteContent,
   type MarketingSiteContentSettings,
@@ -15,6 +16,7 @@ import {
 } from '../../../../lib/admin/settings-translations';
 import type { SiteLanguageRow } from '../../../../types/site-language';
 import { parseSiteDefaultTheme, type SiteDefaultTheme } from '../../../../lib/theme/theme-scope';
+import { emptySeoDefaults, parseSeoDefaults, type SeoDefaults } from '../../../../lib/seo/seo-defaults';
 
 export interface SettingsFormData {
   site_name: string;
@@ -45,6 +47,7 @@ export interface SettingsFormData {
   font_rtl_id: number | null;
   settings_translations: SettingsTranslationsMap;
   marketing_site_content: MarketingSiteContentSettings;
+  seo_defaults: SeoDefaults;
 }
 
 export const defaultSettings: SettingsFormData = {
@@ -78,6 +81,7 @@ export const defaultSettings: SettingsFormData = {
   font_rtl_id: null,
   settings_translations: {},
   marketing_site_content: parseMarketingSiteContent(null),
+  seo_defaults: emptySeoDefaults(),
 };
 
 function coerceFormBool(raw: unknown, fallback: boolean): boolean {
@@ -152,6 +156,7 @@ function normalizeSettings(input: Partial<SettingsFormData> | undefined | null):
     font_rtl_id: normalizeFontId((input as any)?.font_rtl_id),
     settings_translations: parseSettingsTranslations((input as any)?.settings_translations),
     marketing_site_content: parseMarketingSiteContent((input as any)?.marketing_site_content),
+    seo_defaults: parseSeoDefaults((input as any)?.seo_defaults),
   };
 }
 
@@ -377,6 +382,15 @@ export const useUpdateSettings = routeAction$(
         }
       }
 
+      if (has('seo_defaults_json')) {
+        try {
+          // The API replaces seo_defaults as a whole, so the full object is always sent.
+          payload.seo_defaults = parseSeoDefaults(JSON.parse(String((data as any).seo_defaults_json)));
+        } catch {
+          /* ignore invalid JSON */
+        }
+      }
+
       const response = await apiClient.put(API_ENDPOINTS.SETTINGS.UPDATE, payload);
       clearProjectSettingsCache();
 
@@ -433,6 +447,7 @@ export const useUpdateSettings = routeAction$(
     font_rtl_id: z.union([z.string(), z.number()]).optional(),
     settings_translations_json: z.string().optional(),
     marketing_site_content_json: z.string().optional(),
+    seo_defaults_json: z.string().optional(),
   }),
 );
 
@@ -505,6 +520,7 @@ export default component$(() => {
   const { lang } = useTranslate();
   const R = useAppRoutes();
   const location = useLocation();
+  const projectSettings = useContext(ProjectSettingsContext);
 
   const tabs = [
     { label: translateApp(lang, 'settings.general'), href: R.ADMIN.SETTINGS_GENERAL },
@@ -514,6 +530,9 @@ export default component$(() => {
     { label: translateApp(lang, 'settings.languagesNav'), href: R.ADMIN.SETTINGS_LANGUAGES },
     { label: translateApp(lang, 'settings.typographyNav'), href: R.ADMIN.SETTINGS_TYPOGRAPHY },
     { label: translateApp(lang, 'settings.marketingNav'), href: R.ADMIN.SETTINGS_MARKETING },
+    ...(isFeatureModuleEnabled(projectSettings.settings?.features, 'seo')
+      ? [{ label: translateApp(lang, 'settings.seoNav'), href: R.ADMIN.SETTINGS_SEO }]
+      : []),
   ];
 
   return (

@@ -274,6 +274,7 @@ export const Sidebar = component$<SidebarProps>((props) => {
         { label: translateApp(lang, 'settings.branding'), href: R.ADMIN.SETTINGS_BRANDING },
         { label: translateApp(lang, 'settings.languagesNav'), href: R.ADMIN.SETTINGS_LANGUAGES },
         { label: translateApp(lang, 'settings.typographyNav'), href: R.ADMIN.SETTINGS_TYPOGRAPHY },
+        { label: translateApp(lang, 'settings.seoNav'), href: R.ADMIN.SETTINGS_SEO, featureModule: 'seo' },
       ],
       roles: ['admin', 'super_admin'],
     },

@@ -18,6 +18,7 @@ import { marketingRoutes } from '~/lib/marketing/constants';
 import { uiLangFromUrlPathname } from '~/lib/i18n/ui-locale-path';
 import { resolveServiceIconUrl } from '~/lib/marketing/service-icons';
 import { marketingEntityDetailHead } from '~/lib/marketing/marketing-entity-document-head';
+import { jsonLdScript } from '~/lib/seo/json-ld';
 import { AnimatedReveal } from '~/components/marketing/AnimatedReveal';
 import { Container } from '~/components/marketing/Container';
 import { Section } from '~/components/marketing/Section';
@@ -162,7 +163,7 @@ export default component$(() => {
       />
       {/* <!-- Optional JSON-LD from CMS seo_meta.schema --> */}
       {s.seoMeta?.schema != null ? (
-        <script type="application/ld+json" dangerouslySetInnerHTML={JSON.stringify(s.seoMeta.schema)} />
+        <script type="application/ld+json" dangerouslySetInnerHTML={jsonLdScript(s.seoMeta.schema)} />
       ) : null}
     </>
     </ThemeBodyOrFallback>
@@ -187,6 +188,9 @@ export const head: DocumentHead = ({ resolveValue, url }) => {
       defaultTitle: s.name,
       defaultDescription: description,
       seo: s.seoMeta,
+      seoDefaults: shell.branding?.seo_defaults,
+      typeKey: 'service',
+      siteDescription: shell.branding?.site_description,
     });
   } catch {
     return {

@@ -4,10 +4,12 @@ import { routeLoader$ } from '@builder.io/qwik-city';
 import { Link, useLocation } from '@builder.io/qwik-city';
 import { publicSiteName } from '~/lib/marketing/public-page-head';
 import { usePublicShell } from '../../layout';
-import { buildCanonicalHref, getPublicSiteBaseUrl } from '~/lib/seo/canonical-url';
+import { getPublicSiteBaseUrl } from '~/lib/seo/canonical-url';
+import { jsonLdScript } from '~/lib/seo/json-ld';
+import { marketingEntityDetailHead } from '~/lib/marketing/marketing-entity-document-head';
 import { getBlogPostBySlug } from '~/lib/marketing/content-layer';
 import { marketingRoutes } from '~/lib/marketing/constants';
-import { uiLangFromUrlPathname } from '~/lib/i18n/ui-locale-path';
+import { uiLangFromUrlPathname, uiLocaleFromPublicRoute } from '~/lib/i18n/ui-locale-path';
 import { Container } from '~/components/marketing/Container';
 import { Section } from '~/components/marketing/Section';
 import { AnimatedReveal } from '~/components/marketing/AnimatedReveal';
@@ -16,9 +18,10 @@ import { MarketingImageLightbox } from '~/components/marketing/MarketingImageLig
 import { ThemeBodyOrFallback } from '~/components/marketing/theme/ThemeBodyOrFallback';
 import { entityEditTarget, useAdminEditTarget } from '~/lib/marketing/admin-edit-target';
 
-export const useBlogPost = routeLoader$(async ({ params, fail }) => {
+export const useBlogPost = routeLoader$(async ({ params, fail, request }) => {
   const slug = params.slug;
-  const post = await getBlogPostBySlug(slug);
+  const uiLocale = uiLocaleFromPublicRoute(request.headers.get('cookie') || '', params.lang, request.url);
+  const post = await getBlogPostBySlug(slug, uiLocale, { forwardDocumentUrl: request.url });
   if (!post) {
     return fail(404, { message: 'Blog post not found' });
   }
@@ -107,7 +110,7 @@ export default component$(() => {
       {/* Article JSON-LD */}
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={JSON.stringify({
+        dangerouslySetInnerHTML={jsonLdScript({
           '@context': 'https://schema.org',
           '@type': 'Article',
           headline: post.title,
@@ -120,7 +123,7 @@ export default component$(() => {
       {/* BreadcrumbList JSON-LD */}
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={JSON.stringify({
+        dangerouslySetInnerHTML={jsonLdScript({
           '@context': 'https://schema.org',
           '@type': 'BreadcrumbList',
           itemListElement: [
@@ -130,6 +133,10 @@ export default component$(() => {
           ],
         })}
       />
+      {/* Optional JSON-LD from the post's SEO fields */}
+      {post.seoMeta?.schema != null ? (
+        <script type="application/ld+json" dangerouslySetInnerHTML={jsonLdScript(post.seoMeta.schema)} />
+      ) : null}
     </>
     </ThemeBodyOrFallback>
   );
@@ -138,21 +145,24 @@ export default component$(() => {
 export const head: DocumentHead = ({ resolveValue, url }) => {
   const shell = resolveValue(usePublicShell);
   const brandName = publicSiteName(shell.branding);
-  const canonical = buildCanonicalHref(url.pathname, url.origin);
   try {
     const post = resolveValue(useBlogPost);
-    const title = post.seoMeta?.title || post.title;
-    const description = post.seoMeta?.description || post.excerpt;
+    const result = marketingEntityDetailHead({
+      brandName,
+      baseUrl: getPublicSiteBaseUrl(url.origin).replace(/\/$/, ''),
+      sectionLabel: 'Blog',
+      pageUrl: url,
+      defaultTitle: post.title ?? '',
+      defaultDescription: post.excerpt || '',
+      defaultImage: post.coverImage,
+      seo: post.seoMeta,
+      seoDefaults: shell.branding?.seo_defaults,
+      typeKey: 'blog_post',
+      siteDescription: shell.branding?.site_description,
+    });
     return {
-      title: `${title} | Blog | ${brandName}`,
-      meta: [
-        { name: 'description', content: description },
-        { property: 'og:title', content: title },
-        { property: 'og:description', content: description },
-        { property: 'og:type', content: 'article' },
-        { property: 'og:url', content: canonical },
-      ],
-      links: [{ rel: 'canonical', href: canonical }],
+      ...result,
+      meta: [...result.meta, { property: 'og:type', content: 'article' }],
     };
   } catch {
     return {

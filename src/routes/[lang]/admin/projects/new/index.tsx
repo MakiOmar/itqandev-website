@@ -9,7 +9,7 @@ import { parseGalleryIdsJson } from '../../../../../lib/admin/gallery-ids';
 import { useTranslate, translateApp } from '../../../../../lib/i18n/useTranslate';
 import { isUiLocaleRtl } from '../../../../../lib/i18n/ui-locale-segments';
 import { useSwal } from '../../../../../lib/hooks/useSwal';
-import { getApiClient } from '../../../../../lib/api/client';
+import { getApiClient, extractCookieHeader } from '../../../../../lib/api/client';
 import { API_ENDPOINTS } from '../../../../../lib/api/endpoints';
 import {
   fetchTaxonomyListOptions,
@@ -37,6 +37,14 @@ import { usePublicSiteMeta } from '../../layout';
 import type { ProjectCreateInput, Project } from '../../../../../types';
 import { useContentSlugAutosuggestDom } from '../../../../../lib/slug/content-slug-auto';
 import { AdminPublicPageLink } from '../../../../../components/admin/AdminPublicPageLink';
+import { ContentSeoCard } from '../../../../../components/admin/ContentSeoFields';
+import { putContentSeoIfFilled } from '../../../../../lib/admin/content-seo-put';
+import { showWarning } from '../../../../../lib/utils/toast';
+import {
+  emptyContentSeoDraft,
+  parseContentSeoDraftFromJson,
+  type ContentSeoDraft,
+} from '../../../../../types/content-seo';
 
 /**
  * Project creation schema
@@ -80,9 +88,9 @@ export const useCategoriesAndSkills = routeLoader$(async ({ cookie, request, par
  * Create project action
  */
 export const useCreateProject = routeAction$(
-  async (data) => {
+  async (data, { cookie, request }) => {
     try {
-      const apiClient = getApiClient();
+      const apiClient = getApiClient(extractCookieHeader(cookie, request as any), false);
       
       // Handle array fields - Qwik Form sends arrays, but we need to normalize them
       const normalizeArray = (value: any): number[] => {
@@ -179,12 +187,24 @@ export const useCreateProject = routeAction$(
         }
       }
 
+      // SEO for the new project (only when filled); a failure keeps the project and warns the editor.
+      let seoFailed = false;
+      const seoDraft = parseContentSeoDraftFromJson(String((data as { seo_draft_json?: string }).seo_draft_json ?? ''));
+      if (seoDraft) {
+        try {
+          await putContentSeoIfFilled(apiClient, 'project', Number(projectId), editingLocale.toLowerCase(), seoDraft);
+        } catch {
+          seoFailed = true;
+        }
+      }
+
       // Return project data for preview
       const savedProject = await apiClient.get(API_ENDPOINTS.PROJECTS.GET(projectId));
       return {
         success: true,
         project: savedProject,
         projectId,
+        seoFailed,
       };
     } catch (error: any) {
       // Return error response instead of throwing
@@ -203,6 +223,7 @@ export const useCreateProject = routeAction$(
     editing_locale: z.string().optional(),
     form_site_default_locale: z.string().optional(),
     effective_primary_locale: z.string().optional(),
+    seo_draft_json: z.string().optional(),
   }))
 );
 
@@ -238,7 +259,9 @@ export default component$(() => {
   const showPreview = useSignal(false);
   const savedProject = useSignal<any>(null);
   const createdProjectId = useSignal<number | null>(null);
-  const actionResult = useSignal<{ success?: boolean; projectId?: number; error?: string } | null>(null);
+  const actionResult = useSignal<{ success?: boolean; projectId?: number; error?: string; seoFailed?: boolean } | null>(null);
+  const seoDraft = useSignal<ContentSeoDraft>(emptyContentSeoDraft());
+  const seoSaveFailedText = translateApp(lang, 'seo.saveAfterCreateFailed');
   const contentLocaleDraft = useSignal('');
   const editingLocaleDraft = useSignal(langConfig.value.content_editing_locale);
 
@@ -255,6 +278,7 @@ export default component$(() => {
           success: val.success === true,
           projectId: val.projectId || (val.project as { id?: number } | undefined)?.id,
           error: val.error || val.failed ? (val.error || 'Failed to create project') : undefined,
+          seoFailed: val.seoFailed === true,
         };
       }
     }).catch(() => {
@@ -326,6 +350,9 @@ export default component$(() => {
       success(translations.success, {
         text: translations.created,
       });
+      if (result.seoFailed) {
+        showWarning(seoSaveFailedText);
+      }
     } else if (result.error) {
       showError(translations.error, {
         text: result.error,
@@ -850,6 +877,15 @@ export default component$(() => {
           </div>
 
           <MediaGalleryField name="gallery_media_ids_json" />
+
+          {/* Document head SEO for the editing language, saved right after the project is created */}
+          <input type="hidden" name="seo_draft_json" value={JSON.stringify(seoDraft.value)} />
+          <ContentSeoCard
+            class="border-t border-gray-200 pt-4 dark:border-gray-700"
+            lang={lang}
+            idPrefix="project-new-seo"
+            draft={seoDraft}
+          />
 
           {createAction.value?.failed && (createAction.value as any).error && (
             <div class="rounded-md bg-red-50 dark:bg-red-900/20 p-3 text-sm text-red-800 dark:text-red-300">

@@ -97,10 +97,12 @@ export const head: DocumentHead = ({ resolveValue, url }) => {
   let pageTitle = 'About';
   let description = 'Learn about our studio, values, and journey building digital products since 2014.';
   let pageExcluded = false;
+  let cmsPage: PublicPageDetail | null = null;
   try {
     const page = resolveValue(useAboutCmsPage) as PublicPageDetail;
     if (page && typeof page.title === 'string' && page.title.trim()) {
       pageTitle = page.title.trim();
+      cmsPage = page;
       if (typeof page.excerpt === 'string' && page.excerpt.trim()) {
         description = page.excerpt.trim();
       }
@@ -116,5 +118,6 @@ export const head: DocumentHead = ({ resolveValue, url }) => {
     usePublicShell,
     url,
     pageExcluded: pageExcluded,
+    cmsPage,
   });
 };

@@ -10,6 +10,7 @@ import { publicSiteName } from '~/lib/marketing/public-page-head';
 import { getPublicSiteBaseUrl } from '~/lib/seo/canonical-url';
 import { resolveMarketingApiBaseUrl } from '~/lib/marketing/resolve-api-base';
 import { mapMarketingSeoMetaFromApi } from '~/lib/marketing/seo-snippet';
+import { jsonLdScript } from '~/lib/seo/json-ld';
 import { API_ENDPOINTS } from '~/lib/api/endpoints';
 import { withLocaleQuery } from '~/lib/marketing/locale-cache-url';
 import type { PageSectionNode } from '~/lib/marketing/appearance-types';
@@ -157,21 +158,31 @@ export const head: DocumentHead = ({ resolveValue, url }) => {
       return { title: 'Page' };
     }
     const brandName = publicSiteName(shell.branding);
+    const seo = mapMarketingSeoMetaFromApi(page.seo_meta);
     const result = marketingEntityDetailHead({
       brandName,
       baseUrl: getPublicSiteBaseUrl(url.origin).replace(/\/$/, ''),
       sectionLabel: 'Pages',
       pageUrl: url,
       defaultTitle: page.title,
-      defaultDescription: page.excerpt || page.title,
-      seo: mapMarketingSeoMetaFromApi(page.seo_meta),
+      defaultDescription: page.excerpt || '',
+      seo,
+      seoDefaults: shell.branding?.seo_defaults,
+      typeKey: 'page',
+      siteDescription: shell.branding?.site_description,
       robots: publicRobotsContent({
         siteIndexingEnabled: isSearchEngineIndexingEnabled(shell.branding?.search_engine_indexing),
         pageExcluded: page.exclude_from_search === true,
       }),
       canonicalQuery: page.canonical_query,
     });
-    return result;
+    return {
+      ...result,
+      scripts:
+        seo?.schema != null
+          ? [{ key: 'page-json-ld', script: jsonLdScript(seo.schema), props: { type: 'application/ld+json' } }]
+          : [],
+    };
   } catch {
     return { title: 'Page' };
   }

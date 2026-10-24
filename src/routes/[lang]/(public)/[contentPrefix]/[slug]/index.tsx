@@ -11,6 +11,7 @@ import { marketingGet } from '~/lib/marketing/api-client';
 import { publicSiteName } from '~/lib/marketing/public-page-head';
 import { buildCanonicalHref } from '~/lib/seo/canonical-url';
 import { jsonLdScript } from '~/lib/seo/json-ld';
+import { applyTitleTemplate, resolveSeoDefaults } from '~/lib/seo/seo-defaults';
 
 type PublicContentSingle = {
   type: string;
@@ -102,7 +103,8 @@ function absoluteUrl(value: string, origin: string): string {
 }
 
 export const head: DocumentHead = ({ resolveValue, url }) => {
-  const brandName = publicSiteName(resolveValue(usePublicShell).branding);
+  const branding = resolveValue(usePublicShell).branding;
+  const brandName = publicSiteName(branding);
   const loaded = resolveValue(useContentSingle);
   if (!loaded || 'failed' in loaded) {
     return {
@@ -110,20 +112,24 @@ export const head: DocumentHead = ({ resolveValue, url }) => {
       meta: [{ name: 'robots', content: 'noindex, nofollow' }],
     };
   }
+  // Addon content types have no type-level defaults; the global SEO defaults fill the gaps.
+  const defaults = resolveSeoDefaults(branding?.seo_defaults, null);
   const canonical = buildCanonicalHref(url.pathname, url.origin);
   const title = loaded.seo?.title || loaded.title;
-  const description = loaded.seo?.description || loaded.excerpt;
-  const rawImage = loaded.seo?.image || loaded.image;
+  const description =
+    loaded.seo?.description || loaded.excerpt || defaults.description || branding?.site_description || '';
+  const rawImage = loaded.seo?.image || loaded.image || defaults.ogImage;
   const image = absoluteUrl(rawImage, url.origin);
   return {
-    title: `${title} | ${brandName}`,
+    title: applyTitleTemplate(defaults.titleTemplate, { title, section: '', site: brandName }),
     meta: [
-      { name: 'description', content: description },
+      ...(description ? [{ name: 'description', content: description }] : []),
       { property: 'og:title', content: title },
-      { property: 'og:description', content: description },
+      ...(description ? [{ property: 'og:description', content: description }] : []),
       { property: 'og:type', content: 'website' },
       { property: 'og:url', content: canonical },
       ...(image ? [{ property: 'og:image', content: image }] : []),
+      { name: 'twitter:card', content: defaults.twitterCard || (image ? 'summary_large_image' : 'summary') },
     ],
     links: [{ rel: 'canonical', href: canonical }],
     scripts: loaded.seo?.json_ld

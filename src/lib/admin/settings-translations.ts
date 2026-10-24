@@ -22,28 +22,6 @@ export function serializeSettingsTranslations(map: SettingsTranslationsMap): str
   return JSON.stringify(map);
 }
 
-export function scalarTranslation(
-  map: SettingsTranslationsMap,
-  locale: string,
-  field: SettingsScalarField,
-): string {
-  const row = map[locale.toLowerCase()];
-  const val = row?.[field];
-  return typeof val === 'string' ? val : '';
-}
-
-export function setScalarTranslation(
-  map: SettingsTranslationsMap,
-  locale: string,
-  field: SettingsScalarField,
-  value: string,
-): SettingsTranslationsMap {
-  const code = locale.toLowerCase();
-  const next = { ...map };
-  next[code] = { ...(next[code] ?? {}), [field]: value };
-  return next;
-}
-
 export function secondarySiteLocales(
   all: SiteLanguageRow[] | undefined,
   defaultLocale: string | undefined,
@@ -51,18 +29,9 @@ export function secondarySiteLocales(
   return secondaryLocales(all, defaultLocale);
 }
 
-/** Read a nested marketing_site_content string from a locale translation row. */
-export function marketingTranslation(
-  map: SettingsTranslationsMap,
-  locale: string,
-  path: string[],
-): string {
-  const row = map[locale.toLowerCase()];
-  const marketing = row?.marketing_site_content;
-  if (!marketing || typeof marketing !== 'object' || Array.isArray(marketing)) {
-    return '';
-  }
-  let cur: unknown = marketing;
+/** Read a nested string (e.g. `['seo_defaults', 'meta_description']`) from a locale translation row. */
+export function pathTranslation(map: SettingsTranslationsMap, locale: string, path: string[]): string {
+  let cur: unknown = map[locale.toLowerCase()];
   for (const key of path) {
     if (!cur || typeof cur !== 'object' || Array.isArray(cur)) {
       return '';
@@ -72,8 +41,8 @@ export function marketingTranslation(
   return typeof cur === 'string' ? cur : '';
 }
 
-/** Set a nested marketing_site_content string on a locale translation row. */
-export function setMarketingTranslation(
+/** Set a nested string on a locale translation row, copying each object along the path. */
+export function setPathTranslation(
   map: SettingsTranslationsMap,
   locale: string,
   path: string[],
@@ -81,19 +50,13 @@ export function setMarketingTranslation(
 ): SettingsTranslationsMap {
   const code = locale.toLowerCase();
   const next = { ...map };
-  const row = { ...(next[code] ?? {}) };
-  const marketing =
-    row.marketing_site_content && typeof row.marketing_site_content === 'object' && !Array.isArray(row.marketing_site_content)
-      ? { ...(row.marketing_site_content as Record<string, unknown>) }
-      : {};
+  const row: Record<string, unknown> = { ...(next[code] ?? {}) };
 
-  let cur: Record<string, unknown> = marketing;
+  let cur: Record<string, unknown> = row;
   for (let i = 0; i < path.length - 1; i++) {
     const key = path[i];
     const child = cur[key];
-    if (!child || typeof child !== 'object' || Array.isArray(child)) {
-      cur[key] = {};
-    }
+    cur[key] = child && typeof child === 'object' && !Array.isArray(child) ? { ...(child as Record<string, unknown>) } : {};
     cur = cur[key] as Record<string, unknown>;
   }
   const leaf = path[path.length - 1];
@@ -101,7 +64,25 @@ export function setMarketingTranslation(
     cur[leaf] = value;
   }
 
-  row.marketing_site_content = marketing;
   next[code] = row;
   return next;
+}
+
+/** Read a nested marketing_site_content string from a locale translation row. */
+export function marketingTranslation(
+  map: SettingsTranslationsMap,
+  locale: string,
+  path: string[],
+): string {
+  return pathTranslation(map, locale, ['marketing_site_content', ...path]);
+}
+
+/** Set a nested marketing_site_content string on a locale translation row. */
+export function setMarketingTranslation(
+  map: SettingsTranslationsMap,
+  locale: string,
+  path: string[],
+  value: string,
+): SettingsTranslationsMap {
+  return setPathTranslation(map, locale, ['marketing_site_content', ...path], value);
 }

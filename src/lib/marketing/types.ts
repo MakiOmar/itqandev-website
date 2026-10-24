@@ -53,7 +53,7 @@ export interface BlogPost {
   /** Featured / cover image URL from CMS when present */
   coverImage?: string;
   coverImageAlt?: string;
-  seoMeta?: { title?: string; description?: string };
+  seoMeta?: MarketingPublicSeoMeta;
 }
 
 export interface Testimonial {

@@ -18,7 +18,12 @@ import { adminApiClient } from '../../../../../lib/admin/admin-api-client';
 import { API_ENDPOINTS } from '../../../../../lib/api/endpoints';
 import { nestedPagePath } from '../../../../../lib/admin/page-hierarchy';
 import type { AdminPage } from '../../../../../types/page';
-import { adminPageBuilderHref, useAppRoutes } from '../../../../../lib/constants/routes';
+import { adminPageBuilderHref, adminPageEditHref, useAppRoutes } from '../../../../../lib/constants/routes';
+import { ContentSeoCard } from '../../../../../components/admin/ContentSeoFields';
+import { putContentSeoIfFilled } from '../../../../../lib/admin/content-seo-put';
+import { getApiClient } from '../../../../../lib/api/client';
+import { showError as showErrorToast } from '../../../../../lib/utils/toast';
+import { emptyContentSeoDraft, type ContentSeoDraft } from '../../../../../types/content-seo';
 import {
   suggestUniqueContentSlug,
   useContentSlugAutosuggestForm,
@@ -103,6 +108,7 @@ export default component$(() => {
   const mediaTarget = useSignal<{ blockId: string; key: string; accept?: string } | null>(null);
   const activeSettingsLocale = useSignal(langConfig.value.default_locale || 'en');
   const saving = useSignal(false);
+  const seoDraft = useSignal<ContentSeoDraft>(emptyContentSeoDraft());
 
   const pageSlugAuto = useContentSlugAutosuggestForm('pages', formData, 'title');
 
@@ -161,6 +167,20 @@ export default component$(() => {
         exclude_from_search: excludeFromSearch.value,
       });
       if (result.success && result.id) {
+        try {
+          await putContentSeoIfFilled(
+            getApiClient(null),
+            'page',
+            result.id,
+            (editingLocaleDraft.value || effectivePrimary).toLowerCase(),
+            seoDraft.value,
+          );
+        } catch {
+          // The page exists; send the editor to its edit screen to retry the SEO fields.
+          showErrorToast(translateApp(lang, 'seo.saveAfterCreateFailed'));
+          await navigate(adminPageEditHref(lang, result.id));
+          return;
+        }
         await success(translateApp(lang, 'common.created'));
         await navigate(adminPageBuilderHref(lang, result.id));
       } else {
@@ -278,6 +298,18 @@ export default component$(() => {
               </div>
             </div>
           </div>
+
+          {/* Document head SEO lives on this form, never in the builder */}
+          <ContentSeoCard
+            class={ADMIN_FORM_CARD_CLASS}
+            lang={lang}
+            idPrefix="page-new-seo"
+            draft={seoDraft}
+            placeholders={{
+              meta_title: formData.value.title,
+              meta_description: formData.value.excerpt,
+            }}
+          />
 
           <div class={ADMIN_FORM_CARD_CLASS}>
             <p class="mb-4 rounded-lg border border-amber-200 bg-amber-50/80 px-3 py-2 text-xs text-amber-900 dark:border-amber-900 dark:bg-amber-950/30 dark:text-amber-100">
