@@ -31,6 +31,8 @@ import type { SiteContent } from '~/lib/marketing/types';
 import type { HomepageSectionInstance } from '~/lib/marketing/appearance-types';
 import { isSearchEngineIndexingEnabled, publicRobotsContent } from '~/lib/seo/search-engine-indexing';
 import { faviconLink } from '~/lib/seo/favicon';
+import { siteSocialMetaAdditions } from '~/lib/seo/social-meta';
+import { publicSiteName } from '~/lib/marketing/public-page-head';
 import { pathLooksLikeFrontPageAlias } from '~/lib/marketing/static-homepage';
 
 /** Loads the shell before any loader runs; answers 503 instead of placeholder content when the API is down. */
@@ -196,15 +198,27 @@ export default component$(() => {
   );
 });
 
-export const head: DocumentHead = ({ resolveValue }) => {
+export const head: DocumentHead = ({ resolveValue, head: routeHead, params, url }) => {
   try {
     const shell = resolveValue(usePublicShell);
+    const branding = shell.branding;
     const robots = publicRobotsContent({
-      siteIndexingEnabled: isSearchEngineIndexingEnabled(shell.branding?.search_engine_indexing),
+      siteIndexingEnabled: isSearchEngineIndexingEnabled(branding?.search_engine_indexing),
     });
-    const icon = faviconLink(shell.branding?.favicon);
+    const icon = faviconLink(branding?.favicon);
+    // Route heads resolve first, so only the social tags the page left out are added here
+    const social = siteSocialMetaAdditions({
+      meta: routeHead.meta,
+      title: routeHead.title,
+      canonicalHref: routeHead.links.find((l) => l.rel === 'canonical')?.href,
+      siteName: publicSiteName(branding),
+      lang: params.lang || uiLangFromUrlPathname(url.pathname),
+      siteLanguageCodes: (branding?.site_languages ?? []).map((l) => l.code),
+      facebookAppId: branding?.seo_defaults?.facebook_app_id,
+    });
+    const meta = [...(robots ? [{ name: 'robots', content: robots }] : []), ...social];
     return {
-      ...(robots ? { meta: [{ name: 'robots', content: robots }] } : {}),
+      ...(meta.length ? { meta } : {}),
       ...(icon ? { links: [icon] } : {}),
       // RouterHead's theme bootstrap reads this before first paint
       frontmatter: { defaultTheme: shell.branding?.default_theme },

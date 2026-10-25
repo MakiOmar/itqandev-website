@@ -17,7 +17,17 @@ export interface SeoDefaultsBlock {
 }
 
 export interface SeoDefaults extends SeoDefaultsBlock {
+  /** Public numeric id emitted as `fb:app_id` on every public page (global only). */
+  facebook_app_id: string;
   types: Record<SeoDefaultsType, SeoDefaultsBlock>;
+}
+
+const FACEBOOK_APP_ID_RE = /^\d{5,20}$/;
+
+/** Trimmed id when it looks like a Facebook App ID, otherwise ''. */
+export function parseFacebookAppId(raw: unknown): string {
+  const id = typeof raw === 'string' || typeof raw === 'number' ? String(raw).trim() : '';
+  return FACEBOOK_APP_ID_RE.test(id) ? id : '';
 }
 
 /** Keeps today's `Title | Section | Site` output when nothing is configured. */
@@ -35,7 +45,7 @@ export function emptySeoDefaults(): SeoDefaults {
   for (const type of SEO_DEFAULTS_TYPES) {
     types[type] = emptySeoDefaultsBlock();
   }
-  return { ...emptySeoDefaultsBlock(), types };
+  return { ...emptySeoDefaultsBlock(), facebook_app_id: '', types };
 }
 
 function parseTwitterCard(raw: unknown): SeoTwitterCard {
@@ -57,9 +67,13 @@ function parseBlock(raw: unknown): SeoDefaultsBlock {
 }
 
 export function parseSeoDefaults(raw: unknown): SeoDefaults {
-  const out: SeoDefaults = { ...parseBlock(raw), types: emptySeoDefaults().types };
-  const types =
-    raw && typeof raw === 'object' && !Array.isArray(raw) ? (raw as Record<string, unknown>).types : undefined;
+  const obj = raw && typeof raw === 'object' && !Array.isArray(raw) ? (raw as Record<string, unknown>) : undefined;
+  const out: SeoDefaults = {
+    ...parseBlock(raw),
+    facebook_app_id: parseFacebookAppId(obj?.facebook_app_id),
+    types: emptySeoDefaults().types,
+  };
+  const types = obj?.types;
   if (types && typeof types === 'object' && !Array.isArray(types)) {
     for (const type of SEO_DEFAULTS_TYPES) {
       out.types[type] = parseBlock((types as Record<string, unknown>)[type]);

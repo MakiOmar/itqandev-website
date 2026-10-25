@@ -951,6 +951,8 @@
     "seoTypeBlogPost": "Blog posts",
     "seoTypeProject": "Projects",
     "seoTypeService": "Services",
+    "seoFacebookAppId": "Facebook App ID",
+    "seoFacebookAppIdHint": "Optional. Numeric App ID from Meta for Developers, added as fb:app_id on every public page.",
     "marketingTitle": "Marketing content",
     "marketingSubtitle": "Edit public page copy (about, FAQ, pricing, contact display text). Services come from the Services module.",
     "marketingAbout": "About page",

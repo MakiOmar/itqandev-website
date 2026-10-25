@@ -8,6 +8,7 @@ import { SeoDefaultsBlockFields } from '../../../../../components/admin/SeoDefau
 import { secondarySiteLocales } from '../../../../../lib/admin/settings-translations';
 import { parseSeoDefaults, SEO_DEFAULTS_TYPES, type SeoDefaultsType } from '../../../../../lib/seo/seo-defaults';
 import { SettingsSaveButton, useSettings, useUpdateSettings } from '../layout';
+import { ADMIN_FORM_INPUT_CLASS, ADMIN_FORM_LABEL_CLASS } from '../../../../../lib/admin/native-select-classes';
 
 const TYPE_LABEL_KEYS: Record<SeoDefaultsType, string> = {
   page: 'settings.seoTypePage',
@@ -67,6 +68,28 @@ export default component$(() => {
               block={defaults}
               translationPath={['seo_defaults']}
             />
+            {/* Facebook App ID: public id for fb:app_id, shared by every language */}
+            <div class="mt-4 md:w-1/2">
+              <label for="seo-defaults-facebook-app-id" class={ADMIN_FORM_LABEL_CLASS}>
+                {translateApp(lang, 'settings.seoFacebookAppId')}
+              </label>
+              <input
+                id="seo-defaults-facebook-app-id"
+                type="text"
+                inputMode="numeric"
+                pattern="\d{5,20}"
+                maxLength={20}
+                autoComplete="off"
+                class={ADMIN_FORM_INPUT_CLASS}
+                value={defaults.facebook_app_id}
+                onInput$={(_, el) => {
+                  defaults.facebook_app_id = el.value.replace(/\D/g, '');
+                }}
+              />
+              <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                {translateApp(lang, 'settings.seoFacebookAppIdHint')}
+              </p>
+            </div>
           </section>
 
           {/* Per content type overrides; empty fields inherit the global defaults */}

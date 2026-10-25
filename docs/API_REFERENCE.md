@@ -549,7 +549,7 @@ Also available: `GET /api/health` (minimal `{ "status": "ok" }`) and Laravel’s
 
 Returns **locale-resolved** branding, `site_languages`, resolved **`typography`**, **`search_engine_indexing`** (boolean, default `true`), and **`default_theme`** (`system` | `light` | `dark`, default `system`; set via `PUT /api/settings`) for the marketing shell (see `SettingsController::publicMeta`, `SiteSettingsPresenter`, and `TypographyResolver`).
 
-It also returns **`seo_defaults`** (`{ title_template, meta_description, og_image, twitter_card, types: { page, blog_post, project, service } }`, localized; `og_image` absolute or `null`). The marketing head applies it as the fallback cascade described in `docs/CONFIGURATION.md` → *SEO defaults*.
+It also returns **`seo_defaults`** (`{ title_template, meta_description, og_image, twitter_card, facebook_app_id, types: { page, blog_post, project, service } }`, localized; `og_image` absolute or `null`; `facebook_app_id` is a digit string or `''`, same for every locale). The marketing head applies it as the fallback cascade described in `docs/CONFIGURATION.md` → *SEO defaults*.
 
 It also returns **`favicon`** (Settings → Branding favicon URL, or `null`). Public and dashboard layouts add it as `<link rel="icon">`; the bundled `/favicon.svg` is used only when it is empty.
 

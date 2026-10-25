@@ -951,6 +951,8 @@
     "seoTypeBlogPost": "مقالات المدونة",
     "seoTypeProject": "المشاريع",
     "seoTypeService": "الخدمات",
+    "seoFacebookAppId": "معرّف تطبيق فيسبوك",
+    "seoFacebookAppIdHint": "اختياري. المعرّف الرقمي للتطبيق من Meta for Developers، ويُضاف كـ fb:app_id في كل الصفحات العامة.",
     "marketingTitle": "محتوى التسويق",
     "marketingSubtitle": "تحرير نصوص الصفحات العامة (من نحن، الأسئلة الشائعة، الأسعار، نص العرض للتواصل). الخدمات تأتي من وحدة الخدمات.",
     "marketingAbout": "صفحة من نحن",
