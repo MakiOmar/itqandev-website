@@ -133,9 +133,12 @@ export function itqandevAddons({ root }) {
     enforce: 'pre',
     addonPackages: addons.map((a) => a.name),
     config() {
+      if (addons.length === 0) return undefined;
       const linked = linkedAddonDirs(root, addons);
-      if (linked.length === 0) return undefined;
-      return { server: { fs: { allow: [searchForWorkspaceRoot(root), ...linked] } } };
+      // esbuild pre-bundling ignores plugin resolveId, so `@itqandev/host/*` would fail to resolve.
+      const config = { optimizeDeps: { exclude: addons.map((a) => a.name) } };
+      if (linked.length > 0) config.server = { fs: { allow: [searchForWorkspaceRoot(root), ...linked] } };
+      return config;
     },
     resolveId(id) {
       if (id === ADDON_WIDGETS_ID || id === ADDON_ADMIN_ID) return RESOLVED_PREFIX + id;

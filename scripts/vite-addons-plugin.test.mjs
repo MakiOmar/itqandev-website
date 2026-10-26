@@ -22,6 +22,7 @@ test('no installed addon yields empty virtual modules', () => {
   writeFileSync(join(root, 'package.json'), JSON.stringify({ dependencies: { 'plain-package': '1.0.0' } }));
   const plugin = itqandevAddons({ root });
   assert.deepEqual(plugin.addonPackages, []);
+  assert.equal(plugin.config(), undefined);
   assert.equal(plugin.load('\0' + ADDON_WIDGETS_ID), 'export const addonWidgets = {  };\nexport const addonKits = {  };\n');
   assert.equal(plugin.load('\0' + ADDON_ADMIN_ID), 'export const addonAdminScreens = {  };\n');
 });
@@ -80,6 +81,17 @@ test('only addons outside the app folder need a dev-server allow entry', () => {
     { name: '@acme/linked-addon', module: 'linked', widgets: null, admin: null },
   ];
   assert.deepEqual(linkedAddonDirs(root, addons), [realpathSync(outside)]);
+});
+
+test('installed addons are excluded from dependency pre-bundling', () => {
+  const root = mkdtempSync(join(tmpdir(), 'addon-optimize-'));
+  mkdirSync(join(root, 'node_modules', 'real-addon'), { recursive: true });
+  writeFileSync(join(root, 'package.json'), JSON.stringify({ dependencies: { 'real-addon': '1.0.0' } }));
+  writeFileSync(
+    join(root, 'node_modules', 'real-addon', 'package.json'),
+    JSON.stringify({ name: 'real-addon', itqandev: { addon: { module: 'real', widgets: './widgets' } } }),
+  );
+  assert.deepEqual(itqandevAddons({ root }).config(), { optimizeDeps: { exclude: ['real-addon'] } });
 });
 
 test('package.json files saved with a BOM are still read', () => {
