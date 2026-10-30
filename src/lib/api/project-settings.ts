@@ -2,52 +2,14 @@ import type { ApiResponse } from './types';
 import { API_ENDPOINTS } from './endpoints';
 import { getApiClient } from './client';
 import type { AddonNavItem } from '../addons/types';
+import { DEFAULT_FEATURE_MODULES, UNAVAILABLE_FEATURE_MODULES, type FeatureModuleKey } from './feature-modules';
 
-/** Backend config/features.php module keys (GET /api/settings `features`). */
-export type FeatureModuleKey =
-  | 'projects'
-  | 'categories'
-  | 'skills'
-  | 'services'
-  | 'testimonials'
-  | 'blog'
-  | 'pages'
-  | 'forms'
-  | 'media'
-  | 'users'
-  | 'seo'
-  | 'overlays';
-
-/** Defaults when API is unavailable; mirrors backend canonical keys (all enabled). */
-export const DEFAULT_FEATURE_MODULES: Record<FeatureModuleKey, boolean> = {
-  projects: true,
-  categories: true,
-  skills: true,
-  services: true,
-  testimonials: true,
-  blog: true,
-  pages: true,
-  forms: true,
-  media: true,
-  users: true,
-  seo: true,
-  overlays: true,
-};
-
-export function isFeatureModuleEnabled(
-  features: Record<string, boolean> | undefined,
-  key: FeatureModuleKey,
-): boolean {
-  if (!features || !(key in features)) {
-    return true;
-  }
-  return features[key] !== false;
-}
-
-/** Addon modules are off unless the API explicitly reports them on. */
-export function isAddonModuleEnabled(features: Record<string, boolean> | undefined, key: string): boolean {
-  return features?.[key] === true;
-}
+export {
+  DEFAULT_FEATURE_MODULES,
+  isAddonModuleEnabled,
+  isFeatureModuleEnabled,
+  type FeatureModuleKey,
+} from './feature-modules';
 
 /**
  * Project settings interface
@@ -77,6 +39,9 @@ export interface ProjectSettings {
   /** Max upload file size in bytes (from server config). Used for client-side validation before submit. */
   max_file_size?: number;
 
+  /** Dashboard could not read settings or site-meta; every module is reported off. */
+  settingsUnavailable?: boolean;
+
   // Custom project settings
   [key: string]: any;
 }
@@ -89,6 +54,13 @@ export const defaultProjectSettings: ProjectSettings = {
   name: 'Dashboard',
   description: '',
   features: { ...DEFAULT_FEATURE_MODULES },
+};
+
+/** Dashboard settings when the backend cannot be reached (admin layout shows a notice). */
+export const unavailableProjectSettings: ProjectSettings = {
+  ...defaultProjectSettings,
+  features: { ...UNAVAILABLE_FEATURE_MODULES },
+  settingsUnavailable: true,
 };
 
 function normalizeProjectSettings(raw: Record<string, any>): ProjectSettings {

@@ -223,7 +223,9 @@
     "manageCategories": "إدارة التصنيفات",
     "manageCategoriesDesc": "إضافة أو تعديل التصنيفات",
     "manageSkills": "إدارة المهارات",
-    "manageSkillsDesc": "إضافة أو تعديل المهارات"
+    "manageSkillsDesc": "إضافة أو تعديل المهارات",
+    "backendUnavailableTitle": "تعذّر الوصول إلى واجهة الخادم",
+    "backendUnavailableBody": "تعذّر تحميل الإعدادات، لذلك أُخفيت أقسام المحتوى. تأكد من تشغيل خادم Laravel ومن أن عنوان الواجهة في الموقع (VITE_API_PROXY_TARGET / VITE_SSR_API_BASE_URL) يشير إليه، ثم أعد تحميل الصفحة."
   },
   "projects": {
     "gallery": {

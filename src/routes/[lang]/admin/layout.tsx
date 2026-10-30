@@ -56,9 +56,10 @@ export const head: DocumentHead = ({ resolveValue }) => {
 };
 
 /**
- * Redirect when visiting a disabled feature module admin route directly.
+ * Redirect when visiting a disabled feature module admin route directly. An unreachable backend
+ * reports every module off, so module pages redirect to the dashboard home and its notice.
  */
-export const useAdminFeatureModuleGuard = routeLoader$(async ({ cookie, request, url, redirect: redirectFn }) => {
+export const useAdminFeatureModuleGuard = routeLoader$(async ({ cookie, url, redirect: redirectFn, resolveValue }) => {
   const module = getFeatureModuleForAdminPath(url.pathname);
   if (!module) {
     return null;
@@ -71,14 +72,8 @@ export const useAdminFeatureModuleGuard = routeLoader$(async ({ cookie, request,
     return null;
   }
 
-  let enabled = true;
-  try {
-    const settings = await loadAdminSettings(extractCookieHeader(cookie, request));
-    enabled = isFeatureModuleEnabled(settings?.features, module);
-  } catch {
-    // Settings unavailable: let the page load and surface its own errors.
-  }
-  if (!enabled) {
+  const settings = await resolveValue(useAdminSettings);
+  if (!isFeatureModuleEnabled(settings.features, module)) {
     throw redirectFn(302, R.ADMIN.HOME);
   }
 

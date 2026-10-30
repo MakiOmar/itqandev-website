@@ -12,6 +12,7 @@ import { ProjectSettingsContext } from '../../stores/project-settings-store';
 import { getLocalizedRoutes } from '../../lib/constants/routes';
 import { AdminSessionContext } from '../../stores/admin-session-context';
 import { DarkModeToggle } from '../common/DarkModeToggle';
+import { BackendUnavailableNotice } from './BackendUnavailableNotice';
 
 function isAdminPageBuilderPath(pathname: string): boolean {
   const logical = stripUiLocaleFromPathname(pathname.replace(/\/+$/, '') || '/');
@@ -201,6 +202,7 @@ export const AuthenticatedAdminLayout = component$((props: { settings?: ProjectS
           <Header onMenuClick={toggleSidebar} />
           <main class="flex-1 overflow-y-auto p-4 sm:p-6 md:p-8 lg:p-12">
             <div class="max-w-7xl mx-auto">
+              {settingsStore.settings.settingsUnavailable && <BackendUnavailableNotice />}
               <Slot />
             </div>
           </main>

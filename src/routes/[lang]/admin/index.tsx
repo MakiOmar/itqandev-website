@@ -1,4 +1,4 @@
-import { component$, useSignal, useVisibleTask$ } from '@builder.io/qwik';
+import { component$, useContext, useSignal, useVisibleTask$ } from '@builder.io/qwik';
 import type { DocumentHead } from '@builder.io/qwik-city';
 import { routeLoader$, useLocation } from '@builder.io/qwik-city';
 import { Link } from '@builder.io/qwik-city';
@@ -14,6 +14,8 @@ import {
   fetchDashboardMetrics,
   type DashboardMetrics,
 } from '../../../lib/admin/dashboard-metrics';
+import { isFeatureModuleEnabled } from '../../../lib/api/feature-modules';
+import { ProjectSettingsContext } from '../../../stores/project-settings-store';
 
 /**
  * Dashboard metrics route loader - loads real data from API
@@ -51,6 +53,13 @@ export default component$(() => {
   const metrics = useSignal<DashboardMetrics>(metricsLoader.value);
   const userSession = useUserSession();
   const userName = userSession.value?.user?.name || 'User';
+  const features = useContext(ProjectSettingsContext).settings.features;
+  const showProjects = isFeatureModuleEnabled(features, 'projects');
+  const showCategories = isFeatureModuleEnabled(features, 'categories');
+  const showSkills = isFeatureModuleEnabled(features, 'skills');
+  const showTestimonials = isFeatureModuleEnabled(features, 'testimonials');
+  const showStats = showProjects || showCategories || showSkills || showTestimonials;
+  const showQuickActions = showProjects || showCategories || showSkills;
 
   // SSR may return zeros when Node cannot reach WAMP; hydrate from browser /api proxy.
   useVisibleTask$(async ({ track }) => {
@@ -92,101 +101,119 @@ export default component$(() => {
           </p>
         </div>
 
-        {/* Statistics Cards - Matching Vue Dashboard */}
-        <div class="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-          {/* Projects Card */}
-          <div class="rounded-lg border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-800 dark:bg-gray-800">
-            <div class="flex items-center justify-between">
-              <div>
-                <p class="text-sm font-medium text-gray-600 dark:text-gray-400">{translateApp(lang, 'dashboard.projects')}</p>
-                <p class="mt-2 text-3xl font-bold text-gray-900 dark:text-gray-100">{metrics.value.projects.total}</p>
-                <div class="mt-2 flex gap-4 text-xs text-gray-500 dark:text-gray-400">
-                  <span>{translateApp(lang, 'dashboard.published')}: {metrics.value.projects.published}</span>
-                  <span>{translateApp(lang, 'dashboard.draft')}: {metrics.value.projects.draft}</span>
+        {/* Statistics Cards - one per enabled module (config/features.php) */}
+        {showStats && (
+          <div class="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+            {/* Projects Card */}
+            {showProjects && (
+              <div class="rounded-lg border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-800 dark:bg-gray-800">
+                <div class="flex items-center justify-between">
+                  <div>
+                    <p class="text-sm font-medium text-gray-600 dark:text-gray-400">{translateApp(lang, 'dashboard.projects')}</p>
+                    <p class="mt-2 text-3xl font-bold text-gray-900 dark:text-gray-100">{metrics.value.projects.total}</p>
+                    <div class="mt-2 flex gap-4 text-xs text-gray-500 dark:text-gray-400">
+                      <span>{translateApp(lang, 'dashboard.published')}: {metrics.value.projects.published}</span>
+                      <span>{translateApp(lang, 'dashboard.draft')}: {metrics.value.projects.draft}</span>
+                    </div>
+                  </div>
+                  <div class="rounded-full bg-primary-100 p-3 dark:bg-primary-900/20">
+                    <span class="text-2xl">💼</span>
+                  </div>
                 </div>
               </div>
-              <div class="rounded-full bg-primary-100 p-3 dark:bg-primary-900/20">
-                <span class="text-2xl">💼</span>
+            )}
+
+            {/* Categories Card */}
+            {showCategories && (
+              <div class="rounded-lg border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-800 dark:bg-gray-800">
+                <div class="flex items-center justify-between">
+                  <div>
+                    <p class="text-sm font-medium text-gray-600 dark:text-gray-400">{translateApp(lang, 'dashboard.categories')}</p>
+                    <p class="mt-2 text-3xl font-bold text-gray-900 dark:text-gray-100">{metrics.value.categories.total}</p>
+                  </div>
+                  <div class="rounded-full bg-blue-100 p-3 dark:bg-blue-900/20">
+                    <span class="text-2xl">📁</span>
+                  </div>
+                </div>
               </div>
+            )}
+
+            {/* Skills Card */}
+            {showSkills && (
+              <div class="rounded-lg border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-800 dark:bg-gray-800">
+                <div class="flex items-center justify-between">
+                  <div>
+                    <p class="text-sm font-medium text-gray-600 dark:text-gray-400">{translateApp(lang, 'dashboard.skills')}</p>
+                    <p class="mt-2 text-3xl font-bold text-gray-900 dark:text-gray-100">{metrics.value.skills.total}</p>
+                  </div>
+                  <div class="rounded-full bg-green-100 p-3 dark:bg-green-900/20">
+                    <span class="text-2xl">⚡</span>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Testimonials Card */}
+            {showTestimonials && (
+              <div class="rounded-lg border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-800 dark:bg-gray-800">
+                <div class="flex items-center justify-between">
+                  <div>
+                    <p class="text-sm font-medium text-gray-600 dark:text-gray-400">{translateApp(lang, 'dashboard.testimonials')}</p>
+                    <p class="mt-2 text-3xl font-bold text-gray-900 dark:text-gray-100">{metrics.value.testimonials.total}</p>
+                  </div>
+                  <div class="rounded-full bg-yellow-100 p-3 dark:bg-yellow-900/20">
+                    <span class="text-2xl">⭐</span>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Quick Actions Section - links only for enabled modules */}
+        {showQuickActions && (
+          <div class="mt-8 rounded-lg border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-800 dark:bg-gray-800">
+            <h2 class="mb-4 text-lg font-semibold text-gray-900 dark:text-gray-100">{translateApp(lang, 'dashboard.quickActions')}</h2>
+            <div class="grid gap-4 md:grid-cols-3">
+              {showProjects && (
+                <Link
+                  href={R.ADMIN.PROJECTS_NEW}
+                  class="flex items-center gap-3 rounded-lg border border-gray-200 p-4 transition-colors hover:bg-gray-50 dark:border-gray-700 dark:hover:bg-gray-700"
+                >
+                  <span class="text-2xl">➕</span>
+                  <div>
+                    <p class="font-medium text-gray-900 dark:text-gray-100">{translateApp(lang, 'dashboard.addNewProject')}</p>
+                    <p class="text-sm text-gray-500 dark:text-gray-400">{translateApp(lang, 'dashboard.addNewProjectDesc')}</p>
+                  </div>
+                </Link>
+              )}
+              {showCategories && (
+                <Link
+                  href={R.ADMIN.CATEGORIES}
+                  class="flex items-center gap-3 rounded-lg border border-gray-200 p-4 transition-colors hover:bg-gray-50 dark:border-gray-700 dark:hover:bg-gray-700"
+                >
+                  <span class="text-2xl">📁</span>
+                  <div>
+                    <p class="font-medium text-gray-900 dark:text-gray-100">{translateApp(lang, 'dashboard.manageCategories')}</p>
+                    <p class="text-sm text-gray-500 dark:text-gray-400">{translateApp(lang, 'dashboard.manageCategoriesDesc')}</p>
+                  </div>
+                </Link>
+              )}
+              {showSkills && (
+                <Link
+                  href={R.ADMIN.SKILLS}
+                  class="flex items-center gap-3 rounded-lg border border-gray-200 p-4 transition-colors hover:bg-gray-50 dark:border-gray-700 dark:hover:bg-gray-700"
+                >
+                  <span class="text-2xl">⚡</span>
+                  <div>
+                    <p class="font-medium text-gray-900 dark:text-gray-100">{translateApp(lang, 'dashboard.manageSkills')}</p>
+                    <p class="text-sm text-gray-500 dark:text-gray-400">{translateApp(lang, 'dashboard.manageSkillsDesc')}</p>
+                  </div>
+                </Link>
+              )}
             </div>
           </div>
-
-          {/* Categories Card */}
-          <div class="rounded-lg border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-800 dark:bg-gray-800">
-            <div class="flex items-center justify-between">
-              <div>
-                <p class="text-sm font-medium text-gray-600 dark:text-gray-400">{translateApp(lang, 'dashboard.categories')}</p>
-                <p class="mt-2 text-3xl font-bold text-gray-900 dark:text-gray-100">{metrics.value.categories.total}</p>
-              </div>
-              <div class="rounded-full bg-blue-100 p-3 dark:bg-blue-900/20">
-                <span class="text-2xl">📁</span>
-              </div>
-            </div>
-          </div>
-
-          {/* Skills Card */}
-          <div class="rounded-lg border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-800 dark:bg-gray-800">
-            <div class="flex items-center justify-between">
-              <div>
-                <p class="text-sm font-medium text-gray-600 dark:text-gray-400">{translateApp(lang, 'dashboard.skills')}</p>
-                <p class="mt-2 text-3xl font-bold text-gray-900 dark:text-gray-100">{metrics.value.skills.total}</p>
-              </div>
-              <div class="rounded-full bg-green-100 p-3 dark:bg-green-900/20">
-                <span class="text-2xl">⚡</span>
-              </div>
-            </div>
-          </div>
-
-          {/* Testimonials Card */}
-          <div class="rounded-lg border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-800 dark:bg-gray-800">
-            <div class="flex items-center justify-between">
-              <div>
-                <p class="text-sm font-medium text-gray-600 dark:text-gray-400">{translateApp(lang, 'dashboard.testimonials')}</p>
-                <p class="mt-2 text-3xl font-bold text-gray-900 dark:text-gray-100">{metrics.value.testimonials.total}</p>
-              </div>
-              <div class="rounded-full bg-yellow-100 p-3 dark:bg-yellow-900/20">
-                <span class="text-2xl">⭐</span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Quick Actions Section - Matching Vue Dashboard */}
-        <div class="mt-8 rounded-lg border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-800 dark:bg-gray-800">
-          <h2 class="mb-4 text-lg font-semibold text-gray-900 dark:text-gray-100">{translateApp(lang, 'dashboard.quickActions')}</h2>
-          <div class="grid gap-4 md:grid-cols-3">
-            <Link
-              href={R.ADMIN.PROJECTS_NEW}
-              class="flex items-center gap-3 rounded-lg border border-gray-200 p-4 transition-colors hover:bg-gray-50 dark:border-gray-700 dark:hover:bg-gray-700"
-            >
-              <span class="text-2xl">➕</span>
-              <div>
-                <p class="font-medium text-gray-900 dark:text-gray-100">{translateApp(lang, 'dashboard.addNewProject')}</p>
-                <p class="text-sm text-gray-500 dark:text-gray-400">{translateApp(lang, 'dashboard.addNewProjectDesc')}</p>
-              </div>
-            </Link>
-            <Link
-              href={R.ADMIN.CATEGORIES}
-              class="flex items-center gap-3 rounded-lg border border-gray-200 p-4 transition-colors hover:bg-gray-50 dark:border-gray-700 dark:hover:bg-gray-700"
-            >
-              <span class="text-2xl">📁</span>
-              <div>
-                <p class="font-medium text-gray-900 dark:text-gray-100">{translateApp(lang, 'dashboard.manageCategories')}</p>
-                <p class="text-sm text-gray-500 dark:text-gray-400">{translateApp(lang, 'dashboard.manageCategoriesDesc')}</p>
-              </div>
-            </Link>
-            <Link
-              href={R.ADMIN.SKILLS}
-              class="flex items-center gap-3 rounded-lg border border-gray-200 p-4 transition-colors hover:bg-gray-50 dark:border-gray-700 dark:hover:bg-gray-700"
-            >
-              <span class="text-2xl">⚡</span>
-              <div>
-                <p class="font-medium text-gray-900 dark:text-gray-100">{translateApp(lang, 'dashboard.manageSkills')}</p>
-                <p class="text-sm text-gray-500 dark:text-gray-400">{translateApp(lang, 'dashboard.manageSkillsDesc')}</p>
-              </div>
-            </Link>
-          </div>
-        </div>
+        )}
       </div>
     </>
   );

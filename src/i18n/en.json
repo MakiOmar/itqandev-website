@@ -223,7 +223,9 @@
     "manageCategories": "Manage Categories",
     "manageCategoriesDesc": "Add or edit categories",
     "manageSkills": "Manage Skills",
-    "manageSkillsDesc": "Add or edit skills"
+    "manageSkillsDesc": "Add or edit skills",
+    "backendUnavailableTitle": "Can't reach the backend API",
+    "backendUnavailableBody": "Settings could not be loaded, so content sections are hidden. Check that the Laravel server is running and that the website's API URL (VITE_API_PROXY_TARGET / VITE_SSR_API_BASE_URL) points to it, then reload."
   },
   "projects": {
     "gallery": {
