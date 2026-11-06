@@ -637,7 +637,7 @@ When `mode` is `custom`, `google_css_href` is omitted and `sources` maps format 
 - `theme_body_mode` — `replace` (archive template renders the whole index page) or `wrap` (template frames the CMS page content); `null` without a body.
 - `theme_context` / `theme_template_id` — resolved route context and winning published template id.
 
-Cached server-side (~300s) per `locale` + presentation locale + path + theme_context key. Legacy endpoints remain available for tools and gradual migration.
+Cached server-side (~300s) per `locale` + presentation locale + canonical path (lowercase, locale prefix stripped) + `theme_context`. Unknown `theme_context` values are ignored. A `path` that names no published document (unknown route or missing slug) gets the shared `not_found` shell, whatever `theme_context` says. The payload also follows content, menu and global versions, so edits show on the next request. Legacy endpoints remain available for tools and gradual migration.
 
 ### Addons
 
@@ -757,7 +757,7 @@ Public shell resolves header/footer via **record FK → theme template slot → 
 
 Returns localized marketing blocks from `marketing_site_content` in project settings: `pricingTiers`, `faq`, `contact`, `about`, `techStack`.
 
-**Locale:** `locale` query and/or `X-Content-Locale`. Merges `settings_translations.{locale}.marketing_site_content` onto primary content with primary fallback for missing fields. Cached per locale (~300s).
+**Locale:** `locale` query and/or `X-Content-Locale`. Merges `settings_translations.{locale}.marketing_site_content` onto primary content with primary fallback for missing fields. A `locale` that is not an enabled site language falls back to the default. Cached per locale (~300s).
 
 ### GET `/api/public/projects`
 
