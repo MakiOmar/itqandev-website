@@ -862,8 +862,8 @@ Requires permission **`manage pages`** for admin routes. Public routes are guest
 | PUT | `/api/v1/pages/{id}` | Update page |
 | DELETE | `/api/v1/pages/{id}` | Delete page |
 | POST | `/api/v1/pages/bulk-delete` | Bulk delete `{ "ids": [...] }` |
-| GET | `/api/public/pages` | Published pages for marketing (**omits** `exclude_from_search`); includes `path` / `public_path` |
-| GET | `/api/public/pages/{slug}` | Published page detail by unique slug (nested URLs still resolve by leaf slug). Includes `exclude_from_search` and the optional `subtitle` (also on the list). `canonical_query` (sorted string list, usually `[]`) holds the query keys that widgets on the page declare as listing filters (e.g. a product catalog's `category`). The page canonical keeps only those. `{{post.*}}` tags in `sections` resolve against the page. Direct URL works even when excluded from the list. |
+| GET | `/api/public/pages` | Published pages for marketing (**omits** `exclude_from_search`); includes `path` / `public_path`. Paths are built from **published** ancestors only: under a draft parent, `path` is the page's own slug and `parent_id` is `null` |
+| GET | `/api/public/pages/{slug}` | Published page detail by unique slug (nested URLs still resolve by leaf slug). Includes `exclude_from_search` and the optional `subtitle` (also on the list). `canonical_query` (sorted string list, usually `[]`) holds the query keys that widgets on the page declare as listing filters (e.g. a product catalog's `category`). The page canonical keeps only those. `{{post.*}}` tags in `sections` resolve against the page in the requested locale; `{{page.parent.*}}` is empty when the parent is a draft. `path` / `public_path` / `parent_id` follow the same published-ancestor rule as the list. Direct URL works even when excluded from the list. |
 
 Seeded slug **`contact`** (`ContactPageSeeder`) is the page-builder layout for the marketing contact experience. Public `/{lang}/contact/` loads that CMS page when the pages module is enabled; otherwise it uses the legacy hard-coded form + office card.
 
