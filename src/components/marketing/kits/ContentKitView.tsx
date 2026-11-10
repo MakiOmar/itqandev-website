@@ -140,65 +140,78 @@ export const ContentKitView = component$<ContentKitProps>((props) => {
     }
     case 'pricing': {
       const tiers = Array.isArray(s.tiers) ? (s.tiers as Array<Record<string, unknown>>) : [];
+      const cards = (
+        <>
+          <div class="mx-auto max-w-2xl text-center">
+            <h2 class="text-3xl font-bold text-slate-900 dark:text-white">{str(s, 'title', 'Pricing')}</h2>
+            {str(s, 'subtitle') ? (
+              <p class="mt-3 text-slate-600 dark:text-slate-300">{str(s, 'subtitle')}</p>
+            ) : null}
+          </div>
+          <div class="mt-10 grid gap-6 lg:grid-cols-3">
+            {tiers.map((tier, i) => {
+              const highlighted = tier.highlighted === true || tier.highlighted === 'true';
+              const features = String(tier.features || '')
+                .split('\n')
+                .map((x) => x.trim())
+                .filter(Boolean);
+              const rawUrl = String(tier.cta_url || '').trim();
+              const href = localizeInAppHref(props.uiLocale, rawUrl || '/contact');
+              const external = /^https?:\/\//i.test(href);
+              return (
+                <Card
+                  key={i}
+                  class={
+                    highlighted
+                      ? 'border-primary-500 ring-2 ring-primary-500/30'
+                      : undefined
+                  }
+                >
+                  <div class="p-6">
+                    {highlighted ? (
+                      <span class="mb-2 inline-block rounded-full bg-primary-100 px-2 py-0.5 text-xs font-semibold text-primary-800 dark:bg-primary-900/50 dark:text-primary-200">
+                        Popular
+                      </span>
+                    ) : null}
+                    <h3 class="text-xl font-bold text-slate-900 dark:text-white">
+                      {String(tier.name || '')}
+                    </h3>
+                    <p class="mt-2 text-3xl font-bold text-slate-900 dark:text-white">
+                      {String(tier.price || '')}
+                      {tier.period ? (
+                        <span class="text-base font-normal text-slate-500"> / {String(tier.period)}</span>
+                      ) : null}
+                    </p>
+                    <p class="mt-2 text-sm text-slate-600 dark:text-slate-400">
+                      {String(tier.description || '')}
+                    </p>
+                    <ul class="mt-4 space-y-2 text-sm text-slate-700 dark:text-slate-300">
+                      {features.map((f, fi) => (
+                        <li key={fi}>✓ {f}</li>
+                      ))}
+                    </ul>
+                    <div class="mt-6">
+                      <Button
+                        href={href}
+                        variant={highlighted ? 'primary' : 'outline'}
+                        class="w-full"
+                        target={external ? '_blank' : undefined}
+                        rel={external ? 'noopener noreferrer' : undefined}
+                      >
+                        {String(tier.cta || 'Get started')}
+                      </Button>
+                    </div>
+                  </div>
+                </Card>
+              );
+            })}
+          </div>
+        </>
+      );
+      if (props.embedded) return cards;
       return (
         <Section>
-          <Container>
-            <div class="mx-auto max-w-2xl text-center">
-              <h2 class="text-3xl font-bold text-slate-900 dark:text-white">{str(s, 'title', 'Pricing')}</h2>
-              {str(s, 'subtitle') ? (
-                <p class="mt-3 text-slate-600 dark:text-slate-300">{str(s, 'subtitle')}</p>
-              ) : null}
-            </div>
-            <div class="mt-10 grid gap-6 lg:grid-cols-3">
-              {tiers.map((tier, i) => {
-                const highlighted = tier.highlighted === true || tier.highlighted === 'true';
-                const features = String(tier.features || '')
-                  .split('\n')
-                  .map((x) => x.trim())
-                  .filter(Boolean);
-                return (
-                  <Card
-                    key={i}
-                    class={
-                      highlighted
-                        ? 'border-primary-500 ring-2 ring-primary-500/30'
-                        : undefined
-                    }
-                  >
-                    <div class="p-6">
-                      {highlighted ? (
-                        <span class="mb-2 inline-block rounded-full bg-primary-100 px-2 py-0.5 text-xs font-semibold text-primary-800 dark:bg-primary-900/50 dark:text-primary-200">
-                          Popular
-                        </span>
-                      ) : null}
-                      <h3 class="text-xl font-bold text-slate-900 dark:text-white">
-                        {String(tier.name || '')}
-                      </h3>
-                      <p class="mt-2 text-3xl font-bold text-slate-900 dark:text-white">
-                        {String(tier.price || '')}
-                        {tier.period ? (
-                          <span class="text-base font-normal text-slate-500"> / {String(tier.period)}</span>
-                        ) : null}
-                      </p>
-                      <p class="mt-2 text-sm text-slate-600 dark:text-slate-400">
-                        {String(tier.description || '')}
-                      </p>
-                      <ul class="mt-4 space-y-2 text-sm text-slate-700 dark:text-slate-300">
-                        {features.map((f, fi) => (
-                          <li key={fi}>✓ {f}</li>
-                        ))}
-                      </ul>
-                      <div class="mt-6">
-                        <Button href="/contact" variant={highlighted ? 'primary' : 'outline'} class="w-full">
-                          {String(tier.cta || 'Get started')}
-                        </Button>
-                      </div>
-                    </div>
-                  </Card>
-                );
-              })}
-            </div>
-          </Container>
+          <Container>{cards}</Container>
         </Section>
       );
     }
