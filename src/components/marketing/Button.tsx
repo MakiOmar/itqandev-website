@@ -6,6 +6,8 @@ export interface ButtonProps extends Omit<QwikIntrinsicElements['button'], 'clas
   variant?: ButtonVariant;
   href?: string;
   class?: string;
+  target?: QwikIntrinsicElements['a']['target'];
+  rel?: QwikIntrinsicElements['a']['rel'];
 }
 
 const variantClasses: Record<ButtonVariant, string> = {
@@ -19,14 +21,27 @@ const variantClasses: Record<ButtonVariant, string> = {
     'light:text-slate-900 light:hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800',
 };
 
-export const Button = component$<ButtonProps>(({ variant = 'primary', href, class: className = '', ...props }) => {
+export const Button = component$<ButtonProps>(({
+  variant = 'primary',
+  href,
+  target,
+  rel,
+  class: className = '',
+  ...props
+}) => {
   const base =
     'inline-flex items-center justify-center rounded-lg px-5 py-2.5 text-sm font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none';
   const combined = `${base} ${variantClasses[variant]} ${className}`.trim();
 
   if (href) {
     return (
-      <a href={href} class={combined} {...(props as QwikIntrinsicElements['a'])}>
+      <a
+        href={href}
+        class={combined}
+        target={target}
+        rel={rel}
+        {...(props as QwikIntrinsicElements['a'])}
+      >
         <Slot />
       </a>
     );
