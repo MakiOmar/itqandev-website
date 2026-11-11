@@ -1,8 +1,8 @@
 import { component$, useSignal, type QRL } from '@builder.io/qwik';
 import { translateApp } from '~/lib/i18n/useTranslate';
 import { LINK_MODE_KEYS, linkModePatch, resolveLinkMode, type LinkMode } from '~/lib/admin/link-mode-fields';
-import { ADMIN_CHECKBOX_CLASS, ADMIN_CHECKBOX_LABEL_CLASS } from '~/lib/admin/native-select-classes';
 import type { DynamicTagCatalog } from '~/lib/admin/appearance-actions';
+import { LinkTargetSelect } from './LinkTargetSelect';
 import { BuilderDynamicTagButton } from './BuilderDynamicTagButton';
 import { BuilderLinkSearchButton } from './BuilderLinkSearchButton';
 import { INSPECTOR_INPUT, INSPECTOR_LABEL, INSPECTOR_ROW } from './inspector-classes';
@@ -17,7 +17,7 @@ export type LinkModeControlProps = {
   onPatch$: QRL<(patch: Record<string, unknown>) => void>;
 };
 
-/** Link: None / Custom URL / Lightbox. Custom reveals the URL (with dynamic tags) and "Open in new window". */
+/** Link: None / Custom URL / Lightbox. Custom reveals the URL (with dynamic tags) and the link target. */
 export const LinkModeControl = component$<LinkModeControlProps>((props) => {
   const pendingCustom = useSignal(false);
   const t = (key: string) => translateApp(props.lang, `appearance.linkMode.${key}`);
@@ -74,17 +74,15 @@ export const LinkModeControl = component$<LinkModeControlProps>((props) => {
               }}
             />
           </div>
-          <label class={`${ADMIN_CHECKBOX_LABEL_CLASS} text-xs`}>
-            <input
-              type="checkbox"
-              class={ADMIN_CHECKBOX_CLASS}
-              checked={props.newTab}
-              onChange$={async (e) => {
-                await props.onPatch$({ [LINK_MODE_KEYS.newTab]: (e.target as HTMLInputElement).checked });
-              }}
-            />
-            {t('newTab')}
-          </label>
+          <LinkTargetSelect
+            lang={props.lang}
+            id="setting-link-target"
+            newTab={props.newTab}
+            url={props.url}
+            onChange$={async (newTab) => {
+              await props.onPatch$({ [LINK_MODE_KEYS.newTab]: newTab });
+            }}
+          />
         </>
       ) : null}
     </div>

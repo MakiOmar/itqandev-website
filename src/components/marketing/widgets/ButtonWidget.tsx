@@ -1,5 +1,6 @@
 import { component$, useStyles$ } from '@builder.io/qwik';
 import { localizeInAppHref } from '~/lib/i18n/ui-locale-path';
+import { linkTargetAttrs } from '~/lib/marketing/link-target';
 import styles from './button-widget.css?inline';
 
 const VARIANTS = new Set(['primary', 'secondary', 'outline', 'ghost']);
@@ -21,23 +22,6 @@ function variantClass(style: unknown): string {
 function overlayAttrs(value: unknown): Record<string, string> {
   const id = Number(value);
   return Number.isInteger(id) && id > 0 ? { 'data-overlay-id': String(id) } : {};
-}
-
-/** New-tab links always get `noopener noreferrer` so the opened page can't reach `window.opener`. */
-function linkAttrs(row: ButtonRow): Record<string, string> {
-  const newTab = row.open_in_new_tab === true || row.open_in_new_tab === 'true' || row.open_in_new_tab === 1;
-  const tokens = new Set(
-    String(row.rel ?? '')
-      .toLowerCase()
-      .split(/\s+/)
-      .filter((t) => /^[a-z-]+$/.test(t)),
-  );
-  if (newTab) {
-    tokens.add('noopener');
-    tokens.add('noreferrer');
-  }
-  const rel = [...tokens].join(' ');
-  return { ...(newTab ? { target: '_blank' } : {}), ...(rel ? { rel } : {}) };
 }
 
 /**
@@ -64,17 +48,20 @@ export const ButtonWidget = component$<{ type: string; settings: Record<string, 
             },
           ];
 
-    const links = rows.map((b, i) => (
-      <a
-        key={i}
-        href={localizeInAppHref(props.uiLocale, String(b.url ?? '')) || '#'}
-        class={variantClass(b.style)}
-        {...linkAttrs(b)}
-        {...overlayAttrs(b.overlay_id)}
-      >
-        {String(b.label || 'Button')}
-      </a>
-    ));
+    const links = rows.map((b, i) => {
+      const href = localizeInAppHref(props.uiLocale, String(b.url ?? '')) || '#';
+      return (
+        <a
+          key={i}
+          href={href}
+          class={variantClass(b.style)}
+          {...linkTargetAttrs(href, b.open_in_new_tab, b.rel)}
+          {...overlayAttrs(b.overlay_id)}
+        >
+          {String(b.label || 'Button')}
+        </a>
+      );
+    });
 
     return props.type === 'button_group' ? <div class="flex flex-wrap gap-3">{links}</div> : links[0];
   },

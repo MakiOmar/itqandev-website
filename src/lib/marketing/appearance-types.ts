@@ -156,8 +156,8 @@ export type AppearanceSettingField = {
   accept?: string;
   min?: number;
   max?: number;
-  /** Number fields: value shown when the setting is unset (instances saved before the field existed). */
-  default?: number;
+  /** Number / boolean fields: value used when the setting is unset (instances saved before the field existed). */
+  default?: number | boolean;
   /** Number fields: render a range slider with the value beside it. */
   slider?: boolean;
   /** Inspector section id; when any field has one, the Content tab renders collapsible sections. */

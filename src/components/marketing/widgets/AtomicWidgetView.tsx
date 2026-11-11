@@ -7,6 +7,7 @@ import { TextLogoWidget } from '~/components/marketing/widgets/TextLogoWidget';
 import { SvgIcon } from '~/components/marketing/SvgIcon';
 import { marketingRoutes } from '~/lib/marketing/constants';
 import { localizeInAppHref } from '~/lib/i18n/ui-locale-path';
+import { linkTargetAttrs } from '~/lib/marketing/link-target';
 import { ListWidget } from '~/components/marketing/widgets/ListWidget';
 import { ButtonWidget } from '~/components/marketing/widgets/ButtonWidget';
 import { addonWidgets } from 'virtual:itqandev-addon-widgets';
@@ -148,11 +149,7 @@ export const AtomicWidgetView = component$<AtomicWidgetProps>((props) => {
       return (
         <figure>
           {link && !lightbox ? (
-            <a
-              href={link}
-              target={s.open_in_new_tab ? '_blank' : undefined}
-              rel={s.open_in_new_tab ? 'noopener noreferrer' : undefined}
-            >
+            <a href={link} {...linkTargetAttrs(link, s.open_in_new_tab)}>
               {img}
             </a>
           ) : (
@@ -327,8 +324,7 @@ export const AtomicWidgetView = component$<AtomicWidgetProps>((props) => {
                 <a
                   href={String(l.url)}
                   class="text-sm font-medium text-primary-600 hover:underline dark:text-primary-400"
-                  target="_blank"
-                  rel="noopener noreferrer"
+                  {...linkTargetAttrs(String(l.url), l.open_in_new_tab ?? true)}
                 >
                   {String(l.label || l.url)}
                 </a>

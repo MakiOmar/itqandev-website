@@ -1345,8 +1345,13 @@
       "none": "None",
       "custom": "Custom URL",
       "lightbox": "Lightbox",
-      "url": "Link URL",
-      "newTab": "Open in new window"
+      "url": "Link URL"
+    },
+    "linkTarget": {
+      "label": "Link target",
+      "self": "Current window (_self)",
+      "blank": "New window (_blank)",
+      "anchorHint": "Same-page #links always open in the current window and scroll to the element."
     },
     "linkSearch": {
       "open": "Link to page or content",

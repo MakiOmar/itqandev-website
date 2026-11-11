@@ -41,6 +41,7 @@ import {
 import { MediaPreviewPanel } from './MediaPreviewPanel';
 import { TrashGlyph } from './InspectorGlyphs';
 import { LinkModeControl } from './LinkModeControl';
+import { LinkTargetSelect } from './LinkTargetSelect';
 import {
   LINK_MODE_KEYS,
   hasLinkModeFields,
@@ -387,7 +388,16 @@ const AppearanceSettingFieldControl = component$<FieldControlProps>((props) => {
             class="rounded-md border border-gray-300 px-2 py-1 text-xs hover:bg-gray-50 dark:border-gray-600 dark:hover:bg-slate-800"
             onClick$={async () => {
               const blank: Record<string, unknown> = sharedRows ? { id: newRepeaterRowId() } : {};
-              for (const f of itemFields) blank[f.key] = f.type === 'boolean' ? false : f.type === 'number' ? 0 : f.type === 'repeater' ? [] : '';
+              for (const f of itemFields) {
+                blank[f.key] =
+                  f.type === 'boolean'
+                    ? f.default === true
+                    : f.type === 'number'
+                      ? 0
+                      : f.type === 'repeater'
+                        ? []
+                        : '';
+              }
               await setRows$([...rows, blank]);
             }}
           >
@@ -422,6 +432,18 @@ const AppearanceSettingFieldControl = component$<FieldControlProps>((props) => {
                 {itemFields.map((sub) => {
                   const subVal = row[sub.key];
                   const subId = `setting-${field.key}-${rowIndex}-${sub.key}`;
+                  if (sub.type === 'boolean' && sub.key === LINK_MODE_KEYS.newTab) {
+                    return (
+                      <LinkTargetSelect
+                        key={sub.key}
+                        lang={props.lang}
+                        id={subId}
+                        newTab={isTruthySetting(subVal ?? sub.default)}
+                        url={asString(row.url)}
+                        onChange$={(next) => setSub$(sub.key, next)}
+                      />
+                    );
+                  }
                   if (sub.type === 'boolean') {
                     const checked = subVal === true || subVal === 'true' || subVal === 1 || subVal === '1';
                     return (
@@ -524,6 +546,18 @@ const AppearanceSettingFieldControl = component$<FieldControlProps>((props) => {
           );
         })}
       </div>
+    );
+  }
+
+  if (field.type === 'boolean' && field.key === LINK_MODE_KEYS.newTab) {
+    return (
+      <LinkTargetSelect
+        lang={props.lang}
+        id={`setting-${field.key}`}
+        newTab={isTruthySetting(raw)}
+        url={asString(props.values.url ?? props.values.link_url)}
+        onChange$={write$}
+      />
     );
   }
 
