@@ -375,6 +375,9 @@ const AppearanceSettingFieldControl = component$<FieldControlProps>((props) => {
     }
     const rows = Array.isArray(raw) ? (raw as Record<string, unknown>[]) : [];
     const itemFields = field.item_fields ?? [];
+    const accordion = field.accordion === true;
+    const labelKey =
+      field.item_label_key || itemFields.find((f) => f.type === 'text')?.key || '';
     const setRows$ = $(async (next: Record<string, unknown>[]) => {
       await write$(next);
     });
@@ -408,30 +411,33 @@ const AppearanceSettingFieldControl = component$<FieldControlProps>((props) => {
           const setSub$ = $(async (key: string, value: unknown) => {
             await setRows$(rows.map((r, i) => (i === rowIndex ? { ...r, [key]: value } : r)));
           });
-          return (
-            <div
-              key={rowIndex}
-              class="space-y-2.5 rounded-md border border-gray-100 bg-gray-50 p-2 dark:border-gray-800 dark:bg-slate-950"
+          const itemFallback = translateApp(props.lang, 'appearance.repeaterItem', { n: rowIndex + 1 });
+          const itemText = labelKey ? asString(row[labelKey]).trim() : '';
+          const itemTitle = itemText || itemFallback;
+          const removeLabel = translateApp(props.lang, 'appearance.repeaterRemove');
+          const removeButton = (
+            <button
+              type="button"
+              class={[
+                'rounded p-1 text-gray-400 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-950/40',
+                accordion ? 'absolute end-1 top-1 z-10' : '',
+              ].join(' ')}
+              title={removeLabel}
+              aria-label={removeLabel}
+              onClick$={async (event) => {
+                event.stopPropagation();
+                await setRows$(rows.filter((_, i) => i !== rowIndex));
+              }}
             >
-              {/* Row toolbar: position + remove */}
-              <div class="flex items-center justify-between">
-                <span class="text-[11px] font-medium text-gray-400">#{rowIndex + 1}</span>
-                <button
-                  type="button"
-                  class="rounded p-1 text-gray-400 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-950/40"
-                  title={translateApp(props.lang, 'appearance.repeaterRemove')}
-                  aria-label={translateApp(props.lang, 'appearance.repeaterRemove')}
-                  onClick$={async () => {
-                    await setRows$(rows.filter((_, i) => i !== rowIndex));
-                  }}
-                >
-                  <TrashGlyph />
-                </button>
-              </div>
+              <TrashGlyph />
+            </button>
+          );
+          const body = (
               <div class={INSPECTOR_STACK}>
                 {itemFields.map((sub) => {
                   const subVal = row[sub.key];
                   const subId = `setting-${field.key}-${rowIndex}-${sub.key}`;
+                  const subLabel = appearanceFieldLabel(props.lang, sub.key, sub.label);
                   if (sub.type === 'boolean' && sub.key === LINK_MODE_KEYS.newTab) {
                     return (
                       <LinkTargetSelect
@@ -448,9 +454,9 @@ const AppearanceSettingFieldControl = component$<FieldControlProps>((props) => {
                     const checked = subVal === true || subVal === 'true' || subVal === 1 || subVal === '1';
                     return (
                       <div key={sub.key} class={INSPECTOR_ROW}>
-                        <span class={INSPECTOR_LABEL}>{sub.label}</span>
+                        <span class={INSPECTOR_LABEL}>{subLabel}</span>
                         <div class="flex justify-end">
-                          <AdminSwitch checked={checked} ariaLabel={sub.label} onChange$={(next) => setSub$(sub.key, next)} />
+                          <AdminSwitch checked={checked} ariaLabel={subLabel} onChange$={(next) => setSub$(sub.key, next)} />
                         </div>
                       </div>
                     );
@@ -459,7 +465,7 @@ const AppearanceSettingFieldControl = component$<FieldControlProps>((props) => {
                     return (
                       <IconPickerField
                         key={sub.key}
-                        label={sub.label}
+                        label={subLabel}
                         value={subVal}
                         lang={props.lang}
                         onChange$={(next) => setSub$(sub.key, next)}
@@ -470,7 +476,7 @@ const AppearanceSettingFieldControl = component$<FieldControlProps>((props) => {
                     return (
                       <MediaPreviewPanel
                         key={sub.key}
-                        label={sub.label}
+                        label={subLabel}
                         lang={props.lang}
                         value={subVal}
                         previewSrc={appearanceMediaPreviewSrc(subVal, props.mediaPreviewById)}
@@ -485,7 +491,7 @@ const AppearanceSettingFieldControl = component$<FieldControlProps>((props) => {
                   if (sub.type === 'textarea') {
                     return (
                       <div key={sub.key}>
-                        <label for={subId} class={INSPECTOR_STACK_LABEL}>{sub.label}</label>
+                        <label for={subId} class={INSPECTOR_STACK_LABEL}>{subLabel}</label>
                         <textarea
                           id={subId}
                           rows={3}
@@ -499,7 +505,7 @@ const AppearanceSettingFieldControl = component$<FieldControlProps>((props) => {
                   if (sub.type === 'select') {
                     return (
                       <div key={sub.key} class={INSPECTOR_ROW}>
-                        <label for={subId} class={INSPECTOR_LABEL}>{sub.label}</label>
+                        <label for={subId} class={INSPECTOR_LABEL}>{subLabel}</label>
                         <select
                           id={subId}
                           class={INSPECTOR_INPUT}
@@ -520,7 +526,7 @@ const AppearanceSettingFieldControl = component$<FieldControlProps>((props) => {
                   const subKey = sub.key;
                   return (
                     <div key={sub.key} class={INSPECTOR_ROW}>
-                      <label for={subId} class={INSPECTOR_LABEL}>{sub.label}</label>
+                      <label for={subId} class={INSPECTOR_LABEL}>{subLabel}</label>
                       {/* Row input; link fields get the content-link trigger at the end edge */}
                       <div class="relative">
                         <input
@@ -528,6 +534,7 @@ const AppearanceSettingFieldControl = component$<FieldControlProps>((props) => {
                           type={sub.type === 'number' ? 'number' : isUrl ? 'url' : 'text'}
                           dir={isUrl ? 'ltr' : undefined}
                           class={[INSPECTOR_INPUT, urlInputEndPadding(subLinkSearch, false)].join(' ')}
+                          placeholder={accordion && sub.key === labelKey ? itemFallback : undefined}
                           value={asString(subVal)}
                           onInput$={(e) => {
                             const value = (e.target as HTMLInputElement).value;
@@ -542,6 +549,45 @@ const AppearanceSettingFieldControl = component$<FieldControlProps>((props) => {
                   );
                 })}
               </div>
+          );
+          if (accordion) {
+            return (
+              <div
+                key={rowIndex}
+                class="relative rounded-md border border-gray-100 bg-gray-50 dark:border-gray-800 dark:bg-slate-950"
+              >
+                {/* Native details keeps the open state across inspector re-renders; omit `open` so rows start closed. */}
+                <details class="group/item">
+                  <summary class="flex cursor-pointer list-none items-center gap-1.5 py-1.5 ps-2 pe-8 text-xs font-medium text-gray-700 select-none dark:text-gray-200 [&::-webkit-details-marker]:hidden">
+                    <svg
+                      viewBox="0 0 24 24"
+                      width="12"
+                      height="12"
+                      aria-hidden="true"
+                      class="shrink-0 text-gray-400 transition-transform rtl:-scale-x-100 group-open/item:rotate-90 rtl:group-open/item:-rotate-90"
+                    >
+                      <path fill="currentColor" d="M9 6l6 6-6 6z" />
+                    </svg>
+                    <span class="min-w-0 flex-1 truncate" title={itemTitle}>
+                      {itemTitle}
+                    </span>
+                  </summary>
+                  <div class="px-2 pb-2">{body}</div>
+                </details>
+                {removeButton}
+              </div>
+            );
+          }
+          return (
+            <div
+              key={rowIndex}
+              class="space-y-2.5 rounded-md border border-gray-100 bg-gray-50 p-2 dark:border-gray-800 dark:bg-slate-950"
+            >
+              <div class="flex items-center justify-between">
+                <span class="text-[11px] font-medium text-gray-400">#{rowIndex + 1}</span>
+                {removeButton}
+              </div>
+              {body}
             </div>
           );
         })}

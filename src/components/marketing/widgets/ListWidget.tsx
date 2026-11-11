@@ -1,9 +1,10 @@
 import { component$, useStyles$ } from '@builder.io/qwik';
 import { SvgIcon } from '~/components/marketing/SvgIcon';
 import { localizeInAppHref } from '~/lib/i18n/ui-locale-path';
+import { linkTargetAttrs } from '~/lib/marketing/link-target';
 import styles from './list-widget.css?inline';
 
-type ListItem = { text?: unknown; url?: unknown };
+type ListItem = { text?: unknown; url?: unknown; open_in_new_tab?: unknown };
 
 function isDynamic(value: unknown): boolean {
   return value === true || value === 'true' || value === 1 || value === '1';
@@ -47,7 +48,13 @@ export const ListWidget = component$<{ settings: Record<string, unknown>; uiLoca
         return (
           <li key={i}>
             {marker}
-            {href ? <a href={href}>{text}</a> : <span>{text}</span>}
+            {href ? (
+              <a href={href} {...linkTargetAttrs(href, it.open_in_new_tab)}>
+                {text}
+              </a>
+            ) : (
+              <span>{text}</span>
+            )}
           </li>
         );
       })}

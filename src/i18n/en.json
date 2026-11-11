@@ -1276,7 +1276,10 @@
       "whatsapp_message": "Pre-filled message",
       "message_enabled": "Show \"leave a message\"",
       "message_label": "Message button label",
-      "button_url": "Button URL"
+      "button_url": "Button URL",
+      "text": "Text",
+      "url": "URL",
+      "open_in_new_tab": "Open in new tab"
     },
     "categoryMultiHint": "Check categories to show as filter tabs/sidebar. Leave all unchecked to show every category with published projects.",
     "categoriesLoading": "Loading categories…",
@@ -1340,6 +1343,7 @@
     "htmlAllowed": "HTML allowed",
     "repeaterAdd": "+ Add item",
     "repeaterRemove": "Remove item",
+    "repeaterItem": "Item {{n}}",
     "linkMode": {
       "label": "Link",
       "none": "None",

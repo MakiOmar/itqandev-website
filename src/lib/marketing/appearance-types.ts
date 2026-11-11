@@ -168,6 +168,10 @@ export type AppearanceSettingField = {
   hide_if?: string;
   /** When true, edited per language tab into settings.translations.{locale}. */
   translatable?: boolean;
+  /** Repeater rows render as click-to-expand sections, closed until opened. */
+  accordion?: boolean;
+  /** Item field whose value titles an accordion row. */
+  item_label_key?: string;
   options?: Array<{ value: string; label: string }>;
   item_fields?: AppearanceSettingField[];
 };
