@@ -109,7 +109,7 @@ import { AdminSessionContext } from '~/stores/admin-session-context';
 import { LayoutDeviceProvider } from '~/lib/marketing/layout-device-context';
 import { normalizeHideOn, type DeviceHideOn } from '~/lib/marketing/device-visibility';
 import type { BuilderStyles, StyleBreakpoint } from '~/lib/marketing/builder-styles';
-import { CONTAINER_STYLE_TYPE } from '~/lib/marketing/builder-styles';
+import { builderDisplayClass, CONTAINER_STYLE_TYPE } from '~/lib/marketing/builder-styles';
 import { getApiClient } from '~/lib/api/client';
 import {
   bandsWithBuilderMediaPreview,
@@ -2886,6 +2886,7 @@ export const PageBuilderWorkspace = component$<PageBuilderWorkspaceProps>((props
                                               const shown =
                                                 resolved && resolved.id === block.id ? resolved : block;
                                               const blockIsGlobal = isGlobalPlacement(block);
+                                              const displayClass = builderDisplayClass(shown.styles);
                                               return (
                                                 <div
                                                   key={block.id}
@@ -2895,6 +2896,7 @@ export const PageBuilderWorkspace = component$<PageBuilderWorkspaceProps>((props
                                                     'group/block relative cursor-pointer',
                                                     block.enabled === false ? 'opacity-40' : '',
                                                     hiddenOnDeviceClass(block, previewDevice.value),
+                                                    displayClass,
                                                   ].join(' ')}
                                                   onClick$={(e, el) => {
                                                     if (isOwnBuilderNodeClick(e, el)) {
@@ -2965,7 +2967,7 @@ export const PageBuilderWorkspace = component$<PageBuilderWorkspaceProps>((props
                                                   {/* Final render; embeds are inert so clicks reach the editor */}
                                                   <div
                                                     data-label={blockLabel}
-                                                    class="[&_iframe]:pointer-events-none [&_video]:pointer-events-none empty:flex empty:min-h-10 empty:items-center empty:justify-center empty:rounded empty:border empty:border-dashed empty:border-gray-300 empty:text-xs empty:text-gray-400 empty:before:content-[attr(data-label)] dark:empty:border-gray-600"
+                                                    class={`[&_iframe]:pointer-events-none [&_video]:pointer-events-none empty:flex empty:min-h-10 empty:items-center empty:justify-center empty:rounded empty:border empty:border-dashed empty:border-gray-300 empty:text-xs empty:text-gray-400 empty:before:content-[attr(data-label)] dark:empty:border-gray-600 ${displayClass}`}
                                                   >
                                                     <PageBuilderCanvasBlock
                                                       block={withBuilderLocalePreview(

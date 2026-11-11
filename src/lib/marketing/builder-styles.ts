@@ -146,6 +146,9 @@ export function containerStyleGroups(): readonly StyleGroupId[] {
 /** Layout keys that only affect `.b-styled-media` (skip for kits without media). */
 export const MEDIA_ONLY_STYLE_KEYS = new Set(['object_fit', 'object_position']);
 
+/** Layout keys for leaves only; band / row / column shells keep their grid layout. */
+export const LEAF_ONLY_STYLE_KEYS = new Set(['display']);
+
 export function widgetStyleGroups(type: string): readonly StyleGroupId[] {
   if (type === CONTAINER_STYLE_TYPE) {
     return containerStyleGroups();
@@ -509,6 +512,34 @@ export function builderStyleCssVars(
   emitBagVars({ ...fallback, ...resolved.tablet }, '-md', out);
   emitBagVars({ ...fallback, ...resolved.desktop }, '-lg', out);
   return out;
+}
+
+const DISPLAY_CLASS = {
+  md: { block: 'b-d-md-block', inline: 'b-d-md-inline' },
+  lg: { block: 'b-d-lg-block', inline: 'b-d-lg-inline' },
+} as const;
+
+function leafDisplay(bag: StyleBag): 'block' | 'inline' {
+  return bag.display === 'inline' ? 'inline' : 'block';
+}
+
+/**
+ * Style → Layout → Display classes (builder-widget-styles.css). Inline leaves share a line with
+ * neighbouring inline leaves and size to their content, so callers put these classes on the leaf
+ * and on every wrapper between it and its column. Emits only the breakpoints where the value changes.
+ */
+export function builderDisplayClass(styles?: BuilderStyles | null): string {
+  const bags = resolveStyleBags(styles);
+  const mobile = leafDisplay(bags.mobile);
+  const tablet = leafDisplay(bags.tablet);
+  const desktop = leafDisplay(bags.desktop);
+  return [
+    mobile === 'inline' ? 'b-d-inline' : '',
+    tablet !== mobile ? DISPLAY_CLASS.md[tablet] : '',
+    desktop !== tablet ? DISPLAY_CLASS.lg[desktop] : '',
+  ]
+    .filter(Boolean)
+    .join(' ');
 }
 
 export function hoverAnimationClass(styles?: BuilderStyles | null): string {

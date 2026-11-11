@@ -55,6 +55,7 @@ import type { PublicBrandingState } from '~/lib/marketing/public-shell';
 import { getConfig } from '~/lib/config';
 import { getPublicSiteBaseUrl } from '~/lib/seo/canonical-url';
 import {
+  builderDisplayClass,
   hasAnyStyles,
   hasWidgetStyleControls,
   type BuilderStyles,
@@ -497,7 +498,11 @@ function renderLayoutBand(band: PageLayoutBand, props: HomepageSectionsRendererP
                       {(col.blocks ?? [])
                         .filter((b) => b.enabled !== false)
                         .map((block) => {
-                          const wrapperClass = columnBlockWrapperClass(col, hide(block.hide_on));
+                          const wrapperClass = columnBlockWrapperClass(
+                            col,
+                            hide(block.hide_on),
+                            builderDisplayClass(block.styles),
+                          );
                           const rendered = renderBlock(block, bandProps);
                           return wrapperClass ? (
                             <div key={block.id || block.type} class={wrapperClass}>

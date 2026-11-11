@@ -1,5 +1,6 @@
 import { component$, Slot } from '@builder.io/qwik';
 import {
+  builderDisplayClass,
   builderStyleCssVars,
   cssSafeBlockId,
   hoverAnimationClass,
@@ -22,7 +23,7 @@ export const StyledBuilderLeaf = component$<StyledBuilderLeafProps>((props) => {
   const custom = scopedCustomCss(props.id, props.styles);
   const dark = builderDarkStyleCss(props.id, props.styles);
   const anim = hoverAnimationClass(props.styles);
-  const className = ['b-styled', anim].filter(Boolean).join(' ');
+  const className = ['b-styled', anim, builderDisplayClass(props.styles)].filter(Boolean).join(' ');
 
   return (
     <div id={`b-${safe}`} class={className} style={vars}>

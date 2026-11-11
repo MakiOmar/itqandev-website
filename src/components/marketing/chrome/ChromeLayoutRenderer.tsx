@@ -10,6 +10,7 @@ import {
 } from '~/lib/marketing/page-layout-utils';
 import type { PageLayoutBand, PageSectionNode } from '~/lib/marketing/appearance-types';
 import { filterPageLayoutBandForDevice, hideOnClass } from '~/lib/marketing/device-visibility';
+import { builderDisplayClass } from '~/lib/marketing/builder-styles';
 import { useLayoutDevice } from '~/lib/marketing/layout-device-context';
 import { LayoutNodeShell } from '~/components/marketing/layout/LayoutNodeShell';
 import { ChromeKitView, type ChromeKitViewProps } from './ChromeKitView';
@@ -105,7 +106,11 @@ export const ChromeLayoutRenderer = component$<ChromeLayoutRendererProps>((props
                                   isDarkMode={props.isDarkMode}
                                 />
                               );
-                              const wrapperClass = columnBlockWrapperClass(col, hideOnClass(block.hide_on));
+                              const wrapperClass = columnBlockWrapperClass(
+                                col,
+                                hideOnClass(block.hide_on),
+                                builderDisplayClass(block.styles),
+                              );
                               return wrapperClass ? (
                                 <div key={block.id || block.type} class={wrapperClass}>
                                   {view}

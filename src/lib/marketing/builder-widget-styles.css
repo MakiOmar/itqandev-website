@@ -491,6 +491,51 @@
   }
 }
 
+/*
+ * Style → Layout → Display (builderDisplayClass). On the leaf and on each wrapper up to its column:
+ * inline items share a line and size to their content unless Width is set. `top` keeps neighbours
+ * aligned when a wrapper carries the column's `space-y-*` bottom margin.
+ */
+.b-d-inline {
+  display: inline-block;
+  vertical-align: top;
+}
+.b-styled.b-d-inline {
+  width: var(--s-width, auto);
+}
+
+@media (min-width: 768px) {
+  .b-d-md-inline {
+    display: inline-block;
+    vertical-align: top;
+  }
+  .b-d-md-block {
+    display: block;
+  }
+  .b-styled.b-d-md-inline {
+    width: var(--s-width-md, var(--s-width, auto));
+  }
+  .b-styled.b-d-md-block {
+    width: var(--s-width-md, var(--s-width, 100%));
+  }
+}
+
+@media (min-width: 1024px) {
+  .b-d-lg-inline {
+    display: inline-block;
+    vertical-align: top;
+  }
+  .b-d-lg-block {
+    display: block;
+  }
+  .b-styled.b-d-lg-inline {
+    width: var(--s-width-lg, var(--s-width-md, var(--s-width, auto)));
+  }
+  .b-styled.b-d-lg-block {
+    width: var(--s-width-lg, var(--s-width-md, var(--s-width, 100%)));
+  }
+}
+
 .b-flip {
   perspective: 1000px;
 }

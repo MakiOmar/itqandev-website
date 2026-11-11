@@ -110,6 +110,7 @@ const KEY_LABEL: Record<string, string> = {
   glow_secondary_color: 'builder.style.glowSecondaryColor',
   glow_opacity: 'builder.style.glowOpacity',
   text_transform: 'builder.style.transform',
+  display: 'builder.style.display',
   align: 'builder.style.align',
   width: 'builder.style.width',
   max_width: 'builder.style.maxWidth',

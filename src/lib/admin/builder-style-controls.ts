@@ -4,6 +4,8 @@
 import {
   widgetStyleGroups,
   widgetHasMediaStyleChrome,
+  CONTAINER_STYLE_TYPE,
+  LEAF_ONLY_STYLE_KEYS,
   MEDIA_ONLY_STYLE_KEYS,
   type BuilderStyles,
   type ButtonPart,
@@ -395,6 +397,15 @@ export const STYLE_CONTROLS: StyleControl[] = [
     ],
   },
   {
+    key: 'display',
+    group: 'layout',
+    type: 'choose',
+    options: [
+      { value: 'block', labelKey: 'builder.style.displayBlock' },
+      { value: 'inline', labelKey: 'builder.style.displayInline' },
+    ],
+  },
+  {
     key: 'align',
     group: 'layout',
     type: 'choose',
@@ -590,9 +601,11 @@ export function controlsForWidget(type: string): StyleControl[] {
   const groups = new Set(widgetStyleGroups(type));
   if (groups.size === 0) return [];
   const hasMedia = widgetHasMediaStyleChrome(type);
+  const isContainer = type === CONTAINER_STYLE_TYPE;
   return STYLE_CONTROLS.filter((c) => {
     if (!groups.has(c.group as StyleGroupId)) return false;
     if (!hasMedia && MEDIA_ONLY_STYLE_KEYS.has(c.key)) return false;
+    if (isContainer && LEAF_ONLY_STYLE_KEYS.has(c.key)) return false;
     return true;
   });
 }
