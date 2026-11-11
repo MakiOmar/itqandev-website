@@ -51,10 +51,18 @@ function cloneBands(bands: PageLayoutBand[]): PageLayoutBand[] {
   return JSON.parse(JSON.stringify(bands)) as PageLayoutBand[];
 }
 
-/** Deep copy with new ids on the node and everything inside it (ids scope CSS and globals). */
-export function withFreshIds(node: LayoutTreeNode, kind: LayoutTreeNodeKind): LayoutTreeNode {
+/**
+ * Deep copy with new ids on the node and everything inside it (ids scope CSS and globals).
+ * `dropCssIds` removes Advanced → CSS ID too, for copies placed on the same page.
+ */
+export function withFreshIds(
+  node: LayoutTreeNode,
+  kind: LayoutTreeNodeKind,
+  opts: { dropCssIds?: boolean } = {},
+): LayoutTreeNode {
   const copy = JSON.parse(JSON.stringify(node)) as Record<string, unknown>;
   const walk = (n: Record<string, unknown>, k: LayoutTreeNodeKind) => {
+    if (opts.dropCssIds) delete n.css_id;
     if (k === 'band') n.id = newBandId();
     else if (k === 'row') n.id = newRowId();
     else if (k === 'column') n.id = newColumnId();
@@ -77,7 +85,7 @@ export function duplicateLayoutNode(bands: PageLayoutBand[], path: LayoutTreePat
   const list = layoutTreeListAt(next, path.slice(0, -1));
   if (!list) return null;
   const at = path[path.length - 1] + 1;
-  list.splice(at, 0, withFreshIds(node, layoutTreeKindAt(path.length)));
+  list.splice(at, 0, withFreshIds(node, layoutTreeKindAt(path.length), { dropCssIds: true }));
   return { bands: next, path: [...path.slice(0, -1), at] };
 }
 

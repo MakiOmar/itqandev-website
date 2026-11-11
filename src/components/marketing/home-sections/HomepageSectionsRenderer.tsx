@@ -157,6 +157,8 @@ function renderBlock(
     settings?: Record<string, unknown>;
     styles?: BuilderStyles | null;
     rows?: PageLayoutBand['rows'];
+    css_id?: string;
+    css_classes?: string;
   },
   props: HomepageSectionsRendererProps,
 ) {
@@ -169,6 +171,8 @@ function renderBlock(
         settings: block.settings,
         styles: block.styles || undefined,
         rows: block.rows ?? [],
+        css_id: block.css_id,
+        css_classes: block.css_classes,
       },
       props,
     );
@@ -186,6 +190,8 @@ function renderBlock(
   // Locals, not `block.styles` / `props.uiLocale` in JSX: the optimizer freezes member props of plain
   // objects, so the builder canvas would keep the first styles and a client-side language switch the old locale.
   const blockStyles = block.styles;
+  const cssId = block.css_id;
+  const cssClasses = block.css_classes;
   const {
     uiLocale,
     editorPreview,
@@ -204,11 +210,18 @@ function renderBlock(
     const leafId = String(block.id || key);
     const withBg = <LayoutNodeShell id={leafId} settings={settings}>{inner}</LayoutNodeShell>;
     return wrapStyles ? (
-      <StyledBuilderLeaf key={key} id={leafId} styles={blockStyles} settings={settings}>
+      <StyledBuilderLeaf
+        key={key}
+        id={leafId}
+        styles={blockStyles}
+        settings={settings}
+        cssId={cssId}
+        cssClasses={cssClasses}
+      >
         {withBg}
       </StyledBuilderLeaf>
     ) : (
-      <LayoutNodeShell key={key} id={leafId} settings={settings}>
+      <LayoutNodeShell key={key} id={leafId} settings={settings} cssId={cssId} cssClasses={cssClasses}>
         {inner}
       </LayoutNodeShell>
     );
@@ -454,24 +467,32 @@ function renderLayoutBand(band: PageLayoutBand, props: HomepageSectionsRendererP
   const bandProps: HomepageSectionsRendererProps = { ...props, embedKits: true };
   const bandSettings = band.settings;
   const bandStyles = band.styles;
+  const bandCssId = band.css_id;
+  const bandCssClasses = band.css_classes;
   const hide = (hideOn: unknown) => (props.editorPreview ? '' : hideOnClass(hideOn));
   const inner = (
     <LayoutNodeShell
       id={band.id}
       settings={bandSettings}
       styles={bandStyles}
+      cssId={bandCssId}
+      cssClasses={bandCssClasses}
       class="w-full py-6 sm:py-8 lg:py-10"
     >
       {(band.rows ?? []).map((row) => {
         const stackBelow = row.stack_below ?? 'none';
         const rowSettings = row.settings;
         const rowStyles = row.styles;
+        const rowCssId = row.css_id;
+        const rowCssClasses = row.css_classes;
         return (
           <LayoutNodeShell
             key={row.id}
             id={row.id}
             settings={rowSettings}
             styles={rowStyles}
+            cssId={rowCssId}
+            cssClasses={rowCssClasses}
             class={`w-full rounded-xl ${hide(row.hide_on)}`}
           >
             <div
@@ -485,6 +506,8 @@ function renderLayoutBand(band: PageLayoutBand, props: HomepageSectionsRendererP
                 const spanClass = columnSpanClassNames(span, stackBelow);
                 const colSettings = col.settings;
                 const colStyles = col.styles;
+                const colCssId = col.css_id;
+                const colCssClasses = col.css_classes;
                 const content = columnContentLayout(row, col);
                 return (
                   <LayoutNodeShell
@@ -492,6 +515,8 @@ function renderLayoutBand(band: PageLayoutBand, props: HomepageSectionsRendererP
                     id={col.id}
                     settings={colSettings}
                     styles={colStyles}
+                    cssId={colCssId}
+                    cssClasses={colCssClasses}
                     class={`${spanClass} h-full ${hide(col.hide_on)}`}
                   >
                     <div class={content.class} style={content.style}>

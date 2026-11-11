@@ -1519,7 +1519,12 @@
     "advanced": {
       "responsive": "Responsive",
       "responsiveHint": "Hide this element on selected devices. It is left out of the HTML for the detected device and hidden by screen width (mobile under 768px, tablet 768–1023px, desktop 1024px and up).",
-      "hideOn": "Hide on"
+      "hideOn": "Hide on",
+      "attributes": "Attributes",
+      "cssId": "CSS ID",
+      "cssIdHint": "Letters, digits, - and _, starting with a letter. Link to #id to scroll here; Custom CSS selector then targets this id. Keep it unique on the page; Duplicate leaves the copy without one.",
+      "cssClasses": "CSS classes",
+      "cssClassesHint": "Space-separated, up to 10. Invalid names are dropped when you leave the field."
     },
     "style": {
       "empty": "No style controls for this widget yet.",

@@ -48,6 +48,19 @@ assert(dup!.bands[1].id !== 'band_a', 'duplicate band has a new id');
 assert(dup!.bands[1].rows[0].columns[0].blocks[0].id !== 'blk_h', 'nested block ids regenerated');
 assert(dup!.bands[0].id === 'band_a', 'source untouched');
 
+// Duplicate drops CSS IDs on the copy and inside it (they must stay unique); classes are kept.
+const withAttrs = bands();
+withAttrs[0].css_id = 'hero';
+withAttrs[0].css_classes = 'promo';
+withAttrs[0].rows[0].columns[0].blocks[0].css_id = 'title';
+const dupAttrs = duplicateLayoutNode(withAttrs, [0])!;
+assert(dupAttrs.bands[0].css_id === 'hero', 'source keeps its CSS ID');
+assert(dupAttrs.bands[1].css_id === undefined, 'duplicate band has no CSS ID');
+assert(dupAttrs.bands[1].css_classes === 'promo', 'duplicate keeps CSS classes');
+assert(dupAttrs.bands[1].rows[0].columns[0].blocks[0].css_id === undefined, 'nested CSS IDs dropped');
+const pastedAttrs = pasteLayoutNode(bands(), [0], { kind: 'band', node: withAttrs[0] })!;
+assert(pastedAttrs.bands[1].css_id === 'hero', 'paste keeps the CSS ID');
+
 // Paste: same kind goes after the target; a block onto a column goes inside it.
 const heading = bands()[0].rows[0].columns[0].blocks[0];
 const afterBlock = pasteLayoutNode(bands(), [0, 0, 0, 0], { kind: 'block', node: heading });

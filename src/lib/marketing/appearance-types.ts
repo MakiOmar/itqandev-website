@@ -1,4 +1,5 @@
 import type { BuilderStyles } from './builder-styles';
+import type { BuilderNodeAttrs } from './builder-node-attrs';
 
 export type HomepageLayoutWidth = 'boxed' | 'full';
 
@@ -42,7 +43,7 @@ export type ColumnSpans = {
 
 export type PageLayoutStackBelow = 'none' | 'tablet' | 'desktop';
 
-export type PageLayoutBlock = {
+export type PageLayoutBlock = BuilderNodeAttrs & {
   id: string;
   kind?: 'widget' | 'kit' | 'global' | 'inner';
   type: HomepageSectionType | string;
@@ -71,7 +72,7 @@ export type ColumnFlex = {
   gap: number;
 };
 
-export type PageLayoutColumn = {
+export type PageLayoutColumn = BuilderNodeAttrs & {
   id: string;
   span: ColumnSpans;
   flex?: ColumnFlex;
@@ -82,7 +83,7 @@ export type PageLayoutColumn = {
   blocks: PageLayoutBlock[];
 };
 
-export type PageLayoutRow = {
+export type PageLayoutRow = BuilderNodeAttrs & {
   id: string;
   stack_below?: PageLayoutStackBelow;
   gap?: number;
@@ -97,7 +98,7 @@ export type PageLayoutRow = {
   columns: PageLayoutColumn[];
 };
 
-export type PageLayoutBand = {
+export type PageLayoutBand = BuilderNodeAttrs & {
   id: string;
   type: 'layout';
   enabled?: boolean;

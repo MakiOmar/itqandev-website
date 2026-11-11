@@ -110,6 +110,8 @@ import { LayoutDeviceProvider } from '~/lib/marketing/layout-device-context';
 import { normalizeHideOn, type DeviceHideOn } from '~/lib/marketing/device-visibility';
 import type { BuilderStyles, StyleBreakpoint } from '~/lib/marketing/builder-styles';
 import { builderDisplayClass, CONTAINER_STYLE_TYPE } from '~/lib/marketing/builder-styles';
+import { withBuilderNodeAttrs, type BuilderNodeAttrs } from '~/lib/marketing/builder-node-attrs';
+import { BuilderCssAttributesFields } from '~/components/admin/BuilderCssAttributesFields';
 import { getApiClient } from '~/lib/api/client';
 import {
   bandsWithBuilderMediaPreview,
@@ -975,12 +977,21 @@ export const PageBuilderWorkspace = component$<PageBuilderWorkspaceProps>((props
   const selectedBlockSettings = selectedBlock?.settings;
   const selectedBlockStyles = selectedBlock?.styles;
   const selectedBlockHideOn = selectedBlock?.hide_on;
+  const selectedBlockCssId = selectedBlock?.css_id;
+  const selectedBlockCssClasses = selectedBlock?.css_classes;
   const selectedGlobalId = isGlobalPlacement(selectedBlock) ? Number(selectedBlock?.global_id) : 0;
   const selectedGlobalName = selectedGlobalId
     ? builderGlobals.globals.value[String(selectedGlobalId)]?.name ?? `#${selectedGlobalId}`
     : '';
   const selectedRow = rowAtSelection(bands, selection.value);
   const selectedCol = colAtSelection(bands, selection.value);
+  const selectedBand = selection.value ? bands[selection.value.bandIndex] : undefined;
+  const selectedBandCssId = selectedBand?.css_id;
+  const selectedBandCssClasses = selectedBand?.css_classes;
+  const selectedRowCssId = selectedRow?.css_id;
+  const selectedRowCssClasses = selectedRow?.css_classes;
+  const selectedColCssId = selectedCol?.css_id;
+  const selectedColCssClasses = selectedCol?.css_classes;
   const previewCtx: BuilderPreviewContext = {
     surface: props.previewSurface ?? 'page',
     uiLocale: props.activeLocale.value || props.defaultLocale,
@@ -1337,6 +1348,17 @@ export const PageBuilderWorkspace = component$<PageBuilderWorkspaceProps>((props
                         );
                       })}
                     />
+                      <BuilderCssAttributesFields
+                        lang={props.lang}
+                        cssId={selectedBandCssId}
+                        cssClasses={selectedBandCssClasses}
+                        onChange$={$(async (next: BuilderNodeAttrs) => {
+                          const bi = selection.value!.bandIndex;
+                          await commit$(
+                            bands.map((b, i) => (i === bi ? withBuilderNodeAttrs(b, next) : b)),
+                          );
+                        })}
+                      />
                     </div>
                   ) : null}
                 </div>
@@ -1510,6 +1532,7 @@ export const PageBuilderWorkspace = component$<PageBuilderWorkspaceProps>((props
                     </div>
                   ) : null}
                   {inspectorTab.value === 'advanced' ? (
+                    <div class="space-y-5">
                     <BuilderResponsiveVisibilityFields
                       lang={props.lang}
                       hideOn={selectedRow?.hide_on}
@@ -1530,6 +1553,26 @@ export const PageBuilderWorkspace = component$<PageBuilderWorkspaceProps>((props
                         );
                       })}
                     />
+                    <BuilderCssAttributesFields
+                      lang={props.lang}
+                      cssId={selectedRowCssId}
+                      cssClasses={selectedRowCssClasses}
+                      onChange$={$(async (next: BuilderNodeAttrs) => {
+                        const path = rowPathOf(selection.value);
+                        if (!path) return;
+                        const { bandIndex, rowIndex } = path;
+                        await commit$(
+                          bands.map((b, bi) => {
+                            if (bi !== bandIndex) return b;
+                            return {
+                              ...b,
+                              rows: b.rows.map((r, ri) => (ri === rowIndex ? withBuilderNodeAttrs(r, next) : r)),
+                            };
+                          }),
+                        );
+                      })}
+                    />
+                    </div>
                   ) : null}
                 </div>
               ) : null}
@@ -1741,6 +1784,7 @@ export const PageBuilderWorkspace = component$<PageBuilderWorkspaceProps>((props
                     </div>
                   ) : null}
                   {inspectorTab.value === 'advanced' ? (
+                    <div class="space-y-5">
                     <BuilderResponsiveVisibilityFields
                       lang={props.lang}
                       hideOn={selectedCol?.hide_on}
@@ -1769,6 +1813,34 @@ export const PageBuilderWorkspace = component$<PageBuilderWorkspaceProps>((props
                         );
                       })}
                     />
+                    <BuilderCssAttributesFields
+                      lang={props.lang}
+                      cssId={selectedColCssId}
+                      cssClasses={selectedColCssClasses}
+                      onChange$={$(async (next: BuilderNodeAttrs) => {
+                        const path = colPathOf(selection.value);
+                        if (!path) return;
+                        const { bandIndex, rowIndex, colIndex } = path;
+                        await commit$(
+                          bands.map((b, bi) => {
+                            if (bi !== bandIndex) return b;
+                            return {
+                              ...b,
+                              rows: b.rows.map((r, ri) => {
+                                if (ri !== rowIndex) return r;
+                                return {
+                                  ...r,
+                                  columns: r.columns.map((c, ci) =>
+                                    ci === colIndex ? withBuilderNodeAttrs(c, next) : c,
+                                  ),
+                                };
+                              }),
+                            };
+                          }),
+                        );
+                      })}
+                    />
+                    </div>
                   ) : null}
                 </div>
               ) : null}
@@ -1903,6 +1975,7 @@ export const PageBuilderWorkspace = component$<PageBuilderWorkspaceProps>((props
                     </div>
                   ) : null}
                   {inspectorTab.value === 'advanced' ? (
+                    <div class="space-y-5">
                     <BuilderResponsiveVisibilityFields
                       lang={props.lang}
                       hideOn={selectedBlockHideOn}
@@ -1937,6 +2010,17 @@ export const PageBuilderWorkspace = component$<PageBuilderWorkspaceProps>((props
                         );
                       })}
                     />
+                    <BuilderCssAttributesFields
+                      lang={props.lang}
+                      cssId={selectedBlockCssId}
+                      cssClasses={selectedBlockCssClasses}
+                      onChange$={$(async (next: BuilderNodeAttrs) => {
+                        await commit$(
+                          updateBlockInBands(bands, selectedBlock.id, (blk) => withBuilderNodeAttrs(blk, next)),
+                        );
+                      })}
+                    />
+                    </div>
                   ) : null}
                 </div>
               ) : null}
@@ -2335,6 +2419,8 @@ export const PageBuilderWorkspace = component$<PageBuilderWorkspaceProps>((props
                   // loop items immutable, so the shell would never see background/style edits.
                   const bandSettings = band.settings;
                   const bandStyles = band.styles;
+                  const bandCssId = band.css_id;
+                  const bandCssClasses = band.css_classes;
                   return (
                     <section
                       key={band.id}
@@ -2428,6 +2514,8 @@ export const PageBuilderWorkspace = component$<PageBuilderWorkspaceProps>((props
                         id={band.id}
                         settings={bandSettings}
                         styles={bandStyles}
+                        cssId={bandCssId}
+                        cssClasses={bandCssClasses}
                         class={
                           previewCtx.surface === 'chrome'
                             ? 'w-full'
@@ -2452,6 +2540,8 @@ export const PageBuilderWorkspace = component$<PageBuilderWorkspaceProps>((props
                           const dragging = !!(dragWidgetType.value || dragBlock.value);
                           const rowSettings = row.settings;
                           const rowStyles = row.styles;
+                          const rowCssId = row.css_id;
+                          const rowCssClasses = row.css_classes;
                           return (
                             <div
                               key={row.id}
@@ -2661,6 +2751,8 @@ export const PageBuilderWorkspace = component$<PageBuilderWorkspaceProps>((props
                                 id={row.id}
                                 settings={rowSettings}
                                 styles={rowStyles}
+                                cssId={rowCssId}
+                                cssClasses={rowCssClasses}
                                 class="w-full rounded-xl"
                               >
                                 {/* Exact device grid: 12 cols + effective span for active device */}
@@ -2684,6 +2776,8 @@ export const PageBuilderWorkspace = component$<PageBuilderWorkspaceProps>((props
                                     const isDropTarget = dropColumnKey.value === colKey;
                                     const colSettings = col.settings;
                                     const colStyles = col.styles;
+                                    const colCssId = col.css_id;
+                                    const colCssClasses = col.css_classes;
                                     const colSelected =
                                       selection.value?.kind === 'column' &&
                                       selection.value.bandIndex === bandIndex &&
@@ -2854,6 +2948,8 @@ export const PageBuilderWorkspace = component$<PageBuilderWorkspaceProps>((props
                                           id={col.id}
                                           settings={colSettings}
                                           styles={colStyles}
+                                          cssId={colCssId}
+                                          cssClasses={colCssClasses}
                                           class="h-full"
                                         >
                                           <div

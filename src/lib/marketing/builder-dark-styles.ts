@@ -100,9 +100,10 @@ function darkValueCss(key: string, value: unknown): string | null {
 /**
  * Scoped `<style>` body for a node's dark overrides. Re-declares the base, `-md` and `-lg` vars
  * with `!important` so they beat the inline light vars at every breakpoint; `initial` makes
- * `var(--s-x, default)` fall through to the widget's theme default.
+ * `var(--s-x, default)` fall through to the widget's theme default. `domId` is the styled
+ * element's HTML id (`builderNodeDomId`).
  */
-export function builderDarkStyleCss(nodeId: string, styles?: BuilderStyles | null): string | null {
+export function builderDarkStyleCss(domId: string, styles?: BuilderStyles | null): string | null {
   const decls: string[] = [];
   for (const [key, value] of Object.entries(darkStyleBag(styles))) {
     const css = darkValueCss(key, value);
@@ -111,5 +112,5 @@ export function builderDarkStyleCss(nodeId: string, styles?: BuilderStyles | nul
     decls.push(`${name}:${css}!important`, `${name}-md:${css}!important`, `${name}-lg:${css}!important`);
   }
   if (decls.length === 0) return null;
-  return `#b-${cssSafeBlockId(nodeId)}${DARK_SCOPE_SELECTOR}{${decls.join(';')}}`;
+  return `#${cssSafeBlockId(domId)}${DARK_SCOPE_SELECTOR}{${decls.join(';')}}`;
 }

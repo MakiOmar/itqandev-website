@@ -45,6 +45,8 @@ function contentAsBlocks(content: PageSectionNode[]): PageLayoutBlock[] {
         styles: node.styles,
         settings: node.settings,
         rows: node.rows,
+        css_id: node.css_id,
+        css_classes: node.css_classes,
       };
     }
     return { id: node.id, type: node.type, enabled: node.enabled, settings: node.settings };

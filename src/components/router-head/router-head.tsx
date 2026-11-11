@@ -4,6 +4,7 @@ import { uiLocaleBootstrapJson } from "~/lib/i18n/ui-locale-segments";
 import { isAdminDashboardPath } from "~/lib/i18n/ui-locale-path";
 import { INLINE_CRITICAL_CSS } from "~/lib/perf/critical-css";
 import { buildDocumentBootstrapScript } from "~/lib/perf/document-bootstrap-script";
+import { HASH_LINK_SCROLL_SCRIPT } from "~/lib/perf/hash-link-scroll-script";
 import { collectPreconnectHints, type ResourceHintLink } from "~/lib/perf/resource-hints";
 import { buildCanonicalHref } from "~/lib/seo/canonical-url";
 import { parseSiteDefaultTheme } from "~/lib/theme/theme-scope";
@@ -63,6 +64,7 @@ export const RouterHead = component$(() => {
       <script
         dangerouslySetInnerHTML={buildDocumentBootstrapScript(uiLocaleBootstrap, defaultTheme)}
       />
+      {!isAdmin ? <script dangerouslySetInnerHTML={HASH_LINK_SCROLL_SCRIPT} /> : null}
 
       {head.meta.map((m) => (
         <meta key={m.key} {...m} />

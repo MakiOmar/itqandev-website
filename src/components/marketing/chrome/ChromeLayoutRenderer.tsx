@@ -11,6 +11,8 @@ import {
 import type { PageLayoutBand, PageSectionNode } from '~/lib/marketing/appearance-types';
 import { filterPageLayoutBandForDevice, hideOnClass } from '~/lib/marketing/device-visibility';
 import { builderDisplayClass } from '~/lib/marketing/builder-styles';
+import { normalizeCssClasses, normalizeCssId } from '~/lib/marketing/builder-node-attrs';
+import { isChromeKitType } from '~/lib/marketing/chrome-blocks';
 import { useLayoutDevice } from '~/lib/marketing/layout-device-context';
 import { LayoutNodeShell } from '~/components/marketing/layout/LayoutNodeShell';
 import { ChromeKitView, type ChromeKitViewProps } from './ChromeKitView';
@@ -47,7 +49,14 @@ export const ChromeLayoutRenderer = component$<ChromeLayoutRendererProps>((props
         const bandStyles = band.styles;
         return (
           <div key={band.id} class={[widthClass, props.bandClass || '', hideOnClass(band.hide_on)].filter(Boolean).join(' ')}>
-            <LayoutNodeShell id={band.id} settings={bandSettings} styles={bandStyles} clipContent={false}>
+            <LayoutNodeShell
+              id={band.id}
+              settings={bandSettings}
+              styles={bandStyles}
+              cssId={band.css_id}
+              cssClasses={band.css_classes}
+              clipContent={false}
+            >
               {(band.rows || []).map((row) => {
                 const stack =
                   row.stack_below === 'tablet'
@@ -63,6 +72,8 @@ export const ChromeLayoutRenderer = component$<ChromeLayoutRendererProps>((props
                     id={row.id}
                     settings={rowSettings}
                     styles={rowStyles}
+                    cssId={row.css_id}
+                    cssClasses={row.css_classes}
                     clipContent={false}
                     class={hideOnClass(row.hide_on)}
                   >
@@ -87,6 +98,8 @@ export const ChromeLayoutRenderer = component$<ChromeLayoutRendererProps>((props
                             id={col.id}
                             settings={colSettings}
                             styles={colStyles}
+                            cssId={col.css_id}
+                            cssClasses={col.css_classes}
                             clipContent={false}
                             class={`${columnSpanClassNames(spans)} h-full ${hideOnClass(col.hide_on)}`}
                           >
@@ -106,13 +119,25 @@ export const ChromeLayoutRenderer = component$<ChromeLayoutRendererProps>((props
                                   isDarkMode={props.isDarkMode}
                                 />
                               );
-                              const wrapperClass = columnBlockWrapperClass(
-                                col,
-                                hideOnClass(block.hide_on),
-                                builderDisplayClass(block.styles),
-                              );
-                              return wrapperClass ? (
-                                <div key={block.id || block.type} class={wrapperClass}>
+                              // Page widgets carry their CSS ID / classes on the styled leaf; chrome kits have none, so the wrapper does.
+                              const chromeKit = isChromeKitType(block.type);
+                              const kitCssId = chromeKit ? normalizeCssId(block.css_id) : '';
+                              const wrapperClass = [
+                                columnBlockWrapperClass(
+                                  col,
+                                  hideOnClass(block.hide_on),
+                                  builderDisplayClass(block.styles),
+                                ),
+                                chromeKit ? normalizeCssClasses(block.css_classes) : '',
+                              ]
+                                .filter(Boolean)
+                                .join(' ');
+                              return wrapperClass || kitCssId ? (
+                                <div
+                                  key={block.id || block.type}
+                                  id={kitCssId || undefined}
+                                  class={wrapperClass || undefined}
+                                >
                                   {view}
                                 </div>
                               ) : (

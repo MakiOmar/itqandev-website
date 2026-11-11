@@ -37,6 +37,11 @@ html:focus-within {
   scroll-behavior: smooth;
 }
 
+/* --b-anchor-offset: sticky site header height, set on hash-link clicks (hash-link-scroll-script.ts). */
+[data-public-page] [id] {
+  scroll-margin-top: var(--b-anchor-offset, 0px);
+}
+
 body {
   min-height: 100vh;
   text-rendering: optimizeSpeed;

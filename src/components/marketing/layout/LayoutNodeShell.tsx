@@ -3,12 +3,16 @@ import { LayoutBackgroundLayer } from './LayoutBackgroundLayer';
 import { hasVisibleBackground, readBuilderBackground } from '~/lib/marketing/builder-background';
 import {
   builderStyleCssVars,
-  cssSafeBlockId,
   hasAnyStyles,
   scopedCustomCss,
   type BuilderStyles,
 } from '~/lib/marketing/builder-styles';
 import { builderDarkStyleCss } from '~/lib/marketing/builder-dark-styles';
+import {
+  builderNodeDomId,
+  normalizeCssClasses,
+  normalizeCssId,
+} from '~/lib/marketing/builder-node-attrs';
 import { ShapeDividerLayer, type ShapeDividerEdge } from './ShapeDividerLayer';
 // `.b-styled` rules for container Style tabs; header/footer shells render on pages without widgets.
 import '~/lib/marketing/builder-widget-styles.css';
@@ -26,6 +30,10 @@ export type LayoutNodeShellProps = {
    * dropdown menus can hang below the bar; the background layer clips itself either way.
    */
   clipContent?: boolean;
+  /** Advanced → CSS ID; replaces `b-{id}` as the element id and style scope. */
+  cssId?: string;
+  /** Advanced → CSS classes (space-separated). */
+  cssClasses?: string;
 };
 
 /**
@@ -37,10 +45,11 @@ export const LayoutNodeShell = component$<LayoutNodeShellProps>((props) => {
   const bg = readBuilderBackground(props.settings);
   const hasBg = hasVisibleBackground(bg);
   const styled = hasAnyStyles(props.styles);
-  const safe = cssSafeBlockId(props.id || 'layout');
+  const cssId = normalizeCssId(props.cssId);
+  const domId = builderNodeDomId(props.id || 'layout', cssId);
   const vars = styled ? builderStyleCssVars(props.styles, props.settings) : undefined;
-  const custom = styled ? scopedCustomCss(safe, props.styles) : null;
-  const dark = styled ? builderDarkStyleCss(safe, props.styles) : null;
+  const custom = styled ? scopedCustomCss(domId, props.styles) : null;
+  const dark = styled ? builderDarkStyleCss(domId, props.styles) : null;
 
   const sticky = props.settings?.sticky === true;
   const stickyOffset = Number(props.settings?.sticky_offset ?? 0);
@@ -50,13 +59,14 @@ export const LayoutNodeShell = component$<LayoutNodeShellProps>((props) => {
 
   return (
     <div
-      id={styled || custom ? `b-${safe}` : undefined}
+      id={styled || cssId ? domId : undefined}
       class={[
         'relative w-full min-w-0',
         styled ? 'b-styled' : '',
         hasBg && props.clipContent !== false ? 'overflow-hidden' : '',
         sticky ? 'sticky z-30' : '',
         props.class || '',
+        normalizeCssClasses(props.cssClasses),
       ]
         .filter(Boolean)
         .join(' ')}

@@ -566,14 +566,14 @@ export function cssSafeBlockId(id: string): string {
   return String(id || 'x').replace(/[^a-zA-Z0-9_-]/g, '');
 }
 
-export function scopedCustomCss(blockId: string, styles?: BuilderStyles | null): string | null {
+/** `domId` is the styled element's HTML id (`builderNodeDomId`). */
+export function scopedCustomCss(domId: string, styles?: BuilderStyles | null): string | null {
   const raw = String(
     styles?.desktop?.custom_css || styles?.tablet?.custom_css || styles?.mobile?.custom_css || '',
   );
   const css = sanitizeCustomCss(raw);
   if (!css) return null;
-  const safe = cssSafeBlockId(blockId);
-  return css.replace(/\bselector\b/g, `#b-${safe}`);
+  return css.replace(/\bselector\b/g, `#${cssSafeBlockId(domId)}`);
 }
 
 export function hasAnyStyles(styles?: BuilderStyles | null): boolean {
