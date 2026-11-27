@@ -208,6 +208,15 @@ export const Sidebar = component$<SidebarProps>((props) => {
       featureModule: 'blog',
     },
     {
+      label: translateApp(lang, 'sidebar.promotionProposals'),
+      href: R.ADMIN.PROMOTION_PROPOSALS,
+      icon: ActivityIcon,
+      activeOnChildPaths: true,
+      permission: 'manage promotion',
+      featureModule: 'promotion',
+      roles: ['super_admin', 'admin', 'company', 'editor'],
+    },
+    {
       label: translateApp(lang, 'sidebar.media'),
       href: R.ADMIN.MEDIA,
       icon: MediaIcon,

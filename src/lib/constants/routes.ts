@@ -71,6 +71,7 @@ export function getLocalizedRoutes(lang: string) {
       FORMS_NEW: L(`${p}/forms/new`),
       MEDIA: L(`${p}/media`),
       MENUS: L(`${p}/menus`),
+      PROMOTION_PROPOSALS: L(`${p}/promotion/proposals`),
       LOGOUT: L(`${p}/logout`),
     },
     PUBLIC: {

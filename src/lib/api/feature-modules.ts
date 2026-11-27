@@ -16,7 +16,8 @@ export type FeatureModuleKey =
   | 'media'
   | 'users'
   | 'seo'
-  | 'overlays';
+  | 'overlays'
+  | 'promotion';
 
 /** Built-in keys the backend omits stay on (older backends predate some keys). */
 export const DEFAULT_FEATURE_MODULES: Record<FeatureModuleKey, boolean> = {
@@ -32,6 +33,8 @@ export const DEFAULT_FEATURE_MODULES: Record<FeatureModuleKey, boolean> = {
   users: true,
   seo: true,
   overlays: true,
+  /** Opt-in automation; mirrors backend default false. */
+  promotion: false,
 };
 
 /** Backend unreachable: hide every module rather than show ones the backend may have disabled. */
@@ -44,7 +47,7 @@ export function isFeatureModuleEnabled(
   key: FeatureModuleKey,
 ): boolean {
   if (!features || !(key in features)) {
-    return true;
+    return DEFAULT_FEATURE_MODULES[key] ?? true;
   }
   return features[key] !== false;
 }

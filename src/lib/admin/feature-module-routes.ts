@@ -11,6 +11,7 @@ const ADMIN_PATH_MODULE: Array<{ prefix: string; module: FeatureModuleKey }> = [
   { prefix: '/admin/services', module: 'services' },
   { prefix: '/admin/testimonials', module: 'testimonials' },
   { prefix: '/admin/blog', module: 'blog' },
+  { prefix: '/admin/promotion', module: 'promotion' },
   { prefix: '/admin/pages', module: 'pages' },
   { prefix: '/admin/forms', module: 'forms' },
   { prefix: '/admin/appearance/overlays', module: 'overlays' },

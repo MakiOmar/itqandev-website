@@ -201,6 +201,15 @@ export const API_ENDPOINTS = {
     EXPORT: '/v1/blog-posts/export',
     IMPORT: '/v1/blog-posts/import',
   },
+  PROMOTION: {
+    AUDIT: '/v1/promotion/audit',
+    SEO_APPLY: '/v1/promotion/seo/apply',
+    DRAFTS: '/v1/promotion/drafts',
+    PROPOSALS: '/v1/promotion/proposals',
+    APPROVE: (id: string | number) => `/v1/promotion/proposals/${id}/approve`,
+    APPLY: (id: string | number) => `/v1/promotion/proposals/${id}/apply`,
+    INSIGHTS: '/v1/promotion/insights',
+  },
   // Menus (WordPress-style nav)
   MENUS: {
     LIST: '/v1/menus',

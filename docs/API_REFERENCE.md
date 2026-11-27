@@ -1066,4 +1066,24 @@ Throttle: `throttle:bulk` on import.
 
 ---
 
+---
+
+## Promotion automation (`feature.module:promotion`)
+
+Requires `features.modules.promotion` enabled in `backend/config/features.php`. Authenticated Bearer tokens; ability-scoped agent tokens use `promotion:read` | `promotion:apply` | `promotion:publish`.
+
+| Method | Path | Ability |
+|--------|------|---------|
+| GET | `/api/v1/promotion/audit` | read |
+| POST | `/api/v1/promotion/seo/apply` | apply |
+| POST | `/api/v1/promotion/drafts` | apply |
+| GET/POST | `/api/v1/promotion/proposals` | read / apply |
+| POST | `/api/v1/promotion/proposals/{id}/approve` | publish (+ `manage promotion`) |
+| POST | `/api/v1/promotion/proposals/{id}/apply` | publish |
+| GET | `/api/v1/promotion/insights` | read |
+
+Empty-only SEO apply returns `409` with `data.status: approval_required` when fields are already filled or when `schema` / `canonical_url` is requested. See `docs/CONFIGURATION.md` and `mcp/credocode-promotion/README.md`.
+
+---
+
 For more details, see [LARAVEL_INTEGRATION.md](./LARAVEL_INTEGRATION.md)
