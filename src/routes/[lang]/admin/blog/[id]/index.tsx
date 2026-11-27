@@ -28,7 +28,7 @@ import { getApiClient, extractCookieHeader } from '../../../../../lib/api/client
 import { formatApiError } from '../../../../../lib/api/format-api-error';
 import { showError as showErrorToast } from '../../../../../lib/utils/toast';
 import { API_ENDPOINTS } from '../../../../../lib/api/endpoints';
-import { routesFromPreferredCookie, useAppRoutes } from '../../../../../lib/constants/routes';
+import { adminBlogBuilderHref, routesFromPreferredCookie, useAppRoutes } from '../../../../../lib/constants/routes';
 import type { BlogPost, BlogPostUpdateInput } from '../../../../../types';
 import { useContentSlugAutosuggestTitleSlugSignals } from '../../../../../lib/slug/content-slug-auto';
 import { AdminPublicPageLink } from '../../../../../components/admin/AdminPublicPageLink';
@@ -387,10 +387,18 @@ export default component$(() => {
         title={`${translateApp(lang, 'blog.edit')} #${location.params.id}`}
         description={translateApp(lang, 'blog.subtitle')}
       >
-        <Link href={R.ADMIN.BLOG} class={ADMIN_BACK_BUTTON_CLASS}>
-          {translateApp(lang, 'common.back')}
-        </Link>
+        <div class="flex flex-wrap gap-2">
+          <Link href={adminBlogBuilderHref(lang, location.params.id)} class={ADMIN_PRIMARY_BUTTON_CLASS}>
+            {translateApp(lang, 'blog.openBuilder')}
+          </Link>
+          <Link href={R.ADMIN.BLOG} class={ADMIN_BACK_BUTTON_CLASS}>
+            {translateApp(lang, 'common.back')}
+          </Link>
+        </div>
       </PageHeader>
+      <p class="mb-4 text-sm text-gray-600 dark:text-gray-400">
+        {translateApp(lang, 'blog.classicSectionsHint')}
+      </p>
 
       <Form
         action={updateAction}

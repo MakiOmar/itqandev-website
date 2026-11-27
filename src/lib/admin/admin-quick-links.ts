@@ -6,6 +6,7 @@ import type { User } from '../auth/types';
 import { isFeatureModuleEnabled, type FeatureModuleKey } from '../api/project-settings';
 import { getConfig } from '../config';
 import {
+  adminBlogBuilderHref,
   adminBlogEditHref,
   adminPageBuilderHref,
   adminPageEditHref,
@@ -99,7 +100,16 @@ function currentPageLinks(input: QuickLinksInput): QuickLink[] {
       { id: 'page-edit', label: t('editPage'), href: adminPageEditHref(lang, target.id), icon: 'edit' },
     );
   } else if (target?.kind === 'blog' && hasAccess(input, { permission: 'manage blog', feature: 'blog' })) {
-    links.push({ id: 'blog-edit', label: t('editPost'), href: adminBlogEditHref(lang, target.id), icon: 'edit', hint });
+    links.push(
+      {
+        id: 'blog-builder',
+        label: t('openBlogBuilder'),
+        href: withBuilderLocale(adminBlogBuilderHref(lang, target.id), lang),
+        icon: 'builder',
+        hint,
+      },
+      { id: 'blog-edit', label: t('editPost'), href: adminBlogEditHref(lang, target.id), icon: 'edit', hint },
+    );
   } else if (target?.kind === 'project' && hasAccess(input, { permission: 'manage projects', feature: 'projects' })) {
     links.push({ id: 'project-edit', label: t('editProject'), href: adminProjectEditHref(lang, target.id), icon: 'edit', hint });
   } else if (target?.kind === 'service' && hasAccess(input, { permission: 'manage services', feature: 'services' })) {

@@ -54,6 +54,8 @@ export interface BlogPost {
   coverImage?: string;
   coverImageAlt?: string;
   seoMeta?: MarketingPublicSeoMeta;
+  /** Presented builder layout from public show (empty = use HTML body / theme). */
+  sections?: import('./appearance-types').PageSectionNode[];
 }
 
 export interface Testimonial {

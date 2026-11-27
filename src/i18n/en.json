@@ -649,7 +649,14 @@
     "author": "Author: {{name}}",
     "seoLocalesCount": "SEO · {{count}} locales",
     "seoLocalesNone": "SEO · none",
-    "seoLocalesHint": "Locales with saved SEO data. Use Edit Post for full canonical, OG, and JSON-LD."
+    "seoLocalesHint": "Locales with saved SEO data. Use Edit Post for full canonical, OG, and JSON-LD.",
+    "openBuilder": "Open builder",
+    "editWithBuilder": "Open builder",
+    "builderTitle": "Blog post builder",
+    "builderHint": "Drag widgets onto a column or the free span. Drop selects the block and opens the inspector. Device toggles preview real spans.",
+    "classicSectionsHint": "Title, slug, and status stay here. Layout is edited only in the fullscreen builder — classic Save will not overwrite builder layout.",
+    "layoutBandCount": "{{count}} layout band(s) saved. Open the builder to edit.",
+    "builderAfterSaveHint": "After saving, open the fullscreen visual builder to lay out this post."
   },
   "media": {
     "title": "Media Library",
@@ -1822,6 +1829,7 @@
     "manageContent": "Manage content",
     "siteSettings": "Site & appearance",
     "openBuilder": "Open in page builder",
+    "openBlogBuilder": "Open in blog post builder",
     "editPage": "Edit page details",
     "editPost": "Edit this post",
     "editProject": "Edit this project",

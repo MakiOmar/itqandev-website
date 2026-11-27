@@ -171,6 +171,9 @@ export default component$(() => {
           {translateApp(lang, 'common.back')}
         </Link>
       </PageHeader>
+      <p class="mb-4 text-sm text-gray-600 dark:text-gray-400">
+        {translateApp(lang, 'blog.builderAfterSaveHint')}
+      </p>
 
       <Form
         action={createAction}

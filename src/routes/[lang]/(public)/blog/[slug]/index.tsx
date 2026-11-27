@@ -16,7 +16,10 @@ import { AnimatedReveal } from '~/components/marketing/AnimatedReveal';
 import { ContentImage } from '~/components/marketing/ContentImage';
 import { MarketingImageLightbox } from '~/components/marketing/MarketingImageLightbox';
 import { ThemeBodyOrFallback } from '~/components/marketing/theme/ThemeBodyOrFallback';
+import { HomepageSectionsRenderer } from '~/components/marketing/home-sections/HomepageSectionsRenderer';
 import { entityEditTarget, useAdminEditTarget } from '~/lib/marketing/admin-edit-target';
+import { mergeThemeBodyWithContent } from '~/lib/marketing/theme-body-content';
+import type { PageSectionNode } from '~/lib/marketing/appearance-types';
 
 export const useBlogPost = routeLoader$(async ({ params, fail, request }) => {
   const slug = params.slug;
@@ -38,6 +41,62 @@ export default component$(() => {
   const uiLocale = uiLangFromUrlPathname(loc.url.pathname);
   const baseUrl = getPublicSiteBaseUrl();
   const dateStr = post.date ? new Date(post.date).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) : '';
+  const postSections = Array.isArray(post.sections) ? (post.sections as PageSectionNode[]) : [];
+  const hasBuilderSections = postSections.length > 0;
+
+  const jsonLdBlocks = (
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={jsonLdScript({
+          '@context': 'https://schema.org',
+          '@type': 'Article',
+          headline: post.title,
+          description: post.excerpt,
+          datePublished: post.date,
+          author: post.author ? { '@type': 'Person', name: post.author.name } : undefined,
+        })}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={jsonLdScript({
+          '@context': 'https://schema.org',
+          '@type': 'BreadcrumbList',
+          itemListElement: [
+            { '@type': 'ListItem', position: 1, name: 'Home', item: baseUrl },
+            { '@type': 'ListItem', position: 2, name: 'Blog', item: baseUrl + '/blog' },
+            { '@type': 'ListItem', position: 3, name: post.title },
+          ],
+        })}
+      />
+      {post.seoMeta?.schema != null ? (
+        <script type="application/ld+json" dangerouslySetInnerHTML={jsonLdScript(post.seoMeta.schema)} />
+      ) : null}
+    </>
+  );
+
+  if (hasBuilderSections) {
+    const sections = mergeThemeBodyWithContent(shell.value.themeBody, postSections);
+    return (
+      <>
+        <HomepageSectionsRenderer
+          sections={sections}
+          uiLocale={uiLocale}
+          branding={shell.value.branding}
+          services={shell.value.siteContent?.services ?? []}
+          caseStudies={[]}
+          testimonials={[]}
+          blogPosts={[]}
+          techStack={shell.value.siteContent?.techStack ?? []}
+          siteContact={shell.value.siteContent?.contact}
+          layoutAware={true}
+          allowDefaultSections={false}
+          pageContext={{ title: post.title ?? '', slug: String((post as { slug?: string }).slug || '') }}
+        />
+        {jsonLdBlocks}
+      </>
+    );
+  }
 
   return (
     <ThemeBodyOrFallback
@@ -107,36 +166,7 @@ export default component$(() => {
         </Container>
       </Section>
 
-      {/* Article JSON-LD */}
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={jsonLdScript({
-          '@context': 'https://schema.org',
-          '@type': 'Article',
-          headline: post.title,
-          description: post.excerpt,
-          datePublished: post.date,
-          author: post.author ? { '@type': 'Person', name: post.author.name } : undefined,
-        })}
-      />
-
-      {/* BreadcrumbList JSON-LD */}
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={jsonLdScript({
-          '@context': 'https://schema.org',
-          '@type': 'BreadcrumbList',
-          itemListElement: [
-            { '@type': 'ListItem', position: 1, name: 'Home', item: baseUrl },
-            { '@type': 'ListItem', position: 2, name: 'Blog', item: baseUrl + '/blog' },
-            { '@type': 'ListItem', position: 3, name: post.title },
-          ],
-        })}
-      />
-      {/* Optional JSON-LD from the post's SEO fields */}
-      {post.seoMeta?.schema != null ? (
-        <script type="application/ld+json" dangerouslySetInnerHTML={jsonLdScript(post.seoMeta.schema)} />
-      ) : null}
+      {jsonLdBlocks}
     </>
     </ThemeBodyOrFallback>
   );

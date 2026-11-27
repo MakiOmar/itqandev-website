@@ -59,3 +59,13 @@ export function dynamicTagCatalogForCmsPage(catalog: DynamicTagCatalog): Dynamic
       (group.content_type === null || group.content_type === 'page'),
   );
 }
+
+/** A blog post's own layout resolves record tags against that post, never another content type. */
+export function dynamicTagCatalogForBlogPost(catalog: DynamicTagCatalog): DynamicTagCatalog {
+  return filterCatalog(
+    catalog,
+    (group) =>
+      (group.scope === 'site' || group.scope === 'record') &&
+      (group.content_type === null || group.content_type === 'blog_post'),
+  );
+}

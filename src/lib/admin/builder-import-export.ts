@@ -17,6 +17,7 @@ export const BUILDER_EXPORT_VERSION = 1;
 
 export type BuilderKind =
   | 'page'
+  | 'blog_post'
   | 'form'
   | 'homepage'
   | 'header'
@@ -155,7 +156,8 @@ function normalizeHomepageSections(raw: unknown[]): HomepageSectionInstance[] {
 /** Normalize a builder payload to the canonical in-editor document shape. */
 export function normalizeBuilderDocument(builder: BuilderKind, document: unknown): unknown {
   switch (builder) {
-    case 'page': {
+    case 'page':
+    case 'blog_post': {
       const sections = asSectionsArray(document);
       if (!sections) {
         throw new BuilderImportError('INVALID_PAGE_DOCUMENT');

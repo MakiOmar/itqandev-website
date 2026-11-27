@@ -689,6 +689,7 @@ function mapPublicBlogPostRecord(raw: Record<string, unknown>): BlogPost {
     coverImage: cover,
     coverImageAlt: typeof raw.coverImageAlt === 'string' ? raw.coverImageAlt : undefined,
     seoMeta: mapMarketingSeoMetaFromApi(raw.seo_meta ?? raw.seoMeta),
+    sections: Array.isArray(raw.sections) ? (raw.sections as BlogPost['sections']) : undefined,
   });
 }
 
@@ -846,5 +847,6 @@ function normalizeBlogPost(raw: BlogPost): BlogPost {
     coverImage: cover,
     coverImageAlt: raw.coverImageAlt,
     seoMeta: raw.seoMeta,
+    sections: Array.isArray(raw.sections) ? raw.sections : undefined,
   };
 }

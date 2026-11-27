@@ -225,6 +225,7 @@ export type PageBuilderWorkspaceProps = {
   /** Import/export envelope kind (default page). */
   exportBuilderKind?:
     | 'page'
+    | 'blog_post'
     | 'header'
     | 'footer'
     | 'body'
@@ -233,6 +234,10 @@ export type PageBuilderWorkspaceProps = {
     | 'archive'
     | 'loop_item'
     | 'overlay';
+  /** Header title i18n key (default pages.builderTitle). */
+  titleI18nKey?: string;
+  /** Header hint i18n key (default pages.builderHint). */
+  hintI18nKey?: string;
   /** Site branding for chrome live preview (logos from settings). */
   previewBranding?: {
     name: string;
@@ -1050,11 +1055,11 @@ export const PageBuilderWorkspace = component$<PageBuilderWorkspaceProps>((props
             </nav>
           ) : null}
           <p class="truncate text-sm font-semibold text-gray-900 dark:text-gray-100">
-            {translateApp(props.lang, 'pages.builderTitle')}
+            {translateApp(props.lang, props.titleI18nKey || 'pages.builderTitle')}
             {props.pageTitle ? ` — ${props.pageTitle}` : ''}
           </p>
           <p class="truncate text-xs text-gray-500 dark:text-gray-400">
-            {translateApp(props.lang, 'pages.builderHint')}
+            {translateApp(props.lang, props.hintI18nKey || 'pages.builderHint')}
           </p>
         </div>
         {/* Preview device switch */}

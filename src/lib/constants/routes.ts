@@ -138,6 +138,12 @@ export function adminBlogEditHref(lang: string, id: string | number): string {
   return withUiLocale(lang, `${p}/blog/${id}`);
 }
 
+export function adminBlogBuilderHref(lang: string, id: string | number): string {
+  const config = getConfig();
+  const p = config.routes.admin.prefix;
+  return withUiLocale(lang, `${p}/blog/${id}/builder`);
+}
+
 export function adminPageEditHref(lang: string, id: string | number): string {
   const config = getConfig();
   const p = config.routes.admin.prefix;

@@ -1,6 +1,6 @@
 import { component$, useSignal, $, useComputed$ } from '@builder.io/qwik';
 import type { DocumentHead } from '@builder.io/qwik-city';
-import { routeLoader$, routeAction$, useLocation, zod$, z } from '@builder.io/qwik-city';
+import { routeLoader$, routeAction$, useLocation, zod$, z, Link } from '@builder.io/qwik-city';
 import { LoadingSpinner } from '../../../../components/common/LoadingSpinner';
 import { useTranslate, translateApp } from '../../../../lib/i18n/useTranslate';
 import { useSwal } from '../../../../lib/hooks/useSwal';
@@ -21,6 +21,7 @@ import {
   ADMIN_ROW_ACTION_DANGER_CLASS,
   ADMIN_ROW_ACTION_ITEM_CLASS,
 } from '../../../../components/admin/AdminRowActionsMenu';
+import { adminBlogBuilderHref, adminBlogEditHref } from '../../../../lib/constants/routes';
 
 function blogSeoRowHasData(row: ContentSeoMetaRow | Record<string, unknown>): boolean {
   const nonempty = (v: unknown) => typeof v === 'string' && v.trim().length > 0;
@@ -710,6 +711,20 @@ export default component$(() => {
                       >
                         {translateApp(lang, 'common.edit')}
                       </button>
+                      <Link
+                        role="menuitem"
+                        href={adminBlogEditHref(lang, post.id)}
+                        class={ADMIN_ROW_ACTION_ITEM_CLASS}
+                      >
+                        {translateApp(lang, 'blog.edit')}
+                      </Link>
+                      <Link
+                        role="menuitem"
+                        href={adminBlogBuilderHref(lang, post.id)}
+                        class={ADMIN_ROW_ACTION_ITEM_CLASS}
+                      >
+                        {translateApp(lang, 'blog.editWithBuilder')}
+                      </Link>
                       <div class="my-1 border-t border-gray-100 dark:border-gray-700" role="separator" />
                       <button
                         type="button"
