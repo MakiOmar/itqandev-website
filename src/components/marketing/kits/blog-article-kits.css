@@ -1,24 +1,24 @@
-/* Blog article hero + callout — match Canva-style light body on dark site chrome */
+/* Blog article hero + cream body — Canva-grade typography, bullets, padding */
 
 .bah-shell {
   margin-inline: auto;
   width: 100%;
   max-width: 72rem;
-  padding-inline: 1rem;
-  padding-block: 2.5rem 3rem;
+  padding-inline: 1.25rem;
+  padding-block: 2.75rem 3.25rem;
 }
 
 @media (min-width: 640px) {
   .bah-shell {
-    padding-inline: 1.5rem;
-    padding-block: 3rem 3.5rem;
+    padding-inline: 1.75rem;
+    padding-block: 3.25rem 3.75rem;
   }
 }
 
 @media (min-width: 1024px) {
   .bah-shell {
-    padding-inline: 2rem;
-    padding-block: 3.5rem 4rem;
+    padding-inline: 2.5rem;
+    padding-block: 3.75rem 4.25rem;
   }
 }
 
@@ -38,29 +38,29 @@
 .bah-eyebrow {
   margin: 0;
   font-size: 0.75rem;
-  font-weight: 600;
-  letter-spacing: 0.14em;
+  font-weight: 700;
+  letter-spacing: 0.16em;
   text-transform: uppercase;
   color: var(--kit-color-accent);
 }
 
 .bah-title {
-  margin: 0.75rem 0 0;
+  margin: 0.85rem 0 0;
   font-size: clamp(1.875rem, 4vw, 2.85rem);
-  font-weight: 700;
-  letter-spacing: -0.02em;
-  line-height: 1.15;
+  font-weight: 800;
+  letter-spacing: -0.025em;
+  line-height: 1.12;
 }
 
 .bah-body {
-  margin-top: 1.25rem;
+  margin-top: 1.35rem;
   max-width: 38rem;
-  font-size: 1.05rem;
-  line-height: 1.7;
+  font-size: 1.0625rem;
+  line-height: 1.75;
 }
 
 .bah-body p {
-  margin: 0 0 0.85rem;
+  margin: 0 0 0.9rem;
 }
 
 .bah-body p:last-child {
@@ -72,15 +72,15 @@
 }
 
 .bah-tone-dark .bah-body {
-  color: rgba(248, 250, 252, 0.88);
+  color: rgba(248, 250, 252, 0.9);
 }
 
 .bah-tone-light .bah-title {
-  color: #0f172a;
+  color: #0a1128;
 }
 
 .bah-tone-light .bah-body {
-  color: #475569;
+  color: #4a4a4a;
 }
 
 .bah-media {
@@ -112,69 +112,139 @@
   }
 }
 
-/* Full-bleed cream article body (force light text while site chrome may be .dark) */
+/* ---- Cream article surface ---- */
 .blog-article-surface {
-  color: #0f172a;
-  --blog-surface: #fdf8ee;
+  color: #0a1128;
+  --blog-surface: #fffbf0;
+  --blog-ink: #0a1128;
+  --blog-muted: #4a4a4a;
+  --blog-rule: color-mix(in srgb, #c4b59a 70%, transparent);
 }
 
 .blog-article-surface-inner {
   margin-inline: auto;
   width: 100%;
   max-width: 72rem;
-  padding-inline: 1rem;
-  padding-block: 2.5rem 3rem;
+  padding-inline: 1.25rem;
+  padding-block: 3rem 3.5rem;
 }
 
 @media (min-width: 640px) {
   .blog-article-surface-inner {
-    padding-inline: 1.5rem;
-    padding-block: 3rem 3.5rem;
+    padding-inline: 2rem;
+    padding-block: 3.5rem 4rem;
   }
 }
 
 @media (min-width: 1024px) {
   .blog-article-surface-inner {
-    padding-inline: 2rem;
+    padding-inline: 2.75rem;
+    padding-block: 4rem 4.5rem;
   }
 }
 
-.blog-article-surface .aw-heading {
-  --aw-d: #0f172a;
+/* Column headings: bold navy, roomy, numbered titles from content */
+.blog-article-surface .aw-heading,
+.blog-article-surface .bah-col-heading .aw-heading {
+  --aw-d: #0a1128;
+  color: #0a1128;
+  font-size: clamp(1.35rem, 2.1vw, 1.7rem);
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  line-height: 1.22;
+  margin: 0 0 1.15rem;
+}
+
+/* Accent the leading "N." when present (visual cue matching Canva hierarchy) */
+.blog-article-surface .bah-col-heading .aw-heading {
+  display: block;
 }
 
 .blog-article-surface .aw-text {
-  --aw-d: #475569;
+  --aw-d: #4a4a4a;
 }
 
-/* Tailwind dark:prose-invert still matches html.dark — reset for light surfaces */
 .blog-article-surface .prose,
 .blog-article-surface .prose.dark\:prose-invert {
-  color: #475569;
-  --tw-prose-body: #475569;
-  --tw-prose-headings: #0f172a;
-  --tw-prose-bold: #0f172a;
-  --tw-prose-links: #0f172a;
-  --tw-prose-bullets: #94a3b8;
-  --tw-prose-counters: #64748b;
+  color: #4a4a4a;
+  font-size: 1.02rem;
+  line-height: 1.7;
+  --tw-prose-body: #4a4a4a;
+  --tw-prose-headings: #0a1128;
+  --tw-prose-bold: #0a1128;
+  --tw-prose-links: #0a1128;
+  --tw-prose-bullets: var(--kit-color-accent);
+  --tw-prose-counters: #0a1128;
 }
 
-.blog-article-surface .prose :where(p, li, strong) {
+.blog-article-surface .prose :where(p) {
+  margin-top: 0;
+  margin-bottom: 0.9rem;
+  color: #4a4a4a;
+}
+
+.blog-article-surface .prose :where(p):last-child {
+  margin-bottom: 0;
+}
+
+.blog-article-surface .prose :where(li, strong) {
   color: inherit;
 }
 
+/* Fancy accent bullets (solid circles) */
 .blog-article-surface .awl {
-  color: #334155;
+  color: #3f3f46;
+  margin: 0.15rem 0 0;
+  padding: 0;
+  gap: 0.9rem;
+  --awl-gap-y: 0.9rem;
+}
+
+.blog-article-surface .awl > li {
+  align-items: flex-start;
+  gap: 0.95rem;
+  color: #3f3f46;
+  font-size: 1.02rem;
+  line-height: 1.55;
+  --awl-marker: '';
+  --awl-marker-size: 0.5rem;
+  --awl-marker-gap: 0.95rem;
+  --awl-marker-color: var(--kit-color-accent);
+  --awl-item-color: #3f3f46;
+}
+
+.blog-article-surface .awl > li::before {
+  content: '';
+  width: 0.5rem;
+  height: 0.5rem;
+  min-width: 0.5rem;
+  border-radius: 999px;
+  background: var(--kit-color-accent);
+  color: transparent;
+  font-size: 0;
+  line-height: 0;
+  margin-block-start: 0.55em;
+  flex-shrink: 0;
 }
 
 .blog-article-cols {
-  gap: 1.75rem;
+  gap: 1.5rem;
+  align-items: start;
 }
 
 @media (min-width: 1024px) {
+  .blog-article-cols {
+    gap: 0;
+  }
+
   .blog-article-cols > .relative {
-    border-inline-end: 1px solid color-mix(in srgb, #c4b59a 55%, transparent);
-    padding-inline-end: 1.5rem;
+    border-inline-end: 1px solid var(--blog-rule);
+    padding-inline: 1.75rem;
+    padding-block: 0.35rem 0.5rem;
+  }
+
+  .blog-article-cols > .relative:first-child {
+    padding-inline-start: 0;
   }
 
   .blog-article-cols > .relative:last-child {
@@ -183,17 +253,35 @@
   }
 }
 
+@media (max-width: 1023px) {
+  .blog-article-cols > .relative {
+    padding-block: 0.75rem 1.25rem;
+    border-block-end: 1px solid var(--blog-rule);
+  }
+
+  .blog-article-cols > .relative:last-child {
+    border-block-end: none;
+  }
+}
+
+/* Takeaway callout — sand card with generous padding */
 .callout-card {
   display: flex;
   gap: 1rem;
   align-items: flex-start;
   border-radius: 1rem;
-  padding: 1.25rem 1.5rem;
-  background: color-mix(in srgb, var(--kit-color-accent) 18%, #fff);
-  border: 1px solid color-mix(in srgb, var(--kit-color-accent) 32%, transparent);
+  padding: 1.35rem 1.5rem;
+  background: #fde9d2;
+  border: 1px solid color-mix(in srgb, var(--kit-color-accent) 28%, transparent);
 }
 
-/* Dark callout only outside a forced light surface */
+@media (min-width: 640px) {
+  .callout-card {
+    padding: 1.5rem 1.75rem;
+    gap: 1.15rem;
+  }
+}
+
 :is(.dark) .callout-card:not(:where(.light *, .blog-article-surface *)) {
   background: color-mix(in srgb, var(--kit-color-accent) 18%, #0f172a);
   border-color: color-mix(in srgb, var(--kit-color-accent) 32%, transparent);
@@ -201,8 +289,8 @@
 
 .blog-article-surface .callout-card,
 .light .callout-card {
-  background: color-mix(in srgb, var(--kit-color-accent) 18%, #fff);
-  border-color: color-mix(in srgb, var(--kit-color-accent) 32%, transparent);
+  background: #fde9d2;
+  border-color: color-mix(in srgb, var(--kit-color-accent) 35%, transparent);
 }
 
 .callout-icon {
@@ -210,27 +298,27 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 2.5rem;
-  height: 2.5rem;
+  width: 2.65rem;
+  height: 2.65rem;
   border-radius: 9999px;
-  background: color-mix(in srgb, var(--kit-color-accent) 22%, transparent);
+  background: color-mix(in srgb, var(--kit-color-accent) 28%, #fff);
   color: var(--kit-color-accent);
 }
 
 .callout-label {
   margin: 0;
-  font-size: 0.7rem;
-  font-weight: 700;
-  letter-spacing: 0.12em;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: var(--kit-color-accent);
+  color: #d99011;
 }
 
 .callout-body {
-  margin: 0.4rem 0 0;
-  font-size: 0.95rem;
-  line-height: 1.55;
-  color: #334155;
+  margin: 0.45rem 0 0;
+  font-size: 0.98rem;
+  line-height: 1.6;
+  color: #0a1128;
 }
 
 :is(.dark) .callout-body:not(:where(.light *, .blog-article-surface *)) {
@@ -239,7 +327,7 @@
 
 .blog-article-surface .callout-body,
 .light .callout-body {
-  color: #334155;
+  color: #0a1128;
 }
 
 .callout-cta {
@@ -247,5 +335,5 @@
 }
 
 .blog-article-takeaway {
-  margin-top: 2rem;
+  margin-top: 1.75rem;
 }
