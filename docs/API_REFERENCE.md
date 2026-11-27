@@ -1082,7 +1082,7 @@ Requires `features.modules.promotion` enabled in `backend/config/features.php`. 
 | POST | `/api/v1/promotion/proposals/{id}/apply` | publish |
 | GET | `/api/v1/promotion/insights` | read |
 
-Empty-only SEO apply returns `409` with `data.status: approval_required` when fields are already filled or when `schema` / `canonical_url` is requested. See `docs/CONFIGURATION.md` and `mcp/credocode-promotion/README.md`.
+Empty-only SEO apply returns `409` with `data.status: approval_required` when fields are already filled or when `schema` / `canonical_url` is requested. Pass either `locale` + `fields`, or `locales` as `{ "en": { … }, "ar": { … } }` / `[{ locale, fields }]` for the same content `id`. Drafts accept optional `translations[]` (secondary locales on one row; do not create a second draft per language). See `docs/CONFIGURATION.md` and `mcp/credocode-promotion/README.md`.
 
 ---
 
