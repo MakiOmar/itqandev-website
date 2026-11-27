@@ -1,4 +1,4 @@
-import { component$, useComputed$ } from '@builder.io/qwik';
+import { component$, useComputed$, useSignal, useVisibleTask$ } from '@builder.io/qwik';
 import type { DocumentHead } from '@builder.io/qwik-city';
 import { routeLoader$ } from '@builder.io/qwik-city';
 import { Link, useLocation } from '@builder.io/qwik-city';
@@ -8,6 +8,8 @@ import { getPublicSiteBaseUrl } from '~/lib/seo/canonical-url';
 import { jsonLdScript } from '~/lib/seo/json-ld';
 import { marketingEntityDetailHead } from '~/lib/marketing/marketing-entity-document-head';
 import { getBlogPostBySlug } from '~/lib/marketing/content-layer';
+import { marketingApiPageOriginMismatch } from '~/lib/marketing/api-client';
+import type { BlogPost } from '~/lib/marketing/types';
 import { marketingRoutes } from '~/lib/marketing/constants';
 import { uiLangFromUrlPathname, uiLocaleFromPublicRoute } from '~/lib/i18n/ui-locale-path';
 import { Container } from '~/components/marketing/Container';
@@ -21,26 +23,157 @@ import { entityEditTarget, useAdminEditTarget } from '~/lib/marketing/admin-edit
 import { mergeThemeBodyWithContent } from '~/lib/marketing/theme-body-content';
 import type { PageSectionNode } from '~/lib/marketing/appearance-types';
 
+/** SSR cannot forward cross-origin Laravel cookies; loaders return this marker for a client retry. */
+type DeferredCrossOriginPayload = {
+  _deferredCrossOrigin: true;
+  slug: string;
+  uiLocale?: string;
+};
+
+function isBlogPostValue(v: unknown): v is BlogPost {
+  return (
+    v != null &&
+    typeof v === 'object' &&
+    !Array.isArray(v) &&
+    typeof (v as BlogPost).slug === 'string' &&
+    (v as BlogPost).slug.length > 0 &&
+    typeof (v as BlogPost).title === 'string'
+  );
+}
+
+function isDeferredCrossOriginPayload(v: unknown): v is DeferredCrossOriginPayload {
+  return (
+    v != null &&
+    typeof v === 'object' &&
+    (v as DeferredCrossOriginPayload)._deferredCrossOrigin === true &&
+    typeof (v as DeferredCrossOriginPayload).slug === 'string'
+  );
+}
+
 export const useBlogPost = routeLoader$(async ({ params, fail, request }) => {
   const slug = params.slug;
-  const uiLocale = uiLocaleFromPublicRoute(request.headers.get('cookie') || '', params.lang, request.url);
-  const post = await getBlogPostBySlug(slug, uiLocale, { forwardDocumentUrl: request.url });
-  if (!post) {
-    return fail(404, { message: 'Blog post not found' });
+  const cookie = request.headers.get('cookie') || '';
+  const uiLocale = uiLocaleFromPublicRoute(cookie, params.lang, request.url);
+  const forwardAuthorization = request.headers.get('authorization') || '';
+  const post = await getBlogPostBySlug(slug, uiLocale, {
+    forwardCookies: cookie || undefined,
+    forwardAuthorization: forwardAuthorization.trim() !== '' ? forwardAuthorization : undefined,
+    forwardDocumentUrl: request.url,
+  });
+  if (post) {
+    return post;
   }
-  return post;
+
+  if (marketingApiPageOriginMismatch(request.url)) {
+    return { _deferredCrossOrigin: true, slug, uiLocale } satisfies DeferredCrossOriginPayload;
+  }
+
+  return fail(404, { message: 'Blog post not found' });
 });
 
 export default component$(() => {
   const loc = useLocation();
   const MR = marketingRoutes(uiLangFromUrlPathname(loc.url.pathname));
   const postLoader = useBlogPost();
-  useAdminEditTarget(useComputed$(() => entityEditTarget('blog', postLoader.value)));
-  const post = postLoader.value;
+  const clientPost = useSignal<BlogPost | null>(null);
+  const clientRetryPhase = useSignal<'idle' | 'pending' | 'loaded' | 'missing'>('idle');
+
+  useVisibleTask$(async ({ track }) => {
+    track(() => postLoader.value);
+
+    clientPost.value = null;
+    const raw = postLoader.value as unknown;
+
+    if (!isDeferredCrossOriginPayload(raw)) {
+      clientRetryPhase.value = 'idle';
+      return;
+    }
+
+    clientRetryPhase.value = 'pending';
+    try {
+      const loaded = await getBlogPostBySlug(raw.slug, raw.uiLocale, undefined);
+      if (loaded) {
+        clientPost.value = loaded;
+        clientRetryPhase.value = 'loaded';
+        return;
+      }
+    } catch {
+      /* swallow */
+    }
+    clientRetryPhase.value = 'missing';
+  });
+
+  const view = useComputed$(() => {
+    const raw = postLoader.value as unknown;
+
+    if (raw != null && typeof raw === 'object' && (raw as { failed?: boolean }).failed === true) {
+      return { kind: 'failed' as const };
+    }
+
+    if (!isDeferredCrossOriginPayload(raw)) {
+      if (isBlogPostValue(raw)) {
+        return { kind: 'ok' as const, post: raw };
+      }
+      return { kind: 'empty' as const };
+    }
+
+    const phase = clientRetryPhase.value;
+    if (phase === 'pending' || phase === 'idle') {
+      return { kind: 'loading' as const };
+    }
+    if (phase === 'missing') {
+      return { kind: 'missing' as const };
+    }
+
+    const loaded = clientPost.value;
+    if (loaded && isBlogPostValue(loaded)) {
+      return { kind: 'ok' as const, post: loaded };
+    }
+    return { kind: 'loading' as const };
+  });
+
+  useAdminEditTarget(
+    useComputed$(() => (view.value.kind === 'ok' ? entityEditTarget('blog', view.value.post) : null)),
+  );
+
+  const state = view.value;
   const shell = usePublicShell();
   const uiLocale = uiLangFromUrlPathname(loc.url.pathname);
   const baseUrl = getPublicSiteBaseUrl();
-  const dateStr = post.date ? new Date(post.date).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) : '';
+
+  if (state.kind === 'failed' || state.kind === 'empty') {
+    return null;
+  }
+
+  if (state.kind === 'loading') {
+    return (
+      <Section>
+        <Container size="narrow">
+          <p class="rounded-md bg-slate-100 px-4 py-6 text-center text-slate-600 dark:bg-slate-800 dark:text-slate-300">
+            Loading post…
+          </p>
+        </Container>
+      </Section>
+    );
+  }
+
+  if (state.kind === 'missing') {
+    return (
+      <Section>
+        <Container size="narrow" class="text-center">
+          <p class="text-lg text-slate-700 dark:text-slate-200">Blog post not found.</p>
+          <Link href={MR.blog} class="mt-4 inline-block text-primary-600 underline dark:text-primary-400">
+            Back to blog
+          </Link>
+        </Container>
+      </Section>
+    );
+  }
+
+  const post = state.post;
+  const dateStr = post.date
+    ? new Date(post.date).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
+    : '';
   const postSections = Array.isArray(post.sections) ? (post.sections as PageSectionNode[]) : [];
   const hasBuilderSections = postSections.length > 0;
 
@@ -91,7 +224,7 @@ export default component$(() => {
           siteContact={shell.value.siteContent?.contact}
           layoutAware={true}
           allowDefaultSections={false}
-          pageContext={{ title: post.title ?? '', slug: String((post as { slug?: string }).slug || '') }}
+          pageContext={{ title: post.title ?? '', slug: String(post.slug || '') }}
         />
         {jsonLdBlocks}
       </>
@@ -110,64 +243,60 @@ export default component$(() => {
         blogPosts: [],
         techStack: shell.value.siteContent?.techStack ?? [],
         siteContact: shell.value.siteContent?.contact,
-        pageContext: { title: post.title ?? '', slug: String((post as { slug?: string }).slug || '') },
+        pageContext: { title: post.title ?? '', slug: String(post.slug || '') },
       }}
     >
-    <>
-      <Section>
-        <Container size="narrow">
-          <AnimatedReveal>
-            <Link
-              href={MR.blog}
-              class="inline-flex items-center text-sm font-medium text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"
-            >
-              <svg class="mr-1 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
-              </svg>
-              Back to blog
-            </Link>
-          </AnimatedReveal>
-
-          <article class="mt-8">
-            <AnimatedReveal delay={60}>
-              <header>
-                <time dateTime={post.date} class="text-sm text-slate-500 dark:text-slate-400">
-                  {dateStr}
-                </time>
-                <h1 class="mt-2 text-3xl font-bold text-slate-900 dark:text-white sm:text-4xl">
-                  {post.title}
-                </h1>
-                {post.author?.name && (
-                  <p class="mt-2 text-slate-600 dark:text-slate-400">
-                    By {post.author.name}
-                  </p>
-                )}
-              </header>
-              <MarketingImageLightbox>
-                {post.coverImage !== undefined && (
-                  <div class="mt-8 aspect-video w-full overflow-hidden rounded-xl bg-slate-100 shadow-lg ring-1 ring-slate-200/70 dark:bg-slate-800 dark:ring-slate-600/50">
-                    <ContentImage
-                      src={post.coverImage}
-                      alt={post.coverImageAlt || post.title}
-                      width={960}
-                      height={540}
-                      fetchPriority="high"
-                      class="h-full w-full object-cover"
-                    />
-                  </div>
-                )}
-                <div
-                  class="article-content mt-8 max-w-none [&_img]:rounded-xl [&_img]:shadow-sm"
-                  dangerouslySetInnerHTML={post.body}
-                />
-              </MarketingImageLightbox>
+      <>
+        <Section>
+          <Container size="narrow">
+            <AnimatedReveal>
+              <Link
+                href={MR.blog}
+                class="inline-flex items-center text-sm font-medium text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"
+              >
+                <svg class="mr-1 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+                </svg>
+                Back to blog
+              </Link>
             </AnimatedReveal>
-          </article>
-        </Container>
-      </Section>
 
-      {jsonLdBlocks}
-    </>
+            <article class="mt-8">
+              <AnimatedReveal delay={60}>
+                <header>
+                  <time dateTime={post.date} class="text-sm text-slate-500 dark:text-slate-400">
+                    {dateStr}
+                  </time>
+                  <h1 class="mt-2 text-3xl font-bold text-slate-900 dark:text-white sm:text-4xl">{post.title}</h1>
+                  {post.author?.name && (
+                    <p class="mt-2 text-slate-600 dark:text-slate-400">By {post.author.name}</p>
+                  )}
+                </header>
+                <MarketingImageLightbox>
+                  {post.coverImage !== undefined && (
+                    <div class="mt-8 aspect-video w-full overflow-hidden rounded-xl bg-slate-100 shadow-lg ring-1 ring-slate-200/70 dark:bg-slate-800 dark:ring-slate-600/50">
+                      <ContentImage
+                        src={post.coverImage}
+                        alt={post.coverImageAlt || post.title}
+                        width={960}
+                        height={540}
+                        fetchPriority="high"
+                        class="h-full w-full object-cover"
+                      />
+                    </div>
+                  )}
+                  <div
+                    class="article-content mt-8 max-w-none [&_img]:rounded-xl [&_img]:shadow-sm"
+                    dangerouslySetInnerHTML={post.body}
+                  />
+                </MarketingImageLightbox>
+              </AnimatedReveal>
+            </article>
+          </Container>
+        </Section>
+
+        {jsonLdBlocks}
+      </>
     </ThemeBodyOrFallback>
   );
 });
@@ -176,7 +305,14 @@ export const head: DocumentHead = ({ resolveValue, url }) => {
   const shell = resolveValue(usePublicShell);
   const brandName = publicSiteName(shell.branding);
   try {
-    const post = resolveValue(useBlogPost);
+    const raw = resolveValue(useBlogPost) as unknown;
+    if (!isBlogPostValue(raw)) {
+      return {
+        title: `404 | ${brandName}`,
+        meta: [{ name: 'robots', content: 'noindex, nofollow' }],
+      };
+    }
+    const post = raw;
     const result = marketingEntityDetailHead({
       brandName,
       baseUrl: getPublicSiteBaseUrl(url.origin).replace(/\/$/, ''),

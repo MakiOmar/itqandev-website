@@ -792,6 +792,24 @@ export async function getBlogPostBySlug(
   locale?: string,
   fetchContext?: MarketingFetchContext,
 ): Promise<BlogPost | null> {
+  // Prefer the live API whenever a base URL is configured (same as case studies / blog list),
+  // even if VITE_MARKETING_CONTENT_SOURCE is still the default "local".
+  if (hasMarketingApiBase(fetchContext)) {
+    try {
+      const data = await marketingGet<unknown>(
+        MARKETING_ENDPOINTS.blogPost(slug),
+        locale,
+        fetchContext,
+      );
+      if (data && typeof data === 'object' && !Array.isArray(data)) {
+        return mapPublicBlogPostRecord(data as Record<string, unknown>);
+      }
+    } catch {
+      return null;
+    }
+    return null;
+  }
+
   if (contentSource === 'api') {
     try {
       const data = await marketingGet<Record<string, unknown>>(
