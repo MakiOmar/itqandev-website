@@ -1,14 +1,37 @@
-/* Blog article hero + callout kits — design-kit accent tokens only */
+/* Blog article hero + callout — match Canva-style light body on dark site chrome */
+
+.bah-shell {
+  margin-inline: auto;
+  width: 100%;
+  max-width: 72rem;
+  padding-inline: 1rem;
+  padding-block: 2.5rem 3rem;
+}
+
+@media (min-width: 640px) {
+  .bah-shell {
+    padding-inline: 1.5rem;
+    padding-block: 3rem 3.5rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .bah-shell {
+    padding-inline: 2rem;
+    padding-block: 3.5rem 4rem;
+  }
+}
 
 .bah-grid {
   display: grid;
   align-items: center;
-  gap: 2.5rem;
+  gap: 2rem;
 }
 
 @media (min-width: 1024px) {
   .bah-grid {
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr);
+    gap: 3rem;
   }
 }
 
@@ -23,7 +46,7 @@
 
 .bah-title {
   margin: 0.75rem 0 0;
-  font-size: clamp(1.875rem, 4vw, 2.75rem);
+  font-size: clamp(1.875rem, 4vw, 2.85rem);
   font-weight: 700;
   letter-spacing: -0.02em;
   line-height: 1.15;
@@ -49,7 +72,7 @@
 }
 
 .bah-tone-dark .bah-body {
-  color: rgba(248, 250, 252, 0.86);
+  color: rgba(248, 250, 252, 0.88);
 }
 
 .bah-tone-light .bah-title {
@@ -89,18 +112,96 @@
   }
 }
 
+/* Full-bleed cream article body (force light text while site chrome may be .dark) */
+.blog-article-surface {
+  color: #0f172a;
+  --blog-surface: #fdf8ee;
+}
+
+.blog-article-surface-inner {
+  margin-inline: auto;
+  width: 100%;
+  max-width: 72rem;
+  padding-inline: 1rem;
+  padding-block: 2.5rem 3rem;
+}
+
+@media (min-width: 640px) {
+  .blog-article-surface-inner {
+    padding-inline: 1.5rem;
+    padding-block: 3rem 3.5rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .blog-article-surface-inner {
+    padding-inline: 2rem;
+  }
+}
+
+.blog-article-surface .aw-heading {
+  --aw-d: #0f172a;
+}
+
+.blog-article-surface .aw-text {
+  --aw-d: #475569;
+}
+
+/* Tailwind dark:prose-invert still matches html.dark — reset for light surfaces */
+.blog-article-surface .prose,
+.blog-article-surface .prose.dark\:prose-invert {
+  color: #475569;
+  --tw-prose-body: #475569;
+  --tw-prose-headings: #0f172a;
+  --tw-prose-bold: #0f172a;
+  --tw-prose-links: #0f172a;
+  --tw-prose-bullets: #94a3b8;
+  --tw-prose-counters: #64748b;
+}
+
+.blog-article-surface .prose :where(p, li, strong) {
+  color: inherit;
+}
+
+.blog-article-surface .awl {
+  color: #334155;
+}
+
+.blog-article-cols {
+  gap: 1.75rem;
+}
+
+@media (min-width: 1024px) {
+  .blog-article-cols > .relative {
+    border-inline-end: 1px solid color-mix(in srgb, #c4b59a 55%, transparent);
+    padding-inline-end: 1.5rem;
+  }
+
+  .blog-article-cols > .relative:last-child {
+    border-inline-end: none;
+    padding-inline-end: 0;
+  }
+}
+
 .callout-card {
   display: flex;
   gap: 1rem;
   align-items: flex-start;
   border-radius: 1rem;
   padding: 1.25rem 1.5rem;
-  background: color-mix(in srgb, var(--kit-color-accent) 16%, #fff);
-  border: 1px solid color-mix(in srgb, var(--kit-color-accent) 28%, transparent);
+  background: color-mix(in srgb, var(--kit-color-accent) 18%, #fff);
+  border: 1px solid color-mix(in srgb, var(--kit-color-accent) 32%, transparent);
 }
 
-:is(.dark) .callout-card {
+/* Dark callout only outside a forced light surface */
+:is(.dark) .callout-card:not(:where(.light *, .blog-article-surface *)) {
   background: color-mix(in srgb, var(--kit-color-accent) 18%, #0f172a);
+  border-color: color-mix(in srgb, var(--kit-color-accent) 32%, transparent);
+}
+
+.blog-article-surface .callout-card,
+.light .callout-card {
+  background: color-mix(in srgb, var(--kit-color-accent) 18%, #fff);
   border-color: color-mix(in srgb, var(--kit-color-accent) 32%, transparent);
 }
 
@@ -132,10 +233,19 @@
   color: #334155;
 }
 
-:is(.dark) .callout-body {
+:is(.dark) .callout-body:not(:where(.light *, .blog-article-surface *)) {
   color: #e2e8f0;
+}
+
+.blog-article-surface .callout-body,
+.light .callout-body {
+  color: #334155;
 }
 
 .callout-cta {
   margin-top: 0.85rem;
+}
+
+.blog-article-takeaway {
+  margin-top: 2rem;
 }

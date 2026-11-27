@@ -701,7 +701,7 @@ export const ContentKitView = component$<ContentKitProps>((props) => {
       const imageLeft = str(s, 'image_position', 'right') === 'left';
       const tone = str(s, 'tone', 'dark') === 'light' ? 'light' : 'dark';
       const copy = (
-        <div class={`bah-copy bah-order-copy`}>
+        <div class="bah-copy bah-order-copy">
           {str(s, 'eyebrow') ? <p class="bah-eyebrow">{str(s, 'eyebrow')}</p> : null}
           <h1 class="bah-title">{str(s, 'title')}</h1>
           {str(s, 'body') ? (
@@ -714,20 +714,23 @@ export const ContentKitView = component$<ContentKitProps>((props) => {
           <img src={image} alt={str(s, 'image_alt') || ''} loading="eager" />
         </figure>
       ) : null;
+      const grid = (
+        <div
+          class={[
+            'bah-grid',
+            `bah-tone-${tone}`,
+            imageLeft ? 'bah-image-left' : '',
+          ]
+            .filter(Boolean)
+            .join(' ')}
+        >
+          {copy}
+          {media}
+        </div>
+      );
       const body = (
         <AnimatedReveal>
-          <div
-            class={[
-              'bah-grid',
-              `bah-tone-${tone}`,
-              imageLeft ? 'bah-image-left' : '',
-            ]
-              .filter(Boolean)
-              .join(' ')}
-          >
-            {copy}
-            {media}
-          </div>
+          <div class="bah-shell">{grid}</div>
         </AnimatedReveal>
       );
       if (props.embedded) return body;
@@ -744,7 +747,7 @@ export const ContentKitView = component$<ContentKitProps>((props) => {
       const buttonUrl = str(s, 'button_url');
       const card = (
         <AnimatedReveal>
-          <aside class="callout-card" aria-label={label || 'Callout'}>
+          <aside class="callout-card blog-article-takeaway" aria-label={label || 'Callout'}>
             {s.icon != null && s.icon !== '' ? (
               <div class="callout-icon" aria-hidden="true">
                 <SvgIcon value={s.icon} size={22} />
