@@ -172,7 +172,11 @@ export default component$(() => {
 
   const post = state.post;
   const dateStr = post.date
-    ? new Date(post.date).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
+    ? new Date(post.date).toLocaleDateString(uiLocale || undefined, {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+      })
     : '';
   const postSections = Array.isArray(post.sections) ? (post.sections as PageSectionNode[]) : [];
   const hasBuilderSections = postSections.length > 0;
@@ -247,34 +251,55 @@ export default component$(() => {
       }}
     >
       <>
+        <section class="relative overflow-hidden bg-slate-950 text-slate-100">
+          <div
+            class="pointer-events-none absolute -right-24 top-0 h-72 w-72 rounded-full bg-[color:var(--kit-color-accent)]/20 blur-3xl"
+            aria-hidden="true"
+          />
+          <Container size="narrow">
+            <div class="relative py-12 sm:py-16">
+              <AnimatedReveal>
+                <Link
+                  href={MR.blog}
+                  class="inline-flex items-center text-sm font-medium text-slate-300 hover:text-white"
+                >
+                  <svg class="mr-1 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+                  </svg>
+                  Back to blog
+                </Link>
+              </AnimatedReveal>
+              <AnimatedReveal delay={60}>
+                <header class="mt-8">
+                  {dateStr ? (
+                    <time dateTime={post.date} class="text-sm text-slate-400">
+                      {dateStr}
+                    </time>
+                  ) : null}
+                  <h1 class="mt-3 text-3xl font-bold tracking-tight text-white sm:text-4xl lg:text-5xl">
+                    {post.title}
+                  </h1>
+                  {post.excerpt ? (
+                    <p class="mt-4 max-w-2xl text-base leading-relaxed text-slate-300 sm:text-lg">
+                      {post.excerpt}
+                    </p>
+                  ) : null}
+                  {post.author?.name ? (
+                    <p class="mt-3 text-sm text-slate-400">By {post.author.name}</p>
+                  ) : null}
+                </header>
+              </AnimatedReveal>
+            </div>
+          </Container>
+        </section>
+
         <Section>
           <Container size="narrow">
-            <AnimatedReveal>
-              <Link
-                href={MR.blog}
-                class="inline-flex items-center text-sm font-medium text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"
-              >
-                <svg class="mr-1 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
-                </svg>
-                Back to blog
-              </Link>
-            </AnimatedReveal>
-
-            <article class="mt-8">
-              <AnimatedReveal delay={60}>
-                <header>
-                  <time dateTime={post.date} class="text-sm text-slate-500 dark:text-slate-400">
-                    {dateStr}
-                  </time>
-                  <h1 class="mt-2 text-3xl font-bold text-slate-900 dark:text-white sm:text-4xl">{post.title}</h1>
-                  {post.author?.name && (
-                    <p class="mt-2 text-slate-600 dark:text-slate-400">By {post.author.name}</p>
-                  )}
-                </header>
+            <article class="-mt-6 rounded-2xl bg-[#FDF8EE] px-5 py-8 shadow-sm ring-1 ring-slate-200/60 dark:bg-slate-900/80 dark:ring-slate-700/60 sm:px-8 sm:py-10">
+              <AnimatedReveal delay={80}>
                 <MarketingImageLightbox>
                   {post.coverImage !== undefined && (
-                    <div class="mt-8 aspect-video w-full overflow-hidden rounded-xl bg-slate-100 shadow-lg ring-1 ring-slate-200/70 dark:bg-slate-800 dark:ring-slate-600/50">
+                    <div class="mb-8 aspect-video w-full overflow-hidden rounded-xl bg-slate-100 shadow-lg ring-1 ring-slate-200/70 dark:bg-slate-800 dark:ring-slate-600/50">
                       <ContentImage
                         src={post.coverImage}
                         alt={post.coverImageAlt || post.title}
@@ -286,7 +311,7 @@ export default component$(() => {
                     </div>
                   )}
                   <div
-                    class="article-content mt-8 max-w-none [&_img]:rounded-xl [&_img]:shadow-sm"
+                    class="article-content prose prose-slate mt-0 max-w-none dark:prose-invert [&_img]:rounded-xl [&_img]:shadow-sm"
                     dangerouslySetInnerHTML={post.body}
                   />
                 </MarketingImageLightbox>

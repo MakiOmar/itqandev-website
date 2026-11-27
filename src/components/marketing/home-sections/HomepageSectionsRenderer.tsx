@@ -110,6 +110,8 @@ const CONTENT_KITS = new Set([
   'accordion_content',
   'tabs_content',
   'video_cta',
+  'blog_article_hero',
+  'callout',
   'page_header',
 ]);
 

@@ -6,11 +6,13 @@ import { Card } from '~/components/marketing/Card';
 import { Container } from '~/components/marketing/Container';
 import { Section } from '~/components/marketing/Section';
 import { AnimatedReveal } from '~/components/marketing/AnimatedReveal';
+import { SvgIcon } from '~/components/marketing/SvgIcon';
 import { marketingRoutes } from '~/lib/marketing/constants';
 import { localizeInAppHref } from '~/lib/i18n/ui-locale-path';
 import type { ContactInfo } from '~/lib/marketing/types';
 import { translateApp } from '~/lib/i18n/useTranslate';
 import { addonKits } from 'virtual:itqandev-addon-widgets';
+import './blog-article-kits.css';
 
 export type ContentKitProps = {
   type: string;
@@ -691,6 +693,81 @@ export const ContentKitView = component$<ContentKitProps>((props) => {
               </div>
             </AnimatedReveal>
           </Container>
+        </Section>
+      );
+    }
+    case 'blog_article_hero': {
+      const image = str(s, 'image');
+      const imageLeft = str(s, 'image_position', 'right') === 'left';
+      const tone = str(s, 'tone', 'dark') === 'light' ? 'light' : 'dark';
+      const copy = (
+        <div class={`bah-copy bah-order-copy`}>
+          {str(s, 'eyebrow') ? <p class="bah-eyebrow">{str(s, 'eyebrow')}</p> : null}
+          <h1 class="bah-title">{str(s, 'title')}</h1>
+          {str(s, 'body') ? (
+            <div class="bah-body" dangerouslySetInnerHTML={str(s, 'body')} />
+          ) : null}
+        </div>
+      );
+      const media = image ? (
+        <figure class="bah-media bah-order-media">
+          <img src={image} alt={str(s, 'image_alt') || ''} loading="eager" />
+        </figure>
+      ) : null;
+      const body = (
+        <AnimatedReveal>
+          <div
+            class={[
+              'bah-grid',
+              `bah-tone-${tone}`,
+              imageLeft ? 'bah-image-left' : '',
+            ]
+              .filter(Boolean)
+              .join(' ')}
+          >
+            {copy}
+            {media}
+          </div>
+        </AnimatedReveal>
+      );
+      if (props.embedded) return body;
+      return (
+        <Section>
+          <Container>{body}</Container>
+        </Section>
+      );
+    }
+    case 'callout': {
+      const label = str(s, 'label', 'THE TAKEAWAY');
+      const bodyText = str(s, 'body');
+      const buttonLabel = str(s, 'button_label');
+      const buttonUrl = str(s, 'button_url');
+      const card = (
+        <AnimatedReveal>
+          <aside class="callout-card" aria-label={label || 'Callout'}>
+            {s.icon != null && s.icon !== '' ? (
+              <div class="callout-icon" aria-hidden="true">
+                <SvgIcon value={s.icon} size={22} />
+              </div>
+            ) : null}
+            <div class="callout-content">
+              {label ? <p class="callout-label">{label}</p> : null}
+              {bodyText ? <p class="callout-body">{bodyText}</p> : null}
+              {buttonLabel && buttonUrl ? (
+                <div class="callout-cta">
+                  <Button href={localizeInAppHref(props.uiLocale, buttonUrl)} variant="primary">
+                    {buttonLabel}
+                  </Button>
+                </div>
+              ) : null}
+            </div>
+          </aside>
+        </AnimatedReveal>
+      );
+      if (props.embedded) return card;
+      return (
+        <Section>
+          <Container size="narrow">{card}</Container>
         </Section>
       );
     }

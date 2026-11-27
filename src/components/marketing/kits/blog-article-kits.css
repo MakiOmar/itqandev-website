@@ -1,0 +1,141 @@
+/* Blog article hero + callout kits — design-kit accent tokens only */
+
+.bah-grid {
+  display: grid;
+  align-items: center;
+  gap: 2.5rem;
+}
+
+@media (min-width: 1024px) {
+  .bah-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.bah-eyebrow {
+  margin: 0;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--kit-color-accent);
+}
+
+.bah-title {
+  margin: 0.75rem 0 0;
+  font-size: clamp(1.875rem, 4vw, 2.75rem);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.15;
+}
+
+.bah-body {
+  margin-top: 1.25rem;
+  max-width: 38rem;
+  font-size: 1.05rem;
+  line-height: 1.7;
+}
+
+.bah-body p {
+  margin: 0 0 0.85rem;
+}
+
+.bah-body p:last-child {
+  margin-bottom: 0;
+}
+
+.bah-tone-dark .bah-title {
+  color: #f8fafc;
+}
+
+.bah-tone-dark .bah-body {
+  color: rgba(248, 250, 252, 0.86);
+}
+
+.bah-tone-light .bah-title {
+  color: #0f172a;
+}
+
+.bah-tone-light .bah-body {
+  color: #475569;
+}
+
+.bah-media {
+  margin: 0;
+}
+
+.bah-media img {
+  display: block;
+  width: 100%;
+  height: auto;
+  object-fit: contain;
+}
+
+.bah-order-copy {
+  order: 1;
+}
+
+.bah-order-media {
+  order: 2;
+}
+
+@media (min-width: 1024px) {
+  .bah-image-left .bah-order-media {
+    order: 1;
+  }
+
+  .bah-image-left .bah-order-copy {
+    order: 2;
+  }
+}
+
+.callout-card {
+  display: flex;
+  gap: 1rem;
+  align-items: flex-start;
+  border-radius: 1rem;
+  padding: 1.25rem 1.5rem;
+  background: color-mix(in srgb, var(--kit-color-accent) 16%, #fff);
+  border: 1px solid color-mix(in srgb, var(--kit-color-accent) 28%, transparent);
+}
+
+:is(.dark) .callout-card {
+  background: color-mix(in srgb, var(--kit-color-accent) 18%, #0f172a);
+  border-color: color-mix(in srgb, var(--kit-color-accent) 32%, transparent);
+}
+
+.callout-icon {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 9999px;
+  background: color-mix(in srgb, var(--kit-color-accent) 22%, transparent);
+  color: var(--kit-color-accent);
+}
+
+.callout-label {
+  margin: 0;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--kit-color-accent);
+}
+
+.callout-body {
+  margin: 0.4rem 0 0;
+  font-size: 0.95rem;
+  line-height: 1.55;
+  color: #334155;
+}
+
+:is(.dark) .callout-body {
+  color: #e2e8f0;
+}
+
+.callout-cta {
+  margin-top: 0.85rem;
+}
