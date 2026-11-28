@@ -5,7 +5,8 @@
  */
 const FLAG_COUNTRY_BY_LANG: Record<string, string> = {
   en: 'gb',
-  ar: 'sa',
+  /** Arabic on this site uses the Egyptian flag. */
+  ar: 'eg',
   fr: 'fr',
   de: 'de',
   es: 'es',

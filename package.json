@@ -60,7 +60,7 @@
     "start": "vite --open --mode ssr",
     "qwik": "qwik",
     "test.addons": "node --test scripts/vite-addons-plugin.test.mjs",
-    "test.unit": "node --test scripts/feature-modules.test.mjs"
+    "test.unit": "node --test scripts/feature-modules.test.mjs scripts/language-flags.test.mjs"
   },
   "devDependencies": {
     "@builder.io/qwik": "^1.20.0",
