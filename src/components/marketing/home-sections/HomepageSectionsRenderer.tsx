@@ -38,6 +38,7 @@ import {
 import { filterPageSectionsForDevice, hideOnClass } from '~/lib/marketing/device-visibility';
 import { useLayoutDevice } from '~/lib/marketing/layout-device-context';
 import { LayoutNodeShell } from '~/components/marketing/layout/LayoutNodeShell';
+import { readBuilderBackground } from '~/lib/marketing/builder-background';
 import {
   defaultHomepageSections,
   type HomepageSectionInstance,
@@ -60,6 +61,7 @@ import {
   hasWidgetStyleControls,
   type BuilderStyles,
 } from '~/lib/marketing/builder-styles';
+import { normalizeCssClasses } from '~/lib/marketing/builder-node-attrs';
 
 const WIDGET_TYPES = new Set([
   'heading',
@@ -473,13 +475,22 @@ function renderLayoutBand(band: PageLayoutBand, props: HomepageSectionsRendererP
   const bandCssClasses = band.css_classes;
   const isArticleSurface = /\bblog-article-surface\b/.test(String(bandCssClasses || ''));
   const hide = (hideOn: unknown) => (props.editorPreview ? '' : hideOnClass(hideOn));
+  // Full-bleed cream: paint background on the outer section; keep the shell transparent so
+  // blog-article-surface-inner can box the steps without clipping the band color.
+  const shellSettings =
+    isArticleSurface && bandSettings
+      ? { ...bandSettings, background: { type: 'none' as const } }
+      : bandSettings;
+  const surfaceBg = isArticleSurface ? readBuilderBackground(bandSettings) : null;
+  const surfaceBgColor =
+    surfaceBg?.type === 'color' && surfaceBg.color ? surfaceBg.color : undefined;
   const inner = (
     <LayoutNodeShell
       id={band.id}
-      settings={bandSettings}
+      settings={shellSettings}
       styles={bandStyles}
       cssId={bandCssId}
-      cssClasses={bandCssClasses}
+      cssClasses={isArticleSurface ? undefined : bandCssClasses}
       class={isArticleSurface ? 'w-full py-0' : 'w-full py-6 sm:py-8 lg:py-10'}
     >
       {(band.rows ?? []).map((row) => {
@@ -496,7 +507,7 @@ function renderLayoutBand(band: PageLayoutBand, props: HomepageSectionsRendererP
             styles={rowStyles}
             cssId={rowCssId}
             cssClasses={rowCssClasses}
-            class={`w-full rounded-xl ${hide(row.hide_on)}`}
+            class={`w-full ${isArticleSurface ? '' : 'rounded-xl'} ${hide(row.hide_on)}`}
           >
             <div
               class={`grid h-full grid-cols-12 items-stretch ${rowGapClass(row.gap)} ${
@@ -551,23 +562,30 @@ function renderLayoutBand(band: PageLayoutBand, props: HomepageSectionsRendererP
     </LayoutNodeShell>
   );
 
-  const surfaceInner = isArticleSurface ? (
-    <div class="blog-article-surface-inner">{inner}</div>
-  ) : (
-    inner
-  );
+  if (isArticleSurface) {
+    const surfaceClasses = normalizeCssClasses(bandCssClasses) || 'light blog-article-surface';
+    return (
+      <section
+        key={band.id}
+        class={`w-full ${surfaceClasses} ${hide(band.hide_on)}`}
+        style={surfaceBgColor ? { backgroundColor: surfaceBgColor } : undefined}
+      >
+        <div class="blog-article-surface-inner blog-article-steps-box">{inner}</div>
+      </section>
+    );
+  }
 
   if ((band.layout_width ?? 'boxed') === 'full') {
     return (
       <section key={band.id} class={`w-full ${hide(band.hide_on)}`}>
-        {surfaceInner}
+        {inner}
       </section>
     );
   }
 
   return (
     <section key={band.id} class={`mx-auto w-full max-w-6xl px-4 sm:px-6 lg:px-8 ${hide(band.hide_on)}`}>
-      {surfaceInner}
+      {inner}
     </section>
   );
 }

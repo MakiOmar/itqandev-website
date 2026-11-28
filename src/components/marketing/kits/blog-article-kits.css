@@ -129,6 +129,11 @@
   padding-block: 3rem 3.5rem;
 }
 
+/* Boxed steps container inside the full-bleed cream band */
+.blog-article-steps-box {
+  box-sizing: border-box;
+}
+
 @media (min-width: 640px) {
   .blog-article-surface-inner {
     padding-inline: 2rem;
@@ -143,21 +148,49 @@
   }
 }
 
-/* Column headings: bold navy, roomy, numbered titles from content */
-.blog-article-surface .aw-heading,
+/* Canva step number: gold "1." + gold rule across the column */
+.blog-article-surface .bah-step-num {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  width: 100%;
+  margin: 0 0 0.85rem;
+}
+
+.blog-article-surface .bah-step-num .aw-heading {
+  --aw-d: var(--kit-color-accent);
+  color: var(--kit-color-accent);
+  flex-shrink: 0;
+  margin: 0;
+  font-size: clamp(1.45rem, 2.2vw, 1.85rem);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  line-height: 1;
+}
+
+.blog-article-surface .bah-step-num::after {
+  content: '';
+  flex: 1 1 auto;
+  height: 1.5px;
+  min-width: 1.25rem;
+  background: var(--kit-color-accent);
+}
+
+/* Step titles: navy, smaller than previous / Canva display size */
+.blog-article-surface .bah-step-title .aw-heading,
 .blog-article-surface .bah-col-heading .aw-heading {
   --aw-d: #0a1128;
   color: #0a1128;
-  font-size: clamp(1.35rem, 2.1vw, 1.7rem);
+  font-size: clamp(1.05rem, 1.45vw, 1.25rem);
   font-weight: 800;
-  letter-spacing: -0.03em;
-  line-height: 1.22;
-  margin: 0 0 1.15rem;
+  letter-spacing: -0.02em;
+  line-height: 1.3;
+  margin: 0 0 1rem;
 }
 
-/* Accent the leading "N." when present (visual cue matching Canva hierarchy) */
-.blog-article-surface .bah-col-heading .aw-heading {
-  display: block;
+.blog-article-surface .aw-heading {
+  --aw-d: #0a1128;
+  color: #0a1128;
 }
 
 .blog-article-surface .aw-text {
