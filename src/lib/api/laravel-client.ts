@@ -1,6 +1,7 @@
 import type { ApiResponse, ApiError } from './types';
 import { getConfig } from '../config';
 import { readPreferredLocaleFromCookieHeader } from '../i18n/dashboard-locale';
+import { uiLangPrefixFromPathname } from '../i18n/ui-locale-path';
 import { ensureSsrIpv4First } from '../marketing/ssr-dns';
 import { ssrFetch } from '../marketing/ssr-fetch';
 
@@ -30,7 +31,15 @@ export class LaravelApiClient {
       return null;
     }
     if (typeof this.contentPresentationLocale === 'string' && this.contentPresentationLocale.trim() !== '') {
-      return this.contentPresentationLocale.trim();
+      return this.contentPresentationLocale.trim().toLowerCase();
+    }
+    // The dashboard URL (`/ar/admin/...`) is the language the operator just chose.
+    // Cookie and localStorage can still say `en` on the first request after a switch.
+    if (typeof window !== 'undefined') {
+      const fromPath = uiLangPrefixFromPathname(window.location.pathname);
+      if (fromPath) {
+        return fromPath;
+      }
     }
     const fromCookie = readPreferredLocaleFromCookieHeader(this.serverCookies);
     if (fromCookie) {

@@ -10,6 +10,7 @@ import {
   builderPrimaryLocale,
   resolveBuilderInitialLocale,
 } from '~/lib/admin/builder-locale';
+import { useFollowDashboardLocale } from '~/lib/admin/use-follow-dashboard-locale';
 import { usePublicSiteMeta } from '../../../routes/[lang]/admin/layout';
 import { useTranslate, translateApp } from '~/lib/i18n/useTranslate';
 import { useSwal } from '~/lib/hooks/useSwal';
@@ -105,8 +106,12 @@ export const ChromeAppearanceBuilder = component$<ChromeAppearanceBuilderProps>(
   const loc = useLocation();
   const defaultLocale = builderPrimaryLocale(langConfig.value);
   const activeLocale = useSignal(
-    resolveBuilderInitialLocale(langConfig.value, loc.url.searchParams.get(BUILDER_LOCALE_PARAM)),
+    resolveBuilderInitialLocale(
+      langConfig.value,
+      loc.url.searchParams.get(BUILDER_LOCALE_PARAM) || lang,
+    ),
   );
+  useFollowDashboardLocale(activeLocale, langConfig.value.site_languages);
   const pageTitle =
     kind === 'header'
       ? translateApp(lang, 'sidebar.appearanceHeader')

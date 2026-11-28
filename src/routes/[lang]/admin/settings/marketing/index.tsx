@@ -11,6 +11,8 @@ import { Form } from '@builder.io/qwik-city';
 import { useTranslate, translateApp } from '../../../../../lib/i18n/useTranslate';
 import { useSwal } from '../../../../../lib/hooks/useSwal';
 import {
+  dashboardEditsPrimarySettings,
+  SettingsLocaleTextField,
   SettingsTranslationsRoot,
   settingsTranslationsContext,
 } from '../../../../../components/admin/SettingsFieldTranslations';
@@ -114,6 +116,9 @@ export default component$(() => {
     settings.value.site_languages,
     settings.value.default_locale,
   );
+  const otherLocalePanels = dashboardEditsPrimarySettings(lang, settings.value.default_locale)
+    ? secondaryLocales
+    : secondaryLocales.filter((row) => row.code.toLowerCase() !== String(lang).toLowerCase());
 
   const initial = cloneMarketing(parseMarketingSiteContent(settings.value.marketing_site_content));
   const content = useStore<MarketingSiteContentSettings>(initial);
@@ -189,6 +194,7 @@ export default component$(() => {
 
         <SettingsTranslationsRoot
           locales={secondaryLocales}
+          activeLocale={lang}
           initialTranslations={settings.value.settings_translations}
           rtlBadge={translateApp(lang, 'contentTranslations.rtlBadge')}
           fallbackHintShort={translateApp(lang, 'contentTranslations.fallbackPlaceholderHint')}
@@ -201,32 +207,36 @@ export default component$(() => {
               <label class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-200">
                 {translateApp(lang, 'settings.marketingTagline')}
               </label>
-              <input
-                type="text"
-                value={content.about?.tagline ?? ''}
-                onInput$={(e) => {
-                  const el = e.target as HTMLInputElement;
+              <SettingsLocaleTextField
+                path={['marketing_site_content', 'about', 'tagline']}
+                uiLocale={lang}
+                defaultLocale={settings.value.default_locale}
+                primaryValue={content.about?.tagline ?? ''}
+                inputClass="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100"
+                onPrimaryInput$={$((value: string) => {
                   if (!content.about) content.about = {};
-                  content.about.tagline = el.value;
+                  content.about.tagline = value;
                   syncMarketingJson();
-                }}
-                class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100"
+                })}
               />
             </div>
             <div>
               <label class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-200">
                 {translateApp(lang, 'settings.marketingMission')}
               </label>
-              <textarea
+              <SettingsLocaleTextField
+                path={['marketing_site_content', 'about', 'mission']}
+                multiline
                 rows={3}
-                value={content.about?.mission ?? ''}
-                onInput$={(e) => {
-                  const el = e.target as HTMLTextAreaElement;
+                uiLocale={lang}
+                defaultLocale={settings.value.default_locale}
+                primaryValue={content.about?.mission ?? ''}
+                inputClass="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100"
+                onPrimaryInput$={$((value: string) => {
                   if (!content.about) content.about = {};
-                  content.about.mission = el.value;
+                  content.about.mission = value;
                   syncMarketingJson();
-                }}
-                class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100"
+                })}
               />
             </div>
             <div>
@@ -422,21 +432,22 @@ export default component$(() => {
               <label class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-200">
                 {translateApp(lang, 'settings.marketingContactAddress')}
               </label>
-              <input
-                type="text"
-                value={content.contact?.address ?? ''}
-                onInput$={(e) => {
-                  const el = e.target as HTMLInputElement;
+              <SettingsLocaleTextField
+                path={['marketing_site_content', 'contact', 'address']}
+                uiLocale={lang}
+                defaultLocale={settings.value.default_locale}
+                primaryValue={content.contact?.address ?? ''}
+                inputClass="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100"
+                onPrimaryInput$={$((value: string) => {
                   if (!content.contact) content.contact = {};
-                  content.contact.address = el.value;
+                  content.contact.address = value;
                   syncMarketingJson();
-                }}
-                class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100"
+                })}
               />
             </div>
           </section>
 
-          {secondaryLocales.length > 0 ? (
+          {otherLocalePanels.length > 0 ? (
             <section class="space-y-4 border-t border-gray-200 pt-6 dark:border-gray-700">
               <h3 class="text-base font-semibold text-gray-900 dark:text-gray-100">
                 {translateApp(lang, 'settings.marketingTranslations')}
@@ -445,7 +456,7 @@ export default component$(() => {
                 {translateApp(lang, 'settings.marketingTranslationsHint')}
               </p>
               <MarketingLocalePanels
-                locales={secondaryLocales}
+                locales={otherLocalePanels}
                 primary={content}
                 fallbackHint={String(translateApp(lang, 'contentTranslations.fallbackPlaceholderHint'))}
                 taglineLabel={String(translateApp(lang, 'settings.marketingTagline'))}

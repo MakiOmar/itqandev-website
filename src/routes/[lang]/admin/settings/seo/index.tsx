@@ -53,6 +53,7 @@ export default component$(() => {
 
         <SettingsTranslationsRoot
           locales={secondaryLocales}
+          activeLocale={lang}
           initialTranslations={settings.value.settings_translations}
           rtlBadge={translateApp(lang, 'contentTranslations.rtlBadge')}
           fallbackHintShort={translateApp(lang, 'contentTranslations.fallbackPlaceholderHint')}
@@ -64,6 +65,7 @@ export default component$(() => {
             </h3>
             <SeoDefaultsBlockFields
               lang={lang}
+              defaultLocale={settings.value.default_locale}
               idPrefix="seo-defaults-global"
               block={defaults}
               translationPath={['seo_defaults']}
@@ -108,6 +110,7 @@ export default component$(() => {
                 <div class="border-t border-gray-200 p-4 dark:border-gray-700">
                   <SeoDefaultsBlockFields
                     lang={lang}
+                    defaultLocale={settings.value.default_locale}
                     idPrefix={`seo-defaults-${type}`}
                     block={defaults.types[type]}
                     translationPath={['seo_defaults', 'types', type]}

@@ -1,7 +1,12 @@
-import { $, component$, useSignal } from '@builder.io/qwik';
+import { $, component$, useContext, useSignal } from '@builder.io/qwik';
 import { translateApp } from '../../lib/i18n/useTranslate';
+import { pathTranslation, serializeSettingsTranslations, setPathTranslation } from '../../lib/admin/settings-translations';
 import { MediaSelector } from '../common/MediaSelector';
-import { SettingsFieldGlobe } from './SettingsFieldTranslations';
+import {
+  dashboardEditsPrimarySettings,
+  SettingsFieldGlobe,
+  settingsTranslationsContext,
+} from './SettingsFieldTranslations';
 import {
   DEFAULT_TITLE_TEMPLATE,
   SEO_DESCRIPTION_MAX,
@@ -35,8 +40,15 @@ export const SeoDefaultsBlockFields = component$<{
   translationPath: string[];
   /** Global block shown as placeholders when this block inherits from it. */
   inheritFrom?: SeoDefaultsBlock;
+  /** Site default locale. Other dashboard languages edit `settings_translations`, not this block. */
+  defaultLocale?: string;
 }>((props) => {
   const { lang, idPrefix, block, inheritFrom } = props;
+  const translations = useContext(settingsTranslationsContext);
+  const ui = String(lang || '').toLowerCase();
+  const editsTranslation =
+    !dashboardEditsPrimarySettings(ui, props.defaultLocale) &&
+    translations.locales.some((loc) => loc.code.toLowerCase() === ui);
   const showPicker = useSignal(false);
   const globeLabel = translateApp(lang, 'contentTranslations.globeTitle');
   const titlePlaceholder = inheritFrom ? inheritFrom.title_template || DEFAULT_TITLE_TEMPLATE : DEFAULT_TITLE_TEMPLATE;
@@ -58,12 +70,25 @@ export const SeoDefaultsBlockFields = component$<{
           <input
             id={`${idPrefix}-title`}
             type="text"
+            dir="auto"
+            lang={editsTranslation ? ui : undefined}
             maxLength={SEO_TITLE_TEMPLATE_MAX}
-            value={block.title_template}
+            value={
+              editsTranslation
+                ? pathTranslation(translations.store, ui, [...props.translationPath, 'title_template'])
+                : block.title_template
+            }
             placeholder={titlePlaceholder}
             class={ADMIN_FORM_INPUT_CLASS}
             onInput$={(e) => {
-              block.title_template = (e.target as HTMLInputElement).value;
+              const raw = (e.target as HTMLInputElement).value;
+              if (editsTranslation) {
+                const next = setPathTranslation(translations.store, ui, [...props.translationPath, 'title_template'], raw);
+                Object.assign(translations.store, next);
+                translations.hiddenJson.value = serializeSettingsTranslations(translations.store);
+                return;
+              }
+              block.title_template = raw;
             }}
           />
         </SettingsFieldGlobe>
@@ -86,12 +111,30 @@ export const SeoDefaultsBlockFields = component$<{
           <textarea
             id={`${idPrefix}-description`}
             rows={3}
+            dir="auto"
+            lang={editsTranslation ? ui : undefined}
             maxLength={SEO_DESCRIPTION_MAX}
-            value={block.meta_description}
-            placeholder={inheritFrom?.meta_description || ''}
+            value={
+              editsTranslation
+                ? pathTranslation(translations.store, ui, [...props.translationPath, 'meta_description'])
+                : block.meta_description
+            }
+            placeholder={editsTranslation ? block.meta_description || inheritFrom?.meta_description || '' : inheritFrom?.meta_description || ''}
             class={ADMIN_FORM_TEXTAREA_CLASS}
             onInput$={(e) => {
-              block.meta_description = (e.target as HTMLTextAreaElement).value;
+              const raw = (e.target as HTMLTextAreaElement).value;
+              if (editsTranslation) {
+                const next = setPathTranslation(
+                  translations.store,
+                  ui,
+                  [...props.translationPath, 'meta_description'],
+                  raw,
+                );
+                Object.assign(translations.store, next);
+                translations.hiddenJson.value = serializeSettingsTranslations(translations.store);
+                return;
+              }
+              block.meta_description = raw;
             }}
           />
         </SettingsFieldGlobe>

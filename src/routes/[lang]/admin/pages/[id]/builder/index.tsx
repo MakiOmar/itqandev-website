@@ -24,6 +24,7 @@ import type { AppearanceRegistryEntry, PageSectionNode } from '../../../../../..
 import type { AdminPage } from '../../../../../../types/page';
 import { primaryLocaleForContent } from '../../../../../../lib/content-display-locale';
 import { BUILDER_LOCALE_PARAM, resolveBuilderInitialLocale } from '../../../../../../lib/admin/builder-locale';
+import { useFollowDashboardLocale } from '../../../../../../lib/admin/use-follow-dashboard-locale';
 
 function mapPageFromApi(raw: Record<string, unknown>): AdminPage {
   return {
@@ -80,8 +81,12 @@ export default component$(() => {
   const dynamicTags = useSignal<DynamicTagCatalog>(EMPTY_DYNAMIC_TAG_CATALOG);
   const loc = useLocation();
   const activeLocale = useSignal(
-    resolveBuilderInitialLocale(langConfig.value, loc.url.searchParams.get(BUILDER_LOCALE_PARAM)),
+    resolveBuilderInitialLocale(
+      langConfig.value,
+      loc.url.searchParams.get(BUILDER_LOCALE_PARAM) || lang,
+    ),
   );
+  useFollowDashboardLocale(activeLocale, langConfig.value.site_languages);
   const saving = useSignal(false);
 
   // eslint-disable-next-line qwik/no-use-visible-task

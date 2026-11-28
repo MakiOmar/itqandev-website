@@ -1,4 +1,5 @@
 import { $, component$, type QRL, type Signal } from '@builder.io/qwik';
+import { useFollowDashboardLocale } from '../../lib/admin/use-follow-dashboard-locale';
 import {
   ContentEditingLanguageSelect,
   ContentPrimaryLanguageSelect,
@@ -29,6 +30,7 @@ export type AdminContentLanguageFieldsProps = {
  * Must sit inside `grid gap-4 md:grid-cols-2` — the selects already use `md:col-span-2`.
  */
 export const AdminContentLanguageFields = component$<AdminContentLanguageFieldsProps>((props) => {
+  useFollowDashboardLocale(props.editingLocale, props.siteLanguages);
   const showPrimary = props.showPrimary !== false;
   const effectivePrimary = primaryLocaleForContent(
     props.siteLanguages,

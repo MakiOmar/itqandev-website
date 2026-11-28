@@ -22,8 +22,9 @@ export function persistPreferredLocale(lang: string, isRtl: boolean): void {
   const expirationDate = new Date();
   expirationDate.setFullYear(expirationDate.getFullYear() + 1);
   const exp = expirationDate.toUTCString();
-  document.cookie = `preferred-locale=${encodeURIComponent(code)}; path=/; expires=${exp}; SameSite=Lax`;
-  document.cookie = `preferred-locale-rtl=${rtlFlag}; path=/; expires=${exp}; SameSite=Lax`;
+  const secure = location.protocol === 'https:' ? '; Secure' : '';
+  document.cookie = `preferred-locale=${encodeURIComponent(code)}; path=/; expires=${exp}; SameSite=Lax${secure}`;
+  document.cookie = `preferred-locale-rtl=${rtlFlag}; path=/; expires=${exp}; SameSite=Lax${secure}`;
 
   const dir = isRtl ? 'rtl' : 'ltr';
   document.documentElement.setAttribute('dir', dir);

@@ -5,7 +5,7 @@ import { secondaryLocales } from '../content-translations';
 import { MARKETING_ENDPOINTS } from '../marketing/endpoints';
 import { marketingGet } from '../marketing/api-client';
 import { shouldSkipSsrMarketingApi, isDevSsrMarketingFetchFailure } from '../marketing/ssr-api-reachability';
-import { readPreferredLocaleFromCookieHeader } from '../i18n/dashboard-locale';
+import { uiLocaleFromPublicRoute } from '../i18n/ui-locale-path';
 import { resolvePublicSiteLanguages } from '../i18n/public-site-languages';
 import { defaultSystemTypography, parseSiteTypography } from '../perf/typography';
 import type { SiteTypography } from '~/types/typography';
@@ -28,20 +28,26 @@ export interface PublicSiteMetaState {
   default_theme?: SiteDefaultTheme;
 }
 
+/**
+ * Content language for admin editors follows the dashboard URL (`/ar/admin/...`),
+ * not the inbound `preferred-locale` cookie. That cookie is often still `en` on the
+ * request that switches language, because the layout writes it onto the response.
+ */
 function pickContentEditingLocale(
   siteLanguages: SiteLanguageRow[],
   defaultLocale: string,
   cookieHeader: string | null,
+  requestUrl: string,
 ): string {
-  const preferred = readPreferredLocaleFromCookieHeader(cookieHeader)?.toLowerCase().trim();
+  const fromRoute = uiLocaleFromPublicRoute(cookieHeader, undefined, requestUrl)?.toLowerCase();
   const codes = new Set(siteLanguages.map((l) => String(l?.code ?? '').toLowerCase()).filter(Boolean));
-  if (preferred && codes.has(preferred)) {
-    return preferred;
+  if (fromRoute && (codes.size === 0 || codes.has(fromRoute))) {
+    return fromRoute;
   }
   return defaultLocale;
 }
 
-function siteMetaFallback(cookieHeader: string | null): PublicSiteMetaState {
+function siteMetaFallback(cookieHeader: string | null, requestUrl: string): PublicSiteMetaState {
   const site_languages = resolvePublicSiteLanguages(null);
   const default_locale = 'en';
   return {
@@ -49,7 +55,7 @@ function siteMetaFallback(cookieHeader: string | null): PublicSiteMetaState {
     site_languages,
     default_locale,
     secondary: secondaryLocales(site_languages, default_locale),
-    content_editing_locale: pickContentEditingLocale(site_languages, default_locale, cookieHeader),
+    content_editing_locale: pickContentEditingLocale(site_languages, default_locale, cookieHeader, requestUrl),
   };
 }
 
@@ -60,11 +66,13 @@ export async function loadPublicSiteMeta(
 ): Promise<PublicSiteMetaState> {
   const cookieHeader = extractCookieHeader(cookie, request);
   if (typeof window === 'undefined' && shouldSkipSsrMarketingApi()) {
-    return siteMetaFallback(cookieHeader);
+    return siteMetaFallback(cookieHeader, request.url);
   }
 
+  const requestLocale = uiLocaleFromPublicRoute(cookieHeader, undefined, request.url);
+
   try {
-    const settings = await marketingGet<Record<string, unknown>>(MARKETING_ENDPOINTS.siteMeta, null, {
+    const settings = await marketingGet<Record<string, unknown>>(MARKETING_ENDPOINTS.siteMeta, requestLocale, {
       forwardCookies: cookieHeader,
       forwardDocumentUrl: request.url,
     });
@@ -79,7 +87,12 @@ export async function loadPublicSiteMeta(
       site_languages,
       default_locale,
       secondary: secondaryLocales(site_languages, default_locale),
-      content_editing_locale: pickContentEditingLocale(site_languages, default_locale, cookieHeader),
+      content_editing_locale: pickContentEditingLocale(
+        site_languages,
+        default_locale,
+        cookieHeader,
+        request.url,
+      ),
       design_kit_css: typeof settings?.design_kit_css === 'string' ? settings.design_kit_css : undefined,
       kit_colors: parseKitColors(settings?.design_kit),
       favicon: typeof settings?.favicon === 'string' ? resolveLaravelMediaUrl(settings.favicon) : undefined,
@@ -89,6 +102,6 @@ export async function loadPublicSiteMeta(
     if (import.meta.env.DEV && !isDevSsrMarketingFetchFailure(e)) {
       console.warn('loadPublicSiteMeta: site-meta request failed; using defaults.', e);
     }
-    return siteMetaFallback(cookieHeader);
+    return siteMetaFallback(cookieHeader, request.url);
   }
 }

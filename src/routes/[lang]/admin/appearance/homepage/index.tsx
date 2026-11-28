@@ -5,6 +5,7 @@ import {
   builderPrimaryLocale,
   resolveBuilderInitialLocale,
 } from '~/lib/admin/builder-locale';
+import { useFollowDashboardLocale } from '~/lib/admin/use-follow-dashboard-locale';
 import { PageBuilderWorkspace } from '~/components/admin/pages/PageBuilderWorkspace';
 import { useTranslate, translateApp } from '~/lib/i18n/useTranslate';
 import { useSwal } from '~/lib/hooks/useSwal';
@@ -38,8 +39,12 @@ export default component$(() => {
   const loc = useLocation();
   const defaultLocale = builderPrimaryLocale(langConfig.value);
   const activeLocale = useSignal(
-    resolveBuilderInitialLocale(langConfig.value, loc.url.searchParams.get(BUILDER_LOCALE_PARAM)),
+    resolveBuilderInitialLocale(
+      langConfig.value,
+      loc.url.searchParams.get(BUILDER_LOCALE_PARAM) || lang,
+    ),
   );
+  useFollowDashboardLocale(activeLocale, langConfig.value.site_languages);
 
   // eslint-disable-next-line qwik/no-use-visible-task
   useVisibleTask$(async () => {

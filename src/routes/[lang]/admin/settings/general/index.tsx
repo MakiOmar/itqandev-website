@@ -5,6 +5,7 @@ import { useTranslate, translateApp } from '../../../../../lib/i18n/useTranslate
 import { useSwal } from '../../../../../lib/hooks/useSwal';
 import {
   SettingsFieldGlobe,
+  SettingsLocaleTextField,
   SettingsTranslationsRoot,
 } from '../../../../../components/admin/SettingsFieldTranslations';
 import { secondarySiteLocales } from '../../../../../lib/admin/settings-translations';
@@ -84,6 +85,7 @@ export default component$(() => {
       <Form action={updateAction} class="space-y-4">
         <SettingsTranslationsRoot
           locales={secondaryLocales}
+          activeLocale={lang}
           initialTranslations={settings.value.settings_translations}
           rtlBadge={translateApp(lang, 'contentTranslations.rtlBadge')}
           fallbackHintShort={translateApp(lang, 'contentTranslations.fallbackPlaceholderHint')}
@@ -98,11 +100,13 @@ export default component$(() => {
                 globeAriaLabel={translateApp(lang, 'contentTranslations.globeTitle')}
                 fallbackText={settings.value.site_name}
               >
-                <input
+                <SettingsLocaleTextField
+                  field="site_name"
                   name="site_name"
-                  type="text"
-                  value={settings.value.site_name}
-                  class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-primary-500 focus:outline-none focus:ring focus:ring-primary-200 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:focus:ring-primary-700/40"
+                  primaryValue={settings.value.site_name}
+                  uiLocale={lang}
+                  defaultLocale={settings.value.default_locale}
+                  inputClass="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-primary-500 focus:outline-none focus:ring focus:ring-primary-200 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:focus:ring-primary-700/40"
                 />
               </SettingsFieldGlobe>
             </div>
@@ -113,6 +117,7 @@ export default component$(() => {
               <input
                 name="site_email"
                 type="email"
+                dir="ltr"
                 value={settings.value.site_email}
                 class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-primary-500 focus:outline-none focus:ring focus:ring-primary-200 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:focus:ring-primary-700/40"
               />
@@ -124,6 +129,7 @@ export default component$(() => {
               <input
                 name="site_phone"
                 type="tel"
+                dir="ltr"
                 value={settings.value.site_phone}
                 class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-primary-500 focus:outline-none focus:ring focus:ring-primary-200 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:focus:ring-primary-700/40"
               />
@@ -137,11 +143,13 @@ export default component$(() => {
                 globeAriaLabel={translateApp(lang, 'contentTranslations.globeTitle')}
                 fallbackText={settings.value.site_address}
               >
-                <input
+                <SettingsLocaleTextField
+                  field="site_address"
                   name="site_address"
-                  type="text"
-                  value={settings.value.site_address}
-                  class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-primary-500 focus:outline-none focus:ring focus:ring-primary-200 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:focus:ring-primary-700/40"
+                  primaryValue={settings.value.site_address}
+                  uiLocale={lang}
+                  defaultLocale={settings.value.default_locale}
+                  inputClass="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-primary-500 focus:outline-none focus:ring focus:ring-primary-200 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:focus:ring-primary-700/40"
                 />
               </SettingsFieldGlobe>
             </div>
@@ -157,11 +165,15 @@ export default component$(() => {
               globeAriaLabel={translateApp(lang, 'contentTranslations.globeTitle')}
               fallbackText={settings.value.site_description}
             >
-              <textarea
+              <SettingsLocaleTextField
+                field="site_description"
                 name="site_description"
+                multiline
                 rows={3}
-                value={settings.value.site_description}
-                class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-primary-500 focus:outline-none focus:ring focus:ring-primary-200 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:focus:ring-primary-700/40"
+                primaryValue={settings.value.site_description}
+                uiLocale={lang}
+                defaultLocale={settings.value.default_locale}
+                inputClass="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-primary-500 focus:outline-none focus:ring focus:ring-primary-200 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:focus:ring-primary-700/40"
               />
             </SettingsFieldGlobe>
           </div>

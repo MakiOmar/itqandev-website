@@ -73,9 +73,9 @@ export function mergeBlogPostFieldsForUiLocale(
   }
   const row = post.translations?.find((t) => String(t.locale).toLowerCase() === u);
   return {
-    title: row?.title != null && row.title !== '' ? row.title : post.title ?? '',
-    excerpt: row?.excerpt != null && row.excerpt !== '' ? row.excerpt : post.excerpt ?? '',
-    content: row?.content != null && row.content !== '' ? row.content : post.content ?? '',
+    title: row?.title ?? '',
+    excerpt: row?.excerpt ?? '',
+    content: row?.content ?? '',
   };
 }
 
@@ -97,9 +97,9 @@ export function mergeProjectFieldsForUiLocale(
   }
   const row = project.translations?.find((t) => String(t.locale).toLowerCase() === u);
   return {
-    title: row?.title != null && row.title !== '' ? row.title : project.title ?? '',
-    summary: row?.summary != null && row.summary !== '' ? row.summary : project.summary ?? '',
-    description: row?.description != null && row.description !== '' ? row.description : project.description ?? '',
+    title: row?.title ?? '',
+    summary: row?.summary ?? '',
+    description: row?.description ?? '',
   };
 }
 
@@ -123,8 +123,8 @@ export function mergeCategoryFieldsForUiLocale(
   }
   const row = (category as any).translations?.find((t: any) => String(t?.locale).toLowerCase() === u);
   return {
-    name: row?.name != null && row.name !== '' ? row.name : baseName,
-    description: row?.description != null && row.description !== '' ? row.description : baseDescription,
+    name: typeof row?.name === 'string' ? row.name : '',
+    description: typeof row?.description === 'string' ? row.description : '',
   };
 }
 
@@ -220,8 +220,8 @@ export function mergeSkillFieldsForUiLocale(
   }
   const row = (skill as any).translations?.find((t: any) => String(t?.locale).toLowerCase() === u);
   return {
-    name: row?.name != null && row.name !== '' ? row.name : baseName,
-    description: row?.description != null && row.description !== '' ? row.description : baseDescription,
+    name: typeof row?.name === 'string' ? row.name : '',
+    description: typeof row?.description === 'string' ? row.description : '',
   };
 }
 
@@ -247,10 +247,10 @@ export function mergeTestimonialFieldsForUiLocale(
   }
   const row = testimonial.translations?.find((t) => String(t?.locale).toLowerCase() === u);
   return {
-    client_name: row?.client_name != null && row.client_name !== '' ? row.client_name : baseName,
-    content: row?.content != null && row.content !== '' ? row.content : baseContent,
-    client_role: row?.client_role != null && row.client_role !== '' ? row.client_role : baseRole,
-    company: row?.company != null && row.company !== '' ? row.company : baseCompany,
+    client_name: row?.client_name ?? '',
+    content: row?.content ?? '',
+    client_role: row?.client_role ?? '',
+    company: row?.company ?? '',
   };
 }
 
@@ -346,11 +346,11 @@ export function mergeServiceFieldsForUiLocale(
   }
   const row = service.translations?.find((t) => String(t?.locale).toLowerCase() === u);
   return {
-    name: row?.name != null && row.name !== '' ? row.name : baseName,
-    short_description: row?.short_description != null && row.short_description !== '' ? row.short_description : baseShort,
-    description: row?.description != null && row.description !== '' ? row.description : baseDesc,
-    process: normalizeStringArray(row?.process).length > 0 ? normalizeStringArray(row?.process) : baseProcess,
-    deliverables: normalizeStringArray(row?.deliverables).length > 0 ? normalizeStringArray(row?.deliverables) : baseDel,
+    name: row?.name ?? '',
+    short_description: row?.short_description ?? '',
+    description: row?.description ?? '',
+    process: normalizeStringArray(row?.process),
+    deliverables: normalizeStringArray(row?.deliverables),
   };
 }
 
