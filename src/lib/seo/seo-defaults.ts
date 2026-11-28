@@ -30,8 +30,8 @@ export function parseFacebookAppId(raw: unknown): string {
   return FACEBOOK_APP_ID_RE.test(id) ? id : '';
 }
 
-/** Keeps today's `Title | Section | Site` output when nothing is configured. */
-export const DEFAULT_TITLE_TEMPLATE = '{title} | {section} | {site}';
+/** Default when Settings → SEO has no template: headline + brand (no middle section segment). */
+export const DEFAULT_TITLE_TEMPLATE = '{title} | {site}';
 
 export const SEO_TITLE_TEMPLATE_MAX = 160;
 export const SEO_DESCRIPTION_MAX = 320;

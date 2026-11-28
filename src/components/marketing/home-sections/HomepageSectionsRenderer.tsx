@@ -53,8 +53,9 @@ import type {
   PortfolioCategory,
 } from '~/lib/marketing/content-layer';
 import type { PublicBrandingState } from '~/lib/marketing/public-shell';
-import { getConfig } from '~/lib/config';
 import { getPublicSiteBaseUrl } from '~/lib/seo/canonical-url';
+import { jsonLdScript } from '~/lib/seo/json-ld';
+import { publicSiteName } from '~/lib/marketing/public-page-head';
 import {
   builderDisplayClass,
   hasAnyStyles,
@@ -601,7 +602,9 @@ export const HomepageSectionsRenderer = component$<HomepageSectionsRendererProps
         ? defaultHomepageSections()
         : [];
   const list = filterPageSectionsForDevice(rawList as PageSectionNode[], device);
-  const config = getConfig();
+  const orgName = publicSiteName(props.branding);
+  const orgDescription =
+    props.branding?.site_description?.trim() || 'Web, Android & iOS development agency.';
 
   return (
     <>
@@ -615,12 +618,12 @@ export const HomepageSectionsRenderer = component$<HomepageSectionsRendererProps
 
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={JSON.stringify({
+        dangerouslySetInnerHTML={jsonLdScript({
           '@context': 'https://schema.org',
           '@type': 'Organization',
-          name: config.branding.name,
+          name: orgName,
           url: getPublicSiteBaseUrl(),
-          description: 'Web, Android & iOS development agency.',
+          description: orgDescription,
         })}
       />
     </>

@@ -951,7 +951,7 @@
     "seoTypes": "Per content type",
     "seoTypesHint": "Empty fields inherit the global defaults.",
     "seoTitleTemplate": "Title template",
-    "seoTitleTemplateHint": "Tokens: {title} = item title, {section} = section name, {site} = site name. Empty tokens drop their separator. Default: {title} | {section} | {site}",
+    "seoTitleTemplateHint": "Tokens: {title} = item title, {section} = section name, {site} = site name. Empty tokens drop their separator. Default: {title} | {site}",
     "seoDefaultDescription": "Default meta description",
     "seoDefaultOgImage": "Default social image (OG)",
     "seoNoImage": "No image selected",

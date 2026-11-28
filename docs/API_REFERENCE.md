@@ -652,7 +652,7 @@ See [docs/ADDONS.md](../../docs/ADDONS.md). All endpoints only cover **enabled**
 
 `seo` comes from the content type's `seo()` hook, already in the requested locale. Every field may be `null`. `title` and `description` are plain text (tags stripped, capped at 190 and 320 characters). `image` is either an `http(s)` URL or a same-site path. `json_ld` is data only: the website escapes `<` before printing it in `<script type="application/ld+json">`.
 
-**GET `/api/public/content-sitemap`** (guest) — `{ "success": true, "data": ["/products/blue-mug/", …] }`: locale-less paths of published addon records (max 5000 per type), merged into `sitemap.xml`.
+**GET `/api/public/content-sitemap`** (guest) — `{ "success": true, "data": ["/products/blue-mug/", …] }`: locale-less paths of published addon records (max 5000 per type). The Qwik `/sitemap.xml` route expands each path (and built-in marketing/blog/portfolio URLs) into one trailing-slash `<loc>` per enabled UI locale.
 
 **GET `/api/me/addon-nav`** (authenticated) — dashboard links for the current user: `[{ "key": "shop.0", "module": "shop", "label": { "en": "Orders", "ar": "الطلبات" }, "href": "/admin/addons/shop/orders/", "permission": "manage orders" }]`. Admins get every item; other users only items whose `permission` is null or granted. `GET /api/settings` returns the unfiltered list as `addons`.
 

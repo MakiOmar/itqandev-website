@@ -4,8 +4,9 @@ import { routeLoader$ } from '@builder.io/qwik-city';
 import { Link, useLocation } from '@builder.io/qwik-city';
 import { publicSiteName } from '~/lib/marketing/public-page-head';
 import { usePublicShell } from '../../layout';
-import { getPublicSiteBaseUrl } from '~/lib/seo/canonical-url';
+import { buildCanonicalHref, getPublicSiteBaseUrl } from '~/lib/seo/canonical-url';
 import { jsonLdScript } from '~/lib/seo/json-ld';
+import { seoSectionLabel } from '~/lib/seo/section-labels';
 import { marketingEntityDetailHead } from '~/lib/marketing/marketing-entity-document-head';
 import { getBlogPostBySlug } from '~/lib/marketing/content-layer';
 import { marketingApiPageOriginMismatch } from '~/lib/marketing/api-client';
@@ -139,7 +140,6 @@ export default component$(() => {
   const state = view.value;
   const shell = usePublicShell();
   const uiLocale = uiLangFromUrlPathname(loc.url.pathname);
-  const baseUrl = getPublicSiteBaseUrl();
 
   if (state.kind === 'failed' || state.kind === 'empty') {
     return null;
@@ -180,6 +180,9 @@ export default component$(() => {
     : '';
   const postSections = Array.isArray(post.sections) ? (post.sections as PageSectionNode[]) : [];
   const hasBuilderSections = postSections.length > 0;
+  const articleUrl = buildCanonicalHref(MR.blogSlug(post.slug));
+  const orgName = publicSiteName(shell.value.branding);
+  const articleImage = post.coverImage?.trim() || post.seoMeta?.ogImage?.trim() || '';
 
   const jsonLdBlocks = (
     <>
@@ -191,7 +194,16 @@ export default component$(() => {
           headline: post.title,
           description: post.excerpt,
           datePublished: post.date,
+          inLanguage: uiLocale,
+          url: articleUrl,
+          mainEntityOfPage: articleUrl,
+          image: articleImage || undefined,
           author: post.author ? { '@type': 'Person', name: post.author.name } : undefined,
+          publisher: {
+            '@type': 'Organization',
+            name: orgName,
+            url: getPublicSiteBaseUrl(),
+          },
         })}
       />
       <script
@@ -200,9 +212,19 @@ export default component$(() => {
           '@context': 'https://schema.org',
           '@type': 'BreadcrumbList',
           itemListElement: [
-            { '@type': 'ListItem', position: 1, name: 'Home', item: baseUrl },
-            { '@type': 'ListItem', position: 2, name: 'Blog', item: baseUrl + '/blog' },
-            { '@type': 'ListItem', position: 3, name: post.title },
+            {
+              '@type': 'ListItem',
+              position: 1,
+              name: seoSectionLabel(uiLocale, 'home'),
+              item: buildCanonicalHref(MR.home),
+            },
+            {
+              '@type': 'ListItem',
+              position: 2,
+              name: seoSectionLabel(uiLocale, 'blog'),
+              item: buildCanonicalHref(MR.blog),
+            },
+            { '@type': 'ListItem', position: 3, name: post.title, item: articleUrl },
           ],
         })}
       />
@@ -341,7 +363,8 @@ export const head: DocumentHead = ({ resolveValue, url }) => {
     const result = marketingEntityDetailHead({
       brandName,
       baseUrl: getPublicSiteBaseUrl(url.origin).replace(/\/$/, ''),
-      sectionLabel: 'Blog',
+      // Omit `{section}` so titles stay under ~60 chars (headline + brand only).
+      sectionLabel: '',
       pageUrl: url,
       defaultTitle: post.title ?? '',
       defaultDescription: post.excerpt || '',

@@ -380,7 +380,12 @@ export const AtomicWidgetView = component$<AtomicWidgetProps>((props) => {
     case 'post_featured_image': {
       const url = str(s, 'image') || str(s, 'url');
       if (!url) return null;
-      return <img src={url} alt="" class="w-full rounded-xl" loading="lazy" />;
+      const alt =
+        str(s, 'image_alt') ||
+        str(s, 'alt') ||
+        props.pageContext?.title?.trim() ||
+        '';
+      return <img src={url} alt={alt} class="w-full rounded-xl" loading="lazy" />;
     }
     case 'post_info':
       return (

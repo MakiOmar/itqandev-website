@@ -2,7 +2,7 @@ import { component$, useComputed$ } from '@builder.io/qwik';
 import type { DocumentHead } from '@builder.io/qwik-city';
 import { routeLoader$ } from '@builder.io/qwik-city';
 import { Link, useLocation } from '@builder.io/qwik-city';
-import { getPublicSiteBaseUrl } from '~/lib/seo/canonical-url';
+import { buildCanonicalHref, getPublicSiteBaseUrl } from '~/lib/seo/canonical-url';
 import { publicSiteName } from '~/lib/marketing/public-page-head';
 import { usePublicShell } from '../../layout';
 import { getServiceBySlug } from '~/lib/marketing/content-layer';
@@ -16,6 +16,7 @@ import type { Service as MarketingService } from '~/lib/marketing/types';
 import { uiLocaleFromPublicRoute } from '~/lib/i18n/ui-locale-path';
 import { marketingRoutes } from '~/lib/marketing/constants';
 import { uiLangFromUrlPathname } from '~/lib/i18n/ui-locale-path';
+import { seoSectionLabel } from '~/lib/seo/section-labels';
 import { resolveServiceIconUrl } from '~/lib/marketing/service-icons';
 import { marketingEntityDetailHead } from '~/lib/marketing/marketing-entity-document-head';
 import { jsonLdScript } from '~/lib/seo/json-ld';
@@ -65,7 +66,6 @@ export default component$(() => {
   const s = raw as MarketingService;
   const shell = usePublicShell();
   const uiLocale = uiLangFromUrlPathname(loc.url.pathname);
-  const baseUrl = getPublicSiteBaseUrl();
 
   return (
     <ThemeBodyOrFallback
@@ -151,13 +151,28 @@ export default component$(() => {
 
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={JSON.stringify({
+        dangerouslySetInnerHTML={jsonLdScript({
           '@context': 'https://schema.org',
           '@type': 'BreadcrumbList',
           itemListElement: [
-            { '@type': 'ListItem', position: 1, name: 'Home', item: baseUrl },
-            { '@type': 'ListItem', position: 2, name: 'Services', item: baseUrl + '/services' },
-            { '@type': 'ListItem', position: 3, name: s.name },
+            {
+              '@type': 'ListItem',
+              position: 1,
+              name: seoSectionLabel(uiLocale, 'home'),
+              item: buildCanonicalHref(MR.home),
+            },
+            {
+              '@type': 'ListItem',
+              position: 2,
+              name: seoSectionLabel(uiLocale, 'services'),
+              item: buildCanonicalHref(MR.services),
+            },
+            {
+              '@type': 'ListItem',
+              position: 3,
+              name: s.name,
+              item: buildCanonicalHref(MR.serviceSlug(s.slug)),
+            },
           ],
         })}
       />
@@ -183,7 +198,7 @@ export const head: DocumentHead = ({ resolveValue, url }) => {
     return marketingEntityDetailHead({
       brandName,
       baseUrl,
-      sectionLabel: 'Services',
+      sectionLabel: seoSectionLabel(uiLangFromUrlPathname(url.pathname), 'services'),
       pageUrl: url,
       defaultTitle: s.name,
       defaultDescription: description,

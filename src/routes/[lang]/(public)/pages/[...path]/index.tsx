@@ -11,6 +11,7 @@ import { getPublicSiteBaseUrl } from '~/lib/seo/canonical-url';
 import { resolveMarketingApiBaseUrl } from '~/lib/marketing/resolve-api-base';
 import { mapMarketingSeoMetaFromApi } from '~/lib/marketing/seo-snippet';
 import { jsonLdScript } from '~/lib/seo/json-ld';
+import { seoSectionLabel } from '~/lib/seo/section-labels';
 import { API_ENDPOINTS } from '~/lib/api/endpoints';
 import { withLocaleQuery } from '~/lib/marketing/locale-cache-url';
 import type { PageSectionNode } from '~/lib/marketing/appearance-types';
@@ -162,7 +163,7 @@ export const head: DocumentHead = ({ resolveValue, url }) => {
     const result = marketingEntityDetailHead({
       brandName,
       baseUrl: getPublicSiteBaseUrl(url.origin).replace(/\/$/, ''),
-      sectionLabel: 'Pages',
+      sectionLabel: seoSectionLabel(uiLangFromUrlPathname(url.pathname), 'pages'),
       pageUrl: url,
       defaultTitle: page.title,
       defaultDescription: page.excerpt || '',

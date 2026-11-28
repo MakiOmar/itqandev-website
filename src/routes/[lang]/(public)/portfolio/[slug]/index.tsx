@@ -1,7 +1,7 @@
 import { component$, useComputed$, useSignal, useVisibleTask$ } from '@builder.io/qwik';
 import type { DocumentHead } from '@builder.io/qwik-city';
 import { routeLoader$ } from '@builder.io/qwik-city';
-import { getPublicSiteBaseUrl } from '~/lib/seo/canonical-url';
+import { buildCanonicalHref, getPublicSiteBaseUrl } from '~/lib/seo/canonical-url';
 import { publicSiteName } from '~/lib/marketing/public-page-head';
 import { usePublicShell } from '../../layout';
 import { marketingApiPageOriginMismatch } from '~/lib/marketing/api-client';
@@ -10,6 +10,7 @@ import type { CaseStudy as MarketingCaseStudy } from '~/lib/marketing/types';
 import { uiLocaleFromPublicRoute } from '~/lib/i18n/ui-locale-path';
 import { marketingRoutes } from '~/lib/marketing/constants';
 import { uiLangFromUrlPathname } from '~/lib/i18n/ui-locale-path';
+import { seoSectionLabel } from '~/lib/seo/section-labels';
 import { Container } from '~/components/marketing/Container';
 import { Section } from '~/components/marketing/Section';
 import { AnimatedReveal } from '~/components/marketing/AnimatedReveal';
@@ -176,7 +177,6 @@ export default component$(() => {
 
   const shell = usePublicShell();
   const uiLocale = uiLangFromUrlPathname(loc.url.pathname);
-  const baseUrl = getPublicSiteBaseUrl();
 
   return (
     <ThemeBodyOrFallback
@@ -304,13 +304,28 @@ export default component$(() => {
       {/* BreadcrumbList JSON-LD */}
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={JSON.stringify({
+        dangerouslySetInnerHTML={jsonLdScript({
           '@context': 'https://schema.org',
           '@type': 'BreadcrumbList',
           itemListElement: [
-            { '@type': 'ListItem', position: 1, name: 'Home', item: baseUrl },
-            { '@type': 'ListItem', position: 2, name: 'Portfolio', item: baseUrl + '/portfolio' },
-            { '@type': 'ListItem', position: 3, name: caseStudy.title },
+            {
+              '@type': 'ListItem',
+              position: 1,
+              name: seoSectionLabel(uiLocale, 'home'),
+              item: buildCanonicalHref(MR.home),
+            },
+            {
+              '@type': 'ListItem',
+              position: 2,
+              name: seoSectionLabel(uiLocale, 'portfolio'),
+              item: buildCanonicalHref(MR.portfolio),
+            },
+            {
+              '@type': 'ListItem',
+              position: 3,
+              name: caseStudy.title,
+              item: buildCanonicalHref(MR.portfolioSlug(caseStudy.slug)),
+            },
           ],
         })}
       />
@@ -341,7 +356,7 @@ export const head: DocumentHead = ({ resolveValue, url }) => {
     return marketingEntityDetailHead({
       brandName,
       baseUrl: baseUrl.replace(/\/$/, ''),
-      sectionLabel: 'Portfolio',
+      sectionLabel: seoSectionLabel(uiLangFromUrlPathname(url.pathname), 'portfolio'),
       pageUrl: url,
       defaultTitle: caseStudy.title,
       defaultDescription: caseStudy.summary || '',

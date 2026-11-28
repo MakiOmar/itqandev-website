@@ -1,9 +1,11 @@
 import { component$, useComputed$ } from '@builder.io/qwik';
 import type { DocumentHead } from '@builder.io/qwik-city';
 import { routeLoader$, useLocation } from '@builder.io/qwik-city';
-import { getPublicSiteBaseUrl } from '~/lib/seo/canonical-url';
+import { buildCanonicalHref } from '~/lib/seo/canonical-url';
 import { publicListPageHead } from '~/lib/marketing/public-page-head';
 import { usePublicShell } from '../layout';
+import { marketingRoutes } from '~/lib/marketing/constants';
+import { jsonLdScript } from '~/lib/seo/json-ld';
 import {
   getBlogPostsPage,
   getPageBuilderMarketingSupport,
@@ -87,7 +89,7 @@ export default component$(() => {
       />
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={JSON.stringify({
+        dangerouslySetInnerHTML={jsonLdScript({
           '@context': 'https://schema.org',
           '@type': 'BreadcrumbList',
           itemListElement: [
@@ -95,12 +97,13 @@ export default component$(() => {
               '@type': 'ListItem',
               position: 1,
               name: translateApp(uiLocale, 'articlesPage.homeCrumb'),
-              item: getPublicSiteBaseUrl(),
+              item: buildCanonicalHref(marketingRoutes(uiLocale).home),
             },
             {
               '@type': 'ListItem',
               position: 2,
               name: page.title || translateApp(uiLocale, 'articlesPage.title'),
+              item: buildCanonicalHref(marketingRoutes(uiLocale).blog),
             },
           ],
         })}

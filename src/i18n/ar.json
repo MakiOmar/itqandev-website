@@ -951,7 +951,7 @@
     "seoTypes": "حسب نوع المحتوى",
     "seoTypesHint": "الحقول الفارغة تستخدم الإعدادات العامة.",
     "seoTitleTemplate": "قالب العنوان",
-    "seoTitleTemplateHint": "الرموز: {title} = عنوان العنصر، {section} = اسم القسم، {site} = اسم الموقع. الرمز الفارغ يحذف الفاصل المجاور له. الافتراضي: {title} | {section} | {site}",
+    "seoTitleTemplateHint": "الرموز: {title} = عنوان العنصر، {section} = اسم القسم، {site} = اسم الموقع. الرمز الفارغ يحذف الفاصل المجاور له. الافتراضي: {title} | {site}",
     "seoDefaultDescription": "الوصف الافتراضي (Meta description)",
     "seoDefaultOgImage": "صورة المشاركة الافتراضية (OG)",
     "seoNoImage": "لم يتم اختيار صورة",
