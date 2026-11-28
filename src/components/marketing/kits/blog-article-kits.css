@@ -148,11 +148,10 @@
   }
 }
 
-/* Canva step number: gold "1." + gold rule across the column */
+/* Canva step number: gold "1." + gold rule across the column.
+   Class lives on the block shell (around the heading), so the rule hangs off .aw-heading. */
 .blog-article-surface .bah-step-num {
-  display: flex;
-  align-items: center;
-  gap: 0.85rem;
+  display: block;
   width: 100%;
   margin: 0 0 0.85rem;
 }
@@ -160,7 +159,10 @@
 .blog-article-surface .bah-step-num .aw-heading {
   --aw-d: var(--kit-color-accent);
   color: var(--kit-color-accent);
-  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  width: 100%;
   margin: 0;
   font-size: clamp(1.45rem, 2.2vw, 1.85rem);
   font-weight: 800;
@@ -168,7 +170,7 @@
   line-height: 1;
 }
 
-.blog-article-surface .bah-step-num::after {
+.blog-article-surface .bah-step-num .aw-heading::after {
   content: '';
   flex: 1 1 auto;
   height: 1.5px;
